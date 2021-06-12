@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm run clearRedis && nodemon index.js ",
+    "test": "mocha",
+    "clearRedis": "redis-cli --scan --pattern 'mjc:*' | xargs redis-cli DEL"
   },
   "repository": {
     "type": "git",
@@ -16,5 +18,31 @@
   "bugs": {
     "url": "https://github.com/RomainBoudet/Madagascar/issues"
   },
-  "homepage": "https://github.com/RomainBoudet/Madagascar#readme"
+  "homepage": "https://github.com/RomainBoudet/Madagascar#readme",
+  "dependencies": {
+    "app-root-path": "^3.0.0",
+    "bcrypt": "^5.0.1",
+    "chalk": "^4.1.1",
+    "connect-redis": "^6.0.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "ejs": "^3.1.6",
+    "email-validator": "^2.0.4",
+    "express-jwt": "^6.0.0",
+    "express-rate-limit": "^5.2.6",
+    "express-sanitizer": "^1.0.6",
+    "express-session": "^1.17.2",
+    "express-swagger-generator": "^1.1.17",
+    "geoip-lite": "^1.4.2",
+    "helmet": "^4.6.0",
+    "joi": "^17.4.0",
+    "nodemailer": "^6.6.1",
+    "nodemon": "^2.0.7",
+    "pg": "^8.6.0",
+    "redis": "^3.1.2",
+    "spdy": "^4.0.2",
+    "uuid": "^8.3.2",
+    "winston": "^3.3.3"
+  }
 }

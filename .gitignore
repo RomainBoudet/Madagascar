@@ -6,3 +6,5 @@ node_modules/
 .env.back
 .env.test
 
+BACK/certificat/key.pem
+BACK/certificat/cert.pem

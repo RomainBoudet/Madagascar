@@ -1,0 +1,15 @@
+{
+    "swaggerDefinition": {
+        "info": {
+            "description": "Online shopping website",
+            "title": "Madagascar",
+            "version": "1.0.0"
+        },
+        "basePath": "/",
+        "produces": [
+            "application/json"
+        ],
+        "schemes": ["https"]
+    },
+    "files": ["./app/router.js"]
+}

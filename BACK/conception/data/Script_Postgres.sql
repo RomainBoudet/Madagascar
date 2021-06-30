@@ -3,9 +3,24 @@
 ------------------------------------------------------------
 BEGIN;
 
--- Créattion de domaines =
+-- suppression du schéma public
 
-CREATE DOMAIN posint AS int CHECK (VALUE > 0); -- un domaine permettant de créer un type de donnée strictement positif
+DROP SCHEMA IF EXISTS public;
+DROP SCHEMA IF EXISTS mada;
+
+-- création d'un schéma perso ou je vais ranger mes tables : 
+
+CREATE SCHEMA mada;
+
+-- je définit mon schéma par défaut pour la création de table et le requêtage
+
+SET search_path TO mada;
+
+
+
+-- Création de domaines =
+
+CREATE DOMAIN posint AS INT CHECK (VALUE > 0); -- un domaine permettant de créer un type de donnée strictement positif
 CREATE DOMAIN posreal AS REAL CHECK (VALUE > 0);
 CREATE DOMAIN email AS text -- un domaine (type de donnée) permettant de vérifier la validité d'une adresse email via une regex
 	CHECK (
@@ -26,7 +41,7 @@ CREATE DOMAIN phonenumber AS text -- un domaine (type de donnée) permettant de 
 		VALUE ~* '^(0|\\+33|0033)[1-9][0-9]{8}$'
 	);
 
-CREATE DOMAIN password as text  -- un domaine (type de donnée) permettant de vérifier la validité d'un mot de passe en hash via une regex (fonctionne avec bcrypt)
+CREATE DOMAIN password as text  -- un domaine (type de donnée) permettant de vérifier la validité d'un mot de passe en hash via une regex (fonctionne uniquement avec bcrypt qui commence ces hash de la même maniére)
 CHECK (
 
 		VALUE ~* '^\$2[ayb]\$.{60}$'
@@ -35,20 +50,22 @@ CHECK (
 	-- https://stackoverflow.com/questions/31417387/regular-expression-to-find-bcrypt-hash
 	-- https://stackoverflow.com/questions/5393803/can-someone-explain-how-bcrypt-verifies-a-hash
 
-CREATE DOMAIN text_length AS text
+CREATE DOMAIN text_length AS text -- un domaine pour les descriptions = mini 15 caractéres sans espace autour
     CHECK (
         char_length(trim(both from VALUE)) >= 15
     );
 
-CREATE DOMAIN text_valid AS text
+CREATE DOMAIN text_valid AS text -- un domaine pour les textes valides = mini 2 caractéres sans espaces autour
     CHECK (
-        char_length(trim(both from VALUE)) >= 3
+        char_length(trim(both from VALUE)) >= 2
     );
+
+
 ------------------------------------------------------------
 -- Table: Manufacturer
 ------------------------------------------------------------
 CREATE TABLE manufacturer(
-	id               int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id               INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	manufacturerName text_valid NOT NULL,
 	manufacturerLogo text_valid NOT NULL
 );
@@ -58,10 +75,10 @@ CREATE TABLE manufacturer(
 -- Table: Category
 ------------------------------------------------------------
 CREATE TABLE category(
-	id                    int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	categoryName          text_valid NOT NULL,
 	categoryDescription   text_length NOT NULL,
-	categoryOrder         int  NOT NULL ,
+	categoryOrder         INT  NOT NULL ,
 	categoryImageURL      text_valid NOT NULL
 );
 
@@ -70,7 +87,7 @@ CREATE TABLE category(
 -- Table: TaxRate
 ------------------------------------------------------------
 CREATE TABLE taxRate(
-	id                    int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	taxRateValue          posreal  NOT NULL,
 	taxeRateName          text_valid NOT NULL,
 	taxeRateDescription   text_valid NOT NULL
@@ -81,7 +98,7 @@ CREATE TABLE taxRate(
 -- Table: ZipCode
 ------------------------------------------------------------
 CREATE TABLE zipCode(
-	id            int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	zipCodeCity   postale_code_fr NOT NULL 
 );
 
@@ -90,7 +107,7 @@ CREATE TABLE zipCode(
 -- Table: Country
 ------------------------------------------------------------
 CREATE TABLE country(
-	id  		 int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id  		 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	countryName  text_valid NOT NULL
 );
 
@@ -99,7 +116,7 @@ CREATE TABLE country(
 -- Table: City
 ------------------------------------------------------------
 CREATE TABLE city(
-	id          int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	cityName   text_valid NOT NULL
 );
 
@@ -108,7 +125,7 @@ CREATE TABLE city(
 -- Table: OrderedProduct
 ------------------------------------------------------------
 CREATE TABLE orderedProduct(
-	id                       int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	orderedProductName       text_valid NOT NULL,
 	orderedProductQuantity   posint  NOT NULL,
 	orderedProductPrice      posreal  NOT NULL,
@@ -121,7 +138,7 @@ CREATE TABLE orderedProduct(
 -- Table: Pivilege
 ------------------------------------------------------------
 CREATE TABLE privilege(
-	id              int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	privilegeName   text_valid NOT NULL
 );
 
@@ -130,7 +147,7 @@ CREATE TABLE privilege(
 -- Table: Custumer
 ------------------------------------------------------------
 CREATE TABLE custumer(
-	id                         int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	customerGender             text_valid NOT NULL,
 	customerFirstName          text_valid NOT NULL,
 	customerLastName           text_valid NOT NULL,
@@ -149,7 +166,7 @@ CREATE TABLE custumer(
 -- Table: BasquetProduct
 ------------------------------------------------------------
 CREATE TABLE basquetProduct(
-	id                        int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	basquetProductQuantity    posint  NOT NULL,
 	basquetProductDateAdded   DATE  DEFAULT now(),
 	basquetProductStatus      text_valid NOT NULL,
@@ -162,7 +179,7 @@ CREATE TABLE basquetProduct(
 -- Table: AddressCustumer
 ------------------------------------------------------------
 CREATE TABLE addressCustumer(
-	id          int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	addressCustumerName          text_valid NOT NULL,
 	addressCustumerLine1         text_valid NOT NULL,
 	addressCustumerLine2         text_valid NOT NULL,
@@ -179,9 +196,9 @@ CREATE TABLE addressCustumer(
 -- Table: CustumerVerification
 ------------------------------------------------------------
 CREATE TABLE custumerVerification(
-	id                              int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	custumerVerificationEmail       BOOL  NOT NULL,
-	custumerVerificationPhone       BOOL  NOT NULL,
+	id                              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	custumerVerificationEmail       BOOLEAN  NOT NULL DEFAULT FALSE,
+	custumerVerificationPhone       BOOLEAN  NOT NULL DEFAULT FALSE,
 	custumerVerificationEmailDate   timestamptz NOT NULL DEFAULT now(),
 	custumerVerificationPhoneDate   timestamptz NOT NULL DEFAULT now(),
 	id_custumer                     INT  NOT NULL REFERENCES custumer(id)
@@ -192,29 +209,22 @@ CREATE TABLE custumerVerification(
 -- Table: CustumerInteret
 ------------------------------------------------------------
 CREATE TABLE custumerInteret(
-	id                             int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	custumerInteretOrderedAmount   posreal  NOT NULL,
-	custumerInteretNumberOrder     INT  NOT NULL,
+	id                             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	custumerInteretOrderedAmount   posreal  NOT NULL DEFAULT 0,
+	custumerInteretNumberOrder     INT  NOT NULL DEFAULT 0,
 	id_custumer                    INT  NOT NULL REFERENCES custumer(id)
 );
 
 
-------------------------------------------------------------
--- Table de liaison entre les tables city et zipcode 
-------------------------------------------------------------
-CREATE TABLE zipCode_has_city(
-	id           int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	id_city      INT  NOT NULL REFERENCES city (id),
-	id_zipCode   INT  NOT NULL REFERENCES zipCode (id)
-);
+
 
 ------------------------------------------------------------
 -- Table: ProductStock
 ------------------------------------------------------------
 CREATE TABLE productStock(
-	id                     int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	productStockQuantity   INT  NOT NULL,
-	iroductStockStatus     text_valid NOT NULL
+	productStockStatus     text_valid NOT NULL
 );
 
 -- clé étrangére ajoutée a la fin..
@@ -223,7 +233,7 @@ CREATE TABLE productStock(
 -- Table: Product
 ------------------------------------------------------------
 CREATE TABLE product(
-	id                   int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	productName          text_valid NOT NULL,
 	productDescription   text_valid NOT NULL,
 	productPrice         posreal  NOT NULL,
@@ -243,7 +253,7 @@ CREATE TABLE product(
 -- Table: ImageProduct
 ------------------------------------------------------------
 CREATE TABLE imageProduct(
-	id                        int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	imageProductDescription   text_length  NOT NULL,
 	imageProductOrder         text_valid NOT NULL,
 	imageProductURL           text_valid NOT NULL,
@@ -256,10 +266,10 @@ CREATE TABLE imageProduct(
 -- Table: SpecialPriceProduct
 ------------------------------------------------------------
 CREATE TABLE specialPriceProduct(
-	id                                    int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	specialPriceProductNewProductPrice    posreal  NOT NULL,
-	specialPriceProductStartDate          DATE  NOT NULL,
-	specialPriceProductExpiryDate         DATE  NOT NULL,
+	id                                    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	specialPriceProductNewProductPrice    posreal,
+	specialPriceProductStartDate          DATE,
+	specialPriceProductExpiryDate         DATE,
 	id_product                            INT  NOT NULL REFERENCES product(id),
 	CHECK (specialPriceProductStartDate < specialPriceProductExpiryDate)
 );
@@ -269,7 +279,7 @@ CREATE TABLE specialPriceProduct(
 -- Table: Review
 ------------------------------------------------------------
 CREATE TABLE review(
-	id             int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	reviewRating   INT  NOT NULL,
 	reviewstext    text_length NOT NULL,
 	reviewTitle    text_valid NOT NULL,
@@ -281,7 +291,7 @@ CREATE TABLE review(
 -- Table: OderPayement
 ------------------------------------------------------------
 CREATE TABLE orderPayement(
-	id                    int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	orderPayementAmount   posreal  NOT NULL,
 	orderPayementWay      text_valid NOT NULL,
 	orderPayementDate     timestamptz NOT NULL
@@ -294,7 +304,7 @@ CREATE TABLE orderPayement(
 -- Table: Invoice
 ------------------------------------------------------------
 CREATE TABLE invoice(
-	id                 int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	invoiceReference   text_valid NOT NULL,
 	invoiceDate        DATE  NOT NULL DEFAULT now(),
 	id_custumer        INT  NOT NULL REFERENCES custumer(id)
@@ -306,7 +316,7 @@ CREATE TABLE invoice(
 -- Table: Order
 ------------------------------------------------------------
 CREATE TABLE "order"(
-	id                  int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	orderReference      posint  NOT NULL,
 	orderBillingName    text_valid NOT NULL,
 	orderDeliveryName   text_valid NOT NULL,
@@ -320,20 +330,17 @@ CREATE TABLE "order"(
 );
 
 
-
-
-
 ------------------------------------------------------------
 -- Table: OrderShipping
 ------------------------------------------------------------
 CREATE TABLE orderShipping(
-	id                             int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	orderShippingCost              posreal  NOT NULL,
 	orderShippingNameTransporter   text_valid NOT NULL,
 	id_order                       INT  NOT NULL REFERENCES "order"(id)
 );
 
-
+-- tables pour les cardinalitée NN :
 
 ------------------------------------------------------------
 -- Table: basquetProduct_has_product
@@ -358,7 +365,7 @@ CREATE TABLE orderedProduct_has_product(
 ------------------------------------------------------------
 -- Table: orderedProduct_has_order
 ------------------------------------------------------------
-CREATE TABLE orderedProduct_has_order(
+CREATE TABLE order_has_orderedProduct(
 	id 					int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	id_order            INT  NOT NULL REFERENCES "order"(id),
 	id_orderedProduct   INT  NOT NULL REFERENCES orderedProduct(id)	
@@ -369,14 +376,22 @@ CREATE TABLE orderedProduct_has_order(
 -- Table: order_has_addressCustumer
 ------------------------------------------------------------
 CREATE TABLE order_has_addressCustumer(
-	id 					 int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id 					 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	id_order             INT  NOT NULL REFERENCES "order"(id),
 	id_addressCustumer   INT  NOT NULL REFERENCES addressCustumer(id)	
 );
 
-
--- Pour que les references au clé primaire se fasse bien...
-
+------------------------------------------------------------
+-- Table de liaison entre les tables city et zipcode 
+------------------------------------------------------------
+CREATE TABLE zipCode_has_city(
+	id           INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id_city      INT  NOT NULL REFERENCES city (id),
+	id_zipCode   INT  NOT NULL REFERENCES zipCode (id)
+);
+-----------------------------------------------------------------------------
+-- Pour que les references au clé primaire se fasse bien dans le bon ordre...
+-----------------------------------------------------------------------------
 ALTER TABLE productStock ADD COLUMN id_product INT NOT NULL REFERENCES product(id);
 
 ALTER TABLE orderPayement ADD COLUMN id_order INT NOT NULL REFERENCES "order"(id);
@@ -384,5 +399,125 @@ ALTER TABLE orderPayement ADD COLUMN id_order INT NOT NULL REFERENCES "order"(id
 ALTER TABLE invoice ADD COLUMN id_order INT NOT NULL REFERENCES "order"(id);
 
 
+--------------------------------
+-- Création des principales vues 
+--------------------------------
+
+-- Une vue pour les principales infos concernant les clients : 
+
+CREATE VIEW all_custumer AS
+SELECT 
+	customerGender,
+	customerFirstName,
+	customerLastName,
+	custumerEmail,
+	custumerPhone,
+	custumerPassword,
+	custumerCreatedDate,
+	custumerUpdatedDate,
+	custumerNumberTotalOrder,
+	custumerInteret.custumerInteretOrderedAmount,
+	custumerInteret.custumerInteretNumberOrder,
+	privilege.privilegeName,
+	custumerVerification.custumerVerificationEmail,  
+	custumerVerification.custumerVerificationPhone,
+	addressCustumer.addressCustumerName,
+	addressCustumer.addressCustumerLine1,
+	addressCustumer.addressCustumerLine2,
+	addressCustumer.addressCustumerCreatedDate,
+	addressCustumer.addressCustumerUpdatedDate,
+	zipCode.zipCodeCity,
+	country.countryName,
+	city.cityName
+FROM custumer
+JOIN custumerInteret ON custumerInteret.id_custumer  = custumer.id
+JOIN privilege ON custumer.id_privilege = custumer.id
+JOIN custumerVerification ON custumerVerification.id_custumer = custumer.id
+JOIN addressCustumer ON custumer.id = addressCustumer.id_custumer
+JOIN country ON country.id = addressCustumer.id_country
+JOIN zipCode ON zipCode.id = addressCustumer.id_zipCode
+JOIN zipCode_has_city ON zipCode_has_city.id_zipCode = zipCode.id
+JOIN city ON zipCode_has_city.id_city = city.id
+ORDER BY custumer.customerFirstName ASC;
+
+
+-- Une vue pour les principales infos concernant les produits : 
+
+
+CREATE VIEW all_product AS
+SELECT 	
+	productName,     
+	productDescription,
+	productPrice,
+	productColor,        
+	productSize,        
+	productCreatedDate,
+	productUpdatedDate,
+	category.categoryName,          
+	category.categoryDescription,
+	category.categoryOrder,
+	category.categoryImageURL,     
+	taxRate.taxRateValue,  
+	taxRate.taxeRateName,         
+	taxRate.taxeRateDescription,  
+	manufacturer.manufacturerName, 
+	manufacturer.manufacturerLogo,
+	productStock.productStockQuantity,
+	productStock.productStockStatus,
+	imageProduct.imageProductDescription,
+	imageProduct.imageProductOrder,  
+	imageProduct.imageProductURL,        
+	specialPriceProduct.specialPriceProductNewProductPrice,
+	specialPriceProduct.specialPriceProductStartDate,
+	specialPriceProduct.specialPriceProductExpiryDate
+FROM product
+JOIN category ON product.id_category = category.id
+JOIN taxRate ON product.id_taxRate = taxRate.id
+JOIN manufacturer ON product.id_manufacturer = manufacturer.id
+JOIN productStock ON product.id_productStock = productStock.id
+JOIN imageProduct ON imageProduct.id_product = product.id
+JOIN specialPriceProduct ON specialPriceProduct.id_product = product.id;
+
+
+-- Une vue pour les principales infos concernant les commandes (order) : 
+
+CREATE VIEW all_order AS
+SELECT
+	orderReference,
+	orderBillingName,
+	orderDeliveryName,
+	orderPurchaseDate,
+	orderStatus,
+	orderShippedDate,
+	orderComments,
+	orderShipping.orderShippingCost,
+	orderShipping.orderShippingNameTransporter,
+	orderPayement.orderPayementAmount,
+	orderPayement.orderPayementWay,
+	orderPayement.orderPayementDate,
+	invoice.invoiceReference,
+	invoice.invoiceDate,
+	orderedProduct.orderedProductName,
+	orderedProduct.orderedProductQuantity,
+	orderedProduct.orderedProductPrice,
+	orderedProduct.orderedProductTax,
+	addressCustumer.addressCustumerName,
+	addressCustumer.addressCustumerLine1,
+	addressCustumer.addressCustumerLine2,
+	zipCode.zipCodeCity,
+	city.cityName,
+	country.countryName
+FROM "order"
+JOIN orderShipping ON orderShipping.id_order = "order".id
+JOIN orderPayement ON orderPayement.id_order = "order".id
+JOIN invoice ON invoice.id_order = "order".id
+JOIN order_has_orderedProduct ON order_has_orderedProduct.id_order = "order".id
+JOIN orderedProduct ON order_has_orderedProduct.id_orderedProduct = orderedProduct.id
+JOIN order_has_addressCustumer ON order_has_addressCustumer.id_order = "order".id
+JOIN addressCustumer ON order_has_addressCustumer.id_addressCustumer = addressCustumer.id
+JOIN country ON country.id = addressCustumer.id_country
+JOIN zipCode ON zipCode.id = addressCustumer.id_zipCode
+JOIN zipCode_has_city ON zipCode_has_city.id_zipCode = zipCode.id
+JOIN city ON zipCode_has_city.id_city = city.id;
 
 COMMIT;

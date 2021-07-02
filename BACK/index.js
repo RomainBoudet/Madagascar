@@ -17,7 +17,7 @@ const express = require('express');
 const session = require('express-session');
 const redisSession = require('redis');
 const helmet = require('helmet');
-//const router = require('./app/router');
+const router = require('./app/router');
 const cookieParser = require("cookie-parser");
 const uuid = require(`uuid`)
 
@@ -154,12 +154,7 @@ app.use(cors({
 //FIN DES MIDDLEWARES----------------------------------------------------------------------
 
 // on préfixe notre router avec un V1 qui sera inclus devant chaque nom de route. Permet de faire évoluer l'app avec une V2 plus facilement.
-//app.use('/v1', router);
-
-// un petit test
-app.get('/', function (req, res) {
-    res.send('hello Madagascar !')
-  })
+app.use('/v1', router);
 
 
 // key = la clé privée du sous domain 

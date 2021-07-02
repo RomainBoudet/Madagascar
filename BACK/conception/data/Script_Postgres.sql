@@ -476,7 +476,8 @@ JOIN taxRate ON product.id_taxRate = taxRate.id
 JOIN manufacturer ON product.id_manufacturer = manufacturer.id
 JOIN productStock ON product.id_productStock = productStock.id
 JOIN imageProduct ON imageProduct.id_product = product.id
-JOIN specialPriceProduct ON specialPriceProduct.id_product = product.id;
+JOIN specialPriceProduct ON specialPriceProduct.id_product = product.id
+ORDER BY product.productName ASC;
 
 
 -- Une vue pour les principales infos concernant une commande (order) : 
@@ -518,6 +519,7 @@ JOIN addressCustumer ON order_has_addressCustumer.id_addressCustumer = addressCu
 JOIN country ON country.id = addressCustumer.id_country
 JOIN zipCode ON zipCode.id = addressCustumer.id_zipCode
 JOIN zipCode_has_city ON zipCode_has_city.id_zipCode = zipCode.id
-JOIN city ON zipCode_has_city.id_city = city.id;
+JOIN city ON zipCode_has_city.id_city = city.id
+ORDER BY orderedProduct.orderedProductName ASC;
 
 COMMIT;

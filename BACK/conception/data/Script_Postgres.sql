@@ -479,7 +479,7 @@ JOIN imageProduct ON imageProduct.id_product = product.id
 JOIN specialPriceProduct ON specialPriceProduct.id_product = product.id;
 
 
--- Une vue pour les principales infos concernant les commandes (order) : 
+-- Une vue pour les principales infos concernant une commande (order) : 
 
 CREATE VIEW all_order AS
 SELECT

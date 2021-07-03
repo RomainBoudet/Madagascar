@@ -1,0 +1,410 @@
+#------------------------------------------------------------
+#        Script MySQL.
+#------------------------------------------------------------
+
+
+#------------------------------------------------------------
+# Table: Manufacturer
+#------------------------------------------------------------
+
+CREATE TABLE Manufacturer(
+        id               Int  Auto_increment  NOT NULL ,
+        ManufacturerName Varchar (50) NOT NULL ,
+        ManufacturerLogo Varchar (50) NOT NULL
+	,CONSTRAINT Manufacturer_PK PRIMARY KEY (id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: Category
+#------------------------------------------------------------
+
+CREATE TABLE Category(
+        id                  Int  Auto_increment  NOT NULL ,
+        CategoryName        Varchar (50) NOT NULL ,
+        CategoryDescription Longtext NOT NULL ,
+        CategoryOrder       Int NOT NULL ,
+        CategoryImageURL    Varchar (50) NOT NULL
+	,CONSTRAINT Category_PK PRIMARY KEY (id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: TaxRate
+#------------------------------------------------------------
+
+CREATE TABLE TaxRate(
+        id                  Int  Auto_increment  NOT NULL ,
+        TaxRateValue        Int NOT NULL ,
+        TaxeRateName        Varchar (50) NOT NULL ,
+        TaxeRateDescription Varchar (50) NOT NULL
+	,CONSTRAINT TaxRate_PK PRIMARY KEY (id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: Product
+#------------------------------------------------------------
+
+CREATE TABLE Product(
+        id                   Int  Auto_increment  NOT NULL ,
+        ProductName          Varchar (50) NOT NULL ,
+        ProductDescription   Varchar (50) NOT NULL ,
+        ProductPrice         Real NOT NULL ,
+        ProductColor         Varchar (50) NOT NULL ,
+        ProductSize          Varchar (50) NOT NULL ,
+        ProductStockQuantity Int NOT NULL ,
+        ProductQuantitySold  Int NOT NULL ,
+        id_Manufacturer      Int ,
+        id_Category          Int NOT NULL ,
+        id_TaxRate           Int NOT NULL
+	,CONSTRAINT Product_PK PRIMARY KEY (id)
+
+	,CONSTRAINT Product_Manufacturer_FK FOREIGN KEY (id_Manufacturer) REFERENCES Manufacturer(id)
+	,CONSTRAINT Product_Category0_FK FOREIGN KEY (id_Category) REFERENCES Category(id)
+	,CONSTRAINT Product_TaxRate1_FK FOREIGN KEY (id_TaxRate) REFERENCES TaxRate(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: ImageProduct
+#------------------------------------------------------------
+
+CREATE TABLE ImageProduct(
+        id                      Int  Auto_increment  NOT NULL ,
+        ImageProductDescription Longtext NOT NULL ,
+        ImageProductOrder       Varchar (50) NOT NULL ,
+        ImageProductURL         Varchar (50) NOT NULL ,
+        id_Product              Int NOT NULL
+	,CONSTRAINT ImageProduct_PK PRIMARY KEY (id)
+
+	,CONSTRAINT ImageProduct_Product_FK FOREIGN KEY (id_Product) REFERENCES Product(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: SpecialPriceProduct
+#------------------------------------------------------------
+
+CREATE TABLE SpecialPriceProduct(
+        id              Int  Auto_increment  NOT NULL ,
+        NewProductPrice Real NOT NULL ,
+        startDate       Date NOT NULL ,
+        ExpiryDate      Date NOT NULL ,
+        id_Product      Int NOT NULL
+	,CONSTRAINT SpecialPriceProduct_PK PRIMARY KEY (id)
+
+	,CONSTRAINT SpecialPriceProduct_Product_FK FOREIGN KEY (id_Product) REFERENCES Product(id)
+	,CONSTRAINT SpecialPriceProduct_Product_AK UNIQUE (id_Product)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: ZipCode
+#------------------------------------------------------------
+
+CREATE TABLE ZipCode(
+        id          Int  Auto_increment  NOT NULL ,
+        ZipCodeCity Int NOT NULL
+	,CONSTRAINT ZipCode_PK PRIMARY KEY (id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: Country
+#------------------------------------------------------------
+
+CREATE TABLE Country(
+        id          Int  Auto_increment  NOT NULL ,
+        CountryName Varchar (50) NOT NULL
+	,CONSTRAINT Country_PK PRIMARY KEY (id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: City
+#------------------------------------------------------------
+
+CREATE TABLE City(
+        id       Int  Auto_increment  NOT NULL ,
+        CityName Varchar (50) NOT NULL
+	,CONSTRAINT City_PK PRIMARY KEY (id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: OrderedProduct
+#------------------------------------------------------------
+
+CREATE TABLE OrderedProduct(
+        id                     Int  Auto_increment  NOT NULL ,
+        OrderedProductName     Varchar (50) NOT NULL ,
+        OrderedProductQuantity Int NOT NULL ,
+        OrderedProductPrice    Real NOT NULL ,
+        OrderedProductTax      Real NOT NULL
+	,CONSTRAINT OrderedProduct_PK PRIMARY KEY (id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: OderPayement
+#------------------------------------------------------------
+
+CREATE TABLE OderPayement(
+        id                     Int  Auto_increment  NOT NULL ,
+        OrderPayementAmount    Real NOT NULL ,
+        OrderPayementWay       Varchar (50) NOT NULL ,
+        OrderPayementDate      Date NOT NULL ,
+        OrderPayementReference Varchar (50) NOT NULL
+	,CONSTRAINT OderPayement_PK PRIMARY KEY (id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: Pivilege
+#------------------------------------------------------------
+
+CREATE TABLE Pivilege(
+        id            Int  Auto_increment  NOT NULL ,
+        PrivilegeName Varchar (50) NOT NULL
+	,CONSTRAINT Pivilege_PK PRIMARY KEY (id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: Custumer
+#------------------------------------------------------------
+
+CREATE TABLE Custumer(
+        id                        Int  Auto_increment  NOT NULL ,
+        CustomerGender            Varchar (50) NOT NULL ,
+        CustomerFirstName         Varchar (50) NOT NULL ,
+        CustomerLastName          Varchar (50) NOT NULL ,
+        CustumerEmail             Varchar (50) NOT NULL ,
+        CustumerPassword          Varchar (50) NOT NULL ,
+        CustumerCreatedDate       Date NOT NULL ,
+        CustumerUpdatedDatenumber Date NOT NULL ,
+        CustumerPhoneForAdminOnly Int NOT NULL ,
+        id_Pivilege               Int NOT NULL
+	,CONSTRAINT Custumer_PK PRIMARY KEY (id)
+
+	,CONSTRAINT Custumer_Pivilege_FK FOREIGN KEY (id_Pivilege) REFERENCES Pivilege(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: Review
+#------------------------------------------------------------
+
+CREATE TABLE Review(
+        id           Int  Auto_increment  NOT NULL ,
+        ReviewRating Int NOT NULL ,
+        ReviewsText  Varchar (50) NOT NULL ,
+        ReviewTitle  Varchar (50) NOT NULL ,
+        id_Product   Int NOT NULL ,
+        id_Custumer  Int NOT NULL
+	,CONSTRAINT Review_PK PRIMARY KEY (id)
+
+	,CONSTRAINT Review_Product_FK FOREIGN KEY (id_Product) REFERENCES Product(id)
+	,CONSTRAINT Review_Custumer0_FK FOREIGN KEY (id_Custumer) REFERENCES Custumer(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: BasquetProduct
+#------------------------------------------------------------
+
+CREATE TABLE BasquetProduct(
+        id                      Int  Auto_increment  NOT NULL ,
+        BasquetProductQuantity  Int NOT NULL ,
+        BasquetProductDateAdded Date NOT NULL ,
+        BasquetProductStatus    Varchar (50) NOT NULL ,
+        BasquetProductImageMini Varchar (50) NOT NULL ,
+        id_Custumer             Int NOT NULL
+	,CONSTRAINT BasquetProduct_PK PRIMARY KEY (id)
+
+	,CONSTRAINT BasquetProduct_Custumer_FK FOREIGN KEY (id_Custumer) REFERENCES Custumer(id)
+	,CONSTRAINT BasquetProduct_Custumer_AK UNIQUE (id_Custumer)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: AddressCustumer
+#------------------------------------------------------------
+
+CREATE TABLE AddressCustumer(
+        id                         Int  Auto_increment  NOT NULL ,
+        AddressCustumerFirstName   Varchar (50) NOT NULL ,
+        AddressCustumerLine1       Varchar (50) NOT NULL ,
+        AddressCustumerLine2       Varchar (50) NOT NULL ,
+        AddressCustumerCreatedDate Date NOT NULL ,
+        AddressCustumerUpdatedDate Date NOT NULL ,
+        AddressCustumerPhone       Int NOT NULL ,
+        AddressCustumerLastName    Varchar (50) NOT NULL ,
+        AddressCustumerTitle       Varchar (50) NOT NULL ,
+        AddressCustumerCompany     Varchar (50) NOT NULL ,
+        id_Custumer                Int NOT NULL ,
+        id_Country                 Int NOT NULL ,
+        id_ZipCode                 Int NOT NULL
+	,CONSTRAINT AddressCustumer_PK PRIMARY KEY (id)
+
+	,CONSTRAINT AddressCustumer_Custumer_FK FOREIGN KEY (id_Custumer) REFERENCES Custumer(id)
+	,CONSTRAINT AddressCustumer_Country0_FK FOREIGN KEY (id_Country) REFERENCES Country(id)
+	,CONSTRAINT AddressCustumer_ZipCode1_FK FOREIGN KEY (id_ZipCode) REFERENCES ZipCode(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: Order
+#------------------------------------------------------------
+
+CREATE TABLE Order(
+        id                Int  Auto_increment  NOT NULL ,
+        OrderReference    Int NOT NULL ,
+        OrderPurchaseDate Date NOT NULL ,
+        OrderStatus       Varchar (50) NOT NULL ,
+        OrderComments     Varchar (50) NOT NULL ,
+        id_Custumer       Int NOT NULL
+	,CONSTRAINT Order_PK PRIMARY KEY (id)
+
+	,CONSTRAINT Order_Custumer_FK FOREIGN KEY (id_Custumer) REFERENCES Custumer(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: AdminVerification
+#------------------------------------------------------------
+
+CREATE TABLE AdminVerification(
+        id                         Int  Auto_increment  NOT NULL ,
+        AdminVerificationEmail     Bool NOT NULL ,
+        AdminVerificationPhone     Bool NOT NULL ,
+        AdminVerificationEmailDate Date NOT NULL ,
+        AdminVerificationPhoneDate Date NOT NULL ,
+        id_Custumer                Int NOT NULL
+	,CONSTRAINT AdminVerification_PK PRIMARY KEY (id)
+
+	,CONSTRAINT AdminVerification_Custumer_FK FOREIGN KEY (id_Custumer) REFERENCES Custumer(id)
+	,CONSTRAINT AdminVerification_Custumer_AK UNIQUE (id_Custumer)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: OrderShipping
+#------------------------------------------------------------
+
+CREATE TABLE OrderShipping(
+        id                           Int  Auto_increment  NOT NULL ,
+        OrderShippingCost            Real NOT NULL ,
+        OrderShippingNameTransporter Varchar (50) NOT NULL ,
+        OrderShippingShippedDate     Date NOT NULL ,
+        OrderShippingTrackingNumber  Int NOT NULL ,
+        OrderShippingLinkForTracking Varchar (50) NOT NULL ,
+        OrderShippingWeight          Varchar (50) NOT NULL ,
+        id_Order                     Int NOT NULL
+	,CONSTRAINT OrderShipping_PK PRIMARY KEY (id)
+
+	,CONSTRAINT OrderShipping_Order_FK FOREIGN KEY (id_Order) REFERENCES Order(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: CustumerInteret
+#------------------------------------------------------------
+
+CREATE TABLE CustumerInteret(
+        id                           Int  Auto_increment  NOT NULL ,
+        CustumerInteretOrderedAmount Real NOT NULL ,
+        CustumerInteretNumberOrder   Int NOT NULL ,
+        id_Custumer                  Int NOT NULL
+	,CONSTRAINT CustumerInteret_PK PRIMARY KEY (id)
+
+	,CONSTRAINT CustumerInteret_Custumer_FK FOREIGN KEY (id_Custumer) REFERENCES Custumer(id)
+	,CONSTRAINT CustumerInteret_Custumer_AK UNIQUE (id_Custumer)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: Invoice
+#------------------------------------------------------------
+
+CREATE TABLE Invoice(
+        id               Int  Auto_increment  NOT NULL ,
+        InvoiceReference Varchar (50) NOT NULL ,
+        InvoiceDate      Date NOT NULL ,
+        id_Custumer      Int NOT NULL
+	,CONSTRAINT Invoice_PK PRIMARY KEY (id)
+
+	,CONSTRAINT Invoice_Custumer_FK FOREIGN KEY (id_Custumer) REFERENCES Custumer(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: basquetProduct_has_product
+#------------------------------------------------------------
+
+CREATE TABLE basquetProduct_has_product(
+        id         Int NOT NULL ,
+        id_Product Int NOT NULL
+	,CONSTRAINT basquetProduct_has_product_PK PRIMARY KEY (id,id_Product)
+
+	,CONSTRAINT basquetProduct_has_product_BasquetProduct_FK FOREIGN KEY (id) REFERENCES BasquetProduct(id)
+	,CONSTRAINT basquetProduct_has_product_Product0_FK FOREIGN KEY (id_Product) REFERENCES Product(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: zipCode_has_city
+#------------------------------------------------------------
+
+CREATE TABLE zipCode_has_city(
+        id         Int NOT NULL ,
+        id_ZipCode Int NOT NULL
+	,CONSTRAINT zipCode_has_city_PK PRIMARY KEY (id,id_ZipCode)
+
+	,CONSTRAINT zipCode_has_city_City_FK FOREIGN KEY (id) REFERENCES City(id)
+	,CONSTRAINT zipCode_has_city_ZipCode0_FK FOREIGN KEY (id_ZipCode) REFERENCES ZipCode(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: orderedProduct_has_product
+#------------------------------------------------------------
+
+CREATE TABLE orderedProduct_has_product(
+        id         Int NOT NULL ,
+        id_Product Int NOT NULL
+	,CONSTRAINT orderedProduct_has_product_PK PRIMARY KEY (id,id_Product)
+
+	,CONSTRAINT orderedProduct_has_product_OrderedProduct_FK FOREIGN KEY (id) REFERENCES OrderedProduct(id)
+	,CONSTRAINT orderedProduct_has_product_Product0_FK FOREIGN KEY (id_Product) REFERENCES Product(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: order_has_orderedProduct
+#------------------------------------------------------------
+
+CREATE TABLE order_has_orderedProduct(
+        id                Int NOT NULL ,
+        id_OrderedProduct Int NOT NULL
+	,CONSTRAINT order_has_orderedProduct_PK PRIMARY KEY (id,id_OrderedProduct)
+
+	,CONSTRAINT order_has_orderedProduct_Order_FK FOREIGN KEY (id) REFERENCES Order(id)
+	,CONSTRAINT order_has_orderedProduct_OrderedProduct0_FK FOREIGN KEY (id_OrderedProduct) REFERENCES OrderedProduct(id)
+)ENGINE=InnoDB;
+
+
+#------------------------------------------------------------
+# Table: order_has_CustumerAddress
+#------------------------------------------------------------
+
+CREATE TABLE order_has_CustumerAddress(
+        id                 Int NOT NULL ,
+        id_AddressCustumer Int NOT NULL
+	,CONSTRAINT order_has_CustumerAddress_PK PRIMARY KEY (id,id_AddressCustumer)
+
+	,CONSTRAINT order_has_CustumerAddress_Order_FK FOREIGN KEY (id) REFERENCES Order(id)
+	,CONSTRAINT order_has_CustumerAddress_AddressCustumer0_FK FOREIGN KEY (id_AddressCustumer) REFERENCES AddressCustumer(id)
+)ENGINE=InnoDB;
+

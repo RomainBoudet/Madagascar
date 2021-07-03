@@ -20,8 +20,9 @@ SET search_path TO mada;
 
 -- Création de domaines =
 
-CREATE DOMAIN posint AS INT CHECK (VALUE > 0); -- un domaine permettant de créer un type de donnée strictement positif
-CREATE DOMAIN posreal AS REAL CHECK (VALUE > 0);
+CREATE DOMAIN posint AS INT CHECK (VALUE >= 0); -- un domaine permettant de créer un type de donnée nombre entier ne pouvant être négatif
+CREATE DOMAIN posintsup AS INT check (VALUE > 0); -- un domaine permettant de créer un type de donnée nombre entier strictement positif
+CREATE DOMAIN posreal AS REAL CHECK (VALUE > 0); -- un domaine permettant de créer un type de donnée nombre réelle strictement positif
 CREATE DOMAIN email AS text -- un domaine (type de donnée) permettant de vérifier la validité d'une adresse email via une regex
 	CHECK (
 
@@ -127,7 +128,7 @@ CREATE TABLE city(
 CREATE TABLE orderedProduct(
 	id                       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	orderedProductName       text_valid NOT NULL,
-	orderedProductQuantity   posint  NOT NULL,
+	orderedProductQuantity   posintsup  NOT NULL,
 	orderedProductPrice      posreal  NOT NULL,
 	orderedProductTax        posreal  NOT NULL 
 
@@ -152,11 +153,10 @@ CREATE TABLE custumer(
 	customerFirstName          text_valid NOT NULL,
 	customerLastName           text_valid NOT NULL,
 	custumerEmail              email NOT NULL UNIQUE,
-	custumerPhone              phonenumber  NOT NULL,
+	custumerPhoneForAdminOnly  phonenumber,
 	custumerPassword           password NOT NULL,
 	custumerCreatedDate        timestamptz NOT NULL DEFAULT now(),
 	custumerUpdatedDate        timestamptz  NOT NULL,
-	custumerNumberTotalOrder   posint  NOT NULL,
 	id_privilege               INT NOT NULL REFERENCES privilege(id),
 	CHECK (custumerCreatedDate < custumerUpdatedDate)	
 );
@@ -167,10 +167,10 @@ CREATE TABLE custumer(
 ------------------------------------------------------------
 CREATE TABLE basquetProduct(
 	id                        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	basquetProductQuantity    posint  NOT NULL,
+	basquetProductQuantity    posint NOT NULL,
 	basquetProductDateAdded   DATE  DEFAULT now(),
 	basquetProductStatus      text_valid NOT NULL,
-	basquetProductImage       text_valid NOT NULL,
+	basquetProductImageMini   text_valid NOT NULL,
 	id_custumer               INT  NOT NULL  REFERENCES custumer(id)
 );
 
@@ -180,9 +180,13 @@ CREATE TABLE basquetProduct(
 ------------------------------------------------------------
 CREATE TABLE addressCustumer(
 	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	addressCustumerName          text_valid NOT NULL,
+	addressCustumerTitle         text_valid NOT NULL,
+	addressCustumerFirstName     text_valid NOT NULL,
+	addressCustumerLastName      text_valid NOT NULL,
+	addressCustumerCompany       text_valid NOT NULL,
 	addressCustumerLine1         text_valid NOT NULL,
 	addressCustumerLine2         text_valid NOT NULL,
+	addressCustumerPhone         phonenumber NOT NULL,
 	addressCustumerCreatedDate   timestamptz NOT NULL DEFAULT now(),
 	addressCustumerUpdatedDate   timestamptz  NOT NULL,
 	id_custumer                  INT  NOT NULL REFERENCES custumer(id),
@@ -195,13 +199,13 @@ CREATE TABLE addressCustumer(
 ------------------------------------------------------------
 -- Table: CustumerVerification
 ------------------------------------------------------------
-CREATE TABLE custumerVerification(
-	id                              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	custumerVerificationEmail       BOOLEAN  NOT NULL DEFAULT FALSE,
-	custumerVerificationPhone       BOOLEAN  NOT NULL DEFAULT FALSE,
-	custumerVerificationEmailDate   timestamptz NOT NULL DEFAULT now(),
-	custumerVerificationPhoneDate   timestamptz NOT NULL DEFAULT now(),
-	id_custumer                     INT  NOT NULL REFERENCES custumer(id)
+CREATE TABLE AdminVerification(
+	id                           INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	AdminVerificationEmail       BOOLEAN  NOT NULL DEFAULT FALSE,
+	AdminVerificationPhone       BOOLEAN  NOT NULL DEFAULT FALSE,
+	AdminVerificationEmailDate   timestamptz NOT NULL DEFAULT now(),
+	AdminVerificationPhoneDate   timestamptz NOT NULL DEFAULT now(),
+	id_custumer                  INT  NOT NULL REFERENCES custumer(id)
 );
 
 
@@ -211,23 +215,10 @@ CREATE TABLE custumerVerification(
 CREATE TABLE custumerInteret(
 	id                             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	custumerInteretOrderedAmount   posreal  NOT NULL DEFAULT 0,
-	custumerInteretNumberOrder     INT  NOT NULL DEFAULT 0,
+	custumerInteretNumberOrder     posint  NOT NULL DEFAULT 0,
 	id_custumer                    INT  NOT NULL REFERENCES custumer(id)
 );
 
-
-
-
-------------------------------------------------------------
--- Table: ProductStock
-------------------------------------------------------------
-CREATE TABLE productStock(
-	id                     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	productStockQuantity   INT  NOT NULL,
-	productStockStatus     text_valid NOT NULL
-);
-
--- clé étrangére ajoutée a la fin..
 
 ------------------------------------------------------------
 -- Table: Product
@@ -241,10 +232,11 @@ CREATE TABLE product(
 	productSize          text_valid NOT NULL,
 	productCreatedDate	 timestamptz NOT NULL DEFAULT now(),
 	productUpdatedDate	 timestamptz NOT NULL,
+	productStockQuantity posint NOT NULL,
+	ProductQuantitySold	 posint NOT NULL DEFAULT 0,
 	id_manufacturer      INT  NOT NULL REFERENCES manufacturer(id),
 	id_category          INT  NOT NULL REFERENCES category(id),
 	id_taxRate           INT  NOT NULL REFERENCES taxRate(id),
-	id_productStock      INT  NOT NULL REFERENCES productStock(id),
 	CHECK (productCreatedDate < productUpdatedDate)
 );
 
@@ -292,10 +284,10 @@ CREATE TABLE review(
 ------------------------------------------------------------
 CREATE TABLE orderPayement(
 	id                    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	orderPayementReference text_valid NOT NULL,
 	orderPayementAmount   posreal  NOT NULL,
 	orderPayementWay      text_valid NOT NULL,
 	orderPayementDate     timestamptz NOT NULL
-
 );
 
 -- clé étrangére rajoutée a la fin...
@@ -316,17 +308,14 @@ CREATE TABLE invoice(
 -- Table: Order
 ------------------------------------------------------------
 CREATE TABLE "order"(
-	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	orderReference      posint  NOT NULL,
-	orderBillingName    text_valid NOT NULL,
-	orderDeliveryName   text_valid NOT NULL,
-	orderPurchaseDate   timestamptz NOT NULL DEFAULT now(),
-	orderStatus         text_valid NOT NULL,
-	orderShippedDate    DATE NOT NULL,
-	orderComments       text_valid NOT NULL,
-	id_custumer         INT  NOT NULL REFERENCES custumer(id),
-	id_orderPayement    INT  NOT NULL REFERENCES orderPayement(id),
-	id_invoice          INT  NOT NULL REFERENCES invoice(id)
+	id                    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	orderReference        posint  NOT NULL,
+	orderPurchaseDate     timestamptz NOT NULL DEFAULT now(),
+	orderStatus           text_valid NOT NULL,
+	orderComments         text_valid NOT NULL,
+	id_custumer           INT  NOT NULL REFERENCES custumer(id),
+	id_orderPayement      INT  NOT NULL REFERENCES orderPayement(id),
+	id_invoice            INT  NOT NULL REFERENCES invoice(id)
 );
 
 
@@ -337,6 +326,10 @@ CREATE TABLE orderShipping(
 	id                             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	orderShippingCost              posreal  NOT NULL,
 	orderShippingNameTransporter   text_valid NOT NULL,
+	orderShippingShippedDate	   date,
+	orderShippingTrackingNumber    text_valid,
+	orderShippingLinkForTracking   text_valid,
+	orderShippingWeight            text_valid,
 	id_order                       INT  NOT NULL REFERENCES "order"(id)
 );
 
@@ -392,7 +385,6 @@ CREATE TABLE zipCode_has_city(
 -----------------------------------------------------------------------------
 -- Pour que les references au clé primaire se fasse bien dans le bon ordre...
 -----------------------------------------------------------------------------
-ALTER TABLE productStock ADD COLUMN id_product INT NOT NULL REFERENCES product(id);
 
 ALTER TABLE orderPayement ADD COLUMN id_order INT NOT NULL REFERENCES "order"(id);
 
@@ -411,17 +403,16 @@ SELECT
 	customerFirstName,
 	customerLastName,
 	custumerEmail,
-	custumerPhone,
 	custumerPassword,
 	custumerCreatedDate,
 	custumerUpdatedDate,
-	custumerNumberTotalOrder,
 	custumerInteret.custumerInteretOrderedAmount,
 	custumerInteret.custumerInteretNumberOrder,
 	privilege.privilegeName,
-	custumerVerification.custumerVerificationEmail,  
-	custumerVerification.custumerVerificationPhone,
-	addressCustumer.addressCustumerName,
+	addressCustumer.addressCustumerTitle,
+	addressCustumer.addressCustumerFirstName, --! a completer et aggréger...
+	addressCustumer.addressCustumerLastName,
+	addressCustumer.addressCustumerPhone,
 	addressCustumer.addressCustumerLine1,
 	addressCustumer.addressCustumerLine2,
 	addressCustumer.addressCustumerCreatedDate,
@@ -432,7 +423,6 @@ SELECT
 FROM custumer
 JOIN custumerInteret ON custumerInteret.id_custumer  = custumer.id
 JOIN privilege ON custumer.id_privilege = custumer.id
-JOIN custumerVerification ON custumerVerification.id_custumer = custumer.id
 JOIN addressCustumer ON custumer.id = addressCustumer.id_custumer
 JOIN country ON country.id = addressCustumer.id_country
 JOIN zipCode ON zipCode.id = addressCustumer.id_zipCode
@@ -453,6 +443,8 @@ SELECT
 	productSize,        
 	productCreatedDate,
 	productUpdatedDate,
+	productStockQuantity,
+	ProductQuantitySold,
 	category.categoryName,          
 	category.categoryDescription,
 	category.categoryOrder,
@@ -462,8 +454,6 @@ SELECT
 	taxRate.taxeRateDescription,  
 	manufacturer.manufacturerName, 
 	manufacturer.manufacturerLogo,
-	productStock.productStockQuantity,
-	productStock.productStockStatus,
 	imageProduct.imageProductDescription,
 	imageProduct.imageProductOrder,  
 	imageProduct.imageProductURL,        
@@ -474,7 +464,6 @@ FROM product
 JOIN category ON product.id_category = category.id
 JOIN taxRate ON product.id_taxRate = taxRate.id
 JOIN manufacturer ON product.id_manufacturer = manufacturer.id
-JOIN productStock ON product.id_productStock = productStock.id
 JOIN imageProduct ON imageProduct.id_product = product.id
 JOIN specialPriceProduct ON specialPriceProduct.id_product = product.id
 ORDER BY product.productName ASC;
@@ -485,14 +474,16 @@ ORDER BY product.productName ASC;
 CREATE VIEW all_order AS
 SELECT
 	orderReference,
-	orderBillingName,
-	orderDeliveryName,
 	orderPurchaseDate,
 	orderStatus,
-	orderShippedDate,
 	orderComments,
 	orderShipping.orderShippingCost,
 	orderShipping.orderShippingNameTransporter,
+	orderShipping.orderShippingTrackingNumber,
+	orderShipping.orderShippingShippedDate,
+	orderShipping.orderShippingLinkForTracking,
+	orderShipping.orderShippingWeight,
+	orderPayement.orderPayementReference,
 	orderPayement.orderPayementAmount,
 	orderPayement.orderPayementWay,
 	orderPayement.orderPayementDate,
@@ -502,7 +493,8 @@ SELECT
 	orderedProduct.orderedProductQuantity,
 	orderedProduct.orderedProductPrice,
 	orderedProduct.orderedProductTax,
-	addressCustumer.addressCustumerName,
+	addressCustumer.addressCustumerFirstName,
+	addressCustumer.addressCustumerLastName,
 	addressCustumer.addressCustumerLine1,
 	addressCustumer.addressCustumerLine2,
 	zipCode.zipCodeCity,

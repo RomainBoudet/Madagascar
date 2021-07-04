@@ -1,4 +1,5 @@
 const chalk = require('chalk');
+const consol = require ('../services/colorConsole');
 const {
     createClient
 } = require('redis');
@@ -20,9 +21,9 @@ const redis = {
 //L'objet Set (Ensemble en français) permet de stocker des valeurs uniques, 
 //Une valeur donnée ne peut apparaître qu'une seule fois par Set
 const keysIndex = new Set();
-console.log(chalk.hex('#FF8800')("Redis On"));
-console.log(chalk.hex('#585F5A')('Ne pas préter attention au message : "ERR wrong number of arguments for del command" 😉 '))
-//console.log(chalk.hex('#585F5A')('Le script de démmarage et de redémarrage automatique de nodemon efface les clés déja présente dans Redis, ce message survient quand il n\'y pas de clés'));
+consol.redis("Redis On");
+consol.forget('Ne pas préter attention au message : "ERR wrong number of arguments for del command" 😉 ');
+//Le script de démmarage et de redémarrage automatique de nodemon efface les clés déja présente dans Redis, ce message survient quand il n\'y pas de clés
 
 
 // côté routeur, on a dit que cacheGenerator retournait un objet contenant 2 middlewares
@@ -48,7 +49,7 @@ console.log(chalk.hex('#585F5A')('Ne pas préter attention au message : "ERR wro
  * @returns {CacheObject} the 2 configured middlewares
  */
 const cacheGenerator = (options) => {
-    // console.log(chalk.yellow("coucou du module de mise en cache !"));
+   
     return {
         cache: async (request, response, next) => {
 
@@ -59,7 +60,7 @@ const cacheGenerator = (options) => {
             if (await redis.exists(theKey)) {
                 // on la sort du registre et on la parse en json puis on la renvoie
                 const theValue = await redis.get(theKey).then(JSON.parse);
-                console.log(chalk.yellow(`la valeur ${theKey} est déja dans Redis, on la renvoie depuis Redis`));
+                consol.redis(`la valeur ${theKey} est déja dans Redis, on la renvoie depuis Redis`);
         
                 // et on répond directement à l'utilisateur
                 response.json(theValue);
@@ -88,7 +89,7 @@ const cacheGenerator = (options) => {
                     redis.setex(theKey, options.ttl, theResponse);
 
 
-                    console.log(chalk.yellow(`la valeur ${theKey} n'est pas dans Redis, on la renvoie depuis postgreSQL`));
+                    consol.redis(`la valeur ${theKey} n'est pas dans Redis, on la renvoie depuis postgreSQL`);
                  
                     originalResponseSend(theResponse);
                 }
@@ -101,11 +102,11 @@ const cacheGenerator = (options) => {
             //on la supprime et sans attendre ,
             //on passse a la prochaine clé a supprimer.
             //on supprime aussi l'index des clés a la fin.
-            console.log(chalk.hex('#16DE40')("on s'aprete a flush dans Redis..."));
+            consol.redis("on s'aprete a flush dans Redis...");
 
             for (const key of keysIndex) {
                 await redis.del(key);
-                console.log(chalk.hex('#16DE40')("on flush dans Redis"));
+                consol.redis("on flush dans Redis");
                 
                 keysIndex.delete(key);
                 

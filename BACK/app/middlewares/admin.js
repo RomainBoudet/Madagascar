@@ -1,3 +1,5 @@
+const consol = require('../services/colorConsole');
+
 /**
  * Un middleware qui controle la présence d'un xcsrf-token en payload et qui vérifi sa signature avec le xsrf-token contenu dans le header, provenant lui du local Storage.
  * Les droits d'accées doivent être de type Administrateur
@@ -9,9 +11,6 @@
  */
  const admin = async (req, res, next) => {
 
-    const chalk = require('chalk');
-  
-  
     try {
   
       const {
@@ -24,7 +23,7 @@
   
       /* On vérifie que le xsrToken est présent dans les cookies de la session */
       if (!cookieXsrfToken) {
-        console.log(chalk.red('Il n\'y a pas de token dans le cookie de session'))
+        consol.admin('Il n\'y a pas de token dans le cookie de session')
         return res.status(401).json({
           message: 'Il n\'y a pas de token dans le cookie de session'
         });
@@ -33,7 +32,7 @@
   
       /* On vérifie que le token CSRF est présent dans les en-têtes de la requête */
       if (!headers || !headers['x-xsrf-token']) {
-        console.log(chalk.red('Il n\'y a pas de token CRSF dans le header'))
+        consol.admin('Il n\'y a pas de token CRSF dans le header')
         return res.status(401).json({
           message: 'Il n\'y a pas de token CRSF dans le header'
         });
@@ -41,12 +40,12 @@
   
       const headerXsrfToken = headers['x-xsrf-token'];
   
-      console.log("headerXsrfToken =>", headerXsrfToken);
-      console.log("cookieXsrfToken =>", cookieXsrfToken);
+      consol.admin("headerXsrfToken =>", headerXsrfToken);
+      consol.admin("cookieXsrfToken =>", cookieXsrfToken);
   
       /* On vérifie que le token CSRF correspond à celui présent dans le JWT  */
       if (headerXsrfToken !== cookieXsrfToken) {
-        console.log(chalk.red('Probléme de token csrf dans le admin MW'))
+        consol.admin('Probléme de token csrf dans le admin MW')
         return res.status(401).json({
           message: 'Probléme de token csrf'
         });
@@ -67,7 +66,7 @@
       }
   
       
-      console.log(chalk.red.bold.bgYellow(`L'utilisateur ${req.session.user.pseudo} avec le role ${req.session.user.role} a bien été authentifié via le admin MW !`))
+      consol.admin(`L'utilisateur ${req.session.user.pseudo} avec le role ${req.session.user.role} a bien été authentifié via le admin MW !`);
   
       /* On passe l'utilisateur dans notre requête afin que celui-ci soit disponible pour les prochains middlewares */
       //req.user = user;

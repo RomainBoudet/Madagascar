@@ -13,24 +13,16 @@ const {
   // le MW limitant le nombre de requetes pour un user (defense contre les attaques par Brute-Force)
   const rateLimit = require("express-rate-limit");
   
-  // Conrollers
+  // Controllers
   const authController = require('./controllers/authController');
-  const userController = require('./controllers/userController');
-  
+  const mainController = require('./controllers/mainController');
   
   // implémentation de joi, avec un validator  dans le dossier "services".
   const {
     validateQuery,
-    validateBody,
-    validateParams
+    validateBody
   } = require('./services/validator');
   const userLoginSchema = require('./schemas/userLoginSchema');
-  const userSigninSchema = require('./schemas/userSigninSchema');
-  const userUpdateSchema = require('./schemas/userUpdateSchema');
-  const resetPwdSchema = require('./schemas/resetPwdSchema');
-  const verifyEmailSchema = require('./schemas/verifyEmailSchema');
-  const resendEmailLinkSchema = require('./schemas/resendEmailLinkSchema');
-  const addProductSchema = require('./schemas/addProductShema');
   
   //Redis pour le cache
   const cacheGenerator = require('./services/cache');
@@ -93,6 +85,7 @@ const {
  * @param {connexion.Model} connexion.body.required - les informations qu'on doit fournir
  * @returns {JSON} 200 - Un utilisateur à bien été connecté
  */
+
 router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authController.login);
 
 /**
@@ -114,19 +107,19 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été inséré en BDD, redirigé vers la page de connexon
  */
-router.post('/inscription', validateBody(userSigninSchema), userController.handleSignupForm);
+//router.post('/inscription', validateBody(userSigninSchema), userController.handleSignupForm);
 
 //Routes pour procédure de vérification de mail : c'est si un utilisateur n'a pas vérifier son email dans les 24h apres l'inscription, il peut via cet route re-vérifier son mail quand il le souhaite. La route inscription comprend son propre envoi de mail pour vérifier son email sinon.
 //ETAPE 1 => Route pour prendre un email dans le body, verifis ce qu'il faut, envoi un mail avec URL sécurisé incorporé + tolken, qui renvoit sur la route verifyEmail
 /**
  * Envoie un email si l'utilisateur n'a pas valider son email la premiere fois aprés inscription et a attendu plus de 24h.
- * @route POST /resendEmailLink'
+ * @route POST /resendEmailLink
  * @group Vérification du mail
  * @summary Prend un mail en entrée et renvoie un email dessus si celui çi est présent en BDD.  Cliquer sur le lien dans l'email l'enmenera sur la route /verifyemail validera l'attribut verifyemail en BDD, autorisant ainsi la connexion. 
  * @param {evenement.Model} evenement.body.required
  * @returns {JSON} 200 - Un email a été délivré
  */
- router.post('/resendEmailLink', validateBody(verifyEmailSchema), userController.resendEmailLink);
+ //router.post('/resendEmailLink', validateBody(verifyEmailSchema), userController.resendEmailLink);
 
 
  //ETAPE 2 => Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD de verifyemail dans la table user.
@@ -138,7 +131,7 @@ router.post('/inscription', validateBody(userSigninSchema), userController.handl
   * @param {evenement.Model} evenement.body.required
   * @returns {JSON} 200 - l'attibut verifyemail du user est passé a TRUE. Il peut désoemais se connecter.
   */
- router.get('/verifyEmail', validateQuery(resendEmailLinkSchema), userController.verifyEmail);
+ //router.get('/verifyEmail', validateQuery(resendEmailLinkSchema), userController.verifyEmail);
  
  //Routes pour procédure de reset du mot de passe :
  // ETAPE 1 => Route de reception pour l'envoi en 1er de l'email en body: renvoi un lien par mail + token sécurisé par clé dynamique pour aller sur un Form pour rentrer new infos !
@@ -151,7 +144,7 @@ router.post('/inscription', validateBody(userSigninSchema), userController.handl
   * @param {evenement.Model} evenement.body.required
   * @returns {JSON} 200 - Un email a été délivré
   */
- router.post('/user/new_pwd', validateBody(verifyEmailSchema), userController.new_pwd);
+ //router.post('/user/new_pwd', validateBody(verifyEmailSchema), userController.new_pwd);
  // ETAPE 2 => envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
  
  /**
@@ -162,7 +155,7 @@ router.post('/inscription', validateBody(userSigninSchema), userController.handl
   * @param {evenement.Model} evenement.body.required
   * @returns {JSON} 200 - Un nouveau mot de passe est entré en BDD
   */
- router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailLinkSchema), userController.reset_pwd);
+ //router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailLinkSchema), userController.reset_pwd);
 
 
  /**
@@ -188,7 +181,7 @@ router.post('/inscription', validateBody(userSigninSchema), userController.handl
  */
 
 //Pour gérer les informations des users :
-router.get('/user', admin, cache, userController.getAllUser);
+//router.get('/user', admin, cache, userController.getAllUser);
 /**
  * Affiche un utilisateur.
  * @route GET /v1/user/:id
@@ -198,7 +191,7 @@ router.get('/user', admin, cache, userController.getAllUser);
  * @param {number} id.path.required - l'id à fournir
  * @returns {JSON} 200 - Un utilisateur a été délivré
  */
-router.get('/user/:id(\\d+)', auth, cache, userController.getUserbyId);
+//router.get('/user/:id(\\d+)', auth, cache, userController.getUserbyId);
 
 /**
  * Supprime les informations d'un utilisateur.
@@ -209,7 +202,7 @@ router.get('/user/:id(\\d+)', auth, cache, userController.getUserbyId);
  * @param {number} id.path.required - l'id à fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été supprimées
  */
-router.delete('/user/:id(\\d+)', admin, flush, userController.deleteUserById);
+//router.delete('/user/:id(\\d+)', admin, flush, userController.deleteUserById);
 
 /**
  * Modifit les informations d'un utilisateur.
@@ -220,7 +213,7 @@ router.delete('/user/:id(\\d+)', admin, flush, userController.deleteUserById);
  * @param {number} id.path.required - l'id à fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été mis a jour
  */
- router.patch('/user/:id(\\d+)', auth, flush, validateBody(userUpdateSchema), userController.updateUser);
+ //router.patch('/user/:id(\\d+)', auth, flush, validateBody(userUpdateSchema), userController.updateUser);
 
 
 
@@ -232,7 +225,7 @@ router.delete('/user/:id(\\d+)', admin, flush, userController.deleteUserById);
  * @param {produits.model} produits.body.required
  * @returns {JSON} 200 - Un produit a été créé
  */
- router.patch('/produits/:id(\\d+)', auth, flush, validateBody(produitSchema, 'PATCH'), produitController.updateproduit);
+ //router.patch('/produits/:id(\\d+)', auth, flush, validateBody(produitSchema, 'PATCH'), produitController.updateproduit);
 
  /**
   * Permet de créer un nouvel produit.
@@ -242,7 +235,7 @@ router.delete('/user/:id(\\d+)', admin, flush, userController.deleteUserById);
   * @param {produits.model} produits.body.required
   * @returns {JSON} 200 - Un produit a été créé
   */
- router.post('/produits',auth, flush, validateBody(produitSchema, 'POST'), produitController.newproduit);
+ //router.post('/produits',auth, flush, validateBody(produitSchema, 'POST'), produitController.newproduit);
  
  /**
   * Permet de supprimer un produit.
@@ -253,7 +246,7 @@ router.delete('/user/:id(\\d+)', admin, flush, userController.deleteUserById);
   * @param {number} id.path.required - l'id à fournir
   * @returns {JSON} 200 - Un produit a été supprimé
   */
- router.delete('/produits/:id(\\d+)', auth, flush, produitController.deleteproduit);
+ //router.delete('/produits/:id(\\d+)', auth, flush, produitController.deleteproduit);
  
 
 
@@ -270,7 +263,7 @@ router.delete('/user/:id(\\d+)', admin, flush, userController.deleteUserById);
   * @summary déconnecte un utilisateur - on reset les infos du user en session
   * @returns {JSON} 200 - Un utilisateur a bien été déconnecté
   */
- router.get('/deconnexion', auth, authController.deconnexion);
+ //router.get('/deconnexion', auth, authController.deconnexion);
  
  
  /**

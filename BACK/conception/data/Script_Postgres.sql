@@ -32,9 +32,11 @@ CREATE DOMAIN email AS text -- un domaine (type de donnée) permettant de vérif
 CREATE DOMAIN postale_code_fr AS text -- un domaine (type de donnée) permettant de vérifier la validité d'un code postale via une regex
 	CHECK (
 
-		VALUE ~* '^(([0-8][0-9])|(9[0-8]))[0-9]{3}$'
+		--VALUE ~* '^(([0-9][0-9])|(9[0-8]))[0-9]{3}$'
+		VALUE ~* '^[0-9]{5}$'
 	);
--- Les département français vont de 01 a 98.
+-- Depuis 2009, la Poste s'est attribué la boîte postale Entreprise 999 : « Service consommateurs, 99999 LA POSTE​ ».Une entreprise organisant un seul concours peut donc se faire adresser son courrier à sa boîte 99123.
+-- les armées peuvent commencer par 00
 
 CREATE DOMAIN phonenumber AS text -- un domaine (type de donnée) permettant de vérifier la validité d'un numéro de téléphone via une regex
 	CHECK (
@@ -68,7 +70,7 @@ CREATE DOMAIN text_valid AS text -- un domaine pour les textes valides = mini 2 
 CREATE TABLE manufacturer(
 	id               INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	manufacturer_name text_valid NOT NULL,
-	manufacturer_logo text_valid NOT NULL
+	manufacturer_logo text_valid 
 );
 
 
@@ -123,15 +125,13 @@ CREATE TABLE city(
 
 
 ------------------------------------------------------------
--- Table: OrderedProduct
+-- Table: OrderedProduct  
 ------------------------------------------------------------
 CREATE TABLE orderedProduct(
 	id                       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	orderedProduct_name       text_valid NOT NULL,
 	orderedProduct_quantity   posintsup  NOT NULL,
-	orderedProduct_price      posreal  NOT NULL,
-	orderedProduct_tax        posreal  NOT NULL 
-
+	orderedProduct_price      posreal  NOT NULL
 );
 
 
@@ -163,12 +163,13 @@ CREATE TABLE custumer(
 
 
 ------------------------------------------------------------
--- Table: BasquetProduct
+-- Table: BasquetProduct  (??)
 ------------------------------------------------------------
 CREATE TABLE basquetProduct(
 	id                         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	basquetProduct_quantity    posint NOT NULL,
 	basquetProduct_dateAdded   DATE  DEFAULT now(),
+	basquetProduct_dateRemoved DATE, -- (pas sur de la pertinence de ce champs..)
 	basquetProduct_status      text_valid NOT NULL,
 	basquetProduct_imageMini   text_valid NOT NULL,
 	id_custumer                INT  NOT NULL  REFERENCES custumer(id)
@@ -491,7 +492,6 @@ SELECT
 	orderedProduct.orderedProduct_name,
 	orderedProduct.orderedProduct_quantity,
 	orderedProduct.orderedProduct_price,
-	orderedProduct.orderedProduct_tax,
 	addressCustumer.addressCustumer_firstName,
 	addressCustumer.addressCustumer_lastName,
 	addressCustumer.addressCustumer_line1,

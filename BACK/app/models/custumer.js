@@ -147,7 +147,7 @@ class Custumer {
     const {
       rows,
     } = await db.query(
-      `SELECT * FROM mada.custumer WHERE custumer_email = $1;`,
+      `SELECT custumer.*, privilege.privilege_name FROM mada.custumer JOIN mada.privilege ON privilege.id = custumer.id_privilege WHERE custumer.custumerEmail = $1;;`,
       [email]
     );
     if (!rows[0]) {

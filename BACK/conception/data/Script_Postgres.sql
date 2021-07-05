@@ -45,7 +45,7 @@ CREATE DOMAIN phonenumber AS text -- un domaine (type de donnée) permettant de 
 CREATE DOMAIN password as text  -- un domaine (type de donnée) permettant de vérifier la validité d'un mot de passe en hash via une regex (fonctionne uniquement avec bcrypt qui commence ces hash de la même maniére)
 CHECK (
 
-		VALUE ~* '^\$2[ayb]\$.{60}$'
+		VALUE ~* '^\$2[ayb]\$.{50,61}$'
 	);
 
 	-- https://stackoverflow.com/questions/31417387/regular-expression-to-find-bcrypt-hash

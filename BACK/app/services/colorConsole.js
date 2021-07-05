@@ -45,7 +45,11 @@ const consol = {
         // du rose => infos provenant du devMW
     },
 
-// La couleur des log, en magenta, est géré directement dans le logger.
+    seed: function (msg) {
+        console.log(chalk.hex('#29F319')(msg));
+        // du vert fluo pour le seeding
+    }
+    // La couleur des log, en magenta, est géré directement dans le logger.
 };
 
 module.exports = consol;

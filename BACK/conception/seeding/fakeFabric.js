@@ -102,7 +102,7 @@ const fakeData = async () => {
             name: faker.commerce.department(),
             description: "ceci est une description d'une catégorie",
             order: index,
-            imageURL: faker.system.directoryPath() + faker.system.directoryPath()
+            imageURL: faker.image.image()
 
         };
         categories.push(category);
@@ -214,7 +214,7 @@ const fakeData = async () => {
             dateAdded: faker.date.past(),
             //dateRemoved: faker.date.past(),
             status: valideOuNon[Math.floor(Math.random() * valideOuNon.length)], // un random entre "Validé" ou "non validé"
-            imageMini: "Une belle petite image du produit pour afficher dans le panier !",
+            imageMini: faker.image.image(),
             custumer: Math.floor(Math.random() * ((volume - 1) - 1 + 1)) + 1, // un random entre 1 et 100 (notre nombre de client en BDD)
         };
         basquetProducts.push(basquetProduct);
@@ -243,7 +243,7 @@ const fakeData = async () => {
             name: faker.commerce.productName(),
             description: faker.commerce.productDescription(),
             price: faker.commerce.price(),
-            color: colors[Math.floor(Math.random() * colors.length)],
+            color: colors[Math.floor(Math.random() * colors.length)], //faker.internet.color => hex
             size: sizes[Math.floor(Math.random() * sizes.length)],
             quantity: Math.floor(Math.random() * (100 - 1 + 1)) + 1, // un random entre 1 et 100
             id_manufacturer: Math.floor(Math.random() * ((volume - 1) - 1 + 1)) + 1,
@@ -269,8 +269,9 @@ const fakeData = async () => {
 
             descriptionImage: descriptions[Math.floor(Math.random() * descriptions.length)],
             orderImage: 1,
-            URLImage: faker.system.directoryPath(),
-            id_productImage: index
+            URLImage: faker.image.image(),
+            id_productImage: index,
+
 
         };
         imageProducts.push(imageProduct);
@@ -283,6 +284,28 @@ const fakeData = async () => {
 
 
 
+    consol.seed(`Début de la génération de fake reviews`);
+    console.time(`Génération de ${volume*3} reviews`);
+    const reviews = [];
+
+    for (let index = 1; index <= volume * 3; index++) {
+        const review = {
+
+            rating: Math.floor(Math.random() * (5 - 0 + 1)) + 0, // un random entre 0 et 5,
+            text: faker.lorem.sentence(),
+            slug: faker.lorem.slug(),
+            title: faker.lorem.words(),
+            id_product: Math.floor(Math.random() * (300 - 1 + 1)) + 1, // un random entre 1 et 300,
+            id_custumer: Math.floor(Math.random() * (100 - 1 + 1)) + 1, // un random entre 1 et 100,
+
+        };
+        reviews.push(review);
+    }
+    console.timeEnd(`Génération de ${volume*3} reviews`);
+    console.table(reviews);
+    consol.seed(`Fin de la génération de fake reviews`);
+
+    //!
 
 
     // on a générer des fausses des données, ne reste plus qu'a les imorter dans la BDD.
@@ -481,6 +504,34 @@ const fakeData = async () => {
 
     consol.seed(`Fin de l'import de ${imageProducts.length} imageProducts`);
     console.timeEnd(`Import de ${imageProducts.length} imageProducts`);
+
+    //!
+
+
+
+    /*  const review = {
+
+            rating: Math.floor(Math.random() * (5 - 0 + 1)) + 0, // un random entre 0 et 5,
+            text: faker.lorem.sentence(),
+            slug: faker.lorem.slug(),
+            title: faker.lorem.words(),
+            id_product: Math.floor(Math.random() * (300 - 1 + 1)) + 1, // un random entre 1 et 300,
+            id_custumer: Math.floor(Math.random() * (100 - 1 + 1)) + 1, // un random entre 1 et 100,              
+*/
+
+    //!
+
+    consol.seed(`Début de l'import de ${reviews.length} reviews`);
+    console.time(`Import de ${reviews.length} reviews`);
+    const reviewsInsert = "INSERT INTO mada.review (review_rating , review_text, review_title, id_product, id_custumer) VALUES ($1, $2, $3, $4, $5);";
+
+    for (const review of reviews) {
+        consol.seed(`Import de la review de l'id_Product : ${review.id_product}`);
+        const result = await db.query(reviewsInsert, [review.rating, review.text, review.title, review.id_product, review.id_custumer]);
+    }
+
+    consol.seed(`Fin de l'import de ${reviews.length} reviews`);
+    console.timeEnd(`Import de ${reviews.length} reviews`);
 
     //!
 

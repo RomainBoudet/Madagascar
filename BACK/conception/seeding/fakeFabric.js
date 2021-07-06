@@ -12,7 +12,7 @@ const {
 // Aprés la construction d'une BDD vierge => Génération d'un faux jeu de donnée pour mes tables via Faker qui sera donné à un script d'import
 //
 
-const faker = require('faker');
+const faker = require('faker/locale/fr');
 
 faker.locale = 'fr';
 
@@ -26,6 +26,7 @@ const fakeData = async () => {
     console.time("Génération de la fonction fakeData");
 
     //! On fait place neuve ! En ligne de commande on supprime la BDD et on la recreer avant de seeder, pour s'assurer qu'elle est vierge.
+    // permet de modifier le script SQL en même temps qu'on réalise le fichier de seeding et de toujours avoir la derniére version du script
     // (on aurait également pu lancer la commande dans le package.json en même temps que le démarrage 'npm run seed'... )
     consol.seed("Début dropdb - createdb");
 
@@ -282,8 +283,6 @@ const fakeData = async () => {
 
     //!
 
-
-
     consol.seed(`Début de la génération de fake reviews`);
     console.time(`Génération de ${volume*3} reviews`);
     const reviews = [];
@@ -293,7 +292,6 @@ const fakeData = async () => {
 
             rating: Math.floor(Math.random() * (5 - 0 + 1)) + 0, // un random entre 0 et 5,
             text: faker.lorem.sentence(),
-            slug: faker.lorem.slug(),
             title: faker.lorem.words(),
             id_product: Math.floor(Math.random() * (300 - 1 + 1)) + 1, // un random entre 1 et 300,
             id_custumer: Math.floor(Math.random() * (100 - 1 + 1)) + 1, // un random entre 1 et 100,
@@ -306,6 +304,121 @@ const fakeData = async () => {
     consol.seed(`Fin de la génération de fake reviews`);
 
     //!
+
+    consol.seed(`Début de la génération de fake orderPayements`);
+    console.time(`Génération de ${volume/2} orderPayements`);
+    const orderPayements = [];
+
+    for (let index = 1; index <= volume / 2; index++) {
+        const orderPayement = {
+
+            ref: index + 9000,
+            amount: faker.finance.amount(),
+            way: faker.finance.transactionDescription(),
+            id_order: index,
+
+        };
+        orderPayements.push(orderPayement);
+    }
+    console.timeEnd(`Génération de ${volume/2} orderPayements`);
+    console.table(orderPayements);
+    consol.seed(`Fin de la génération de fake orderPayements`);
+
+    //!
+
+    consol.seed(`Début de la génération de fake invoices`);
+    console.time(`Génération de ${volume/2} invoices`);
+    const invoices = [];
+
+    for (let index = 1; index <= volume / 2; index++) {
+        const invoice = {
+
+            ref: index + 9000, // une ref UNIQUE
+            id_custumer: Math.floor(Math.random() * (100 - 1 + 1)) + 1, // un random entre 1 et 100,
+            id_order: index,
+        };
+        invoices.push(invoice);
+    }
+    console.timeEnd(`Génération de ${volume/2} invoices`);
+    console.table(invoices);
+    consol.seed(`Fin de la génération de fake invoices`);
+
+
+
+    //!
+
+    consol.seed(`Début de la génération de fake orders`);
+    console.time(`Génération de ${volume/2} orders`);
+    const status = ["En cours de  préparation", "paiement accepté", "En cours de livraisons", "Livraison éffectuée"];
+    const arrayNumber = Array.from({
+        length: 100
+    }, (_, i) => i + 1); // un tableau avec des valeurs allant de 1 a 100 // si on veut commençer a zero => Array.from(Array(10).keys())
+    const orders = [];
+
+    for (let index = 1; index <= volume / 2; index++) {
+        const order = {
+
+            ref: index + 9000, // une ref UNIQUE
+            status: status[Math.floor(Math.random() * status.length)],
+            comments: faker.lorem.sentence(),
+            id_custumer: arrayNumber[Math.floor(Math.random() * arrayNumber.length)], //!!!!!!!!!!!!!!
+            trackingNumber: faker.datatype.number({
+                min: 9999,
+                max: 100000,
+                precision: 2
+            }),
+            linkForTracking: faker.image.imageUrl(),
+            weight: faker.datatype.number(9),
+        };
+        orders.push(order);
+    }
+    console.timeEnd(`Génération de ${volume/2} orders`);
+    console.table(orders);
+    consol.seed(`Fin de la génération de fake orders`);
+
+
+
+
+    //! Va falloir créer un JSON dynamique a partir de ce tableau de donnée
+
+    consol.seed(`Début de la génération de fake transporters`);
+    console.time(`Génération de 4 transporters`);
+
+    const transporters = [{
+            cost: 7.20,
+            logo: faker.image.business(),
+            name: "DPD",
+            estimateDelivery: "Expédié sous 24 à 48h",
+            description: "DPD EN POINT RELAIS PICKUP"
+        }, {
+            cost: 14.00,
+            logo: faker.image.business(),
+            name: "TNT",
+            estimateDelivery: "Livraison le lendemain pour toute commande avant 12h00",
+            description: "EXPRESS À DOMICILE POUR UNE LIVRAISON À DOMICILE EN FRANCE MÉTROPOLITAINE. LIVRAISON EN MAINS PROPRES ET CONTRE SIGNATURE DÈS LE LENDEMAIN DE L'EXPÉDITION DE VOTRE COMMANDE (1).(1) AVANT 13 HEURES OU EN DÉBUT D'APRÈS-MIDI EN ZONE RURALE."
+        },
+        {
+            cost: 0,
+            logo: faker.image.business(),
+            name: "Retrait sur le stand durant le prochain marché",
+            estimateDelivery: "Durant le prochain marché. Nous contacter pour connaitre la date",
+            description: "Une livraison de la main a la main, sur notre stand"
+        }, {
+            cost: 12.00,
+            logo: faker.image.business(),
+            name: "La poste Collisimmo",
+            estimateDelivery: "Livraison dans les 48h a 72h",
+            description: "Le service colis de La Poste"
+        }
+    ];
+
+
+    console.timeEnd(`Génération de 4 transporters`);
+    console.table(transporters);
+    consol.seed(`Fin de la génération de fake transporters`);
+
+
+
 
 
     // on a générer des fausses des données, ne reste plus qu'a les imorter dans la BDD.
@@ -507,20 +620,6 @@ const fakeData = async () => {
 
     //!
 
-
-
-    /*  const review = {
-
-            rating: Math.floor(Math.random() * (5 - 0 + 1)) + 0, // un random entre 0 et 5,
-            text: faker.lorem.sentence(),
-            slug: faker.lorem.slug(),
-            title: faker.lorem.words(),
-            id_product: Math.floor(Math.random() * (300 - 1 + 1)) + 1, // un random entre 1 et 300,
-            id_custumer: Math.floor(Math.random() * (100 - 1 + 1)) + 1, // un random entre 1 et 100,              
-*/
-
-    //!
-
     consol.seed(`Début de l'import de ${reviews.length} reviews`);
     console.time(`Import de ${reviews.length} reviews`);
     const reviewsInsert = "INSERT INTO mada.review (review_rating , review_text, review_title, id_product, id_custumer) VALUES ($1, $2, $3, $4, $5);";
@@ -532,6 +631,97 @@ const fakeData = async () => {
 
     consol.seed(`Fin de l'import de ${reviews.length} reviews`);
     console.timeEnd(`Import de ${reviews.length} reviews`);
+
+
+
+
+
+    //! order
+
+    consol.seed(`Début de l'import de ${orders.length} orders`);
+    console.time(`Import de ${orders.length} orders`);
+    const ordersInsert = "INSERT INTO mada.order (order_reference, order_status, order_comments, order_trackingNumber, order_linkForTracking, order_weight, id_custumer) VALUES ($1, $2, $3, $4, $5, $6, $7);";
+
+    for (const order of orders) {
+        consol.seed(`Import de la order de l'id_custumer : ${order.id_custumer}`);
+        const result = await db.query(ordersInsert, [order.ref, order.status, order.comments, order.trackingNumber, order.linkForTracking, order.weight, order.id_custumer]);
+    }
+
+    consol.seed(`Fin de l'import de ${orders.length} orders`);
+    console.timeEnd(`Import de ${orders.length} orders`);
+    //! Invoice
+
+    consol.seed(`Début de l'import de ${invoices.length} invoices`);
+    console.time(`Import de ${invoices.length} invoices`);
+    const invoicesInsert = "INSERT INTO mada.invoice (invoice_reference, id_custumer,  id_order) VALUES ($1, $2, $3);";
+
+    for (const invoice of invoices) {
+        consol.seed(`Import de l'invoice de l'id_custumer : ${invoice.id_custumer}`);
+        const result = await db.query(invoicesInsert, [invoice.ref, invoice.id_custumer, invoice.id_order]);
+    }
+
+    consol.seed(`Fin de l'import de ${invoices.length} invoices`);
+    console.timeEnd(`Import de ${invoices.length} invoices`);
+
+
+    //! orderPayement
+
+    consol.seed(`Début de l'import de ${orderPayements.length} orderPayements`);
+    console.time(`Import de ${orderPayements.length} orderPayements`);
+    const orderPayementsInsert = "INSERT INTO mada.orderPayement (orderPayement_reference , orderPayement_amount, orderPayement_way, id_order) VALUES ($1, $2, $3, $4);";
+
+    for (const orderPayement of orderPayements) {
+        consol.seed(`Import de l'orderPayement ref : ${orderPayement.way}`);
+        const result = await db.query(orderPayementsInsert, [orderPayement.ref, orderPayement.amount, orderPayement.way, orderPayement.id_order]);
+    }
+
+    consol.seed(`Fin de l'import de ${orderPayements.length} orderPayements`);
+    console.timeEnd(`Import de ${orderPayements.length} orderPayements`);
+
+
+    //! transporter
+
+    /* const transporters = [{
+                cost: 7.20,
+                logo: faker.image.business(),
+                name: "DPD",
+                estimateDelivery: "Expédié sous 24 à 48h",
+                description: "DPD EN POINT RELAIS PICKUP"
+            }, {
+                cost: 14.00,
+                logo:  faker.image.business(),
+                name: "TNT",
+                estimateDelivery: "Livraison le lendemain pour toute commande avant 12h00",
+                description: "EXPRESS À DOMICILE POUR UNE LIVRAISON À DOMICILE EN FRANCE MÉTROPOLITAINE. LIVRAISON EN MAINS PROPRES ET CONTRE SIGNATURE DÈS LE LENDEMAIN DE L'EXPÉDITION DE VOTRE COMMANDE (1).(1) AVANT 13 HEURES OU EN DÉBUT D'APRÈS-MIDI EN ZONE RURALE."
+            },
+            {
+                cost: 0,
+                logo:  faker.image.business(),
+                name: "Retrait sur le stand durant le prochain marché",
+                estimateDelivery: "Durant le prochain marché. Nous contacter pour connaitre la date",
+                description: "Une livraison de la main a la main, sur notre stand"
+            }, {
+                cost: 12.00,
+                logo:  faker.image.business(),
+                name: "La poste Collisimmo",
+                estimateDelivery: "Livraison dans les 48h a 72h",
+                description: "Le service colis de La Poste"
+            }
+        ]; */
+
+
+    /* consol.seed(`Début de l'import de ${transporters.length} transporters`);
+    console.time(`Import de ${transporters.length} transporters`);
+    const transportersInsert = "INSERT INTO mada.transporter (transporter_cost, transporter_logo, transporter_name, transporter_estimatedDelivery, transporter_description, id_order) VALUES ($1, $2, $3, $4, $5, $6);";
+    
+    for (const transporter of transporters) {
+        consol.seed(`Import de du transporter nommé : ${transporter.name}`);
+        const result = await db.query(transportersInsert, [transporter.cost, transporter.logo, transporter.name, transporter.estimateDelivery, transporter.description, transporter.id_order]);
+    }
+    
+    consol.seed(`Fin de l'import de ${transporters.length} transporters`);
+    console.timeEnd(`Import de ${transporters.length} transporters`); */
+
 
     //!
 

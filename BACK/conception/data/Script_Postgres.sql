@@ -285,10 +285,10 @@ CREATE TABLE review(
 ------------------------------------------------------------
 CREATE TABLE orderPayement(
 	id                      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	orderPayement_reference text_valid NOT NULL,
+	orderPayement_reference text_valid NOT NULL UNIQUE,
 	orderPayement_amount    posreal  NOT NULL,
 	orderPayement_way       text_valid NOT NULL,
-	orderPayement_date      timestamptz NOT NULL
+	orderPayement_date      timestamptz NOT NULL DEFAULT now()
 );
 
 -- clé étrangére rajoutée a la fin...
@@ -298,7 +298,7 @@ CREATE TABLE orderPayement(
 ------------------------------------------------------------
 CREATE TABLE invoice(
 	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	invoice_reference   text_valid NOT NULL,
+	invoice_reference   text_valid NOT NULL UNIQUE,
 	invoice_date        DATE  NOT NULL DEFAULT now(),
 	id_custumer         INT  NOT NULL REFERENCES custumer(id)
 );
@@ -314,22 +314,23 @@ CREATE TABLE "order"(
 	order_purchaseDate     timestamptz NOT NULL DEFAULT now(),
 	order_status           text_valid NOT NULL,
 	order_comments         text_valid NOT NULL,
-	id_custumer            INT  NOT NULL REFERENCES custumer(id),
-	id_invoice             INT  NOT NULL REFERENCES invoice(id)
+	order_trackingNumber    text_valid,
+	order_linkForTracking   text_valid,
+	order_weight            text_valid,
+	id_custumer            INT  NOT NULL REFERENCES custumer(id)
 ); 
 
 
 ------------------------------------------------------------
--- Table: OrderShipping
+-- Table: transporter // OrderShipping
 ------------------------------------------------------------
-CREATE TABLE orderShipping(
+CREATE TABLE transporter(
 	id                              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	orderShipping_cost              posreal  NOT NULL,
-	orderShipping_nameTransporter   text_valid NOT NULL,
-	orderShipping_shippedDate	    date,
-	orderShipping_trackingNumber    text_valid,
-	orderShipping_linkForTracking   text_valid,
-	orderShipping_weight            text_valid,
+	transporter_cost                posreal  NOT NULL,
+	transporter_logo				text_valid,
+	transporter_name                text_valid NOT NULL,
+	transporter_estimatedDelivery	text_valid NOT NULL,
+	transporter_description         text_valid NOT NULL,
 	id_order                        INT  NOT NULL REFERENCES "order"(id)
 );
 
@@ -477,12 +478,11 @@ SELECT
 	order_purchaseDate,
 	order_status,
 	order_comments,
-	orderShipping.orderShipping_cost,
-	orderShipping.orderShipping_nameTransporter,
-	orderShipping.orderShipping_trackingNumber,
-	orderShipping.orderShipping_shippedDate,
-	orderShipping.orderShipping_linkForTracking,
-	orderShipping.orderShipping_weight,
+	transporter.transporter_cost,
+	transporter.transporter_name,
+	transporter.transporter_estimatedDelivery,
+	transporter.transporter_logo,
+	transporter.transporter_description,
 	orderPayement.orderPayement_reference,
 	orderPayement.orderPayement_amount,
 	orderPayement.orderPayement_way,
@@ -500,7 +500,7 @@ SELECT
 	city.city_name,
 	country.country_name
 FROM "order"
-JOIN orderShipping ON orderShipping.id_order = "order".id
+JOIN transporter ON transporter.id_order = "order".id
 JOIN orderPayement ON orderPayement.id_order = "order".id
 JOIN invoice ON invoice.id_order = "order".id
 JOIN order_has_orderedProduct ON order_has_orderedProduct.id_order = "order".id

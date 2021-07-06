@@ -181,12 +181,12 @@ CREATE TABLE basquetProduct(
 ------------------------------------------------------------
 CREATE TABLE addressCustumer(
 	id                            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	addressCustumer_title         text_valid NOT NULL,
+	addressCustumer_title         text_valid NOT NULL DEFAULT 'Mon adresse',
 	addressCustumer_firstName     text_valid NOT NULL,
 	addressCustumer_lastName      text_valid NOT NULL,
-	addressCustumer_company       text_valid NOT NULL,
+	addressCustumer_company       text_valid ,
 	addressCustumer_line1         text_valid NOT NULL,
-	addressCustumer_line2         text_valid NOT NULL,
+	addressCustumer_line2         text_valid ,
 	addressCustumer_phone         phonenumber NOT NULL,
 	addressCustumer_createdDate   timestamptz NOT NULL DEFAULT now(),
 	addressCustumer_updatedDate   timestamptz,
@@ -202,8 +202,8 @@ CREATE TABLE addressCustumer(
 ------------------------------------------------------------
 CREATE TABLE adminVerification(
 	id                            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	adminVerification_email       BOOLEAN  NOT NULL DEFAULT FALSE,
-	adminVerification_phone       BOOLEAN  NOT NULL DEFAULT FALSE,
+	adminVerification_email       BOOLEAN  NOT NULL DEFAULT 'false',
+	adminVerification_phone       BOOLEAN  NOT NULL DEFAULT 'false',
 	adminVerification_emailDate   timestamptz NOT NULL DEFAULT now(),
 	adminVerification_phoneDate   timestamptz NOT NULL DEFAULT now(),
 	id_custumer                   INT  NOT NULL REFERENCES custumer(id)

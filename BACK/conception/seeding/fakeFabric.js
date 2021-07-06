@@ -50,10 +50,10 @@ const fakeData = async () => {
     console.time(`Génération de ${volume} personnes`);
     //!
     const custumers = [];
-    for (let index = 1; index < volume; index++) {
+    for (let index = 1; index <= volume; index++) {
         const user = {
             id_for_fk: index,
-            addressCustumer_line1 : `${(Math.floor(Math.random() * (100 - 1 + 1)) + 1)} ${faker.address.streetPrefix()} ${faker.address.streetName()} `,
+            addressCustumer_line1: `${(Math.floor(Math.random() * (100 - 1 + 1)) + 1)} ${faker.address.streetPrefix()} ${faker.address.streetName()} `,
             gender: faker.name.gender(),
             phone: faker.phone.phoneNumberFormat(),
             firstName: faker.name.firstName(),
@@ -62,7 +62,7 @@ const fakeData = async () => {
             password: await bcrypt.hash(myPasswordTest, 10), // Permet de connaitre le mot de passe, juste le sel changeant le hash.. sinon => password: await bcrypt.hash((faker.internet.password() + '!!'), 10), //  => pour obtenir un jeu de password dynamique.
             id_privilege: 1,
             addressCustumer_title: "Maison",
-            
+
 
         };
         custumers.push(user);
@@ -80,7 +80,7 @@ const fakeData = async () => {
 
     const manufacturers = [];
 
-    for (let index = 1; index < volume; index++) {
+    for (let index = 1; index <= volume; index++) {
         const manufacturer = {
 
             name: faker.company.companyName(),
@@ -96,13 +96,13 @@ const fakeData = async () => {
     console.time(`Génération de ${volume} categories`);
     const categories = [];
 
-    for (let index = 1; index < volume; index++) {
+    for (let index = 1; index <= volume; index++) {
         const category = {
 
             name: faker.commerce.department(),
             description: "ceci est une description d'une catégorie",
             order: index,
-            imageURL: "Une belle URL menant vers une image"
+            imageURL: faker.system.directoryPath() + faker.system.directoryPath()
 
         };
         categories.push(category);
@@ -132,7 +132,7 @@ const fakeData = async () => {
     console.time(`Génération de ${volume} zipCodes`);
     const zipCodes = [];
 
-    for (let index = 1; index < volume; index++) {
+    for (let index = 1; index <= volume; index++) {
         const zipCode = {
 
             city: faker.address.zipCode(),
@@ -150,7 +150,7 @@ const fakeData = async () => {
     console.time(`Génération de ${volume} countries`);
     const countries = [];
 
-    for (let index = 1; index < volume; index++) {
+    for (let index = 1; index <= volume; index++) {
         const country = {
 
             name: faker.address.country(),
@@ -169,7 +169,7 @@ const fakeData = async () => {
     console.time(`Génération de ${volume} cities`);
     const cities = [];
 
-    for (let index = 1; index < volume; index++) {
+    for (let index = 1; index <= volume; index++) {
         const city = {
 
             name: faker.address.city(),
@@ -187,7 +187,7 @@ const fakeData = async () => {
     console.time(`Génération de ${volume*2} orderedProducts`);
     const orderedProducts = [];
 
-    for (let index = 1; index < volume*2; index++) {
+    for (let index = 1; index <= volume * 2; index++) {
         const orderedProduct = {
 
             name: faker.commerce.product(),
@@ -207,7 +207,7 @@ const fakeData = async () => {
     console.time(`Génération de ${volume*2} basquetProducts`);
     const basquetProducts = [];
     const valideOuNon = ["Panier validé et payé", "Panier non validé"];
-    for (let index = 1; index < volume*2; index++) {
+    for (let index = 1; index <= volume * 2; index++) {
         const basquetProduct = {
 
             quantity: Math.floor(Math.random() * (5 - 1 + 1)) + 1, // un random entre 1 et 5.
@@ -215,7 +215,7 @@ const fakeData = async () => {
             //dateRemoved: faker.date.past(),
             status: valideOuNon[Math.floor(Math.random() * valideOuNon.length)], // un random entre "Validé" ou "non validé"
             imageMini: "Une belle petite image du produit pour afficher dans le panier !",
-            custumer: Math.floor(Math.random() * ((volume-1) - 1 + 1)) + 1, // un random entre 1 et 100 (notre nombre de client en BDD)
+            custumer: Math.floor(Math.random() * ((volume - 1) - 1 + 1)) + 1, // un random entre 1 et 100 (notre nombre de client en BDD)
         };
         basquetProducts.push(basquetProduct);
     }
@@ -226,13 +226,60 @@ const fakeData = async () => {
     //!
 
 
-    // les données nécéssaire a la table addressCustume sont également extraites du tableau custumer.
+    // les données nécéssaire a la table addressCustumer sont extraites du tableau custumer.
 
 
 
     //!
 
+    consol.seed(`Début de la génération de fake products`);
+    console.time(`Génération de ${volume*3} products`);
+    const products = [];
+    const colors = ["rouge", "vert", "jaune", "bleu", "orange", "violet", "blanc", "noir"];
+    const sizes = ["XL", "L", "M", "S", "XS"];
+    for (let index = 1; index <= volume * 3; index++) {
+        const product = {
 
+            name: faker.commerce.productName(),
+            description: faker.commerce.productDescription(),
+            price: faker.commerce.price(),
+            color: colors[Math.floor(Math.random() * colors.length)],
+            size: sizes[Math.floor(Math.random() * sizes.length)],
+            quantity: Math.floor(Math.random() * (100 - 1 + 1)) + 1, // un random entre 1 et 100
+            id_manufacturer: Math.floor(Math.random() * ((volume - 1) - 1 + 1)) + 1,
+            id_category: Math.floor(Math.random() * (100 - 1 + 1)) + 1,
+            id_taxRate: Math.floor(Math.random() * (2 - 1 + 1)) + 1, // un random entre 1 et 2
+
+        };
+        products.push(product);
+    }
+    console.timeEnd(`Génération de ${volume*3} products`);
+    console.table(products);
+    consol.seed(`Fin de la génération de fake products`);
+
+    //!
+
+    consol.seed(`Début de la génération de fake imageProducts`);
+    console.time(`Génération de ${volume*3} imageProducts`);
+    const descriptions = ["Produit vu de face", "Produit vu de 3/4", "Produit vu de l'arriére", "Produit vu de dessus", "Produit vu de coté"];
+    const imageProducts = [];
+
+    for (let index = 1; index <= volume * 3; index++) {
+        const imageProduct = {
+
+            descriptionImage: descriptions[Math.floor(Math.random() * descriptions.length)],
+            orderImage: 1,
+            URLImage: faker.system.directoryPath(),
+            id_productImage: index
+
+        };
+        imageProducts.push(imageProduct);
+    }
+    console.timeEnd(`Génération de ${volume*3} imageProducts`);
+    console.table(imageProducts);
+    consol.seed(`Fin de la génération de fake imageProducts`);
+
+    //!
 
 
 
@@ -394,7 +441,7 @@ const fakeData = async () => {
     console.timeEnd(`Import de ${basquetProducts.length} basquetProducts`);
 
     //! 
-   
+
     consol.seed(`Début de l'import de ${custumers.length} addressCustumers`);
     console.time(`Import de ${custumers.length} addressCustumers`);
     const addressCustumersInsert = "INSERT INTO mada.addressCustumer (addressCustumer_title, addressCustumer_firstName, addressCustumer_lastName, addressCustumer_line1, addressCustumer_phone, id_custumer, id_country, id_zipCode) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8) RETURNING id;";
@@ -409,19 +456,39 @@ const fakeData = async () => {
 
     //! 
 
+    consol.seed(`Début de l'import de ${products.length} products`);
+    console.time(`Import de ${products.length} products`);
+    const productsInsert = "INSERT INTO mada.product (product_name , product_description, product_price, product_color, product_size , product_stockQuantity, id_manufacturer, id_category, id_taxRate) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, $9);";
+
+    for (const product of products) {
+        consol.seed(`Import du product ayant pour nom : ${product.name} et id_category : ${product.id_category}`);
+        const result = await db.query(productsInsert, [product.name, product.description, product.price, product.color, product.size, product.quantity, product.id_manufacturer, product.id_category, product.id_taxRate]);
+    }
+
+    consol.seed(`Fin de l'import de ${products.length} products`);
+    console.timeEnd(`Import de ${products.length} products`);
+
+    //!
+
+    consol.seed(`Début de l'import de ${imageProducts.length} imageProducts`);
+    console.time(`Import de ${imageProducts.length} imageProducts`);
+    const imageProductsInsert = "INSERT INTO mada.imageProduct (imageProduct_description , imageProduct_order, imageProduct_URL, id_product) VALUES ($1, $2, $3 ,$4);";
+
+    for (const imageProduct of imageProducts) {
+        consol.seed(`Import du imageProduct de l'id_Product : ${imageProduct.id_productImage}`);
+        const result = await db.query(imageProductsInsert, [imageProduct.descriptionImage, imageProduct.orderImage, imageProduct.URLImage, imageProduct.id_productImage]);
+    }
+
+    consol.seed(`Fin de l'import de ${imageProducts.length} imageProducts`);
+    console.timeEnd(`Import de ${imageProducts.length} imageProducts`);
+
+    //!
 
 
-
-
-
-
-
-
-
-  // Mise en place d'un custumer avec des droits admin.
+    // Mise en place d'un custumer avec des droits admin.
     consol.seed("Mise en place d'un admin dans la BDD");
     await db.query(`UPDATE mada.custumer SET id_privilege='${process.env.MYPRIVILEGE}', custumer_email='${process.env.EMAILTEST}', custumer_phoneForAdminOnly='${process.env.MYPHONE}', custumer_firstName='${process.env.MYFIRST}', custumer_lastName='${process.env.MYLAST}' WHERE id = ${process.env.ID}; `);
-    await db.query (`INSERT INTO mada.adminVerification (adminVerification_email, adminVerification_phone, id_custumer) VALUES ('true', 'true', ${process.env.ID});`);
+    await db.query(`INSERT INTO mada.adminVerification (adminVerification_email, adminVerification_phone, id_custumer) VALUES ('true', 'true', ${process.env.ID});`);
     consol.seed(`Admin mis en place en client id ${process.env.ID}`)
 
 

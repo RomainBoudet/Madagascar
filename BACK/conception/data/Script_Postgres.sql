@@ -60,7 +60,7 @@ CREATE DOMAIN text_length AS text -- un domaine pour les descriptions = mini 15 
 
 CREATE DOMAIN text_valid AS text -- un domaine pour les textes valides = mini 2 caractéres sans espaces autour
     CHECK (
-        char_length(trim(both from VALUE)) >= 2
+        char_length(trim(both from VALUE)) >= 1
     );
 
 

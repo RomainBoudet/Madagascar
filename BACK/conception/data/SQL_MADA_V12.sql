@@ -9,7 +9,7 @@
 
 CREATE TABLE TVA(
         id          Int  Auto_increment  NOT NULL ,
-        taux        Int NOT NULL ,
+        taux        Decimal (50) NOT NULL ,
         nom         Varchar (50) NOT NULL ,
         periode_TVA Varchar (50) NOT NULL
 	,CONSTRAINT TVA_PK PRIMARY KEY (id)
@@ -83,8 +83,8 @@ CREATE TABLE categorie(
         nom         Varchar (50) NOT NULL ,
         description Longtext NOT NULL ,
         order       Int NOT NULL ,
-        createdDate Varchar (50) NOT NULL ,
-        updatedDate Varchar (50) NOT NULL
+        createdDate Date NOT NULL ,
+        updatedDate Date NOT NULL
 	,CONSTRAINT categorie_PK PRIMARY KEY (id)
 )ENGINE=InnoDB;
 
@@ -151,8 +151,8 @@ CREATE TABLE sous_categorie(
         id           Int  Auto_increment  NOT NULL ,
         nom          Varchar (50) NOT NULL ,
         description  Varchar (50) NOT NULL ,
-        createdDate  Varchar (50) NOT NULL ,
-        updatedDate  Varchar (50) NOT NULL ,
+        createdDate  Date NOT NULL ,
+        updatedDate  Date NOT NULL ,
         id_categorie Int NOT NULL
 	,CONSTRAINT sous_categorie_PK PRIMARY KEY (id)
 
@@ -171,8 +171,8 @@ CREATE TABLE commande(
         date_achat  Date NOT NULL ,
         statut      Varchar (50) NOT NULL ,
         commentaire Varchar (50) NOT NULL ,
-        createdDate Varchar (50) NOT NULL ,
-        updatedDate Varchar (50) NOT NULL
+        createdDate Date NOT NULL ,
+        updatedDate Date NOT NULL
 	,CONSTRAINT commande_PK PRIMARY KEY (id,id_commande)
 
 	,CONSTRAINT commande_client_FK FOREIGN KEY (id) REFERENCES client(id)
@@ -189,8 +189,7 @@ CREATE TABLE commande_paiement(
         methode              Varchar (50) NOT NULL ,
         date_paiement        Date NOT NULL ,
         montant              Decimal NOT NULL ,
-        createdDate          Varchar (50) NOT NULL ,
-        updatedDate          Varchar (50) NOT NULL ,
+        updatedDate          Date NOT NULL ,
         id_commande          Int NOT NULL ,
         id_commande_comprend Int NOT NULL
 	,CONSTRAINT commande_paiement_PK PRIMARY KEY (id)
@@ -211,9 +210,9 @@ CREATE TABLE livraison(
         date_envoi       Date NOT NULL ,
         numero_suivi     Int NOT NULL ,
         URL_suivi        Varchar (50) NOT NULL ,
-        poid             Varchar (50) NOT NULL ,
-        createdDate      Varchar (50) NOT NULL ,
-        updatedDate      Varchar (50) NOT NULL ,
+        poid             Decimal (50) NOT NULL ,
+        createdDate      Date NOT NULL ,
+        updatedDate      Date NOT NULL ,
         estime_arrive    Varchar (50) NOT NULL
 	,CONSTRAINT livraison_PK PRIMARY KEY (id_client,id)
 
@@ -294,7 +293,7 @@ CREATE TABLE facture(
         montant_TTC      Decimal NOT NULL ,
         montant_TVA      Decimal NOT NULL ,
         taux_TVA         Decimal NOT NULL ,
-        updatedDate      Varchar (50) NOT NULL
+        updatedDate      Date NOT NULL
 	,CONSTRAINT facture_PK PRIMARY KEY (id_client,id)
 
 	,CONSTRAINT facture_client_FK FOREIGN KEY (id_client) REFERENCES client(id)
@@ -325,7 +324,7 @@ CREATE TABLE stock(
 CREATE TABLE reduction(
         id                    Int  Auto_increment  NOT NULL ,
         nom                   Varchar (50) NOT NULL ,
-        pourcentage_reduction Real NOT NULL ,
+        pourcentage_reduction Decimal NOT NULL ,
         actif                 Bool NOT NULL ,
         periode_reduction     Date NOT NULL
 	,CONSTRAINT reduction_PK PRIMARY KEY (id)
@@ -399,17 +398,17 @@ CREATE TABLE ligne(
 #------------------------------------------------------------
 
 CREATE TABLE ligne_commande(
-        id                 Int NOT NULL ,
-        nom_produit        Varchar (50) NOT NULL ,
-        prix_unitaire      Decimal NOT NULL ,
-        quantite           Int NOT NULL ,
-        id_commande        Int NOT NULL ,
-        id_commande_inclue Int NOT NULL ,
-        id_produit         Int NOT NULL
-	,CONSTRAINT ligne_commande_PK PRIMARY KEY (id)
+        id_ligne      Int NOT NULL ,
+        id_client     Int NOT NULL ,
+        id_commande   Int NOT NULL ,
+        nom_produit   Varchar (50) NOT NULL ,
+        prix_unitaire Decimal NOT NULL ,
+        quantite      Int NOT NULL ,
+        id_produit    Int NOT NULL
+	,CONSTRAINT ligne_commande_PK PRIMARY KEY (id_ligne,id_client,id_commande)
 
-	,CONSTRAINT ligne_commande_ligne_FK FOREIGN KEY (id) REFERENCES ligne(id)
-	,CONSTRAINT ligne_commande_commande0_FK FOREIGN KEY (id_commande,id_commande_inclue) REFERENCES commande(id,id_commande)
+	,CONSTRAINT ligne_commande_ligne_FK FOREIGN KEY (id_ligne) REFERENCES ligne(id)
+	,CONSTRAINT ligne_commande_commande0_FK FOREIGN KEY (id_client,id_commande) REFERENCES commande(id,id_commande)
 	,CONSTRAINT ligne_commande_produit1_FK FOREIGN KEY (id_produit) REFERENCES produit(id)
 )ENGINE=InnoDB;
 
@@ -419,21 +418,23 @@ CREATE TABLE ligne_commande(
 #------------------------------------------------------------
 
 CREATE TABLE ligne_facture(
-        id                Int NOT NULL ,
-        nom_produit       Varchar (50) NOT NULL ,
-        prix_unitaire     Decimal NOT NULL ,
-        quantite          Int NOT NULL ,
-        id_ligne_commande Int NOT NULL ,
-        id_client_facture Int NOT NULL ,
-        id_facture        Int NOT NULL ,
-        id_produit        Int NOT NULL
-	,CONSTRAINT ligne_facture_PK PRIMARY KEY (id)
+        id_ligne                   Int NOT NULL ,
+        id_client                  Int NOT NULL ,
+        id_facture                 Int NOT NULL ,
+        nom_produit                Varchar (50) NOT NULL ,
+        prix_unitaire              Decimal NOT NULL ,
+        quantite                   Int NOT NULL ,
+        id_ligne_ligne_commande    Int NOT NULL ,
+        id_client_ligne_commande   Int NOT NULL ,
+        id_commande_ligne_commande Int NOT NULL ,
+        id_produit                 Int NOT NULL
+	,CONSTRAINT ligne_facture_PK PRIMARY KEY (id_ligne,id_client,id_facture)
 
-	,CONSTRAINT ligne_facture_ligne_FK FOREIGN KEY (id) REFERENCES ligne(id)
-	,CONSTRAINT ligne_facture_ligne_commande0_FK FOREIGN KEY (id_ligne_commande) REFERENCES ligne_commande(id)
-	,CONSTRAINT ligne_facture_facture1_FK FOREIGN KEY (id_client_facture,id_facture) REFERENCES facture(id_client,id)
+	,CONSTRAINT ligne_facture_ligne_FK FOREIGN KEY (id_ligne) REFERENCES ligne(id)
+	,CONSTRAINT ligne_facture_facture0_FK FOREIGN KEY (id_client,id_facture) REFERENCES facture(id_client,id)
+	,CONSTRAINT ligne_facture_ligne_commande1_FK FOREIGN KEY (id_ligne_ligne_commande,id_client_ligne_commande,id_commande_ligne_commande) REFERENCES ligne_commande(id_ligne,id_client,id_commande)
 	,CONSTRAINT ligne_facture_produit2_FK FOREIGN KEY (id_produit) REFERENCES produit(id)
-	,CONSTRAINT ligne_facture_ligne_commande_AK UNIQUE (id_ligne_commande)
+	,CONSTRAINT ligne_facture_ligne_commande_AK UNIQUE (id_ligne_ligne_commande,id_client_ligne_commande,id_commande_ligne_commande)
 )ENGINE=InnoDB;
 
 
@@ -442,21 +443,23 @@ CREATE TABLE ligne_facture(
 #------------------------------------------------------------
 
 CREATE TABLE ligne_livraison(
-        id                  Int NOT NULL ,
-        nom_produit         Varchar (50) NOT NULL ,
-        prix_unitaire       Decimal NOT NULL ,
-        quantite            Int NOT NULL ,
-        id_client_livraison Int NOT NULL ,
-        id_livraison        Int NOT NULL ,
-        id_ligne_commande   Int NOT NULL ,
-        id_produit          Int NOT NULL
-	,CONSTRAINT ligne_livraison_PK PRIMARY KEY (id)
+        id_ligne                   Int NOT NULL ,
+        id_client                  Int NOT NULL ,
+        id_livraison               Int NOT NULL ,
+        nom_produit                Varchar (50) NOT NULL ,
+        prix_unitaire              Decimal NOT NULL ,
+        quantite                   Int NOT NULL ,
+        id_ligne_ligne_commande    Int NOT NULL ,
+        id_client_ligne_commande   Int NOT NULL ,
+        id_commande_ligne_commande Int NOT NULL ,
+        id_produit                 Int NOT NULL
+	,CONSTRAINT ligne_livraison_PK PRIMARY KEY (id_ligne,id_client,id_livraison)
 
-	,CONSTRAINT ligne_livraison_ligne_FK FOREIGN KEY (id) REFERENCES ligne(id)
-	,CONSTRAINT ligne_livraison_livraison0_FK FOREIGN KEY (id_client_livraison,id_livraison) REFERENCES livraison(id_client,id)
-	,CONSTRAINT ligne_livraison_ligne_commande1_FK FOREIGN KEY (id_ligne_commande) REFERENCES ligne_commande(id)
+	,CONSTRAINT ligne_livraison_ligne_FK FOREIGN KEY (id_ligne) REFERENCES ligne(id)
+	,CONSTRAINT ligne_livraison_livraison0_FK FOREIGN KEY (id_client,id_livraison) REFERENCES livraison(id_client,id)
+	,CONSTRAINT ligne_livraison_ligne_commande1_FK FOREIGN KEY (id_ligne_ligne_commande,id_client_ligne_commande,id_commande_ligne_commande) REFERENCES ligne_commande(id_ligne,id_client,id_commande)
 	,CONSTRAINT ligne_livraison_produit2_FK FOREIGN KEY (id_produit) REFERENCES produit(id)
-	,CONSTRAINT ligne_livraison_ligne_commande_AK UNIQUE (id_ligne_commande)
+	,CONSTRAINT ligne_livraison_ligne_commande_AK UNIQUE (id_ligne_ligne_commande,id_client_ligne_commande,id_commande_ligne_commande)
 )ENGINE=InnoDB;
 
 

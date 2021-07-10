@@ -1,3 +1,5 @@
+
+
 ------------------------------------------------------------
 --        Script Postgres BDD MADA
 ------------------------------------------------------------
@@ -22,7 +24,7 @@ SET search_path TO mada;
 
 CREATE DOMAIN posint AS INT CHECK (VALUE >= 0); -- un domaine permettant de créer un type de donnée nombre entier ne pouvant être négatif
 CREATE DOMAIN posintsup AS INT check (VALUE > 0); -- un domaine permettant de créer un type de donnée nombre entier strictement positif
-CREATE DOMAIN posreal AS REAL CHECK (VALUE > 0); -- un domaine permettant de créer un type de donnée nombre réelle strictement positif
+CREATE DOMAIN posreal AS REAL CHECK (VALUE >= 0); -- un domaine permettant de créer un type de donnée nombre réelle positif ou égal a zéro
 CREATE DOMAIN email AS text -- un domaine (type de donnée) permettant de vérifier la validité d'une adresse email via une regex
 	CHECK (
 
@@ -234,7 +236,6 @@ CREATE TABLE product(
 	product_createdDate	  timestamptz NOT NULL DEFAULT now(),
 	product_updatedDate	  timestamptz,
 	product_stockQuantity posint NOT NULL,
-	Product_quantitySold  posint NOT NULL DEFAULT 0,
 	id_manufacturer       INT  NOT NULL REFERENCES manufacturer(id),
 	id_category           INT  NOT NULL REFERENCES category(id),
 	id_taxRate            INT  NOT NULL REFERENCES taxRate(id),
@@ -445,7 +446,6 @@ SELECT
 	product_createdDate,
 	product_updatedDate,
 	product_stockQuantity,
-	Product_quantitySold,
 	category.category_name,          
 	category.category_description,
 	category.category_order,

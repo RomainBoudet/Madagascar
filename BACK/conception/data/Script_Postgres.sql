@@ -70,9 +70,9 @@ CREATE DOMAIN text_valid AS text -- un domaine pour les textes valides = mini 2 
 -- Table: Manufacturer
 ------------------------------------------------------------
 CREATE TABLE manufacturer(
-	id               INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	manufacturer_name text_valid NOT NULL,
-	manufacturer_logo text_valid 
+	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	manufacturer_name   text_valid NOT NULL,
+	manufacturer_logo   text_valid 
 );
 
 
@@ -80,7 +80,7 @@ CREATE TABLE manufacturer(
 -- Table: Category
 ------------------------------------------------------------
 CREATE TABLE category(
-	id                    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	category_name          text_valid NOT NULL,
 	category_description   text_length NOT NULL,
 	category_order         INT  NOT NULL ,
@@ -92,10 +92,11 @@ CREATE TABLE category(
 -- Table: TaxRate
 ------------------------------------------------------------
 CREATE TABLE taxRate(
-	id                    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	taxRate_value          posreal  NOT NULL,
-	taxRate_name          text_valid NOT NULL,
-	taxRate_description   text_valid NOT NULL
+	taxRate_name           text_valid NOT NULL,
+	taxRate_description    text_valid NOT NULL,
+	periode_TVA			   DATERANGE NOT NULL DEFAULT '[2017-05-02, 2017-05-03]'
 );
 
 

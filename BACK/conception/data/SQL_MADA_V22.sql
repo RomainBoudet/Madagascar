@@ -67,11 +67,19 @@ CREATE DOMAIN text_valid AS text -- un domaine pour les textes valides = mini 2 
 
 
 
+------------------------------------------------------------
+-- Table: shop
+------------------------------------------------------------
 
+CREATE TABLE shop(
+	idShop  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	nom               text_valid NOT NULL,
+	logo              text_valid,
+	texte_intro       text_valid NOT NULL DEFAULT 'BIenvenue sur le site XXX',
+	email_contact     email NOT NULL DEFAULT 'contact@monsite.fr',
+	telephone         phonenumber
 
-
-
-
+);
 
 ------------------------------------------------------------
 -- Table: fournisseur
@@ -82,7 +90,6 @@ CREATE TABLE fournisseur(
 	logo              text_valid
 	
 );
-
 
 ------------------------------------------------------------
 -- Table: categorie
@@ -97,6 +104,9 @@ CREATE TABLE categorie(
 	CHECK (createdDate < updatedDate)
 );
 
+
+
+
 ------------------------------------------------------------
 -- Table: TVA
 ------------------------------------------------------------
@@ -106,6 +116,7 @@ CREATE TABLE TVA(
 	nom           text_valid NOT NULL,
 	periode_TVA   DATERANGE NOT NULL DEFAULT '[2021-01-01, 2099-12-24]' -- [] => on inclut les deux bornes // () => on exclut les deux bornes // (] => on exclut la 1iere borne .... etc.)
 );
+
 
 
 
@@ -146,6 +157,9 @@ CREATE TABLE privilege(
 );
 
 
+
+
+
 ------------------------------------------------------------
 -- Table: client
 ------------------------------------------------------------
@@ -162,6 +176,7 @@ CREATE TABLE client(
 );
 
 
+
 ------------------------------------------------------------
 -- Table: panier
 ------------------------------------------------------------
@@ -173,6 +188,8 @@ CREATE TABLE panier(
 	CHECK (createdDate < updatedDate),
 	id_client     INT NOT NULL REFERENCES client(idClient)
 );
+
+
 
 
 
@@ -199,7 +216,6 @@ CREATE TABLE produit_image(
 	URL                      text_valid NOT NULL,
 	id_produit               INT NOT NULL REFERENCES produit(idProduit)
 );
-
 
 ------------------------------------------------------------
 -- Table: avis
@@ -229,40 +245,47 @@ CREATE TABLE sous_categorie(
 	id_categorie                INT NOT NULL REFERENCES categorie(idCategorie)
 );
 
+------------------------------------------------------------
+-- Table: statut_commande
+------------------------------------------------------------
+CREATE TABLE statut_commande(
+	idCommandeStatut   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	statut             text_valid NOT NULL,
+	description        text_length NOT NULL
+);
 
---! ici premir test avec : idCommande    INT  GENERATED ALWAYS AS IDENTITY,
---! ici idClient est a la fois clé étrangére et clé primaire...
 ------------------------------------------------------------
 -- Table: commande
 ------------------------------------------------------------
 CREATE TABLE commande(
-	idClient      INT  NOT NULL,
-	idCommande    INT  GENERATED ALWAYS AS IDENTITY UNIQUE,
-	reference     text_valid NOT NULL,
-	date_achat    timestamptz NOT NULL DEFAULT now(),
-	statut        text_valid NOT NULL,
-	commentaire   text_valid NOT NULL,
-	updatedDate   timestamptz,
+	idClient           INT  NOT NULL UNIQUE,
+	idCommande         INT  GENERATED ALWAYS AS IDENTITY UNIQUE,
+	reference          text_valid NOT NULL,
+	date_achat         timestamptz NOT NULL DEFAULT now(),
+	commentaire        text_valid NOT NULL,
+	updatedDate        timestamptz,
 	CHECK (date_achat < updatedDate),
+	id_commandeStatut   INT  NOT NULL REFERENCES statut_commande(idCommandeStatut),
 	CONSTRAINT commande_PK PRIMARY KEY (idClient,idCommande),
 
-    CONSTRAINT commande_client_FK FOREIGN KEY (idClient) REFERENCES client(idClient)
+	CONSTRAINT commande_client_FK FOREIGN KEY (idClient) REFERENCES client(idClient)
 );
 
 
+
 ------------------------------------------------------------
--- Table: commande_paiement
+-- Table: paiement
 ------------------------------------------------------------
-CREATE TABLE commande_paiement(
-	idCommandedPaiement   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+CREATE TABLE paiement(
+	idPaiement            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	reference             text_valid NOT NULL,
 	methode               text_valid NOT NULL,
 	date_paiement         timestamptz NOT NULL DEFAULT now(),
 	montant               posrealsup  NOT NULL,
 	updatedDate           timestamptz,
 	CHECK (date_paiement < updatedDate),	
-	idClient             INT  NOT NULL REFERENCES client(idClient),
-	idCommande           INT  NOT NULL REFERENCES commande(idCommande)
+	id_client             INT  NOT NULL REFERENCES client(idClient),
+	id_commande           INT  NOT NULL REFERENCES commande(idCommande)
 );
 
 
@@ -271,7 +294,7 @@ CREATE TABLE commande_paiement(
 ------------------------------------------------------------
 CREATE TABLE livraison(
 	idClient           INT  NOT NULL,
-	idLivraison        INT GENERATED ALWAYS AS IDENTITY,
+	idLivraison        INT GENERATED ALWAYS AS IDENTITY UNIQUE,
 	frais_expedition   posreal  NOT NULL,
 	nom_transporteur   text_valid NOT NULL,
 	date_envoi         timestamptz NOT NULL DEFAULT now(),
@@ -282,12 +305,14 @@ CREATE TABLE livraison(
 	updatedDate        timestamptz,
 	estime_arrive      timestamptz,
 	CHECK (createdDate < updatedDate),
+
+	id_client            INT  NOT NULL REFERENCES commande(idClient),
+	id_commande          INT  NOT NULL REFERENCES commande(idCommande),
 	CONSTRAINT livraison_PK PRIMARY KEY (idClient,idLivraison),
 
-	CONSTRAINT livraison_client_FK FOREIGN KEY (idClient) REFERENCES client(idClient)
+	CONSTRAINT livraison_client_FK FOREIGN KEY (idClient) REFERENCES client(idClient),
+	CONSTRAINT livraison_commande_AK UNIQUE (id_client,id_commande)
 );
-
-
 
 ------------------------------------------------------------
 -- Table: client_adresse
@@ -306,9 +331,8 @@ CREATE TABLE client_adresse(
 	id_client         INT  NOT NULL REFERENCES client(idClient),
 	id_ville          INT  NOT NULL REFERENCES ville(idVille),
 	CHECK (createdDate < updatedDate)	
-	
-	
 );
+
 
 
 ------------------------------------------------------------
@@ -316,19 +340,22 @@ CREATE TABLE client_adresse(
 ------------------------------------------------------------
 CREATE TABLE facture(
 	idClient           INT  NOT NULL,
-	idFacture          INT GENERATED ALWAYS AS IDENTITY,
+	idFacture          INT GENERATED ALWAYS AS IDENTITY UNIQUE,
 	reference          text_valid NOT NULL,
 	date_facturation   timestamptz NOT NULL DEFAULT now(),
 	montant_HT         posrealsup  NOT NULL,
 	montant_TTC        posrealsup  NOT NULL,
 	montant_TVA        posrealsup  NOT NULL,
-	taux_TVA           posrealsup  NOT NULL,
 	updatedDate        timestamptz ,
 	CHECK (date_facturation < updatedDate),
+
+	id_paiement         INT NOT NULL REFERENCES paiement(idPaiement),
 	CONSTRAINT facture_PK PRIMARY KEY (idClient,idFacture),
 
 	CONSTRAINT facture_client_FK FOREIGN KEY (idClient) REFERENCES client(idClient)
 );
+
+
 
 
 ------------------------------------------------------------
@@ -340,7 +367,7 @@ CREATE TABLE stock(
 	createdDate   timestamptz NOT NULL DEFAULT now(),
 	updatedDate   timestamptz,
 	CHECK (createdDate < updatedDate),
-	id_produit    INT  NOT NULL REFERENCES produit(idProduit)
+	id_produit    INT UNIQUE NOT NULL REFERENCES produit(idProduit)
 );
 
 
@@ -363,9 +390,8 @@ CREATE TABLE caracteristique(
 	idCaracteristique   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	couleur             text_valid NOT NULL,
 	taille              text_valid NOT NULL,
-	id_produit           INT  NOT NULL REFERENCES produit(idProduit)
+	id_produit          INT  NOT NULL REFERENCES produit(idProduit)
 );
-
 
 ------------------------------------------------------------
 -- Table: category_image
@@ -389,60 +415,26 @@ CREATE TABLE sous_category_image(
 );
 
 
-------------------------------------------------------------
--- Table: ligne
-------------------------------------------------------------
-CREATE TABLE ligne(
-	idProduit       INT  NOT NULL,
-	idLigne         INT GENERATED ALWAYS AS IDENTITY,
-	nom_produit     text_valid NOT NULL,
-	prix_unitaire   posrealsup  NOT NULL,
-	quantite        posintsup  NOT NULL,
-	CONSTRAINT ligne_PK PRIMARY KEY (idProduit,idLigne),
 
-	CONSTRAINT ligne_produit_FK FOREIGN KEY (idProduit) REFERENCES produit(idProduit)
-);
 
 
 ------------------------------------------------------------
 -- Table: ligne_commande
 ------------------------------------------------------------
 CREATE TABLE ligne_commande(
-	idProduit       INT  NOT NULL,
-	idLigne         INT  NOT NULL,
-	idClient        INT  NOT NULL,
-	idCommande      INT  NOT NULL,
-	nom_produit     text_valid NOT NULL,
-	prix_unitaire   posrealsup  NOT NULL,
-	quantite        posintsup  NOT NULL,
-	CONSTRAINT ligne_commande_PK PRIMARY KEY (idProduit,idLigne,idClient,idCommande),
+	idClient            INT  NOT NULL UNIQUE,
+	idCommande          INT  NOT NULL UNIQUE,
+	idCommandeLigne     INT GENERATED ALWAYS AS IDENTITY UNIQUE,
+	nom_produit         text_valid NOT NULL,
+	prix_unitaire       posrealsup  NOT NULL,
+	quantite_commande   posintsup  NOT NULL,
+	id_produit           INT  NOT NULL REFERENCES produit(idProduit),
+	--id_client_facture    INT  NOT NULL REFERENCES facture(idClient),
+	id_facture           INT  NOT NULL  REFERENCES facture(idFacture),
+	CONSTRAINT ligne_commande_PK PRIMARY KEY (idClient,idCommande,idCommandeLigne),
 
-	CONSTRAINT ligne_commande_ligne_FK FOREIGN KEY (idProduit,idLigne) REFERENCES ligne(idProduit,idLigne),
-	CONSTRAINT ligne_commande_commande0_FK FOREIGN KEY (idClient,idCommande) REFERENCES commande(idClient,idCommande)
-);
-
-
-------------------------------------------------------------
--- Table: ligne_facture
-------------------------------------------------------------
-CREATE TABLE ligne_facture(
-	idProduit                   INT  NOT NULL ,
-	idLigne                     INT  NOT NULL ,
-	idClient                    INT  NOT NULL ,
-	idFacture                   INT  NOT NULL ,
-	nom_produit                 text_valid NOT NULL,
-	prix_unitaire               posrealsup  NOT NULL,
-	quantite                    posintsup  NOT NULL,
-	idProduit_ligne_commande    INT  NOT NULL ,
-	idLigne_ligne_commande      INT  NOT NULL ,
-	idClient_ligne_commande     INT  NOT NULL ,
-	idCommande_ligne_commande   INT  NOT NULL  ,
-	CONSTRAINT ligne_facture_PK PRIMARY KEY (idProduit,idLigne,idClient,idFacture)
-
-	,CONSTRAINT ligne_facture_ligne_FK FOREIGN KEY (idProduit,idLigne) REFERENCES ligne(idProduit,idLigne)
-	,CONSTRAINT ligne_facture_facture0_FK FOREIGN KEY (idClient,idFacture) REFERENCES facture(idClient,idFacture)
-	,CONSTRAINT ligne_facture_ligne_commande1_FK FOREIGN KEY (idProduit_ligne_commande,idLigne_ligne_commande,idClient_ligne_commande,idCommande_ligne_commande) REFERENCES ligne_commande(idProduit,idLigne,idClient,idCommande)
-	,CONSTRAINT ligne_facture_ligne_commande_AK UNIQUE (idProduit_ligne_commande,idLigne_ligne_commande,idClient_ligne_commande,idCommande_ligne_commande)
+	CONSTRAINT ligne_commande_commande_FK FOREIGN KEY (idClient,idCommande) REFERENCES commande(idClient,idCommande)
+	
 );
 
 
@@ -450,41 +442,68 @@ CREATE TABLE ligne_facture(
 -- Table: ligne_livraison
 ------------------------------------------------------------
 CREATE TABLE ligne_livraison(
-	idProduit                   INT  NOT NULL ,
-	idLigne                     INT  NOT NULL ,
-	idClient                    INT  NOT NULL ,
-	idLivraison                 INT  NOT NULL ,
-	nom_produit                 text_valid NOT NULL,
-	prix_unitaire               posrealsup  NOT NULL,
-	quantite                    posintsup  NOT NULL,
-	idProduit_ligne_commande    INT  NOT NULL ,
-	idLigne_ligne_commande      INT  NOT NULL ,
-	idClient_ligne_commande     INT  NOT NULL ,
-	idCommande_ligne_commande   INT  NOT NULL  ,
-	CONSTRAINT ligne_livraison_PK PRIMARY KEY (idProduit,idLigne,idClient,idLivraison)
+	idClient                         INT  NOT NULL UNIQUE,
+	idLivraison                      INT  NOT NULL UNIQUE,
+	idLivraisonLigne                 INT GENERATED ALWAYS AS IDENTITY UNIQUE,
+	quantite_livraison               posintsup  NOT NULL,
+	id_client                        INT  NOT NULL REFERENCES ligne_commande(idClient),
+	id_commande                      INT  NOT NULL REFERENCES ligne_commande(idCommande),
+	id_commandeLigne                 INT  NOT NULL REFERENCES ligne_commande(idCommandeLigne),
+	CONSTRAINT ligne_livraison_PK PRIMARY KEY (idClient,idLivraison,idLivraisonLigne),
 
-	,CONSTRAINT ligne_livraison_ligne_FK FOREIGN KEY (idProduit,idLigne) REFERENCES ligne(idProduit,idLigne)
-	,CONSTRAINT ligne_livraison_livraison0_FK FOREIGN KEY (idClient,idLivraison) REFERENCES livraison(idClient,idLivraison)
-	,CONSTRAINT ligne_livraison_ligne_commande1_FK FOREIGN KEY (idProduit_ligne_commande,idLigne_ligne_commande,idClient_ligne_commande,idCommande_ligne_commande) REFERENCES ligne_commande(idProduit,idLigne,idClient,idCommande)
-	,CONSTRAINT ligne_livraison_ligne_commande_AK UNIQUE (idProduit_ligne_commande,idLigne_ligne_commande,idClient_ligne_commande,idCommande_ligne_commande)
+	CONSTRAINT ligne_livraison_livraison_FK FOREIGN KEY (idClient,idLivraison) REFERENCES livraison(idClient,idLivraison),
+	CONSTRAINT ligne_livraison_ligne_commande_AK UNIQUE (id_client,id_commande,id_commandeLigne)
 );
-
 
 ------------------------------------------------------------
 -- Table: ligne_panier
 ------------------------------------------------------------
 CREATE TABLE ligne_panier(
-	idPanier        INT  NOT NULL,
-	idLignePanier   INT GENERATED ALWAYS AS IDENTITY,
+	idLignePanier   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom_produit     text_valid NOT NULL,
 	quantite        posintsup  NOT NULL,
 	prix_HT         posrealsup  NOT NULL,
-	id_produit       INT  NOT NULL REFERENCES produit(idProduit),
-	CONSTRAINT ligne_panier_PK PRIMARY KEY (idPanier,idLignePanier),
-
-	CONSTRAINT ligne_panier_panier_FK FOREIGN KEY (idPanier) REFERENCES panier(idPanier)
-	
+	id_produit      INT  NOT NULL REFERENCES produit(idProduit),
+	id_panier       INT  NOT NULL REFERENCES panier(idPanier)
 );
+
+------------------------------------------------------------
+-- Table: produit_commande_retourne
+------------------------------------------------------------
+CREATE TABLE produit_commande_retourne(
+	idProduitCommandeRetourne   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	quantite                    posint  NOT NULL DEFAULT 0,
+	createdDate                 DATE  NOT NULL,
+	commentaire                 text_valid NOT NULL,
+	id_client                   INT  NOT NULL REFERENCES ligne_livraison(idClient),
+	id_livraison                INT  NOT NULL REFERENCES ligne_livraison(idLivraison),
+	id_livraisonLigne           INT  NOT NULL REFERENCES ligne_livraison(idLivraisonLigne),
+
+    CONSTRAINT produit_commande_retourne_ligne_livraison_AK UNIQUE (id_client,id_livraison,id_livraisonLigne)
+);
+
+
+------------------------------------------------------------
+-- Table: client_historique_password
+------------------------------------------------------------
+CREATE TABLE client_historique_password(
+	idClientHistoriqueConnexion   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	password_hash                 password NOT NULL,
+	date_creation                 timestamptz NOT NULL DEFAULT now(),
+	id_client                     INT  NOT NULL REFERENCES client(idClient)
+);
+
+
+------------------------------------------------------------
+-- Table: client_historique_connexion
+------------------------------------------------------------
+CREATE TABLE client_historique_connexion(
+	idClientHistoriqueConnexion   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	connexion_succes              BOOL  NOT NULL,
+	connexion_date                timestamptz NOT NULL DEFAULT now(),
+	id_client                     INT  NOT NULL REFERENCES client(idClient)
+);
+
 
 ------------------------------------------------------------
 -- Table: ville_a_codePostale
@@ -496,27 +515,26 @@ CREATE TABLE ville_a_codePostale (
 );
 
 
-
 ------------------------------------------------------------
 -- Table: deduit
 ------------------------------------------------------------
 CREATE TABLE deduit(
 	idDeduit      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	idReduction   INT  NOT NULL REFERENCES reduction(idReduction),
-	idProduit     INT  NOT NULL REFERENCES produit(idProduit)
+	id_reduction   INT  NOT NULL REFERENCES reduction(idReduction),
+	id_produit     INT  NOT NULL REFERENCES produit(idProduit)
 
 );
-
 
 ------------------------------------------------------------
 -- Table: fournie
 ------------------------------------------------------------
 CREATE TABLE fournie(
 	idFournie       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	idFournisseur   INT  NOT NULL REFERENCES fournisseur(idFournisseur),
-	idProduit       INT  NOT NULL REFERENCES produit(idProduit)
+	id_fournisseur   INT  NOT NULL REFERENCES fournisseur(idFournisseur),
+	id_produit       INT  NOT NULL REFERENCES produit(idProduit)
 );
 
-
-
 COMMIT;
+
+
+

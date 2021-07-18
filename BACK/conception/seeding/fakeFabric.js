@@ -32,7 +32,7 @@ const fakeData = async () => {
         // (on aurait également pu lancer la commande dans le package.json en même temps que le démarrage 'npm run seed'... )
         consol.seed("Début dropdb - createdb");
 
-        await exec(" dropdb --if-exists madagascar && createdb madagascar && cd .. && cd data && psql madagascar -f Script_Postgres.sql", (error, stdout, stderr) => {
+        await exec(" dropdb --if-exists madagascar && createdb madagascar && cd .. && cd data && psql madagascar -f SQL_MADA_V22.sql", (error, stdout, stderr) => {
             if (error) {
                 consol.seed(`error: ${error.message}`);
                 return;
@@ -50,24 +50,23 @@ const fakeData = async () => {
 
         consol.admin(`Début de la génération de Fake data ! Un peu de patience... Volume d'enregistrement à générer par table : ${volume} à ${volume*3} selon les tables. 
         ATTENTION => SI pg admin EST OUVERT DURANT CE SCRIPT AVEC DES VALEURS DANS CERTAINES TABLES, CERTAINES CONTRAINTE "UNIQUE" BLOQUERONT LE SCRIPT !`)
-
-        console.time(`Génération de ${volume} personnes`);
+       
         //!
+
+        console.time(`Génération de ${volume} clients`);
+
         const custumers = [];
         for (let index = 1; index <= volume; index++) {
             const user = {
-                id_for_fk: index,
+                id_for_pk: index,
                 addressCustumer_line1: `${(Math.floor(Math.random() * (100 - 1 + 1)) + 1)} ${faker.address.streetPrefix()} ${faker.address.streetName()} `,
-                gender: faker.name.gender(),
                 phone: faker.phone.phoneNumberFormat(),
-                firstName: faker.name.firstName(),
-                lastName: faker.name.lastName(),
+                prenom: faker.name.firstName(),
+                nom_famille: faker.name.lastName(),
                 email: index + faker.internet.email(), // l'ajout de l'index me permet de n'avoir que des emails unique (postgres ok)
                 password: await bcrypt.hash(process.env.PASSWORDTEST, 10), // Permet de connaitre le mot de passe, juste le sel changeant le hash.. sinon => password: await bcrypt.hash((faker.internet.password() + '!!'), 10), //  => pour obtenir un jeu de password dynamique.
                 id_privilege: 1,
                 addressCustumer_title: "Maison",
-
-
             };
             custumers.push(user);
         }
@@ -469,11 +468,38 @@ const fakeData = async () => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!IMPORT DES DONNEES EN BDD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // on a générer des fausses des données, ne reste plus qu'a les importer dans la BDD (dans le bon ordre).
 
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!IMPORT DES DONNEES EN BDD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -604,7 +630,7 @@ const fakeData = async () => {
 
         for (const custumer of custumers) {
             consol.seed(`Import du client prénomé : ${custumer.firstName}`);
-            const result = await db.query(custumersInsert, [custumer.gender, custumer.firstName, custumer.lastName, custumer.email, custumer.password, custumer.id_privilege]);
+            const result = await db.query(custumersInsert, [custumer.prenom, custumer.nom_famille, custumer.email, custumer.password, custumer.id_privilege]);
         }
 
         consol.seed(`Fin de l'import de ${custumers.length} clients`);
@@ -757,7 +783,7 @@ const fakeData = async () => {
 
         for (const basquetProduct_has_product of basquetProduct_has_products) {
             consol.seed(`Import de basquetProduct_has_product avec l'id-product  : ${basquetProduct_has_product.id_product}`);
-            const result = await db.query(basquetProduct_has_productsInsert, [basquetProduct_has_product.id_basquetProduct , basquetProduct_has_product.id_product]);
+            const result = await db.query(basquetProduct_has_productsInsert, [basquetProduct_has_product.id_basquetProduct, basquetProduct_has_product.id_product]);
         }
 
         consol.seed(`Fin de l'import de ${basquetProduct_has_products.length} basquetProduct_has_products`);

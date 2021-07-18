@@ -4,6 +4,10 @@
 
 BEGIN;
 
+-- suppression de messages en NOTICES (pour les remettre => SET client_min_messages TO default;)
+
+  SET client_min_messages TO warning;
+
 -- suppression du schéma public
 
 DROP SCHEMA IF EXISTS public;
@@ -23,8 +27,8 @@ SET search_path TO mada;
 
 CREATE DOMAIN posint AS INT CHECK (VALUE >= 0); -- un domaine permettant de créer un type de donnée nombre entier ne pouvant être négatif
 CREATE DOMAIN posintsup AS INT check (VALUE > 0); -- un domaine permettant de créer un type de donnée nombre entier strictement positif
-CREATE DOMAIN posreal AS NUMERIC(2) CHECK (VALUE >= 00.00); -- un domaine permettant de créer un type de donnée nombre réel, 2 chiffre aprés la virgule (précision de 4 et une échelle de 2 selon la nomanclature postgres), positif ou égal a zéro
-CREATE DOMAIN posrealsup AS NUMERIC(2) CHECK (VALUE > 00.00);
+CREATE DOMAIN posreal AS DECIMAL(6,2) CHECK (VALUE >= 00.00); -- un domaine permettant de créer un type de donnée nombre réel, 2 chiffre aprés la virgule (précision de 6 et une échelle de 2 selon la nomanclature postgres), positif ou égal a zéro
+CREATE DOMAIN posrealsup AS DECIMAL(6,2) CHECK (VALUE > 00.00);
 CREATE DOMAIN email AS text -- un domaine (type de donnée) permettant de vérifier la validité d'une adresse email via une regex
 	CHECK (
 
@@ -73,9 +77,9 @@ CREATE DOMAIN text_valid AS text -- un domaine pour les textes valides = mini 2 
 
 CREATE TABLE shop(
 	idShop  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom               text_valid NOT NULL,
+	nom               text_valid NOT NULL DEFAULT 'Madagascar Artisanat',
 	logo              text_valid,
-	texte_intro       text_valid NOT NULL DEFAULT 'BIenvenue sur le site XXX',
+	texte_intro       text_valid NOT NULL DEFAULT 'Bienvenue sur le site XXX',
 	email_contact     email NOT NULL DEFAULT 'contact@monsite.fr',
 	telephone         phonenumber
 
@@ -106,13 +110,12 @@ CREATE TABLE categorie(
 
 
 
-
 ------------------------------------------------------------
 -- Table: TVA
 ------------------------------------------------------------
 CREATE TABLE TVA(
 	idTVA         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	taux          posrealsup  NOT NULL,
+	taux          posreal  NOT NULL,
 	nom           text_valid NOT NULL,
 	periode_TVA   DATERANGE NOT NULL DEFAULT '[2021-01-01, 2099-12-24]' -- [] => on inclut les deux bornes // () => on exclut les deux bornes // (] => on exclut la 1iere borne .... etc.)
 );
@@ -153,10 +156,10 @@ CREATE TABLE ville(
 ------------------------------------------------------------
 CREATE TABLE privilege(
 	idPrivilege   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom   text_valid NOT NULL
+	nom           text_valid NOT NULL
 );
 
-
+CREATE INDEX idx_privilege ON privilege(idPrivilege) INCLUDE (nom); -- index couvrant => https://public.dalibo.com/exports/formation/manuels/formations/perf2/perf2.handout.html
 
 
 
@@ -175,14 +178,43 @@ CREATE TABLE client(
 	id_privilege   INT NOT NULL REFERENCES privilege(idPrivilege)
 );
 
+CREATE INDEX idx_client_id ON client(idClient);
 
+-----------------------------------------------------------
+-- Table: admin_verif_email
+------------------------------------------------------------
+CREATE TABLE admin_verif_email(
+	idAdminVerifEmail     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	verif_email           BOOL  NOT NULL DEFAULT 'false',
+	date_verif_email      timestamptz NOT NULL DEFAULT now(),
+	id_client             INT UNIQUE NOT NULL REFERENCES client(idClient)
+);
+
+-----------------------------------------------------------
+-- Table: admin_verif_telephone
+------------------------------------------------------------
+CREATE TABLE admin_verif_telephone(
+	idAdminVerifTelephone   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	verif_phone             BOOL NOT NULL DEFAULT 'false',
+	date_verif_phone        timestamptz NOT NULL DEFAULT now(),
+	id_client               INT UNIQUE NOT NULL REFERENCES client(idClient)
+);
+
+------------------------------------------------------------
+-- Table: admin_phone
+------------------------------------------------------------
+CREATE TABLE admin_phone(
+	idAdminPhone      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	admin_telephone   phonenumber  NOT NULL,
+	id_client         INT UNIQUE NOT NULL REFERENCES client(idClient) 
+);
 
 ------------------------------------------------------------
 -- Table: panier
 ------------------------------------------------------------
 CREATE TABLE panier(
 	idPanier      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	montant       posreal  NOT NULL DEFAULT 00.00,
+	total         posreal  NOT NULL DEFAULT 00.00,
 	createdDate   timestamptz NOT NULL DEFAULT now(),
 	updatedDate   timestamptz,
 	CHECK (createdDate < updatedDate),
@@ -190,7 +222,7 @@ CREATE TABLE panier(
 );
 
 
-
+CREATE INDEX idx_panier_id ON panier(idPanier);
 
 
 ------------------------------------------------------------
@@ -205,7 +237,8 @@ CREATE TABLE produit(
 	id_TVA         INT NOT NULL REFERENCES TVA(idTVA)
 );
 
-
+CREATE INDEX idx_produit_id ON produit(idProduit);
+CREATE INDEX idx_produit_nom ON produit(nom);
 ------------------------------------------------------------
 -- Table: produit_image
 ------------------------------------------------------------
@@ -271,7 +304,7 @@ CREATE TABLE commande(
 	CONSTRAINT commande_client_FK FOREIGN KEY (idClient) REFERENCES client(idClient)
 );
 
-
+-- CREATE INDEX idx_commmande_id ON commande(idClient,idCommande); UNIQUE créé également un index, a tester...
 
 ------------------------------------------------------------
 -- Table: paiement
@@ -313,6 +346,9 @@ CREATE TABLE livraison(
 	CONSTRAINT livraison_client_FK FOREIGN KEY (idClient) REFERENCES client(idClient),
 	CONSTRAINT livraison_commande_AK UNIQUE (id_client,id_commande)
 );
+
+
+-- CREATE INDEX idx_livraison_id ON livraison(idClient,idLivraison);
 
 ------------------------------------------------------------
 -- Table: client_adresse
@@ -356,7 +392,7 @@ CREATE TABLE facture(
 );
 
 
-
+-- CREATE INDEX idx_facture_id ON facture(idClient,idFacture);
 
 ------------------------------------------------------------
 -- Table: stock
@@ -437,6 +473,7 @@ CREATE TABLE ligne_commande(
 	
 );
 
+-- CREATE INDEX idx_ligne_commande_id ON ligne_commande(idClient,idCommande,idCommandeLigne);
 
 ------------------------------------------------------------
 -- Table: ligne_livraison
@@ -454,6 +491,9 @@ CREATE TABLE ligne_livraison(
 	CONSTRAINT ligne_livraison_livraison_FK FOREIGN KEY (idClient,idLivraison) REFERENCES livraison(idClient,idLivraison),
 	CONSTRAINT ligne_livraison_ligne_commande_AK UNIQUE (id_client,id_commande,id_commandeLigne)
 );
+
+
+-- CREATE INDEX idx_ligne_livraison_id ON ligne_livraison(idClient,idLivraison,idLivraisonLigne);
 
 ------------------------------------------------------------
 -- Table: ligne_panier

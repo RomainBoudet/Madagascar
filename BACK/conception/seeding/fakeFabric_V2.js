@@ -207,10 +207,10 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake paniers`);
-        console.time(`Génération de ${volume*2} paniers`);
+        console.time(`Génération de ${volume*3} paniers`);
         const basquetProducts = [];
         //const valideOuNon = ["Panier validé et payé", "Panier non validé"];
-        for (let index = 1; index <= volume * 2; index++) {
+        for (let index = 1; index <= volume * 3; index++) {
             const basquetProduct = {
 
                 total: faker.commerce.price(),
@@ -223,7 +223,7 @@ const fakeData = async () => {
             };
             basquetProducts.push(basquetProduct);
         }
-        console.timeEnd(`Génération de ${volume*2} paniers`);
+        console.timeEnd(`Génération de ${volume*3} paniers`);
         console.table(basquetProducts);
         consol.seed(`Fin de la génération de fake paniers`);
 
@@ -243,7 +243,7 @@ const fakeData = async () => {
                 price: faker.commerce.price(),
                 color: colors[Math.floor(Math.random() * colors.length)], //faker.internet.color => hex
                 size: sizes[Math.floor(Math.random() * sizes.length)],
-                quantity: Math.floor(Math.random() * (100 - 1 + 1)) + 1, // un random entre 1 et 100
+                quantity: Math.floor(Math.random() * (10 - 1 + 1)) + 1, // un random entre 1 et 10
                 index,
                 id_category: Math.floor(Math.random() * (100 - 1 + 1)) + 1,
                 id_taxRate: Math.floor(Math.random() * (2 - 1 + 1)) + 1, // un random entre 1 et 2
@@ -262,7 +262,7 @@ const fakeData = async () => {
         consol.seed(`Début de la génération de fake image de produits`);
         console.time(`Génération de ${volume*3} image de produits`);
         const arrayNumber300 = Array.from({
-            length: 300
+            length: volume*3
         }, (_, i) => i + 1); // un tableau avec des valeurs allant de 1 a 300 // si on veut commençer a zero => Array.from(Array(10).keys())
         const image_produits = [];
 
@@ -273,6 +273,7 @@ const fakeData = async () => {
                 ordre: Math.floor(Math.random() * (5 - 1 + 1)) + 1, // un random entre 1 et 5
                 URL: faker.image.imageUrl(),
                 id_produit: arrayNumber300[Math.floor(Math.random() * arrayNumber300.length)],
+                index,
             };
             image_produits.push(image_produit);
         }
@@ -287,7 +288,7 @@ const fakeData = async () => {
         consol.seed(`Début de la génération de fake avis`);
         console.time(`Génération de ${volume*3} avis`);
         const arrayNumber100 = Array.from({
-            length: 100
+            length: volume
         }, (_, i) => i + 1); // un tableau avec des valeurs allant de 1 a 100 // si on veut commençer a zero => Array.from(Array(10).keys())
         const avis = [];
 
@@ -333,10 +334,8 @@ const fakeData = async () => {
         //! STATUT_COMMANDE
 
         consol.seed(`Début de la génération de fake statut_commandes`);
-        console.time(`Génération de ${volume/2} statut_commandes`);
-        const arrayNumber50 = Array.from({
-            length: 50
-        }, (_, i) => i + 1);
+        console.time(`Génération de ${volume} statut_commandes`);
+        
         const statut_commandes = [];
         const statutCommandes = [{
             nom: 'en attente',
@@ -363,7 +362,7 @@ const fakeData = async () => {
             description: "La commande a remis au transporteur. Vous avez dû recevoir un email contenant le numéro de tracking vous permettant de suivre l'acheminement de votre colis. Ce numéro de tracking est également accessible dans votre compte client dans la rubrique Mes commandes / Onglet Expéditions"
         }]
 
-        for (let index = 1; index <= volume / 2; index++) {
+        for (let index = 1; index <= volume; index++) {
             const statut_commande = {
 
 
@@ -372,7 +371,7 @@ const fakeData = async () => {
             };
             statut_commandes.push(statut_commande);
         }
-        console.timeEnd(`Génération de ${volume/2} statut_commandes`);
+        console.timeEnd(`Génération de ${volume} statut_commandes`);
         console.table(statut_commandes);
         consol.seed(`Fin de la génération de fake statut_commandes`);
 
@@ -380,11 +379,11 @@ const fakeData = async () => {
         //! COMMANDE
 
         consol.seed(`Début de la génération de fake commandes`);
-        console.time(`Génération de ${volume/2} commandes`);
+        console.time(`Génération de ${volume} commandes`);
 
         const commandes = [];
 
-        for (let index = 1; index <= volume / 2; index++) {
+        for (let index = 1; index <= volume; index++) {
             const commande = {
                 idClient: index,
                 ref: `COMMANDE/${9000+index} `, // une ref UNIQUE
@@ -394,7 +393,7 @@ const fakeData = async () => {
             };
             commandes.push(commande);
         }
-        console.timeEnd(`Génération de ${volume/2} commandes`);
+        console.timeEnd(`Génération de ${volume} commandes`);
         console.table(commandes);
         consol.seed(`Fin de la génération de fake commandes`);
 
@@ -403,10 +402,10 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake paiements`);
-        console.time(`Génération de ${volume/2} paiements`);
+        console.time(`Génération de ${volume} paiements`);
         const paiements = [];
 
-        for (let index = 1; index <= volume / 2; index++) {
+        for (let index = 1; index <= volume; index++) {
             const paiement = {
 
                 ref: `PAIEMENT/${9000+index} `,
@@ -418,7 +417,7 @@ const fakeData = async () => {
             };
             paiements.push(paiement);
         }
-        console.timeEnd(`Génération de ${volume/2} paiements`);
+        console.timeEnd(`Génération de ${volume} paiements`);
         console.table(paiements);
         consol.seed(`Fin de la génération de fake paiements`);
 
@@ -426,7 +425,7 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake livraisons`);
-        console.time(`Génération de ${volume/2} livraisons`);
+        console.time(`Génération de ${volume} livraisons`);
         const livraisons = [];
 
         const transporteurs = [{
@@ -471,7 +470,7 @@ const fakeData = async () => {
 
         ];
 
-        for (let index = 1; index <= volume / 2; index++) {
+        for (let index = 1; index <= volume; index++) {
             const livraison = {
 
                 randomTransport: transporteurs[Math.floor(Math.random() * transporteurs.length)],
@@ -481,7 +480,7 @@ const fakeData = async () => {
             livraisons.push(livraison);
         }
 
-        console.timeEnd(`Génération de ${volume/2} livraisons`);
+        console.timeEnd(`Génération de ${volume} livraisons`);
         console.table(livraisons.randomTransport); // structure => [{randomTransport:{}}]  
         consol.seed(`Fin de la génération de fake livraisons`);
 
@@ -496,18 +495,18 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake factures`);
-        console.time(`Génération de ${volume/2} factures`);
+        console.time(`Génération de ${volume} factures`);
         const factures = [];
         const randomMontants = [];
-        for (let index = 1; index <= volume; index++) {
+        for (let index = 1; index <= volume * 2; index++) {
             const randomMontant = faker.commerce.price();
 
             randomMontants.push(randomMontant);
         }
 
-        for (let index = 1; index <= volume / 2; index++) {
+        for (let index = 1; index <= volume; index++) {
             const facture = {
-                idClient: index,
+                id_client: index,
                 ref: `FACTURE/${9000+index} `,
                 montant_HT: randomMontants[index],
                 montant_TTC: (parseInt(randomMontants[index]) + (parseInt(randomMontants[index]) * 0.2)).toFixed(2),
@@ -517,7 +516,7 @@ const fakeData = async () => {
             };
             factures.push(facture);
         }
-        console.timeEnd(`Génération de ${volume/2} factures`);
+        console.timeEnd(`Génération de ${volume} factures`);
         console.table(factures);
         consol.seed(`Fin de la génération de fake factures`);
 
@@ -535,13 +534,13 @@ const fakeData = async () => {
         const reductions = [];
         const soldes = ['soldes d\'hiver', 'soldes d\'été', 'soldes de printemps', 'soldes automne'];
         const actifOuNon = ['true', 'false'];
-        for (let index = 1; index <= volume / 4; index++) {
+        for (let index = 1; index <= volume/4; index++) {
             const reduction = {
                 idClient: index,
                 nom: soldes[Math.floor(Math.random() * soldes.length)],
                 pourcentage_reduction: (Math.random()).toFixed(2), // un random entre 0.1 et 0.8 avec deux chiffres aprés la virgules
                 actif: actifOuNon[Math.floor(Math.random() * actifOuNon.length)],
-                periode_reduction: `[${(faker.date.past()).toISOString().slice(0, 10)}, ${(faker.date.soon()).toISOString().slice(0, 10)}]`, // on récupére que la partie qui convient de la date pour satifaire le format DATERABGE de postgres
+                periode_reduction: `[${(faker.date.past()).toISOString().slice(0, 10)}, ${(faker.date.soon()).toISOString().slice(0, 10)}]`, // on récupére que la partie qui convient de la date pour satifaire le format DATERANGE de postgres
                 //periode_reduction: `[${(faker.date.past()).toISOString()}, ${(faker.date.soon()).toISOString()}]`,
 
             };
@@ -553,16 +552,209 @@ const fakeData = async () => {
 
 
 
+        //! CARACTERISTIQUE
+
+
+        // voir produits..
+
+
+        //! SOUS_CATEGORIE_IMAGE et  CATEGORIE_IMAGE 
+
+
+        // voir produit_image
+
+
+        //! LIGNE_COMMANDE
+
+        //100 commandes
+        //100 client
+        //100 factures
+        //300 produits
+
+        consol.seed(`Début de la génération de fake ligne_commandes`);
+        console.time(`Génération de ${volume*3} ligne_commandes`);
+        
+        //const arrayNumberClient = Array.from(Array(101).keys()) // génére un tableau qui commence a zéro et va a 101
+        const arrayNumberProduits = Array.from({
+            length: volume*3
+        }, (_, i) => i + 1); // génére un tableau qui commence a 1 et va à 300
+
+        const arrayNumberVolumeDivideBy2 = Array.from({
+            length: volume/2
+        }, (_, i) => i + 1);
+
+        
+        const ligne_commandes = [];
+
+        for (let index = 1; index <= volume * 3; index++) {
+            const ligne_commande = {
+                index,
+                id_client: arrayNumberVolumeDivideBy2[Math.floor(Math.random() * arrayNumberVolumeDivideBy2.length)],
+                id_commande: arrayNumberVolumeDivideBy2[Math.floor(Math.random() * arrayNumberVolumeDivideBy2.length)],
+                id_produit: arrayNumberProduits[Math.floor(Math.random() * arrayNumberProduits.length)],
+                quantite_commande: Math.floor(Math.random() * (5 - 1 + 1)) + 1, // un random entre 1 et 5.
+
+            };
+            ligne_commandes.push(ligne_commande);
+        }
+        console.timeEnd(`Génération de ${volume*3} ligne_commandes`);
+        console.table(ligne_commandes);
+        consol.seed(`Fin de la génération de fake ligne_commandes`);
+
+
+        //! LIGNE_LIVRAISON
+
+
+        consol.seed(`Début de la génération de fake ligne_livraisons`);
+        console.time(`Génération de ${volume*3} ligne_livraisons`);
+
+
+        const ligne_livraisons = [];
+
+        for (let index = 1; index <= volume * 3; index++) {
+            const ligne_livraison = {
+
+                id_livraison: arrayNumberVolumeDivideBy2[Math.floor(Math.random() * arrayNumberVolumeDivideBy2.length)],
+                id_commandeLigne: arrayNumberVolumeDivideBy2[Math.floor(Math.random() * arrayNumberVolumeDivideBy2.length)],
+                quantite_livraison: Math.floor(Math.random() * (5 - 1 + 1)) + 1,
+            };
+            ligne_livraisons.push(ligne_livraison);
+        }
+        console.timeEnd(`Génération de ${volume*3} ligne_livraisons`);
+        console.table(ligne_livraisons);
+        consol.seed(`Fin de la génération de fake ligne_livraisons`);
+
+
+        //! LIGNE_PANIER
+
+
+        consol.seed(`Début de la génération de fake ligne_paniers`);
+        console.time(`Génération de ${volume*3} ligne_paniers`);
+        const arrayNumberPanier = Array.from(Array((volume*3)+1).keys())
+
+        const ligne_paniers = [];
+
+        for (let index = 1; index <= volume * 3; index++) {
+            const ligne_panier = {
+
+                id_produit: arrayNumberPanier[index], //300 produits
+                id_panier: arrayNumberPanier[index], //300 paniers
+                quantite: Math.floor(Math.random() * (5 - 1 + 1)) + 1,
+            };
+            ligne_paniers.push(ligne_panier);
+        }
+        console.timeEnd(`Génération de ${volume*3} ligne_paniers`);
+        console.table(ligne_paniers);
+        consol.seed(`Fin de la génération de fake ligne_paniers`);
+
+
+        //! PRODUIT_COMMANDE_RETOURNE
+
+
+        consol.seed(`Début de la génération de fake produit_commande_retournes`);
+        console.time(`Génération de 10 produit_commande_retournes`);
+
+        const random = [10, 45, 2, 100, 87, 55, 18, 48, 76, 64, 37];
+        const produit_commande_retournes = [];
+
+        for (let index = 1; index <= 10; index++) {
+            const produit_commande_retourne = {
+
+                id_livraisonLigne: random[index],
+                quantite: 1,
+                commentaire: faker.lorem.words(),
+            };
+            produit_commande_retournes.push(produit_commande_retourne);
+        }
+        console.timeEnd(`Génération de 10 produit_commande_retournes`);
+        console.table(produit_commande_retournes);
+        consol.seed(`Fin de la génération de fake produit_commande_retournes`);
+
+
+        //! CLIENT_HISTORIQUE_PASSWORD
 
 
 
+        consol.seed(`Début de la génération de fake client_historique_passwords`);
+        console.time(`Génération de ${volume/2} client_historique_passwords`);
+
+        const client_historique_passwords = [];
+
+        for (let index = 1; index <= volume / 2; index++) {
+            const client_historique_password = {
+
+                id_client: index,
+                password_hash: await bcrypt.hash(process.env.PASSWORDTESTOLD, 10),
+            };
+            client_historique_passwords.push(client_historique_password);
+        }
+        console.timeEnd(`Génération de ${volume/2} client_historique_passwords`);
+        console.table(client_historique_passwords);
+        consol.seed(`Fin de la génération de fake client_historique_passwords`);
+
+
+        //! VILLE_a_CODEPOSTAL
+
+
+        consol.seed(`Début de la génération de fake ville_a_codePostales`);
+        console.time(`Génération de ${volume} ville_a_codePostales`);
+
+        const ville_a_codePostales = [];
+
+        for (let index = 1; index <= volume; index++) {
+            const ville_a_codePostale = {
+
+                id_ville: index,
+                id_codePostale: index,
+            };
+            ville_a_codePostales.push(ville_a_codePostale);
+        }
+        console.timeEnd(`Génération de ${volume} ville_a_codePostales`);
+        console.table(ville_a_codePostales);
+        consol.seed(`Fin de la génération de fake ville_a_codePostale`);
+
+
+        //! DEDUIT
 
 
 
+        consol.seed(`Début de la génération de fake deductions`);
+        console.time(`Génération de ${volume/4} deductions`);
+
+        const deductions = [];
+
+        for (let index = 1; index <= volume/4; index++) {
+            const deduction = {
+
+                id_reduction: index,
+                id_produit: index,
+            };
+            deductions.push(deduction);
+        }
+        console.timeEnd(`Génération de ${volume/4} deductions`);
+        console.table(deductions);
+        consol.seed(`Fin de la génération de fake deduction`);
 
 
+        //! FOURNIE 
 
 
+        consol.seed(`Début de la génération de fake fournies`);
+        console.time(`Génération de ${volume} fournies`);
+
+        const fournies = [];
+
+        for (let index = 1; index <= volume; index++) {
+            const fournie = {
+
+                id_fournisseur: index,
+                id_produit: index,
+            };
+            fournies.push(fournie);
+        }
+        console.timeEnd(`Génération de ${volume} fournies`);
+        console.table(fournies);
+        consol.seed(`Fin de la génération de fake fournies`);
 
 
 
@@ -681,7 +873,7 @@ const fakeData = async () => {
         consol.seed("Début de l'import des privileges");
         // je dois importer en premier la table des privileges sinon érreur de clé étrangére avec la table custumer
 
-        const privileges = ['Custumer', 'Administrateur', 'Developpeur'];
+        const privileges = ['Client', 'Administrateur', 'Developpeur'];
 
         console.time(`Import de ${privileges.length} privileges`);
 
@@ -690,7 +882,7 @@ const fakeData = async () => {
         for (let i = 0; i < privileges.length; i++) {
             consol.seed(`Import du privilege ${[i]}`);
 
-            const result = await db.query(privilegeInsert, [privileges[i]]);
+            await db.query(privilegeInsert, [privileges[i]]);
         }
         consol.seed("Fin de l'import des privileges");
         console.timeEnd(`Import de ${privileges.length} privileges`);
@@ -806,11 +998,11 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${commandes.length} commandes`);
         console.time(`Import de ${commandes.length} commandes`);
-        const commandesInsert = "INSERT INTO mada.commande (idClient, reference, commentaire, id_commandeStatut) VALUES ($1, $2, $3, $4);";
+        const commandesInsert = "INSERT INTO mada.commande (reference, commentaire, id_commandeStatut, id_client) VALUES ($1, $2, $3, $4);";
 
         for (const commande of commandes) {
             consol.seed(`Import de la commande pour l'ID client ${commande.idClient} et l'id commande statut : ${commande.id_commandeStatut}`);
-            await db.query(commandesInsert, [commande.idClient, commande.ref, commande.commentaire, commande.id_commandeStatut]);
+            await db.query(commandesInsert, [commande.ref, commande.commentaire, commande.id_commandeStatut, commande.idClient, ]);
         }
 
         consol.seed(`Fin de l'import de ${commandes.length} commandes`);
@@ -822,11 +1014,11 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${paiements.length} paiements`);
         console.time(`Import de ${paiements.length} paiements`);
-        const paiementsInsert = "INSERT INTO mada.paiement (reference, methode, montant, id_client, id_commande) VALUES ($1, $2, $3, $4, $5);";
+        const paiementsInsert = "INSERT INTO mada.paiement (reference, methode, montant, id_commande) VALUES ($1, $2, $3, $4);";
 
         for (const paiement of paiements) {
-            consol.seed(`Import du paiement pour le client id ${paiement.id_client} et l'id commande ${paiement.id_commande}`);
-            await db.query(paiementsInsert, [paiement.ref, paiement.methode, paiement.montant, paiement.id_client, paiement.id_commande]);
+            consol.seed(`Import du paiement ref ${paiement.ref} et l'id commande ${paiement.id_commande}`);
+            await db.query(paiementsInsert, [paiement.ref, paiement.methode, paiement.montant, paiement.id_commande]);
         }
 
         consol.seed(`Fin de l'import de ${paiements.length} paiements`);
@@ -838,11 +1030,11 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${livraisons.length} livraisons`);
         console.time(`Import de ${livraisons.length} livraisons`);
-        const livraisonsInsert = "INSERT INTO mada.livraison (idClient, frais_expedition, nom_transporteur, description, numero_suivi, URL_suivi, poid, estime_arrive, id_client, id_commande) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);";
+        const livraisonsInsert = "INSERT INTO mada.livraison (frais_expedition, nom_transporteur, description, numero_suivi, URL_suivi, poid, estime_arrive, id_client, id_commande) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);";
 
         for (const livraison of livraisons) {
             consol.seed(`Import du livraison pour le client id ${livraison.indexClientCommande} et l'id commande ${livraison.indexClientCommande}`);
-            await db.query(livraisonsInsert, [livraison.indexClientCommande, livraison.randomTransport.frais_expedition, livraison.randomTransport.nom_transporteur, livraison.randomTransport.description, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.randomTransport.estime_arrive, livraison.indexClientCommande, livraison.indexClientCommande]);
+            await db.query(livraisonsInsert, [livraison.randomTransport.frais_expedition, livraison.randomTransport.nom_transporteur, livraison.randomTransport.description, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.randomTransport.estime_arrive, livraison.indexClientCommande, livraison.indexClientCommande]);
         }
 
         consol.seed(`Fin de l'import de ${livraisons.length} livraisons`);
@@ -869,11 +1061,11 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${factures.length} factures`);
         console.time(`Import de ${factures.length} factures`);
-        const facturesInsert = "INSERT INTO mada.facture (idClient, reference,  montant_HT, montant_TTC, montant_TVA, id_paiement) VALUES ($1, $2, $3, $4, $5, $6);";
+        const facturesInsert = "INSERT INTO mada.facture (reference, montant_HT, montant_TTC, montant_TVA, id_paiement, id_client) VALUES ($1, $2, $3, $4, $5, $6);";
 
         for (const facture of factures) {
-            consol.seed(`Import de la facture de l'id_client : ${facture.idClient} avec pour ref : ${facture.ref} et id du paiement : ${facture.id_paiement}`);
-            await db.query(facturesInsert, [facture.idClient, facture.ref, facture.montant_HT, facture.montant_TTC, facture.montant_TVA, facture.id_paiement]);
+            consol.seed(`Import de la facture de l'id_client : ${facture.id_client} avec pour ref : ${facture.ref} et id du paiement : ${facture.id_paiement}`);
+            await db.query(facturesInsert, [facture.ref, facture.montant_HT, facture.montant_TTC, facture.montant_TVA, facture.id_paiement, facture.id_client]);
         }
 
         consol.seed(`Fin de l'import de ${factures.length} factures`);
@@ -910,23 +1102,190 @@ const fakeData = async () => {
         consol.seed(`Fin de l'import de ${reductions.length} reductions`);
         console.timeEnd(`Import de ${reductions.length} reductions`);
 
+        //! CARACTERISTIQUE
+
+
+        consol.seed(`Début de l'import de ${products.length} caracteristiques`);
+        console.time(`Import de ${products.length} caracteristiques`);
+        const caracteristiquesInsert = "INSERT INTO mada.caracteristique (couleur, taille, id_produit) VALUES ($1, $2, $3);";
+
+        for (const product of products) {
+            consol.seed(`Import de la caracteristique ayant pour couleur : ${product.color} et taille : ${product.size} pour le produit id : ${product.index}`);
+            await db.query(caracteristiquesInsert, [product.color, product.size, product.index]);
+        }
+
+        consol.seed(`Fin de l'import de ${products.length} caracteristiques`);
+        console.timeEnd(`Import de ${products.length} caracteristiques`);
+
+
+
+        //! CATEGORIE_IMAGE
+
+
+        consol.seed(`Début de l'import de ${image_produits.slice(0,33).length} images de categories`);
+        console.time(`Import de ${image_produits.slice(0,33).length} images de categories`);
+        const imageCategoriesInsert = "INSERT INTO mada.categorie_image (nom, URL, id_categorie) VALUES ($1, $2, $3);";
+
+        for (const image_produit of image_produits.slice(0, 33)) {
+            consol.seed(`Import de l'image URL : ${image_produit.URL} pour la la categorie : ${image_produit.index}`);
+            await db.query(imageCategoriesInsert, [image_produit.nom, image_produit.URL, image_produit.index]);
+        }
+
+        consol.seed(`Fin de l'import de ${image_produits.slice(0,33).length} images de categories`);
+        console.timeEnd(`Import de ${image_produits.slice(0,33).length} images de categories`);
+
+
+        //! SOUS_CATEGORIE_IMAGE
+
+
+        consol.seed(`Début de l'import de ${image_produits.slice(0,33).length} images de sous-categories`);
+        console.time(`Import de ${image_produits.slice(0,33).length} images de sous-categories`);
+        const imageSousCategoriesInsert = "INSERT INTO mada.sous_categorie_image (nom, URL, id_sousCategorie) VALUES ($1, $2, $3);";
+
+        for (const image_produit of image_produits.slice(0, 33)) {
+            consol.seed(`Import de l'image URL : ${image_produit.URL} pour la sous_categorie : ${image_produit.index}`);
+            await db.query(imageSousCategoriesInsert, [image_produit.nom, image_produit.URL, image_produit.index]);
+        }
+
+        consol.seed(`Fin de l'import de ${image_produits.slice(0,33).length} images de sous-categories`);
+        console.timeEnd(`Import de ${image_produits.slice(0,33).length} images de sous-categories`);
+
+
+        //! LIGNE_COMMANDE
+
+
+        consol.seed(`Début de l'import de ${ligne_commandes.length} ligne_commandes`);
+        console.time(`Import de ${ligne_commandes.length} ligne_commandes`);
+        const ligne_commandesInsert = "INSERT INTO mada.ligne_commande ( quantite_commande, id_produit, id_commande) VALUES ($1, $2, $3);";
+
+        for (const ligne_commande of ligne_commandes) {
+            consol.seed(`Import de la ligne_commande pour la commande id : ${ligne_commande.id_commande} avec l'index numéro ${ligne_commande.index}`);
+            await db.query(ligne_commandesInsert, [ligne_commande.quantite_commande, ligne_commande.id_produit, ligne_commande.id_commande]);
+        }
+
+        consol.seed(`Fin de l'import de ${ligne_commandes.length} ligne_commandes`);
+        console.timeEnd(`Import de ${ligne_commandes.length} ligne_commandes`);
+
+
+        //! LIGNE_LIVRAISON
+
+
+        consol.seed(`Début de l'import de ${ligne_livraisons.length} ligne_livraisons`);
+        console.time(`Import de ${ligne_livraisons.length} ligne_livraisons`);
+        const ligne_livraisonsInsert = "INSERT INTO mada.ligne_livraison (quantite_livraison, id_livraison, id_commandeLigne) VALUES ($1, $2, $3);";
+
+        for (const ligne_livraison of ligne_livraisons) {
+            consol.seed(`Import de la ligne_livraison pour la ligne commande id : ${ligne_livraison.id_commandeLigne}`);
+            await db.query(ligne_livraisonsInsert, [ligne_livraison.quantite_livraison, ligne_livraison.id_livraison, ligne_livraison.id_commandeLigne]);
+        }
+
+        consol.seed(`Fin de l'import de ${ligne_livraisons.length} ligne_livraisons`);
+        console.timeEnd(`Import de ${ligne_livraisons.length} ligne_livraisons`);
+
+
+        //! LIGNE_PANIER
+
+        consol.seed(`Début de l'import de ${ligne_paniers.length} ligne_paniers`);
+        console.time(`Import de ${ligne_paniers.length} ligne_paniers`);
+        const ligne_paniersInsert = "INSERT INTO mada.ligne_panier (quantite, id_produit, id_panier) VALUES ($1, $2, $3);";
+
+        for (const ligne_panier of ligne_paniers) {
+            consol.seed(`Import de la ligne_panier pour la le panier id : ${ligne_panier.id_panier} et le produit id : ${ligne_panier.id_produit}`);
+            await db.query(ligne_paniersInsert, [ligne_panier.quantite, ligne_panier.id_produit, ligne_panier.id_panier]);
+        }
+        consol.seed(`Fin de l'import de ${ligne_paniers.length} ligne_paniers`);
+        console.timeEnd(`Import de ${ligne_paniers.length} ligne_paniers`);
+
+
+
+        //! PRODUIT_COMMANDE_RETOURNE
+
+
+        consol.seed(`Début de l'import de ${produit_commande_retournes.length} produit_commande_retournes`);
+        console.time(`Import de ${produit_commande_retournes.length} produit_commande_retournes`);
+        const produit_commande_retournesInsert = "INSERT INTO mada.produit_commande_retourne (quantite, commentaire, id_livraisonLigne) VALUES ($1, $2, $3);";
+
+        for (const produit_commande_retourne of produit_commande_retournes) {
+            consol.seed(`Import de produit_commande_retourne pour l'id livraison ligne  : ${produit_commande_retourne.id_livraisonLigne}`);
+            await db.query(produit_commande_retournesInsert, [produit_commande_retourne.quantite, produit_commande_retourne.commentaire, produit_commande_retourne.id_livraisonLigne]);
+        }
+        consol.seed(`Fin de l'import de ${produit_commande_retournes.length} produit_commande_retournes`);
+        console.timeEnd(`Import de ${produit_commande_retournes.length} produit_commande_retournes`);
+
+
+
+        //! CLIENT_HISTORIQUE_PASWORD
+
+
+        consol.seed(`Début de l'import de ${client_historique_passwords.length} client_historique_passwords`);
+        console.time(`Import de ${client_historique_passwords.length} client_historique_passwords`);
+        const client_historique_passwordsInsert = "INSERT INTO mada.client_historique_password (password_hash, id_client) VALUES ($1, $2);";
+
+        for (const client_historique_password of client_historique_passwords) {
+            consol.seed(`Import de client_historique_password pour le client id  : ${client_historique_password.id_client}`);
+            await db.query(client_historique_passwordsInsert, [client_historique_password.password_hash, client_historique_password.id_client]);
+        }
+        consol.seed(`Fin de l'import de ${client_historique_passwords.length} client_historique_passwords`);
+        console.timeEnd(`Import de ${client_historique_passwords.length} client_historique_passwords`);
+
+
+
+        //! VILLE_a_CODEPOSTAL
+
+
+        consol.seed(`Début de l'import de ${ville_a_codePostales.length} ville_a_codePostales`);
+        console.time(`Import de ${ville_a_codePostales.length} ville_a_codePostales`);
+        const ville_a_codePostalesInsert = "INSERT INTO mada.ville_a_codePostal (id_ville, id_codePostal) VALUES ($1, $2);";
+
+        for (const ville_a_codePostale of ville_a_codePostales) {
+            consol.seed(`Import de ville_a_codePostale pour la ville id  : ${ville_a_codePostale.id_ville} et id_codePostal ${ville_a_codePostale.id_codePostale}`);
+            await db.query(ville_a_codePostalesInsert, [ville_a_codePostale.id_ville, ville_a_codePostale.id_codePostale]);
+        }
+        consol.seed(`Fin de l'import de ${ville_a_codePostales.length} ville_a_codePostales`);
+        console.timeEnd(`Import de ${ville_a_codePostales.length} ville_a_codePostales`);
+
+
+        //! DEDUIT
+
+
+        consol.seed(`Début de l'import de ${deductions.length} reductions`);
+        console.time(`Import de ${deductions.length} reductions`);
+        const reductionInsert = "INSERT INTO mada.deduit (id_reduction, id_produit) VALUES ($1, $2);";
+
+        for (const reduction of deductions) {
+            consol.seed(`Import de reduction pour le produit id  : ${reduction.id_produit}`);
+            await db.query(reductionInsert, [reduction.id_reduction, reduction.id_produit]);
+        }
+        consol.seed(`Fin de l'import de ${deductions.length} reductions`);
+        console.timeEnd(`Import de ${deductions.length} reductions`);
+
+
+        //! FOURNIT
+
+        consol.seed(`Début de l'import de ${fournies.length} fournies`);
+        console.time(`Import de ${fournies.length} fournies`);
+        const fournieInsert = "INSERT INTO mada.fournie (id_fournisseur, id_produit) VALUES ($1, $2);";
+
+        for (const fournie of fournies) {
+            consol.seed(`Import de fournie pour le produit id  : ${fournie.id_produit}`);
+            await db.query(fournieInsert, [fournie.id_fournisseur, fournie.id_produit]);
+        }
+        consol.seed(`Fin de l'import de ${fournies.length} fournies`);
+        console.timeEnd(`Import de ${fournies.length} fournies`);
 
 
 
 
 
+        //! Mise en place d'un client avec des droits admin.
 
+        consol.seed("Mise en place d'un admin dans la BDD");
+        await db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE}', email='${process.env.EMAILTEST}', prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}' WHERE idClient = ${process.env.ID}; `);
+        await db.query(`INSERT INTO mada.admin_verif_telephone (verif_phone, id_client) VALUES ('true', ${process.env.ID});`);
+        await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('true', ${process.env.ID});`);
+        await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
 
-
-
-
-
-
-
-
-
-
-
+        consol.seed(`Admin mis en place en client id ${process.env.ID}`)
 
 
         console.timeEnd("Génération de la fonction fakeData");

@@ -232,7 +232,7 @@ CREATE TABLE produit(
 	idProduit       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom            text_valid NOT NULL,
 	description    text_length NOT NULL,
-	prix_HT        posreal  NOT NULL,
+	prix_HT        posrealsup  NOT NULL,
 	id_categorie   INT NOT NULL REFERENCES categorie(idCategorie),
 	id_TVA         INT NOT NULL REFERENCES TVA(idTVA)
 );
@@ -330,13 +330,14 @@ CREATE TABLE livraison(
 	idLivraison        INT GENERATED ALWAYS AS IDENTITY UNIQUE,
 	frais_expedition   posreal  NOT NULL,
 	nom_transporteur   text_valid NOT NULL,
+	description		   text_valid NOT NULL,
 	date_envoi         timestamptz NOT NULL DEFAULT now(),
-	numero_suivi       text_valid NOT NULL,
-	URL_suivi          text_valid NOT NULL,
+	numero_suivi       text_valid,
+	URL_suivi          text_valid,
 	poid               posrealsup  NOT NULL,
 	createdDate        timestamptz NOT NULL DEFAULT now(),
 	updatedDate        timestamptz,
-	estime_arrive      timestamptz,
+	estime_arrive      text_valid,
 	CHECK (createdDate < updatedDate),
 
 	id_client            INT  NOT NULL REFERENCES commande(idClient),
@@ -358,9 +359,9 @@ CREATE TABLE client_adresse(
 	prenom            text_valid NOT NULL,
 	nom_famille       text_valid NOT NULL,
 	ligne1            text_valid NOT NULL,
-	ligne2            text_valid NOT NULL,
-	ligne3            text_valid NOT NULL,
-	numero            posint  NOT NULL, -- peut être égale a zéro...
+	ligne2            text_valid ,
+	ligne3            text_valid ,
+	telephone         posint  NOT NULL, -- peut être égale a zéro...
 	titre             text_valid NOT NULL,
 	createdDate       timestamptz NOT NULL DEFAULT now(),
 	updatedDate       timestamptz,

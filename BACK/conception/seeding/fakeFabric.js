@@ -377,6 +377,7 @@ const fakeData = async () => {
         console.timeEnd(`Génération de ${volume/2} orders`);
         console.log(orders);
         consol.seed(`Fin de la génération de fake orders`);
+        
 
 
         //!

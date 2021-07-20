@@ -50,7 +50,7 @@ CREATE DOMAIN phonenumber AS text -- un domaine (type de donnée) permettant de 
 		VALUE ~* '^(0|\\+33|0033)[1-9][0-9]{8}$'
 	);
 
-CREATE DOMAIN password as text  -- un domaine (type de donnée) permettant de vérifier la validité d'un mot de passe en hash via une regex (fonctionne uniquement avec bcrypt qui commence ces hash de la même maniére)
+CREATE DOMAIN pass as text  -- un domaine (type de donnée) permettant de vérifier la validité d'un mot de passe en hash via une regex (fonctionne uniquement avec bcrypt qui commence ces hash de la même maniére)
 CHECK (
 
 		VALUE ~* '^\$2[ayb]\$.{50,61}$'
@@ -76,7 +76,7 @@ CREATE DOMAIN text_valid AS text -- un domaine pour les textes valides = mini 2 
 ------------------------------------------------------------
 
 CREATE TABLE shop(
-	idShop  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom               text_valid NOT NULL DEFAULT 'Madagascar Artisanat',
 	logo              text_valid,
 	texte_intro       text_valid NOT NULL DEFAULT 'Bienvenue sur le site XXX',
@@ -89,7 +89,7 @@ CREATE TABLE shop(
 -- Table: fournisseur
 ------------------------------------------------------------
 CREATE TABLE fournisseur(
-	idFournisseur     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom               text_valid NOT NULL,
 	logo              text_valid
 	
@@ -99,7 +99,7 @@ CREATE TABLE fournisseur(
 -- Table: categorie
 ------------------------------------------------------------
 CREATE TABLE categorie(
-	idCategorie   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom           text_valid NOT NULL,
 	description   text_length NOT NULL,
 	ordre         posint  NOT NULL,
@@ -114,7 +114,7 @@ CREATE TABLE categorie(
 -- Table: TVA
 ------------------------------------------------------------
 CREATE TABLE TVA(
-	idTVA         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	taux          posreal  NOT NULL,
 	nom           text_valid NOT NULL,
 	periode_TVA   DATERANGE NOT NULL DEFAULT '[2021-01-01, 2099-12-24]' -- [] => on inclut les deux bornes // () => on exclut les deux bornes // (] => on exclut la 1iere borne .... etc.)
@@ -127,7 +127,7 @@ CREATE TABLE TVA(
 -- Table: code_postal
 ------------------------------------------------------------
 CREATE TABLE code_postal(
-	idCodePostal    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	code_postal     postale_code_fr NOT NULL 
 );
 
@@ -136,7 +136,7 @@ CREATE TABLE code_postal(
 -- Table: pays
 ------------------------------------------------------------
 CREATE TABLE pays(
-	idPays   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom      text_valid NOT NULL
 );
 
@@ -145,9 +145,9 @@ CREATE TABLE pays(
 -- Table: ville
 ------------------------------------------------------------
 CREATE TABLE ville(
-	idVille     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom         text_valid NOT NULL,
-	id_pays     INT NOT NULL REFERENCES pays(idPays)
+	id_pays     INT NOT NULL REFERENCES pays(id)
 );
 
 
@@ -155,11 +155,11 @@ CREATE TABLE ville(
 -- Table: privilege
 ------------------------------------------------------------
 CREATE TABLE privilege(
-	idPrivilege   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom           text_valid NOT NULL
 );
 
-CREATE INDEX idx_privilege ON privilege(idPrivilege) INCLUDE (nom); -- index couvrant => https://public.dalibo.com/exports/formation/manuels/formations/perf2/perf2.handout.html
+CREATE INDEX idx_privilege ON privilege(id) INCLUDE (nom); -- index couvrant => https://public.dalibo.com/exports/formation/manuels/formations/perf2/perf2.handout.html
 
 
 
@@ -167,122 +167,122 @@ CREATE INDEX idx_privilege ON privilege(idPrivilege) INCLUDE (nom); -- index cou
 -- Table: client
 ------------------------------------------------------------
 CREATE TABLE client(
-	idClient       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	prenom         text_valid NOT NULL,
 	nom_famille    text_valid NOT NULL,
 	email          email NOT NULL UNIQUE,
-	password       password NOT NULL,
+	password       pass NOT NULL,
 	createdDate    timestamptz NOT NULL DEFAULT now(),
 	updatedDate    timestamptz,
 	CHECK (createdDate < updatedDate),
-	id_privilege   INT NOT NULL REFERENCES privilege(idPrivilege)
+	id_privilege   INT NOT NULL REFERENCES privilege(id) DEFAULT 1
 );
 
-CREATE INDEX idx_client_id ON client(idClient);
+CREATE INDEX idx_client_id ON client(id);
 
 -----------------------------------------------------------
 -- Table: admin_verif_email
 ------------------------------------------------------------
 CREATE TABLE admin_verif_email(
-	idAdminVerifEmail     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	verif_email           BOOL  NOT NULL DEFAULT 'false',
 	date_verif_email      timestamptz NOT NULL DEFAULT now(),
-	id_client             INT UNIQUE NOT NULL REFERENCES client(idClient)
+	id_client             INT UNIQUE NOT NULL REFERENCES client(id)
 );
 
 -----------------------------------------------------------
 -- Table: admin_verif_telephone
 ------------------------------------------------------------
 CREATE TABLE admin_verif_telephone(
-	idAdminVerifTelephone   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	verif_phone             BOOL NOT NULL DEFAULT 'false',
 	date_verif_phone        timestamptz NOT NULL DEFAULT now(),
-	id_client               INT UNIQUE NOT NULL REFERENCES client(idClient)
+	id_client               INT UNIQUE NOT NULL REFERENCES client(id)
 );
 
 ------------------------------------------------------------
 -- Table: admin_phone
 ------------------------------------------------------------
 CREATE TABLE admin_phone(
-	idAdminPhone      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	admin_telephone   phonenumber  NOT NULL,
-	id_client         INT UNIQUE NOT NULL REFERENCES client(idClient) 
+	id_client         INT UNIQUE NOT NULL REFERENCES client(id) 
 );
 
 ------------------------------------------------------------
 -- Table: panier
 ------------------------------------------------------------
 CREATE TABLE panier(
-	idPanier      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	total         posreal  NOT NULL DEFAULT 00.00,
 	createdDate   timestamptz NOT NULL DEFAULT now(),
 	updatedDate   timestamptz,
 	CHECK (createdDate < updatedDate),
-	id_client     INT NOT NULL REFERENCES client(idClient)
+	id_client     INT NOT NULL REFERENCES client(id)
 );
 
 
-CREATE INDEX idx_panier_id ON panier(idPanier);
+CREATE INDEX idx_panier_id ON panier(id);
 
 
 ------------------------------------------------------------
 -- Table: produit
 ------------------------------------------------------------
 CREATE TABLE produit(
-	idProduit       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom            text_valid NOT NULL,
 	description    text_length NOT NULL,
 	prix_HT        posrealsup  NOT NULL,
-	id_categorie   INT NOT NULL REFERENCES categorie(idCategorie),
-	id_TVA         INT NOT NULL REFERENCES TVA(idTVA)
+	id_categorie   INT NOT NULL REFERENCES categorie(id),
+	id_TVA         INT NOT NULL REFERENCES TVA(id)
 );
 
-CREATE INDEX idx_produit_id ON produit(idProduit);
+CREATE INDEX idx_produit_id ON produit(id);
 CREATE INDEX idx_produit_nom ON produit(nom);
 ------------------------------------------------------------
 -- Table: produit_image
 ------------------------------------------------------------
 CREATE TABLE produit_image(
-	idProduitImage           INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                      text_valid NOT NULL,
 	ordre                    posint NOT NULL,
 	URL                      text_valid NOT NULL,
-	id_produit               INT NOT NULL REFERENCES produit(idProduit)
+	id_produit               INT NOT NULL REFERENCES produit(id)
 );
 
 ------------------------------------------------------------
 -- Table: avis
 ------------------------------------------------------------
 CREATE TABLE avis(
-	idAvis            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	notation          posintsup  NOT NULL,
 	avis              text_valid NOT NULL,
 	titre             text_valid NOT NULL,
 	createdDate       timestamptz NOT NULL DEFAULT now(),
 	updatedDate       timestamptz,
 	CHECK (createdDate < updatedDate),
-	id_client         INT NOT NULL REFERENCES client(idClient),
-	id_produit        INT NOT NULL REFERENCES produit(idProduit)
+	id_client         INT NOT NULL REFERENCES client(id),
+	id_produit        INT NOT NULL REFERENCES produit(id)
 );
 
 ------------------------------------------------------------
 -- Table: sous_categorie
 ------------------------------------------------------------
 CREATE TABLE sous_categorie(
-	idSousCategorie             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                         text_valid NOT NULL,
 	description                 text_length NOT NULL,
 	createdDate                 timestamptz NOT NULL DEFAULT now(),
 	updatedDate                 timestamptz,
 	CHECK (createdDate < updatedDate),
-	id_categorie                INT NOT NULL REFERENCES categorie(idCategorie)
+	id_categorie                INT NOT NULL REFERENCES categorie(id)
 );
 
 ------------------------------------------------------------
 -- Table: statut_commande
 ------------------------------------------------------------
 CREATE TABLE statut_commande(
-	idCommandeStatut   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	statut             text_valid NOT NULL,
 	description        text_length NOT NULL
 );
@@ -291,15 +291,15 @@ CREATE TABLE statut_commande(
 -- Table: commande
 ------------------------------------------------------------
 CREATE TABLE commande(
-	idCommande         INT  GENERATED ALWAYS AS IDENTITY UNIQUE,
+	id     INT  GENERATED ALWAYS AS IDENTITY UNIQUE,
 	reference          text_valid NOT NULL,
 	date_achat         timestamptz NOT NULL DEFAULT now(),
 	commentaire        text_valid NOT NULL,
 	updatedDate        timestamptz,
 	CHECK (date_achat < updatedDate),
 
-	id_commandeStatut   INT  NOT NULL REFERENCES statut_commande(idCommandeStatut),
-	id_client   	    INT  NOT NULL REFERENCES client(idClient)
+	id_commandeStatut   INT  NOT NULL REFERENCES statut_commande(id),
+	id_client   	    INT  NOT NULL REFERENCES client(id)
 
 
 );
@@ -310,14 +310,14 @@ CREATE TABLE commande(
 -- Table: paiement
 ------------------------------------------------------------
 CREATE TABLE paiement(
-	idPaiement            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	reference             text_valid NOT NULL,
 	methode               text_valid NOT NULL,
 	date_paiement         timestamptz NOT NULL DEFAULT now(),
 	montant               posrealsup  NOT NULL,
 	updatedDate           timestamptz,
 	CHECK (date_paiement < updatedDate),	
-	id_commande           INT  NOT NULL REFERENCES commande(idCommande)
+	id_commande           INT  NOT NULL REFERENCES commande(id)
 );
 
 
@@ -325,7 +325,7 @@ CREATE TABLE paiement(
 -- Table: livraison
 ------------------------------------------------------------
 CREATE TABLE livraison(
-	idLivraison        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	frais_expedition   posreal  NOT NULL,
 	nom_transporteur   text_valid NOT NULL,
 	description		   text_valid NOT NULL,
@@ -338,8 +338,8 @@ CREATE TABLE livraison(
 	estime_arrive      text_valid,
 	CHECK (createdDate < updatedDate),
 
-	id_client            INT  NOT NULL REFERENCES client(idClient),
-	id_commande          INT  NOT NULL REFERENCES commande(idCommande)
+	id_client            INT  NOT NULL REFERENCES client(id),
+	id_commande          INT  NOT NULL REFERENCES commande(id)
 	
 
 	
@@ -352,7 +352,7 @@ CREATE TABLE livraison(
 -- Table: client_adresse
 ------------------------------------------------------------
 CREATE TABLE client_adresse(
-	idClientAdresse   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	prenom            text_valid NOT NULL,
 	nom_famille       text_valid NOT NULL,
 	ligne1            text_valid NOT NULL,
@@ -364,8 +364,8 @@ CREATE TABLE client_adresse(
 	updatedDate       timestamptz,
 	CHECK (createdDate < updatedDate),
 
-	id_client         INT  NOT NULL REFERENCES client(idClient),
-	id_ville          INT  NOT NULL REFERENCES ville(idVille)
+	id_client         INT  NOT NULL REFERENCES client(id),
+	id_ville          INT  NOT NULL REFERENCES ville(id)
 	
 );
 
@@ -375,7 +375,7 @@ CREATE TABLE client_adresse(
 -- Table: facture
 ------------------------------------------------------------
 CREATE TABLE facture(
-	idFacture          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	reference          text_valid NOT NULL,
 	date_facturation   timestamptz NOT NULL DEFAULT now(),
 	montant_HT         posrealsup  NOT NULL,
@@ -384,8 +384,8 @@ CREATE TABLE facture(
 	updatedDate        timestamptz ,
 	CHECK (date_facturation < updatedDate),
 
-	id_paiement         INT NOT NULL REFERENCES paiement(idPaiement),
-	id_client			INT NOT NULL REFERENCES client(idClient)
+	id_paiement         INT NOT NULL REFERENCES paiement(id),
+	id_client			INT NOT NULL REFERENCES client(id)
 );
 
 
@@ -395,12 +395,12 @@ CREATE TABLE facture(
 -- Table: stock
 ------------------------------------------------------------
 CREATE TABLE stock(
-	idStock       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite      posint  NOT NULL,
 	createdDate   timestamptz NOT NULL DEFAULT now(),
 	updatedDate   timestamptz,
 	CHECK (createdDate < updatedDate),
-	id_produit    INT UNIQUE NOT NULL REFERENCES produit(idProduit)
+	id_produit    INT UNIQUE NOT NULL REFERENCES produit(id)
 );
 
 
@@ -408,7 +408,7 @@ CREATE TABLE stock(
 -- Table: reduction
 ------------------------------------------------------------
 CREATE TABLE reduction(
-	idReduction             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                     text_valid NOT NULL,
 	pourcentage_reduction   posreal  NOT NULL DEFAULT 00.00,
 	actif                   BOOL  NOT NULL,
@@ -420,20 +420,20 @@ CREATE TABLE reduction(
 -- Table: caracteristique
 ------------------------------------------------------------
 CREATE TABLE caracteristique(
-	idCaracteristique   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	couleur             text_valid NOT NULL,
 	taille              text_valid NOT NULL,
-	id_produit          INT  NOT NULL REFERENCES produit(idProduit)
+	id_produit          INT  NOT NULL REFERENCES produit(id)
 );
 
 ------------------------------------------------------------
 -- Table: categorie_image
 ------------------------------------------------------------
 CREATE TABLE categorie_image(
-	idCategorieImage   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                text_valid NOT NULL,
 	URL                text_valid NOT NULL,
-	id_categorie       INT  NOT NULL REFERENCES categorie(idCategorie)
+	id_categorie       INT  NOT NULL REFERENCES categorie(id)
 );
 
 
@@ -441,10 +441,10 @@ CREATE TABLE categorie_image(
 -- Table: sous_categorie_image
 ------------------------------------------------------------
 CREATE TABLE sous_categorie_image(
-	idSousCategorieImage   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                    text_valid NOT NULL ,
 	URL                    text_valid NOT NULL ,
-	id_sousCategorie       INT  NOT NULL REFERENCES sous_categorie(idSousCategorie)
+	id_sousCategorie       INT  NOT NULL REFERENCES sous_categorie(id)
 );
 
 
@@ -455,11 +455,11 @@ CREATE TABLE sous_categorie_image(
 -- Table: ligne_commande
 ------------------------------------------------------------
 CREATE TABLE ligne_commande(
-	idCommandeLigne     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite_commande   posintsup  NOT NULL,
 
-	id_produit          INT  NOT NULL REFERENCES produit(idProduit),
-	id_commande			INT  NOT NULL REFERENCES commande(idCommande)
+	id_produit          INT  NOT NULL REFERENCES produit(id),
+	id_commande			INT  NOT NULL REFERENCES commande(id)
 	
 );
 
@@ -469,11 +469,11 @@ CREATE TABLE ligne_commande(
 -- Table: ligne_livraison
 ------------------------------------------------------------
 CREATE TABLE ligne_livraison(
-	idLivraisonLigne                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite_livraison               posintsup  NOT NULL,
 
-	id_livraison                     INT  NOT NULL REFERENCES livraison(idLivraison),
-	id_commandeLigne                 INT  NOT NULL REFERENCES ligne_commande(idCommandeLigne)
+	id_livraison                     INT  NOT NULL REFERENCES livraison(id),
+	id_commandeLigne                 INT  NOT NULL REFERENCES ligne_commande(id)
 	
 );
 
@@ -484,22 +484,22 @@ CREATE TABLE ligne_livraison(
 -- Table: ligne_panier
 ------------------------------------------------------------
 CREATE TABLE ligne_panier(
-	idLignePanier   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite        posintsup  NOT NULL,
 
-	id_produit      INT  NOT NULL REFERENCES produit(idProduit),
-	id_panier       INT  NOT NULL REFERENCES panier(idPanier)
+	id_produit      INT  NOT NULL REFERENCES produit(id),
+	id_panier       INT  NOT NULL REFERENCES panier(id)
 );
 
 ------------------------------------------------------------
 -- Table: produit_commande_retourne
 ------------------------------------------------------------
 CREATE TABLE produit_commande_retourne(
-	idProduitCommandeRetourne   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite                    posint  NOT NULL DEFAULT 0,
 	createdDate                 timestamptz NOT NULL DEFAULT now(),
 	commentaire                 text_valid NOT NULL,
-	id_livraisonLigne           INT  NOT NULL REFERENCES ligne_livraison(idLivraisonLigne)
+	id_livraisonLigne           INT  NOT NULL REFERENCES ligne_livraison(id)
 
 );
 
@@ -508,10 +508,10 @@ CREATE TABLE produit_commande_retourne(
 -- Table: client_historique_password
 ------------------------------------------------------------
 CREATE TABLE client_historique_password(
-	idClientHistoriqueConnexion   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	password_hash                 password NOT NULL,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	password_hash                 pass NOT NULL,
 	date_creation                 timestamptz NOT NULL DEFAULT now(),
-	id_client                     INT  NOT NULL REFERENCES client(idClient)
+	id_client                     INT  NOT NULL REFERENCES client(id)
 );
 
 
@@ -519,10 +519,10 @@ CREATE TABLE client_historique_password(
 -- Table: client_historique_connexion
 ------------------------------------------------------------
 CREATE TABLE client_historique_connexion(
-	idClientHistoriqueConnexion   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	connexion_succes              BOOL  NOT NULL,
 	connexion_date                timestamptz NOT NULL DEFAULT now(),
-	id_client                     INT  NOT NULL REFERENCES client(idClient)
+	id_client                     INT  NOT NULL REFERENCES client(id)
 );
 
 
@@ -530,9 +530,9 @@ CREATE TABLE client_historique_connexion(
 -- Table: ville_a_codePostale
 ------------------------------------------------------------
 CREATE TABLE ville_a_codePostal (
-	idVille_a_codePostal              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	id_ville                          INT NOT NULL REFERENCES ville(idVille),
-	id_codePostal                    INT NOT NULL REFERENCES code_postal(idCodePostal)
+	id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id_ville                          INT NOT NULL REFERENCES ville(id),
+	id_codePostal                    INT NOT NULL REFERENCES code_postal(id)
 );
 
 
@@ -540,9 +540,9 @@ CREATE TABLE ville_a_codePostal (
 -- Table: deduit
 ------------------------------------------------------------
 CREATE TABLE deduit(
-	idDeduit      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	id_reduction   INT  NOT NULL REFERENCES reduction(idReduction),
-	id_produit     INT  NOT NULL REFERENCES produit(idProduit)
+	id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id_reduction   INT  NOT NULL REFERENCES reduction(id),
+	id_produit     INT  NOT NULL REFERENCES produit(id)
 
 );
 
@@ -550,9 +550,9 @@ CREATE TABLE deduit(
 -- Table: fournie
 ------------------------------------------------------------
 CREATE TABLE fournie(
-	idFournie       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	id_fournisseur   INT  NOT NULL REFERENCES fournisseur(idFournisseur),
-	id_produit       INT  NOT NULL REFERENCES produit(idProduit)
+	id       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id_fournisseur   INT  NOT NULL REFERENCES fournisseur(id),
+	id_produit       INT  NOT NULL REFERENCES produit(id)
 );
 
 COMMIT;

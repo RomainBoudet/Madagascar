@@ -1280,7 +1280,7 @@ const fakeData = async () => {
         //! Mise en place d'un client avec des droits admin.
 
         consol.seed("Mise en place d'un admin dans la BDD");
-        await db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE}', email='${process.env.EMAILTEST}', prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}' WHERE idClient = ${process.env.ID}; `);
+        await db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE}', email='${process.env.EMAILTEST}', prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}' WHERE id = ${process.env.ID}; `);
         await db.query(`INSERT INTO mada.admin_verif_telephone (verif_phone, id_client) VALUES ('true', ${process.env.ID});`);
         await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('true', ${process.env.ID});`);
         await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);

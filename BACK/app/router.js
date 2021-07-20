@@ -26,6 +26,7 @@ const {
   
   //Redis pour le cache
   const cacheGenerator = require('./services/cache');
+const consol = require('./services/colorConsole');
   //Config de notre service de mise en cache via Redis, avec une invalidation temporelle de 15 Jours (en sec) en plus de l'invalidation événementielle.
    const { cache, flush } = cacheGenerator({
     ttl: 1296000, // 3600 *24 *15 
@@ -56,9 +57,7 @@ const {
   //! pour autoriser une route aux modérateurs ET au administrateurs :
   //on ajoute "moderateur" apres la route  ex = router.get('/produits', moderateur, produitController.allproduits);
   
-  //! SQL RACCOURCIS POUR PG ADMIN
-  // SQL pour changer le role = UPDATE "user" SET group_id = 3 WHERE pseudo = 'agathe'; // valeur de group_id => [1 = Membre, 2 = Administrateur, 3 = Modérateur])
-  // SQL Pour changer le statut d'un email a TRUE =  UPDATE "user" SET verifyemail ='true' WHERE pseudo = 'agathe';
+
   
   /**
    * Page d'acceuil du site des Gardiens de la légende
@@ -88,6 +87,17 @@ const {
 
 router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authController.login);
 
+router.get('/all',authController.getAllClient);
+
+router.get('/getone/:id(\\d+)', authController.getUserbyId);
+
+router.post('/email', authController.getUserbyEmail);
+
+router.post('/aut', authController.aut);
+
+router.post('/newClient', authController.newClient);
+
+router.patch('/updateClient/:id(\\d+)', authController.updateClient);
 /**
  * Une inscription
  * @typedef {object} inscription

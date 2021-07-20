@@ -1,0 +1,242 @@
+const db = require('../database');
+const bcrypt = require('bcrypt');
+const consol = require('../services/colorConsole');
+
+class Client {
+
+  id;
+  prenom ;
+  nom_famille;
+  email;
+  password;
+  createdDate;
+  updatedDate;
+  id_privilege;
+
+
+
+  set nom_famille(val) {
+    this.nomFamille = val;
+  }
+
+  set id_privilege(val) {
+    this.idPrivilege = val;
+  }
+
+
+  /**
+   * @constructor
+   */
+  constructor(data = {}) {
+    for (const prop in data) {
+      this[prop] = data[prop];
+    }
+  }
+
+  /**
+   * Méthode chargé d'aller chercher toutes les informations relatives à tous les clients
+   * @returns - tous les clients présent en BDD
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+  static async findAll() {
+    const {
+      rows
+    } = await db.query('SELECT client.prenom Prenom, client.nom_famille Nom_de_famille, client.email email, privilege.nom Privilege, client_adresse.ligne1 adresse1, client_adresse.ligne2 adresse2, client_adresse.ligne3 adresse3, ville.nom Ville, code_postal.code_postal Code_postale, pays.nom Pays FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege JOIN mada.client_adresse ON client_adresse.id_client = client.id JOIN mada.ville ON client_adresse.id_ville = ville.id JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id JOIN mada.code_postal ON code_postal.id = ville_a_codePostal.id_codePostal JOIN mada.pays ON pays.id = ville.id_pays ORDER BY client.prenom ASC;');
+
+    if (!rows[0]) {
+      throw new Error("Aucun client dans la BDD");
+    }
+    consol.model(
+      `les informations des ${rows.length} clients ont été demandé !`
+    );
+
+    return rows.map((client) => new Client(client));
+  }
+
+
+  /**
+   * Méthode chargé d'aller chercher les informations relatives à un client passé en paramétre
+   * @param - un id d'un client
+   * @returns - les informations du client demandées
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+  static async findOne(id) {
+
+
+    const {
+      rows,
+    } = await db.query(
+      'SELECT client.prenom Prenom, client.nom_famille Nom_de_famille, client.email email, client.password, privilege.nom Privilege, client_adresse.ligne1 adresse1, client_adresse.ligne2 adresse2, client_adresse.ligne3 adresse3, ville.nom Ville, code_postal.code_postal Code_postale, pays.nom Pays FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege JOIN mada.client_adresse ON client_adresse.id_client = client.id JOIN mada.ville ON client_adresse.id_ville = ville.id JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id JOIN mada.code_postal ON code_postal.id = ville_a_codePostal.id_codePostal JOIN mada.pays ON pays.id = ville.id_pays WHERE client.id = $1;',
+      [id]
+    );
+
+    if (!rows[0]) {
+      throw new Error("Aucun client avec cet id");
+    }
+
+    consol.model(
+      `le client id : ${id} a été demandé en BDD !`
+    );
+
+    return new Client(rows[0]);
+  }
+
+  /**
+   * Méthode chargé d'aller chercher les informations relatives à un client passé en paramétre
+   * @param - un email d'un client
+   * @returns - les informations du client demandées
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+  static async findByEmail(email) {
+
+    const {
+      rows,
+    } = await db.query(
+      `SELECT client.prenom Prenom, client.nom_famille Nom_de_famille, client.email email, client.password, privilege.nom Privilege, client_adresse.ligne1 adresse1, client_adresse.ligne2 adresse2, client_adresse.ligne3 adresse3, ville.nom Ville, code_postal.code_postal Code_postale, pays.nom Pays FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege JOIN mada.client_adresse ON client_adresse.id_client = client.id JOIN mada.ville ON client_adresse.id_ville = ville.id JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id JOIN mada.code_postal ON code_postal.id = ville_a_codePostal.id_codePostal JOIN mada.pays ON pays.id = ville.id_pays WHERE client.email = $1;`,
+      [email]
+    );
+
+    if (!rows[0]) {
+      consol.model("Aucun client avec cet email");
+    } else {
+      consol.model(
+        `le client avec l'email : ${email} a été demandé !`
+      );
+    }
+    return new Client(rows[0]);
+  }
+
+/**
+   * Méthode chargé d'aller authentifier un client passé en paramétre
+   * @param - un email d'un client
+   * @param - un password d'un client
+   * @returns - les informations du client si il a put s'authentifier
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+  static async authenticate(email, password) {
+
+    const {
+      rows,
+    } = await db.query(
+      `SELECT client.*, privilege.nom FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege WHERE client.email = $1;`,
+      [email]
+    );
+    if (!rows[0]) {
+      consol.model("Aucun client avec cet email en BDD");
+      return null
+    } else {
+      consol.model(
+        `Une authentification à été demandé pour le client : ${email} !`
+      );
+      consol.model(`Le password de ${email} en BDD est ${rows[0].password} et celui proposé est ${password}.`);
+
+      if (await bcrypt.compare(password, rows[0].password)) {
+        consol.model(`l'utilisateur avec l'email ${email} a été authentifié avec succés !`);
+        return new Client(rows[0])
+      } else {
+        consol.model(`Echec. L'utilisateur avec l'email ${email} n'a pas été authentifié !`);
+        return null;
+      }
+    }
+  }
+
+
+
+
+  /**
+   * Méthode chargé d'aller insérer les informations relatives à un utilisateur passé en paramétre
+   * @param prenom - le prénom d'un client
+   * @param nomFamille - le nom de famille d'un client
+   * @param email  - l'email' d'un client
+   * @param password - le password d'un client
+   * @returns - les informations du client demandées
+   * @async - une méthode asynchrone
+   */
+  async save() {
+    const {
+      rows,
+    } = await db.query(
+      `INSERT INTO mada.client (prenom, nom_famille, email, password) VALUES ($1,$2,$3,$4) RETURNING*;`,
+      [this.prenom, this.nomFamille, this.email, this.password]
+    );
+
+    this.id = rows[0].id;
+    this.createdDate = rows[0].createddate;
+    consol.model(
+      `le client id ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été inséré à la date du ${this.createdDate} !`
+    );
+  }
+
+
+
+  /**
+  * Méthode chargé d'aller mettre à jour les informations relatives à un client passé en paramétre
+  * @param prenom - le prénom d'un client
+  * @param nomFamille - le nom de famille d'un client
+  * @param email  - l'email' d'un client
+  * @param password - le password d'un client
+  * @returns - les informations du client mis à jour
+  * @async - une méthode asynchrone
+  */
+  async update() {
+    const {
+      rows,
+    } = await db.query(
+      `UPDATE mada.client SET prenom = $1, nom_famille = $2, email = $3, password = $4 WHERE id = $5 RETURNING *;`,
+      [this.prenom, this.nomFamille, this.email, this.password, this.id]
+    );
+
+    console.log(
+      `le client id : ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été mise à jour !`
+    );
+  }
+
+  async delete(id) {
+    const {
+      rows
+    } = await db.query('DELETE FROM mada.client WHERE id = $1 RETURNING *;', [
+      id,
+    ]);
+    consol.model(`le client id ${id} a été supprimé !`);
+
+    return new Client(rows[0]);
+  }
+
+
+
+  static async adminEmailVerified(id) {
+
+    const {
+      rows
+    } = await db.query('UPDATE mada.adminVerification SET adminVerification_email=TRUE WHERE id = $1 RETURNING adminVerification_email;', [
+      id,
+    ]);
+
+    this.adminVerificationEmail = rows[0].adminVerificationEmail;
+    consol.model(`l'email de l'admin id: ${id} a bien été vérifié et est passé en statut ${this.adminVerificationEmail} !`);
+
+    return new Client(rows[0]);
+
+
+  }
+
+
+
+  async updatePwd() {
+    const {
+      rows,
+    } = await db.query(`UPDATE mada.client SET password= $1 WHERE id = $2;`, [this.password, this.id]);
+
+    consol.model(`Le password du client id ${this.id} a été mise à jour !`);
+  }
+
+
+
+
+}
+
+module.exports = Client;

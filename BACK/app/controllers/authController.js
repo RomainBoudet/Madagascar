@@ -1,4 +1,4 @@
-const Custumer = require('../models/custumer');
+const Client = require('../models/client');
 const crypto = require('crypto');
 const consol = require('../services/colorConsole');
 
@@ -21,7 +21,7 @@ const authController = {
     login: async (request, response) => {
 
         try {
-            
+
             //on cherche à identifier le client à partir de son email (qu'on a au préalable sanitizé pour éviter une petite attaque xss ;)
             const email = request.sanitize(request.body.email);
 
@@ -52,7 +52,7 @@ const authController = {
                     role: clientInDb.privilegeName,
                 };
 
-               consol.controller("request.session.user =>", request.session.user);
+                consol.controller("request.session.user =>", request.session.user);
 
                 //LocalStorage => sensible aux attaques XSS // faille Cross site Scripting ! injection du contenu dans une page web
                 //Cookies => sensible aux attaques CSRF // Cross Site Request Forgery , faille qui consiste simplement à faire exécuter à une victime une requête HTTP à son insu
@@ -138,6 +138,128 @@ const authController = {
         }
 
     },
+
+
+    getAllClient: async (req, res) => {
+        try {
+            const clients = await Client.findAll();
+
+            res.status(200).json(clients);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllUser du userController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getUserbyId: async (req, res) => {
+        try {
+
+            const client = await Client.findOne(req.params.id);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getUserbyId du userController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getUserbyEmail: async (req, res) => {
+        try {
+
+            const {
+                email
+            } = req.body;
+
+            const client = await Client.findByEmail(email);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getUserbyId du userController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    aut: async (req, res) => {
+        try {
+
+            const {
+                email,
+                password
+            } = req.body;
+            console.log(req.body);
+            const client = await Client.authenticate(email, password);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getUserbyId du userController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newClient: async (req, res) => {
+        try {
+
+
+            const data = {};
+            data.prenom = req.body.prenom;
+            data.nomFamille = req.body.nomFamille;
+            data.email = req.body.email;
+            data.password = req.body.password;
+
+            const newClient = new Client(data);
+            await newClient.save();
+            res.json(newClient);
+        } catch (error) {
+            console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateClient: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            const updateClient = await Client.findOne(id);
+
+            console.log("Dans le controller updateClient vaut => ", updateClient);
+
+            const prenom = req.body.prenom;
+            const nomFamille = req.body.nomFamille;
+            const email = req.body.email;
+            const password = req.body.password;
+
+            if (prenom) {
+                updateClient.prenom = prenom;
+            }
+            updateClient
+
+            if (nomFamille) {
+                updateClient.nomFamille = nomFamille;
+            }
+
+            if (email) {
+                updateClient.email = email;
+            }
+
+            if (password) {
+                updateClient.password = password;
+            }
+
+            await updateClient.update();
+            res.json(updateClient);
+        } catch (error) {
+            console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
 
 
 }

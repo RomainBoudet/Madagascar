@@ -42,7 +42,7 @@ class Client {
   static async findAll() {
     const {
       rows
-    } = await db.query('SELECT client.prenom Prenom, client.nom_famille Nom_de_famille, client.email email, privilege.nom Privilege, client_adresse.ligne1 adresse1, client_adresse.ligne2 adresse2, client_adresse.ligne3 adresse3, ville.nom Ville, code_postal.code_postal Code_postale, pays.nom Pays FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege JOIN mada.client_adresse ON client_adresse.id_client = client.id JOIN mada.ville ON client_adresse.id_ville = ville.id JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id JOIN mada.code_postal ON code_postal.id = ville_a_codePostal.id_codePostal JOIN mada.pays ON pays.id = ville.id_pays ORDER BY client.prenom ASC;');
+    } = await db.query('SELECT * FROM mada.client ORDER BY client.id ASC');
 
     if (!rows[0]) {
       throw new Error("Aucun client dans la BDD");
@@ -68,7 +68,7 @@ class Client {
     const {
       rows,
     } = await db.query(
-      'SELECT client.prenom Prenom, client.nom_famille Nom_de_famille, client.email email, client.password, privilege.nom Privilege, client_adresse.ligne1 adresse1, client_adresse.ligne2 adresse2, client_adresse.ligne3 adresse3, ville.nom Ville, code_postal.code_postal Code_postale, pays.nom Pays FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege JOIN mada.client_adresse ON client_adresse.id_client = client.id JOIN mada.ville ON client_adresse.id_ville = ville.id JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id JOIN mada.code_postal ON code_postal.id = ville_a_codePostal.id_codePostal JOIN mada.pays ON pays.id = ville.id_pays WHERE client.id = $1;',
+      'SELECT * FROM mada.client WHERE client.id = $1;',
       [id]
     );
 
@@ -95,7 +95,7 @@ class Client {
     const {
       rows,
     } = await db.query(
-      `SELECT client.prenom Prenom, client.nom_famille Nom_de_famille, client.email email, client.password, privilege.nom Privilege, client_adresse.ligne1 adresse1, client_adresse.ligne2 adresse2, client_adresse.ligne3 adresse3, ville.nom Ville, code_postal.code_postal Code_postale, pays.nom Pays FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege JOIN mada.client_adresse ON client_adresse.id_client = client.id JOIN mada.ville ON client_adresse.id_ville = ville.id JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id JOIN mada.code_postal ON code_postal.id = ville_a_codePostal.id_codePostal JOIN mada.pays ON pays.id = ville.id_pays WHERE client.email = $1;`,
+      `SELECT * FROM mada.client WHERE client.email = $1;;`,
       [email]
     );
 
@@ -194,45 +194,22 @@ class Client {
       `le client id : ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été mise à jour !`
     );
   }
-
-  async delete(id) {
+/**
+  * Méthode chargé d'aller supprimer un client passé en paramétre
+  * @param id - l'id d'un article
+  * @async - une méthode asynchrone
+  */
+  async delete() {
     const {
       rows
-    } = await db.query('DELETE FROM mada.client WHERE id = $1 RETURNING *;', [
-      id,
+    } = await db.query('DELETE FROM mada.client WHERE client.id = $1 RETURNING *;', [
+      this.id,
     ]);
-    consol.model(`le client id ${id} a été supprimé !`);
+    consol.model(`le client id ${this.id} a été supprimé !`);
 
     return new Client(rows[0]);
   }
 
-
-
-  static async adminEmailVerified(id) {
-
-    const {
-      rows
-    } = await db.query('UPDATE mada.adminVerification SET adminVerification_email=TRUE WHERE id = $1 RETURNING adminVerification_email;', [
-      id,
-    ]);
-
-    this.adminVerificationEmail = rows[0].adminVerificationEmail;
-    consol.model(`l'email de l'admin id: ${id} a bien été vérifié et est passé en statut ${this.adminVerificationEmail} !`);
-
-    return new Client(rows[0]);
-
-
-  }
-
-
-
-  async updatePwd() {
-    const {
-      rows,
-    } = await db.query(`UPDATE mada.client SET password= $1 WHERE id = $2;`, [this.password, this.id]);
-
-    consol.model(`Le password du client id ${this.id} a été mise à jour !`);
-  }
 
 
 

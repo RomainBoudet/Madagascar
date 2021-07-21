@@ -87,7 +87,7 @@ const consol = require('./services/colorConsole');
 
 router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authController.login);
 
-router.get('/all',authController.getAllClient);
+router.get('/all', authController.getAllClient);
 
 router.get('/getone/:id(\\d+)', authController.getUserbyId);
 
@@ -98,6 +98,8 @@ router.post('/aut', authController.aut);
 router.post('/newClient', authController.newClient);
 
 router.patch('/updateClient/:id(\\d+)', authController.updateClient);
+
+router.delete('/del/:id(\\d+)', authController.delClient);
 /**
  * Une inscription
  * @typedef {object} inscription

@@ -203,7 +203,6 @@ const authController = {
     newClient: async (req, res) => {
         try {
 
-
             const data = {};
             data.prenom = req.body.prenom;
             data.nomFamille = req.body.nomFamille;
@@ -225,9 +224,10 @@ const authController = {
             const {
                 id
             } = req.params;
+            console.log(id);
             const updateClient = await Client.findOne(id);
 
-            console.log("Dans le controller updateClient vaut => ", updateClient);
+            console.log("Dans le controller updateClient avant modif vaut => ", updateClient);
 
             const prenom = req.body.prenom;
             const nomFamille = req.body.nomFamille;
@@ -251,6 +251,8 @@ const authController = {
                 updateClient.password = password;
             }
 
+            console.log("Dans le controller updateClient apres modif vaut =>",updateClient);
+
             await updateClient.update();
             res.json(updateClient);
         } catch (error) {
@@ -258,6 +260,24 @@ const authController = {
             res.status(500).json(error.message);
         }
     },
+
+
+    delClient: async (req, res) => {
+
+        try {
+    
+          const clientInDb = await Client.findOne(req.params.id);
+    
+          const client = await clientInDb.delete();
+    
+          res.json(client);
+    
+        } catch (error) {
+          console.trace('Erreur dans la méthode DeleteUserById du userController :',
+            error);
+          res.status(500).json(error.message);
+        }
+      },
 
 
 

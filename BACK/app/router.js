@@ -16,6 +16,7 @@ const {
   // Controllers
   const authController = require('./controllers/authController');
   const mainController = require('./controllers/mainController');
+  const testController = require('./controllers/testController');
   
   // implémentation de joi, avec un validator  dans le dossier "services".
   const {
@@ -87,19 +88,27 @@ const consol = require('./services/colorConsole');
 
 router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authController.login);
 
-router.get('/all', authController.getAllClient);
 
-router.get('/getone/:id(\\d+)', authController.getUserbyId);
+//! Des routes de test pour mes models ...
 
-router.post('/email', authController.getUserbyEmail);
+router.get('/all', testController.getAllClient);
 
-router.post('/aut', authController.aut);
+router.get('/getone/:id(\\d+)', testController.getUserbyId);
 
-router.post('/newClient', authController.newClient);
+router.post('/email', testController.getUserbyEmail);
 
-router.patch('/updateClient/:id(\\d+)', authController.updateClient);
+router.post('/aut', testController.aut);
 
-router.delete('/del/:id(\\d+)', authController.delClient);
+router.post('/newClient', testController.newClient);
+
+router.patch('/updateClient/:id(\\d+)', testController.updateClient);
+
+router.delete('/del/:id(\\d+)', testController.delClient);
+
+router.patch('/updatePanier/:id(\\d+)', testController.updatePanier);
+
+
+
 /**
  * Une inscription
  * @typedef {object} inscription

@@ -6,14 +6,20 @@ class Client {
 
   id;
   prenom ;
-  nom_famille;
+  nomFamille;
   email;
   password;
   createdDate;
   updatedDate;
-  id_privilege;
+  idPrivilege;
 
+  set created_date(val) {
+    this.createdDate = val;
+  }
 
+  set update_date(val) {
+    this.updateDate = val;
+  }
 
   set nom_famille(val) {
     this.nomFamille = val;
@@ -165,7 +171,7 @@ class Client {
     );
 
     this.id = rows[0].id;
-    this.createdDate = rows[0].createddate;
+    this.createdDate = rows[0].created_date;
     consol.model(
       `le client id ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été inséré à la date du ${this.createdDate} !`
     );
@@ -186,7 +192,7 @@ class Client {
     const {
       rows,
     } = await db.query(
-      `UPDATE mada.client SET prenom = $1, nom_famille = $2, email = $3, password = $4 WHERE id = $5 RETURNING *;`,
+      `UPDATE mada.client SET prenom = $1, nom_famille = $2, email = $3, password = $4, updated_date = now() WHERE id = $5 RETURNING *;`,
       [this.prenom, this.nomFamille, this.email, this.password, this.id]
     );
 
@@ -209,9 +215,6 @@ class Client {
 
     return new Client(rows[0]);
   }
-
-
-
 
 
 }

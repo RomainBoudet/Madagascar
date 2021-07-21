@@ -103,9 +103,9 @@ CREATE TABLE categorie(
 	nom           text_valid NOT NULL,
 	description   text_length NOT NULL,
 	ordre         posint  NOT NULL,
-	createdDate   timestamptz NOT NULL DEFAULT now(),
-	updatedDate   timestamptz,
-	CHECK (createdDate < updatedDate)
+	created_date   timestamptz NOT NULL DEFAULT now(),
+	updated_date   timestamptz,
+	CHECK (created_date < updated_date)
 );
 
 
@@ -172,9 +172,9 @@ CREATE TABLE client(
 	nom_famille    text_valid NOT NULL,
 	email          email NOT NULL UNIQUE,
 	password       pass NOT NULL,
-	createdDate    timestamptz NOT NULL DEFAULT now(),
-	updatedDate    timestamptz,
-	CHECK (createdDate < updatedDate),
+	created_date    timestamptz NOT NULL DEFAULT now(),
+	updated_date    timestamptz,
+	CHECK (created_date < updated_date),
 	id_privilege   INT NOT NULL REFERENCES privilege(id) DEFAULT 1
 );
 
@@ -215,10 +215,10 @@ CREATE TABLE admin_phone(
 CREATE TABLE panier(
 	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	total         posreal  NOT NULL DEFAULT 00.00,
-	createdDate   timestamptz NOT NULL DEFAULT now(),
-	updatedDate   timestamptz,
-	CHECK (createdDate < updatedDate),
-	id_client     INT NOT NULL REFERENCES client(id)
+	created_date   timestamptz NOT NULL DEFAULT now(),
+	updated_date   timestamptz,
+	CHECK (created_date < updated_date),
+	id_client     INT NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
 
 
@@ -258,9 +258,9 @@ CREATE TABLE avis(
 	notation          posintsup  NOT NULL,
 	avis              text_valid NOT NULL,
 	titre             text_valid NOT NULL,
-	createdDate       timestamptz NOT NULL DEFAULT now(),
-	updatedDate       timestamptz,
-	CHECK (createdDate < updatedDate),
+	created_date       timestamptz NOT NULL DEFAULT now(),
+	updated_date       timestamptz,
+	CHECK (created_date < updated_date),
 	id_client         INT NOT NULL REFERENCES client(id),
 	id_produit        INT NOT NULL REFERENCES produit(id)
 );
@@ -272,9 +272,9 @@ CREATE TABLE sous_categorie(
 	id            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                         text_valid NOT NULL,
 	description                 text_length NOT NULL,
-	createdDate                 timestamptz NOT NULL DEFAULT now(),
-	updatedDate                 timestamptz,
-	CHECK (createdDate < updatedDate),
+	created_date                 timestamptz NOT NULL DEFAULT now(),
+	updated_date                 timestamptz,
+	CHECK (created_date < updated_date),
 	id_categorie                INT NOT NULL REFERENCES categorie(id)
 );
 
@@ -295,8 +295,8 @@ CREATE TABLE commande(
 	reference          text_valid NOT NULL,
 	date_achat         timestamptz NOT NULL DEFAULT now(),
 	commentaire        text_valid NOT NULL,
-	updatedDate        timestamptz,
-	CHECK (date_achat < updatedDate),
+	updated_date        timestamptz,
+	CHECK (date_achat < updated_date),
 
 	id_commandeStatut   INT  NOT NULL REFERENCES statut_commande(id),
 	id_client   	    INT  NOT NULL REFERENCES client(id)
@@ -315,8 +315,8 @@ CREATE TABLE paiement(
 	methode               text_valid NOT NULL,
 	date_paiement         timestamptz NOT NULL DEFAULT now(),
 	montant               posrealsup  NOT NULL,
-	updatedDate           timestamptz,
-	CHECK (date_paiement < updatedDate),	
+	updated_date           timestamptz,
+	CHECK (date_paiement < updated_date),	
 	id_commande           INT  NOT NULL REFERENCES commande(id)
 );
 
@@ -333,10 +333,10 @@ CREATE TABLE livraison(
 	numero_suivi       text_valid,
 	URL_suivi          text_valid,
 	poid               posrealsup  NOT NULL,
-	createdDate        timestamptz NOT NULL DEFAULT now(),
-	updatedDate        timestamptz,
+	created_date        timestamptz NOT NULL DEFAULT now(),
+	updated_date        timestamptz,
 	estime_arrive      text_valid,
-	CHECK (createdDate < updatedDate),
+	CHECK (created_date < updated_date),
 
 	id_client            INT  NOT NULL REFERENCES client(id),
 	id_commande          INT  NOT NULL REFERENCES commande(id)
@@ -360,9 +360,9 @@ CREATE TABLE client_adresse(
 	ligne3            text_valid ,
 	telephone         posint  NOT NULL, -- peut être égale a zéro...
 	titre             text_valid NOT NULL,
-	createdDate       timestamptz NOT NULL DEFAULT now(),
-	updatedDate       timestamptz,
-	CHECK (createdDate < updatedDate),
+	created_date       timestamptz NOT NULL DEFAULT now(),
+	updated_date       timestamptz,
+	CHECK (created_date < updated_date),
 
 	id_client         INT  NOT NULL REFERENCES client(id),
 	id_ville          INT  NOT NULL REFERENCES ville(id)
@@ -381,8 +381,8 @@ CREATE TABLE facture(
 	montant_HT         posrealsup  NOT NULL,
 	montant_TTC        posrealsup  NOT NULL,
 	montant_TVA        posrealsup  NOT NULL,
-	updatedDate        timestamptz ,
-	CHECK (date_facturation < updatedDate),
+	updated_date        timestamptz ,
+	CHECK (date_facturation < updated_date),
 
 	id_paiement         INT NOT NULL REFERENCES paiement(id),
 	id_client			INT NOT NULL REFERENCES client(id)
@@ -397,9 +397,9 @@ CREATE TABLE facture(
 CREATE TABLE stock(
 	id       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite      posint  NOT NULL,
-	createdDate   timestamptz NOT NULL DEFAULT now(),
-	updatedDate   timestamptz,
-	CHECK (createdDate < updatedDate),
+	created_date   timestamptz NOT NULL DEFAULT now(),
+	updated_date   timestamptz,
+	CHECK (created_date < updated_date),
 	id_produit    INT UNIQUE NOT NULL REFERENCES produit(id)
 );
 
@@ -488,7 +488,7 @@ CREATE TABLE ligne_panier(
 	quantite        posintsup  NOT NULL,
 
 	id_produit      INT  NOT NULL REFERENCES produit(id),
-	id_panier       INT  NOT NULL REFERENCES panier(id)
+	id_panier       INT  NOT NULL REFERENCES panier(id) ON DELETE CASCADE
 );
 
 ------------------------------------------------------------
@@ -497,7 +497,7 @@ CREATE TABLE ligne_panier(
 CREATE TABLE produit_commande_retourne(
 	id  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite                    posint  NOT NULL DEFAULT 0,
-	createdDate                 timestamptz NOT NULL DEFAULT now(),
+	created_date                 timestamptz NOT NULL DEFAULT now(),
 	commentaire                 text_valid NOT NULL,
 	id_livraisonLigne           INT  NOT NULL REFERENCES ligne_livraison(id)
 

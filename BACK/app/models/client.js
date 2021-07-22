@@ -63,7 +63,7 @@ class Client {
 
   /**
    * Méthode chargé d'aller chercher les informations relatives à un client passé en paramétre
-   * @param - un id d'un client
+   * @param id - un id d'un client
    * @returns - les informations du client demandées
    * @static - une méthode static
    * @async - une méthode asynchrone

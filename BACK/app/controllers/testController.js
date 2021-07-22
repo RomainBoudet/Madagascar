@@ -1,8 +1,9 @@
 const Client = require('../models/client');
 const Panier = require('../models/panier');
 const AdminPhone = require('../models/adminPhone');
-const Privilege = require ('../models/privilege');
+const Privilege = require('../models/privilege');
 const ClientHistoPass = require('../models/clientHistoPass');
+const ClientHistoConn = require('../models/clientHistoConn');
 const consol = require('../services/colorConsole');
 
 
@@ -20,7 +21,7 @@ const testController = {
 
     getAll: async (req, res) => {
         try {
-            const clients = await ClientHistoPass.findAll();
+            const clients = await ClientHistoConn.findAll();
 
             res.status(200).json(clients);
         } catch (error) {
@@ -33,41 +34,61 @@ const testController = {
     getOne: async (req, res) => {
         try {
 
-            const client = await ClientHistoPass.findOne(req.params.id);
+            const client = await ClientHistoConn.findOne(req.params.id);
             res.json(client);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode getUserbyId du userController :',
+            console.trace('Erreur dans la méthode getOne du userController :',
                 error);
             res.status(500).json(error.message);
         }
     },
 
-    
+    getByIdClient: async (req, res) => {
+        try {
+            console.log(req.params);
+            const client = await Panier.findByIdClient(req.params.id);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getByIdClient du userController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
 
     new: async (req, res) => {
         try {
 
             const data = {};
+            //C'est open bar pour binder !
             //!Client :
             //data.prepasswordHash = req.body.prepasswordHash;
             //data.idClient = req.body.idClient;
             //data.email = req.body.email;
             //data.password = req.body.password;
             //!Panier :
-            //data.passwordHash = req.body.passwordHash;
-            //data.idClient = req.body.idClient;
+            data.total = req.body.total;
+            data.idClient = req.body.idClient;
             //!AdminPhone :
             //data.passwordHash = req.body.passwordHash;
             //data.idClient = req.body.idClient;
             //!Privilege :
             //data.passwordHash = req.body.passwordHash;
-            //ClientHistoPass :
-            //!data.passwordHash = req.body.passwordHash;
+            //!ClientHistoPass :
+            //data.passwordHash = req.body.passwordHash;
+            //data.idClient = req.body.idClient;
+            //!ClientHistoConn :
+            //data.connexionSucces = req.body.connexionSucces;
             //data.idClient = req.body.idClient;
 
-            console.log("req.body ==> ",req.body);
-            const newClient = new ClientHistoPass(data);
+
+            console.log("req.body ==> ", req.body);
+            const newClient = new Panier(data);
             await newClient.save();
             res.json(newClient);
         } catch (error) {
@@ -81,7 +102,7 @@ const testController = {
 
         try {
 
-            const clientInDb = await ClientHistoPass.findOne(req.params.id);
+            const clientInDb = await ClientHistoConn.findOne(req.params.id);
 
             const client = await clientInDb.delete();
 
@@ -94,6 +115,28 @@ const testController = {
         }
     },
 
+
+    deleteByIdClient: async (req, res) => {
+
+        try {
+
+            const clientsInDb = await Panier.findByIdClient(req.params.id);
+            const arrayDeleted = [];
+            for (const clientInDb of clientsInDb) {
+               
+                const clientHistoConn = await clientInDb.deleteByIdClient();
+                arrayDeleted.push(clientHistoConn);
+            }
+
+            
+            res.json(arrayDeleted[0]);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode DeleteUserById du userController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
 
 
 
@@ -114,10 +157,10 @@ const testController = {
             console.log("Dans le controller updateClient avant modif vaut => ", updateClient);
 
 
-             const prepasswordHash = req.body.prepasswordHash;
+            const prepasswordHash = req.body.prepasswordHash;
             const idClient = req.body.idClient;
             const email = req.body.email;
-            const password = req.body.password; 
+            const password = req.body.password;
 
             let updateClientInfo = {};
             let userMessage = {};
@@ -157,7 +200,7 @@ const testController = {
             } else if (!password) {
                 updateClientInfo.password = updateClient.password
                 userMessage.password = 'Votre password n\'a pas changé';
-            } 
+            }
 
             await updateClient.update();
 
@@ -244,7 +287,7 @@ const testController = {
                 userMessage.idClient = 'Votre idClient n\'a pas changé';
             }
 
-           
+
             await updateClient.update();
 
             res.json(userMessage);
@@ -267,7 +310,7 @@ const testController = {
 
 
             const passwordHash = req.body.passwordHash;
-      
+
 
             let updateClientInfo = {};
             let userMessage = {};
@@ -283,7 +326,7 @@ const testController = {
             }
 
 
-           
+
             await updateClient.update();
 
             res.json(userMessage);
@@ -306,7 +349,7 @@ const testController = {
 
 
             const passwordHash = req.body.passwordHash;
-      
+
 
             let updateClientInfo = {};
             let userMessage = {};
@@ -322,7 +365,7 @@ const testController = {
             }
 
 
-           
+
             await updateClient.update();
 
             res.json(userMessage);
@@ -345,7 +388,7 @@ const testController = {
 
 
             const passwordHash = req.body.passwordHash;
-      
+
 
             let updateClientInfo = {};
             let userMessage = {};
@@ -361,7 +404,7 @@ const testController = {
             }
 
 
-           
+
             await updateClient.update();
 
             res.json(userMessage);

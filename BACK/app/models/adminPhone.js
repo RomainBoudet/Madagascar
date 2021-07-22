@@ -59,7 +59,7 @@ class AdminPhone {
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à un admin_phone passé en paramétre
-     * @param - un id d'un admin_phone
+     * @param id - un id d'un admin_phone
      * @returns - les informations du admin_phone demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
@@ -94,7 +94,7 @@ class AdminPhone {
      * @async - une méthode asynchrone
      */
     async save() {
-        console.log(this);
+       
         const {
             rows,
         } = await db.query(

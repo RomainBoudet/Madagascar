@@ -4,7 +4,7 @@ const consol = require('../services/colorConsole');
 class Panier {
 
   id;
-  total ;
+  total;
   createdDate;
   updatedDate;
   idClient;
@@ -55,7 +55,7 @@ class Panier {
 
   /**
    * Méthode chargé d'aller chercher les informations relatives à un panier passé en paramétre
-   * @param - un id d'un panier
+   * @param id - un id d'un panier
    * @returns - les informations du panier demandées
    * @static - une méthode static
    * @async - une méthode asynchrone
@@ -80,6 +80,35 @@ class Panier {
 
     return new Panier(rows[0]);
   }
+
+  /**
+   * Méthode chargé d'aller chercher les informations relatives à un panier passé en paramétre
+   * @param idClient - un idClient d'un client_historique_connexion
+   * @returns - les informations du panier demandées
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+  static async findByIdClient(idClient) {
+
+
+    const {
+      rows,
+    } = await db.query(
+      'SELECT * FROM mada.panier WHERE panier.id_client = $1;',
+      [idClient]
+    );
+
+    if (!rows[0]) {
+      throw new Error("Aucun panier avec cet idClient");
+    }
+
+    consol.model(
+      `l'historique de panier pour le idClient : ${idClient} a été demandé en BDD !`
+    );
+
+    return rows.map((clientHistoConn) => new Panier(clientHistoConn));
+  }
+
 
 
   /**
@@ -109,14 +138,14 @@ class Panier {
 
 
   /**
-  * Méthode chargé d'aller mettre à jour les informations relatives à un panier passé en paramétre
-  * @param prenom - le prénom d'un panier
-  * @param nomFamille - le nom de famille d'un panier
-  * @param email  - l'email' d'un panier
-  * @param password - le password d'un panier
-  * @returns - les informations du panier mis à jour
-  * @async - une méthode asynchrone
-  */
+   * Méthode chargé d'aller mettre à jour les informations relatives à un panier passé en paramétre
+   * @param prenom - le prénom d'un panier
+   * @param nomFamille - le nom de famille d'un panier
+   * @param email  - l'email' d'un panier
+   * @param password - le password d'un panier
+   * @returns - les informations du panier mis à jour
+   * @async - une méthode asynchrone
+   */
   async update() {
     const {
       rows,
@@ -129,11 +158,11 @@ class Panier {
       `le panier id : ${this.id} appartenant au client id ${this.idClient} a été mise à jour le ${this.updatedDate} !`
     );
   }
-/**
-  * Méthode chargé d'aller supprimer un panier passé en paramétre
-  * @param id - l'id d'un article
-  * @async - une méthode asynchrone
-  */
+  /**
+   * Méthode chargé d'aller supprimer un panier passé en paramétre
+   * @param id - l'id d'un article
+   * @async - une méthode asynchrone
+   */
   async delete() {
     const {
       rows
@@ -144,6 +173,25 @@ class Panier {
 
     return new Panier(rows[0]);
   }
+
+  /**
+     * Méthode chargé d'aller supprimer un panier passé en paramétre
+     * Afin de supprimer plus facilement toute trace d'un client si demande de suppression de compte. A voir si je la garde dans le temps...
+     * @param idClient - l'id d'un client d'un historique de connexion
+     * @async - une méthode asynchrone
+     */
+   async deleteByIdClient() {
+
+
+    const {
+        rows
+    } = await db.query('DELETE FROM mada.panier WHERE panier.id_client = $1 RETURNING *;', [
+        this.idClient
+    ]);
+    consol.model(`l'historique de panier du client id ${this.idClient}  a été supprimé !`);
+    
+    return rows.map((deletedClient) => new Panier(deletedClient));
+}
 
 
 }

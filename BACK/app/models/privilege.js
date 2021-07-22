@@ -52,7 +52,7 @@ class Privilege {
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à un privilege passé en paramétre
-     * @param - un id d'un privilege
+     * @param id - un id d'un privilege
      * @returns - les informations du privilege demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
@@ -86,7 +86,7 @@ class Privilege {
      * @async - une méthode asynchrone
      */
     async save() {
-        console.log(this);
+        
         const {
             rows,
         } = await db.query(

@@ -95,9 +95,13 @@ router.get('/all', testController.getAll);
 
 router.get('/getone/:id(\\d+)', testController.getOne);
 
+router.get('/getByIdClient/:id(\\d+)', testController.getByIdClient);
+
 router.post('/new', testController.new);
 
 router.delete('/del/:id(\\d+)', testController.delete);
+
+router.delete('/delByClient/:id(\\d+)', testController.deleteByIdClient);
 
 
 

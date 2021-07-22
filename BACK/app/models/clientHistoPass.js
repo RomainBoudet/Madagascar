@@ -6,7 +6,6 @@ class ClientHistoPass {
     id;
     passwordHash;
     createdDate;
-    updatedDate;
 
     set password_hash(val) {
         this.passwordHash = val;
@@ -20,9 +19,6 @@ class ClientHistoPass {
         this.createdDate = val;
     }
 
-    set updated_date(val) {
-        this.updatedDate = val;
-    }
 
 
     /**
@@ -58,7 +54,7 @@ class ClientHistoPass {
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à un client_historique_password passé en paramétre
-     * @param - un id d'un client_historique_password
+     * @param id - un id d'un client_historique_password
      * @returns - les informations du client_historique_password demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
@@ -86,6 +82,34 @@ class ClientHistoPass {
 
 
     /**
+     * Méthode chargé d'aller chercher les informations relatives à un client_historique_password passé en paramétre
+     * @param idClient - un idClient d'un client_historique_connexion
+     * @returns - les informations du client_historique_connexion demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findByIdClient(idClient) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.client_historique_password WHERE client_historique_password.id_client = $1;',
+            [idClient]
+        );
+
+        if (!rows[0]) {
+            throw new Error("Aucun client_historique_password avec cet idClient");
+        }
+
+        consol.model(
+            `l'historique de password pour le idClient : ${idClient} a été demandé en BDD !`
+        );
+
+        return rows.map((clientHistoConn) => new ClientHistoPass(clientHistoConn));
+    }
+
+    /**
      * Méthode chargé d'aller insérer les informations relatives à un utilisateur passé en paramétre
      * @param  password_hash - l'ancien password hash d'un client
      * @param  idClient - l'id du client lié a l'ancien hash du password
@@ -104,30 +128,11 @@ class ClientHistoPass {
         this.id = rows[0].id;
         this.createdDate = rows[0].created_date;
         consol.model(
-            `l'ancien password hash id ${this.id} avec comme hash ${this.password_hash} a été inséré à la date du ${this.createdDate} !`
+            `l'ancien password hash id ${this.id} avec comme hash ${this.passwordHash} a été inséré à la date du ${this.createdDate} !`
         );
     }
 
-
-
-    /**
-     * Méthode chargé d'aller mettre à jour les informations relatives à un client_historique_password passé en paramétre
-     * @param  password_hash - l'ancien password hash d'un client
-     * @returns - les informations du client_historique_password mis à jour
-     * @async - une méthode asynchrone
-     */
-    async update() {
-        const {
-            rows,
-        } = await db.query(
-            `UPDATE mada.client_historique_password SET password_hash = $1, updated_date = now() WHERE id = $2 RETURNING *;`,
-            [this.passwordHash, this.id]
-        );
-        this.updatedDate = rows[0].updated_date;
-        console.log(
-            `l'ancien password hash id : ${this.id} comprenant le hash ${this.passwordHash} a été mise à jour le ${this.updatedDate} !`
-        );
-    }
+   
     /**
      * Méthode chargé d'aller supprimer un client_historique_password passé en paramétre
      * @param id - l'id d'un client_historique_password
@@ -142,6 +147,25 @@ class ClientHistoPass {
         consol.model(`l'ancien password hash id ${this.id} a été supprimé !`);
 
         return new ClientHistoPass(rows[0]);
+    }
+
+    /**
+     * Méthode chargé d'aller supprimer un client_historique_password passé en paramétre
+     * Afin de supprimer plus facilement toute trace d'un client si demande de suppression de compte. A voir si je la garde dans le temps...
+     * @param idClient - l'id d'un client d'un historique de connexion
+     * @async - une méthode asynchrone
+     */
+     async deleteByIdClient() {
+
+
+        const {
+            rows
+        } = await db.query('DELETE FROM mada.client_historique_password WHERE client_historique_password.id_client = $1 RETURNING *;', [
+            this.idClient
+        ]);
+        consol.model(`l'historique de password du client id ${this.idClient}  a été supprimé !`);
+        
+        return rows.map((deletedClient) => new ClientHistoPass(deletedClient));
     }
 
 

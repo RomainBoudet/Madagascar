@@ -514,9 +514,11 @@ CREATE TABLE produit_commande_retourne(
 -- Table: client_historique_password
 ------------------------------------------------------------
 CREATE TABLE client_historique_password(
-	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id   						  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	password_hash                 pass NOT NULL,
-	date_creation                 timestamptz NOT NULL DEFAULT now(),
+	created_date    			  timestamptz NOT NULL DEFAULT now(),
+	updated_date    			  timestamptz,
+	CHECK (created_date < updated_date),
 	id_client                     INT  NOT NULL REFERENCES client(id)
 );
 

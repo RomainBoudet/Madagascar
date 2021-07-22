@@ -2,6 +2,7 @@ const Client = require('../models/client');
 const Panier = require('../models/panier');
 const AdminPhone = require('../models/adminPhone');
 const Privilege = require ('../models/privilege');
+const ClientHistoPass = require('../models/clientHistoPass');
 const consol = require('../services/colorConsole');
 
 
@@ -19,7 +20,7 @@ const testController = {
 
     getAll: async (req, res) => {
         try {
-            const clients = await Privilege.findAll();
+            const clients = await ClientHistoPass.findAll();
 
             res.status(200).json(clients);
         } catch (error) {
@@ -32,7 +33,7 @@ const testController = {
     getOne: async (req, res) => {
         try {
 
-            const client = await Privilege.findOne(req.params.id);
+            const client = await ClientHistoPass.findOne(req.params.id);
             res.json(client);
 
         } catch (error) {
@@ -49,20 +50,24 @@ const testController = {
 
             const data = {};
             //!Client :
-            //data.prenom = req.body.prenom;
+            //data.prepasswordHash = req.body.prepasswordHash;
             //data.idClient = req.body.idClient;
             //data.email = req.body.email;
             //data.password = req.body.password;
             //!Panier :
-            //data.nom = req.body.nom;
+            //data.passwordHash = req.body.passwordHash;
             //data.idClient = req.body.idClient;
             //!AdminPhone :
-            //data.nom = req.body.nom;
+            //data.passwordHash = req.body.passwordHash;
             //data.idClient = req.body.idClient;
-            data.nom = req.body.nom;
+            //!Privilege :
+            //data.passwordHash = req.body.passwordHash;
+            //ClientHistoPass :
+            //!data.passwordHash = req.body.passwordHash;
+            //data.idClient = req.body.idClient;
 
             console.log("req.body ==> ",req.body);
-            const newClient = new Privilege(data);
+            const newClient = new ClientHistoPass(data);
             await newClient.save();
             res.json(newClient);
         } catch (error) {
@@ -70,6 +75,31 @@ const testController = {
             res.status(500).json(error.message);
         }
     },
+
+
+    delete: async (req, res) => {
+
+        try {
+
+            const clientInDb = await ClientHistoPass.findOne(req.params.id);
+
+            const client = await clientInDb.delete();
+
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode DeleteUserById du userController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
+
+
+
 
     updateClient: async (req, res) => {
         try {
@@ -84,7 +114,7 @@ const testController = {
             console.log("Dans le controller updateClient avant modif vaut => ", updateClient);
 
 
-             const prenom = req.body.prenom;
+             const prepasswordHash = req.body.prepasswordHash;
             const idClient = req.body.idClient;
             const email = req.body.email;
             const password = req.body.password; 
@@ -94,12 +124,12 @@ const testController = {
 
             updateClientInfo.id = updateClient.id;
 
-            if (prenom) {
-                updateClient.prenom = prenom;
-                userMessage.prenom = 'Votre nouveau prenom a bien été enregistré ';
-            } else if (!prenom) {
-                updateClientInfo.prenom = updateClient.prenom
-                userMessage.prenom = 'Votre prenom n\'a pas changé';
+            if (prepasswordHash) {
+                updateClient.prepasswordHash = prepasswordHash;
+                userMessage.prepasswordHash = 'Votre nouveau prepasswordHash a bien été enregistré ';
+            } else if (!prepasswordHash) {
+                updateClientInfo.prepasswordHash = updateClient.prepasswordHash
+                userMessage.prepasswordHash = 'Votre prepasswordHash n\'a pas changé';
             }
 
 
@@ -138,33 +168,6 @@ const testController = {
             res.status(500).json(error.message);
         }
     },
-
-
-    delete: async (req, res) => {
-
-        try {
-
-            const clientInDb = await Privilege.findOne(req.params.id);
-
-            const client = await clientInDb.delete();
-
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode DeleteUserById du userController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-
-
-
-
-
-
-
-
 
 
     getUserbyEmail: async (req, res) => {
@@ -216,7 +219,7 @@ const testController = {
             const updateClient = await Panier.findOne(id);
 
 
-            const nom = req.body.nom;
+            const passwordHash = req.body.passwordHash;
             const idClient = req.body.idClient;
 
             let updateClientInfo = {};
@@ -224,12 +227,12 @@ const testController = {
 
             updateClientInfo.id = updateClient.id;
 
-            if (nom) {
-                updateClient.nom = nom;
-                userMessage.nom = 'Votre nouveau nom a bien été enregistré ';
-            } else if (!nom) {
-                updateClientInfo.nom = updateClient.nom
-                userMessage.nom = 'Votre nom n\'a pas changé';
+            if (passwordHash) {
+                updateClient.passwordHash = passwordHash;
+                userMessage.passwordHash = 'Votre nouveau passwordHash a bien été enregistré ';
+            } else if (!passwordHash) {
+                updateClientInfo.passwordHash = updateClient.passwordHash
+                userMessage.passwordHash = 'Votre passwordHash n\'a pas changé';
             }
 
 
@@ -263,7 +266,7 @@ const testController = {
             const updateClient = await AdminPhone.findOne(id);
 
 
-            const nom = req.body.nom;
+            const passwordHash = req.body.passwordHash;
       
 
             let updateClientInfo = {};
@@ -271,12 +274,12 @@ const testController = {
 
             updateClientInfo.id = updateClient.id;
 
-            if (nom) {
-                updateClient.nom = nom;
-                userMessage.nom = 'Votre nouveau nom a bien été enregistré ';
-            } else if (!nom) {
-                updateClientInfo.nom = updateClient.nom
-                userMessage.nom = 'Votre nom n\'a pas changé';
+            if (passwordHash) {
+                updateClient.passwordHash = passwordHash;
+                userMessage.passwordHash = 'Votre nouveau passwordHash a bien été enregistré ';
+            } else if (!passwordHash) {
+                updateClientInfo.passwordHash = updateClient.passwordHash
+                userMessage.passwordHash = 'Votre passwordHash n\'a pas changé';
             }
 
 
@@ -302,7 +305,7 @@ const testController = {
             const updateClient = await Privilege.findOne(id);
 
 
-            const nom = req.body.nom;
+            const passwordHash = req.body.passwordHash;
       
 
             let updateClientInfo = {};
@@ -310,12 +313,12 @@ const testController = {
 
             updateClientInfo.id = updateClient.id;
 
-            if (nom) {
-                updateClient.nom = nom;
-                userMessage.nom = 'Votre nouveau nom a bien été enregistré ';
-            } else if (!nom) {
-                updateClientInfo.nom = updateClient.nom
-                userMessage.nom = 'Votre nom n\'a pas changé';
+            if (passwordHash) {
+                updateClient.passwordHash = passwordHash;
+                userMessage.passwordHash = 'Votre nouveau passwordHash a bien été enregistré ';
+            } else if (!passwordHash) {
+                updateClientInfo.passwordHash = updateClient.passwordHash
+                userMessage.passwordHash = 'Votre passwordHash n\'a pas changé';
             }
 
 
@@ -331,7 +334,43 @@ const testController = {
     },
 
 
+    updateClientHistoPass: async (req, res) => {
+        try {
 
+            const {
+                id
+            } = req.params;
+            console.log(id);
+            const updateClient = await ClientHistoPass.findOne(id);
+
+
+            const passwordHash = req.body.passwordHash;
+      
+
+            let updateClientInfo = {};
+            let userMessage = {};
+
+            updateClientInfo.id = updateClient.id;
+
+            if (passwordHash) {
+                updateClient.passwordHash = passwordHash;
+                userMessage.passwordHash = 'Votre nouveau passwordHash a bien été enregistré ';
+            } else if (!passwordHash) {
+                updateClientInfo.passwordHash = updateClient.passwordHash
+                userMessage.passwordHash = 'Votre passwordHash n\'a pas changé';
+            }
+
+
+           
+            await updateClient.update();
+
+            res.json(userMessage);
+
+        } catch (error) {
+            console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
 
 
 

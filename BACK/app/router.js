@@ -91,23 +91,32 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', testController.getAllClient);
+router.get('/all', testController.getAll);
 
-router.get('/getone/:id(\\d+)', testController.getUserbyId);
+router.get('/getone/:id(\\d+)', testController.getOne);
 
-router.post('/email', testController.getUserbyEmail);
+router.post('/new', testController.new);
+
+router.delete('/del/:id(\\d+)', testController.delete);
+
+
+
+
+
+
+
+
+
 
 router.post('/aut', testController.aut);
 
-router.post('/newClient', testController.newClient);
-
 router.patch('/updateClient/:id(\\d+)', testController.updateClient);
-
-router.delete('/del/:id(\\d+)', testController.delClient);
 
 router.patch('/updatePanier/:id(\\d+)', testController.updatePanier);
 
+router.patch('/updateAdminPhone/:id(\\d+)', testController.updateAdminPhone);
 
+router.post('/email', testController.getUserbyEmail);
 
 /**
  * Une inscription

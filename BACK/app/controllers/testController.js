@@ -1,5 +1,6 @@
 const Client = require('../models/client');
 const Panier = require('../models/panier');
+const AdminPhone = require('../models/adminPhone');
 const consol = require('../services/colorConsole');
 
 
@@ -15,9 +16,9 @@ const consol = require('../services/colorConsole');
 const testController = {
 
 
-    getAllClient: async (req, res) => {
+    getAll: async (req, res) => {
         try {
-            const clients = await Panier.findAll();
+            const clients = await AdminPhone.findAll();
 
             res.status(200).json(clients);
         } catch (error) {
@@ -27,10 +28,10 @@ const testController = {
         }
     },
 
-    getUserbyId: async (req, res) => {
+    getOne: async (req, res) => {
         try {
 
-            const client = await Panier.findOne(req.params.id);
+            const client = await AdminPhone.findOne(req.params.id);
             res.json(client);
 
         } catch (error) {
@@ -75,19 +76,25 @@ const testController = {
         }
     },
 
-    newClient: async (req, res) => {
+    new: async (req, res) => {
         try {
 
             const data = {};
+            //!Client :
             //data.prenom = req.body.prenom;
             //data.idClient = req.body.idClient;
-           // data.email = req.body.email;
-           // data.password = req.body.password;
-            data.total = req.body.total;
-            data.idClient = req.body.idClient; 
+            //data.email = req.body.email;
+            //data.password = req.body.password;
+            //!Panier :
+            //data.adminTelephone = req.body.adminTelephone;
+            //data.idClient = req.body.idClient;
+            //!AdminPhone :
+            //data.adminTelephone = req.body.adminTelephone;
+            //data.idClient = req.body.idClient;
+
 
             console.log("req.body ==> ",req.body);
-            const newClient = new Panier(data);
+            const newClient = new AdminPhone(data);
             await newClient.save();
             res.json(newClient);
         } catch (error) {
@@ -103,7 +110,7 @@ const testController = {
                 id
             } = req.params;
             console.log(id);
-            const updateClient = await Panier.findOne(id);
+            const updateClient = await Client.findOne(id);
 
             console.log("req.body =>", req.body);
             console.log("Dans le controller updateClient avant modif vaut => ", updateClient);
@@ -130,10 +137,10 @@ const testController = {
 
             if (idClient) {
                 updateClient.idClient = idClient;
-                userMessage.idClient = 'Votre nouveau nom de famille a bien été enregistré ';
+                userMessage.idClient = 'Votre nouveau idClient a bien été enregistré ';
             } else if (!idClient) {
                 updateClientInfo.idClient = updateClient.idClient
-                userMessage.idClient = 'Votre nom de famille n\'a pas changé';
+                userMessage.idClient = 'Votre idClient n\'a pas changé';
             }
 
 
@@ -154,9 +161,6 @@ const testController = {
                 userMessage.password = 'Votre password n\'a pas changé';
             } 
 
-           
-          
-
             await updateClient.update();
 
             res.json(userMessage);
@@ -168,11 +172,11 @@ const testController = {
     },
 
 
-    delClient: async (req, res) => {
+    delete: async (req, res) => {
 
         try {
 
-            const clientInDb = await Panier.findOne(req.params.id);
+            const clientInDb = await AdminPhone.findOne(req.params.id);
 
             const client = await clientInDb.delete();
 
@@ -188,6 +192,19 @@ const testController = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
     updatePanier: async (req, res) => {
         try {
 
@@ -198,7 +215,7 @@ const testController = {
             const updateClient = await Panier.findOne(id);
 
 
-            const total = req.body.total;
+            const adminTelephone = req.body.adminTelephone;
             const idClient = req.body.idClient;
 
             let updateClientInfo = {};
@@ -206,26 +223,24 @@ const testController = {
 
             updateClientInfo.id = updateClient.id;
 
-            if (total) {
-                updateClient.total = total;
-                userMessage.total = 'Votre nouveau total a bien été enregistré ';
-            } else if (!total) {
-                updateClientInfo.total = updateClient.total
-                userMessage.total = 'Votre total n\'a pas changé';
+            if (adminTelephone) {
+                updateClient.adminTelephone = adminTelephone;
+                userMessage.adminTelephone = 'Votre nouveau adminTelephone a bien été enregistré ';
+            } else if (!adminTelephone) {
+                updateClientInfo.adminTelephone = updateClient.adminTelephone
+                userMessage.adminTelephone = 'Votre adminTelephone n\'a pas changé';
             }
 
 
             if (idClient) {
                 updateClient.idClient = idClient;
-                userMessage.idClient = 'Votre nouveau nom de famille a bien été enregistré ';
+                userMessage.idClient = 'Votre nouveau idClient a bien été enregistré ';
             } else if (!idClient) {
                 updateClientInfo.idClient = updateClient.idClient
-                userMessage.idClient = 'Votre nom de famille n\'a pas changé';
+                userMessage.idClient = 'Votre idClient n\'a pas changé';
             }
 
            
-          
-
             await updateClient.update();
 
             res.json(userMessage);
@@ -235,6 +250,46 @@ const testController = {
             res.status(500).json(error.message);
         }
     },
+
+
+    updateAdminPhone: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            console.log(id);
+            const updateClient = await AdminPhone.findOne(id);
+
+
+            const adminTelephone = req.body.adminTelephone;
+      
+
+            let updateClientInfo = {};
+            let userMessage = {};
+
+            updateClientInfo.id = updateClient.id;
+
+            if (adminTelephone) {
+                updateClient.adminTelephone = adminTelephone;
+                userMessage.adminTelephone = 'Votre nouveau adminTelephone a bien été enregistré ';
+            } else if (!adminTelephone) {
+                updateClientInfo.adminTelephone = updateClient.adminTelephone
+                userMessage.adminTelephone = 'Votre adminTelephone n\'a pas changé';
+            }
+
+
+           
+            await updateClient.update();
+
+            res.json(userMessage);
+
+        } catch (error) {
+            console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
 
 
 

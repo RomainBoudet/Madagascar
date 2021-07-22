@@ -204,9 +204,12 @@ CREATE TABLE admin_verif_telephone(
 -- Table: admin_phone
 ------------------------------------------------------------
 CREATE TABLE admin_phone(
-	id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	admin_telephone   phonenumber  NOT NULL,
-	id_client         INT UNIQUE NOT NULL REFERENCES client(id) 
+	created_date      timestamptz NOT NULL DEFAULT now(),
+	updated_date      timestamptz,
+	id_client         INT UNIQUE NOT NULL REFERENCES client(id),
+	CHECK (created_date < updated_date)
 );
 
 ------------------------------------------------------------

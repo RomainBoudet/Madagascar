@@ -17,8 +17,8 @@ class Client {
     this.createdDate = val;
   }
 
-  set update_date(val) {
-    this.updateDate = val;
+  set updated_date(val) {
+    this.updatedDate = val;
   }
 
   set nom_famille(val) {

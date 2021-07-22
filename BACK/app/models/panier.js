@@ -13,8 +13,8 @@ class Panier {
     this.createdDate = val;
   }
 
-  set update_date(val) {
-    this.updateDate = val;
+  set updated_date(val) {
+    this.updatedDate = val;
   }
 
   set id_client(val) {

@@ -115,6 +115,7 @@ router.patch('/updateClient/:id(\\d+)', testController.updateClient);
 router.patch('/updatePanier/:id(\\d+)', testController.updatePanier);
 
 router.patch('/updateAdminPhone/:id(\\d+)', testController.updateAdminPhone);
+router.patch('/updatePrivilege/:id(\\d+)', testController.updatePrivilege);
 
 router.post('/email', testController.getUserbyEmail);
 

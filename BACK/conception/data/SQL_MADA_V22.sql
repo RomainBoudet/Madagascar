@@ -156,7 +156,10 @@ CREATE TABLE ville(
 ------------------------------------------------------------
 CREATE TABLE privilege(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom           text_valid NOT NULL
+	nom           text_valid NOT NULL,
+	created_date    timestamptz NOT NULL DEFAULT now(),
+	updated_date    timestamptz,
+	CHECK (created_date < updated_date)
 );
 
 CREATE INDEX idx_privilege ON privilege(id) INCLUDE (nom); -- index couvrant => https://public.dalibo.com/exports/formation/manuels/formations/perf2/perf2.handout.html

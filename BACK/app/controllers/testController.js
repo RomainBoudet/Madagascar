@@ -1,6 +1,7 @@
 const Client = require('../models/client');
 const Panier = require('../models/panier');
 const AdminPhone = require('../models/adminPhone');
+const Privilege = require ('../models/privilege');
 const consol = require('../services/colorConsole');
 
 
@@ -18,7 +19,7 @@ const testController = {
 
     getAll: async (req, res) => {
         try {
-            const clients = await AdminPhone.findAll();
+            const clients = await Privilege.findAll();
 
             res.status(200).json(clients);
         } catch (error) {
@@ -31,7 +32,7 @@ const testController = {
     getOne: async (req, res) => {
         try {
 
-            const client = await AdminPhone.findOne(req.params.id);
+            const client = await Privilege.findOne(req.params.id);
             res.json(client);
 
         } catch (error) {
@@ -41,40 +42,7 @@ const testController = {
         }
     },
 
-    getUserbyEmail: async (req, res) => {
-        try {
-
-            const {
-                email
-            } = req.body;
-
-            const client = await Client.findByEmail(email);
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getUserbyId du userController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-    aut: async (req, res) => {
-        try {
-
-            const {
-                email,
-                password
-            } = req.body;
-            console.log(req.body);
-            const client = await Client.authenticate(email, password);
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getUserbyId du userController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
+    
 
     new: async (req, res) => {
         try {
@@ -86,15 +54,15 @@ const testController = {
             //data.email = req.body.email;
             //data.password = req.body.password;
             //!Panier :
-            //data.adminTelephone = req.body.adminTelephone;
+            //data.nom = req.body.nom;
             //data.idClient = req.body.idClient;
             //!AdminPhone :
-            //data.adminTelephone = req.body.adminTelephone;
+            //data.nom = req.body.nom;
             //data.idClient = req.body.idClient;
-
+            data.nom = req.body.nom;
 
             console.log("req.body ==> ",req.body);
-            const newClient = new AdminPhone(data);
+            const newClient = new Privilege(data);
             await newClient.save();
             res.json(newClient);
         } catch (error) {
@@ -176,7 +144,7 @@ const testController = {
 
         try {
 
-            const clientInDb = await AdminPhone.findOne(req.params.id);
+            const clientInDb = await Privilege.findOne(req.params.id);
 
             const client = await clientInDb.delete();
 
@@ -199,7 +167,40 @@ const testController = {
 
 
 
+    getUserbyEmail: async (req, res) => {
+        try {
 
+            const {
+                email
+            } = req.body;
+
+            const client = await Client.findByEmail(email);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getUserbyId du userController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    aut: async (req, res) => {
+        try {
+
+            const {
+                email,
+                password
+            } = req.body;
+            console.log(req.body);
+            const client = await Client.authenticate(email, password);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getUserbyId du userController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
 
 
 
@@ -215,7 +216,7 @@ const testController = {
             const updateClient = await Panier.findOne(id);
 
 
-            const adminTelephone = req.body.adminTelephone;
+            const nom = req.body.nom;
             const idClient = req.body.idClient;
 
             let updateClientInfo = {};
@@ -223,12 +224,12 @@ const testController = {
 
             updateClientInfo.id = updateClient.id;
 
-            if (adminTelephone) {
-                updateClient.adminTelephone = adminTelephone;
-                userMessage.adminTelephone = 'Votre nouveau adminTelephone a bien été enregistré ';
-            } else if (!adminTelephone) {
-                updateClientInfo.adminTelephone = updateClient.adminTelephone
-                userMessage.adminTelephone = 'Votre adminTelephone n\'a pas changé';
+            if (nom) {
+                updateClient.nom = nom;
+                userMessage.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                updateClientInfo.nom = updateClient.nom
+                userMessage.nom = 'Votre nom n\'a pas changé';
             }
 
 
@@ -262,7 +263,7 @@ const testController = {
             const updateClient = await AdminPhone.findOne(id);
 
 
-            const adminTelephone = req.body.adminTelephone;
+            const nom = req.body.nom;
       
 
             let updateClientInfo = {};
@@ -270,12 +271,12 @@ const testController = {
 
             updateClientInfo.id = updateClient.id;
 
-            if (adminTelephone) {
-                updateClient.adminTelephone = adminTelephone;
-                userMessage.adminTelephone = 'Votre nouveau adminTelephone a bien été enregistré ';
-            } else if (!adminTelephone) {
-                updateClientInfo.adminTelephone = updateClient.adminTelephone
-                userMessage.adminTelephone = 'Votre adminTelephone n\'a pas changé';
+            if (nom) {
+                updateClient.nom = nom;
+                userMessage.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                updateClientInfo.nom = updateClient.nom
+                userMessage.nom = 'Votre nom n\'a pas changé';
             }
 
 
@@ -290,6 +291,44 @@ const testController = {
         }
     },
 
+
+    updatePrivilege: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            console.log(id);
+            const updateClient = await Privilege.findOne(id);
+
+
+            const nom = req.body.nom;
+      
+
+            let updateClientInfo = {};
+            let userMessage = {};
+
+            updateClientInfo.id = updateClient.id;
+
+            if (nom) {
+                updateClient.nom = nom;
+                userMessage.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                updateClientInfo.nom = updateClient.nom
+                userMessage.nom = 'Votre nom n\'a pas changé';
+            }
+
+
+           
+            await updateClient.update();
+
+            res.json(userMessage);
+
+        } catch (error) {
+            console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
 
 
 

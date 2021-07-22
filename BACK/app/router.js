@@ -112,6 +112,7 @@ router.delete('/delByClient/:id(\\d+)', testController.deleteByIdClient);
 
 
 
+
 router.post('/aut', testController.aut);
 
 router.patch('/updateClient/:id(\\d+)', testController.updateClient);
@@ -121,6 +122,8 @@ router.patch('/updatePanier/:id(\\d+)', testController.updatePanier);
 router.patch('/updateAdminPhone/:id(\\d+)', testController.updateAdminPhone);
 router.patch('/updatePrivilege/:id(\\d+)', testController.updatePrivilege);
 router.patch('/updateClientHistoPass/:id(\\d+)', testController.updateClientHistoPass);
+router.patch('/updateVerifPhone/:id(\\d+)', testController.updateVerifPhone);
+
 
 router.post('/email', testController.getUserbyEmail);
 

@@ -198,7 +198,7 @@ CREATE TABLE admin_verif_email(
 ------------------------------------------------------------
 CREATE TABLE admin_verif_telephone(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	verif_phone             BOOL NOT NULL DEFAULT 'false',
+	verif_phone             BOOLEAN NOT NULL DEFAULT FALSE,
 	date_verif_phone        timestamptz NOT NULL DEFAULT now(),
 	id_client               INT UNIQUE NOT NULL REFERENCES client(id)
 );

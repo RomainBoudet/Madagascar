@@ -4,7 +4,12 @@ const AdminPhone = require('../models/adminPhone');
 const Privilege = require('../models/privilege');
 const ClientHistoPass = require('../models/clientHistoPass');
 const ClientHistoConn = require('../models/clientHistoConn');
-const consol = require('../services/colorConsole');
+const AdminVerifEmail = require('../models/adminVerifEmail');
+const AdminVerifPhone = require('../models/adminVerifPhone');
+const {
+    date
+} = require('joi');
+
 
 
 /**
@@ -21,7 +26,7 @@ const testController = {
 
     getAll: async (req, res) => {
         try {
-            const clients = await ClientHistoConn.findAll();
+            const clients = await AdminVerifPhone.findAll();
 
             res.status(200).json(clients);
         } catch (error) {
@@ -34,7 +39,7 @@ const testController = {
     getOne: async (req, res) => {
         try {
 
-            const client = await ClientHistoConn.findOne(req.params.id);
+            const client = await AdminVerifPhone.findOne(req.params.id);
             res.json(client);
 
         } catch (error) {
@@ -47,7 +52,7 @@ const testController = {
     getByIdClient: async (req, res) => {
         try {
             console.log(req.params);
-            const client = await Panier.findByIdClient(req.params.id);
+            const client = await AdminVerifPhone.findByIdClient(req.params.id);
             res.json(client);
 
         } catch (error) {
@@ -67,29 +72,34 @@ const testController = {
             const data = {};
             //C'est open bar pour binder !
             //!Client :
-            //data.prepasswordHash = req.body.prepasswordHash;
-            //data.idClient = req.body.idClient;
+            //data.prenom = req.body.prepasswordHash;
+            //data.nomFamille = req.body.idClient;
             //data.email = req.body.email;
             //data.password = req.body.password;
             //!Panier :
-            data.total = req.body.total;
-            data.idClient = req.body.idClient;
+            //data.total = req.body.total;
+            //data.idClient = req.body.idClient;
             //!AdminPhone :
-            //data.passwordHash = req.body.passwordHash;
+            //data.adminTelephone = req.body.passwordHash;
             //data.idClient = req.body.idClient;
             //!Privilege :
-            //data.passwordHash = req.body.passwordHash;
+            //data.nom = req.body.passwordHash;
             //!ClientHistoPass :
             //data.passwordHash = req.body.passwordHash;
             //data.idClient = req.body.idClient;
             //!ClientHistoConn :
             //data.connexionSucces = req.body.connexionSucces;
             //data.idClient = req.body.idClient;
+            //!AdminVerifEmail :
+            //data.idClient = req.body.idClient;
+            //!AdminVerifPhone :
+            data.idClient = req.body.idClient;
+
 
 
             console.log("req.body ==> ", req.body);
-            const newClient = new Panier(data);
-            await newClient.save();
+            const newClient = new AdminVerifPhone(data);
+            await newClient.true();
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
@@ -98,11 +108,13 @@ const testController = {
     },
 
 
+
+
     delete: async (req, res) => {
 
         try {
 
-            const clientInDb = await ClientHistoConn.findOne(req.params.id);
+            const clientInDb = await AdminVerifPhone.findOne(req.params.id);
 
             const client = await clientInDb.delete();
 
@@ -120,15 +132,15 @@ const testController = {
 
         try {
 
-            const clientsInDb = await Panier.findByIdClient(req.params.id);
+            const clientsInDb = await AdminVerifPhone.findByIdClient(req.params.id);
             const arrayDeleted = [];
             for (const clientInDb of clientsInDb) {
-               
+
                 const clientHistoConn = await clientInDb.deleteByIdClient();
                 arrayDeleted.push(clientHistoConn);
             }
 
-            
+
             res.json(arrayDeleted[0]);
 
         } catch (error) {
@@ -247,9 +259,6 @@ const testController = {
             res.status(500).json(error.message);
         }
     },
-
-
-
 
 
     updatePanier: async (req, res) => {
@@ -415,6 +424,50 @@ const testController = {
         }
     },
 
+
+    updateVerifPhone: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+
+            const updateClient = await AdminVerifPhone.findOne(id);
+            console.log(updateClient);
+
+            const verifPhone = req.body.verifPhone;
+            const idClient = req.body.idClient;
+
+            let updateClientInfo = {};
+            let userMessage = {};
+
+            updateClientInfo.id = updateClient.id;
+
+            if (verifPhone) {
+                updateClient.verifPhone = verifPhone;
+                userMessage.verifPhone = 'Votre nouveau verifPhone a bien été enregistré ';
+            } else if (!verifPhone) {
+                updateClientInfo.verifPhone = updateClient.verifPhone
+                userMessage.verifPhone = 'Votre verifEmail n\'a pas changé';
+            }
+            if (idClient) {
+                updateClient.idClient = idClient;
+                userMessage.idClient = 'Votre nouveau idClient a bien été enregistré ';
+            } else if (!idClient) {
+                updateClientInfo.idClient = updateClient.idClient
+                userMessage.idClient = 'Votre idClient n\'a pas changé';
+            }
+
+
+            await updateClient.update();
+
+            res.json(userMessage);
+
+        } catch (error) {
+            console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
 
 
 

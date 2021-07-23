@@ -112,11 +112,9 @@ class Panier {
 
 
   /**
-   * Méthode chargé d'aller insérer les informations relatives à un utilisateur passé en paramétre
-   * @param prenom - le prénom d'un panier
-   * @param nomFamille - le nom de famille d'un panier
-   * @param email  - l'email' d'un panier
-   * @param password - le password d'un panier
+   * Méthode chargé d'aller insérer les informations relatives à un panier passé en paramétre
+   * @param total  - le montant total d'un panier
+   * @param idClient - l'identifiant Client lié a un panier
    * @returns - les informations du panier demandées
    * @async - une méthode asynchrone
    */
@@ -139,10 +137,9 @@ class Panier {
 
   /**
    * Méthode chargé d'aller mettre à jour les informations relatives à un panier passé en paramétre
-   * @param prenom - le prénom d'un panier
-   * @param nomFamille - le nom de famille d'un panier
-   * @param email  - l'email' d'un panier
-   * @param password - le password d'un panier
+   * @param total  - le montant total d'un panier
+   * @param idClient - l'identifiant Client lié a un panier
+   * @param id - l'identifiant d'un panier
    * @returns - les informations du panier mis à jour
    * @async - une méthode asynchrone
    */

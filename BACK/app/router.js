@@ -16,7 +16,10 @@ const {
   // Controllers
   const authController = require('./controllers/authController');
   const mainController = require('./controllers/mainController');
-  const testController = require('./controllers/testController');
+  const adminController = require('./controllers/adminController');
+  const clientController = require('./controllers/clientController');
+  const panierController = require('./controllers/panierController');
+  const clientHistoController = require ('./controllers/clientHistoController');
   
   // implémentation de joi, avec un validator  dans le dossier "services".
   const {
@@ -91,21 +94,19 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', testController.getAll);
+router.get('/all', clientHistoController.getAllHistoPass);
 
-router.get('/getone/:id(\\d+)', testController.getOne);
+//router.get('/getone/:id(\\d+)', adminController.getOnePhone);
 
-router.get('/getByIdClient/:id(\\d+)', testController.getByIdClient);
+//router.get('/getByIdClient/:id(\\d+)', adminController.getPhoneByIdClient);
 
-router.post('/new', testController.new);
+router.post('/new', adminController.newPrivilege);
 
-router.delete('/del/:id(\\d+)', testController.delete);
+//router.delete('/del/:id(\\d+)', adminController.deletePhone);
 
-router.delete('/delByClient/:id(\\d+)', testController.deleteByIdClient);
+router.delete('/delByClient/:id(\\d+)', adminController.deletePrivilege);
 
-
-
-
+router.patch('/updatePhone/:id(\\d+)', adminController.updatePhone);
 
 
 
@@ -113,19 +114,22 @@ router.delete('/delByClient/:id(\\d+)', testController.deleteByIdClient);
 
 
 
-router.post('/aut', testController.aut);
-
-router.patch('/updateClient/:id(\\d+)', testController.updateClient);
-
-router.patch('/updatePanier/:id(\\d+)', testController.updatePanier);
-
-router.patch('/updateAdminPhone/:id(\\d+)', testController.updateAdminPhone);
-router.patch('/updatePrivilege/:id(\\d+)', testController.updatePrivilege);
-router.patch('/updateClientHistoPass/:id(\\d+)', testController.updateClientHistoPass);
-router.patch('/updateVerifPhone/:id(\\d+)', testController.updateVerifPhone);
 
 
-router.post('/email', testController.getUserbyEmail);
+
+router.post('/aut', clientController.aut);
+
+router.patch('/updateClient/:id(\\d+)', clientController.updateClient);
+
+//router.patch('/updatePanier/:id(\\d+)', testController.updatePanier);
+
+//router.patch('/updateAdminPhone/:id(\\d+)', testController.updateAdminPhone);
+//router.patch('/updatePrivilege/:id(\\d+)', testController.updatePrivilege);
+//router.patch('/updateClientHistoPass/:id(\\d+)', testController.updateClientHistoPass);
+//router.patch('/updateVerifPhone/:id(\\d+)', testController.updateVerifPhone);
+
+
+//router.post('/email', testController.getUserbyEmail);
 
 /**
  * Une inscription

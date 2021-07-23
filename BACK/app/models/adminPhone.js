@@ -59,7 +59,7 @@ class AdminPhone {
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à un admin_phone passé en paramétre
-     * @param id - un id d'un admin_phone
+     * @param - un id d'un admin_phone
      * @returns - les informations du admin_phone demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
@@ -86,6 +86,35 @@ class AdminPhone {
     }
 
 
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à un admin_verif_telephone passé en paramétre
+     * @param idClient - un idClient d'un client_historique_connexion
+     * @returns - les informations du client_historique_connexion demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    static async findByIdClient(idClient) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.admin_phone WHERE admin_phone.id_client = $1;',
+            [idClient]
+        );
+
+        if (!rows[0]) {
+            throw new Error("Aucun admin_phone avec cet idClient");
+        }
+
+        consol.model(
+            `le statut de l'admin_phone pour le idClient : ${idClient} a été demandé en BDD !`
+        );
+
+        return new AdminPhone(rows[0]);
+    }
+
     /**
      * Méthode chargé d'aller insérer les informations relatives à un utilisateur passé en paramétre
      * @param adminTelephone - le telephone d'un administrateur
@@ -94,7 +123,7 @@ class AdminPhone {
      * @async - une méthode asynchrone
      */
     async save() {
-       
+
         const {
             rows,
         } = await db.query(
@@ -114,19 +143,20 @@ class AdminPhone {
     /**
      * Méthode chargé d'aller mettre à jour les informations relatives à un admin_phone passé en paramétre
      * @param adminTelephone - le telephone d'un administrateur
+     * @param id - l'identifiant du champs a supprimer
      * @returns - les informations du admin_phone mis à jour
      * @async - une méthode asynchrone
      */
-    async update() {
+    async updateByIdClient() {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.admin_phone SET admin_telephone = $1, updated_date = now() WHERE id = $2 RETURNING *;`,
-            [this.adminTelephone, this.id]
+            `UPDATE mada.admin_phone SET admin_telephone = $1, updated_date = now() WHERE id_client = $2 RETURNING *;`,
+            [this.adminTelephone, this.idClient]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(
-            `le admin_phone id : ${this.id} comprenant le numéro ${this.adminTelephone} a été mise à jour le ${this.updatedDate} !`
+            `le admin_phone du client id : ${this.idClient} comprenant le nouveau numéro ${this.adminTelephone} a été mise à jour le ${this.updatedDate} !`
         );
     }
     /**
@@ -144,6 +174,26 @@ class AdminPhone {
 
         return new AdminPhone(rows[0]);
     }
+
+    /**
+     * Méthode chargé d'aller supprimer le téléphone d'un client admin via l'idClient du statut passé en paramétre
+     * @param idClient - l'id d'un client
+     * @returns - les informations du admin_phone qui viennent d'être supprimés.
+     * @async - une méthode asynchrone
+     */
+    async deleteByIdClient() {
+
+
+        const {
+            rows
+        } = await db.query('DELETE FROM mada.admin_phone WHERE admin_phone.id_client = $1 RETURNING *;', [
+            this.idClient
+        ]);
+        consol.model(`l'admin_phone du client id ${this.idClient} a été supprimé !`);
+
+        return rows.map((deletedClient) => new AdminPhone(deletedClient));
+    }
+
 
 
 }

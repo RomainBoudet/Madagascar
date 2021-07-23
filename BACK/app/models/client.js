@@ -91,7 +91,7 @@ class Client {
 
   /**
    * Méthode chargé d'aller chercher les informations relatives à un client passé en paramétre
-   * @param - un email d'un client
+   * @param email- un email d'un client
    * @returns - les informations du client demandées
    * @static - une méthode static
    * @async - une méthode asynchrone
@@ -189,6 +189,7 @@ class Client {
   * @async - une méthode asynchrone
   */
   async update() {
+    console.log("this dans le model => ", this);
     const {
       rows,
     } = await db.query(
@@ -196,9 +197,10 @@ class Client {
       [this.prenom, this.nomFamille, this.email, this.password, this.id]
     );
 
-    console.log(
+    consol.model(
       `le client id : ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été mise à jour !`
     );
+    return new Client(rows[0]);
   }
 /**
   * Méthode chargé d'aller supprimer un client passé en paramétre

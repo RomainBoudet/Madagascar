@@ -108,7 +108,7 @@ class AdminVerifPhone {
             `le statut de l'email pour le idClient : ${idClient} a été demandé en BDD !`
         );
 
-        return rows.map((clients) => new AdminVerifPhone(clients));
+        return new AdminVerifPhone(rows[0]);
     }
 
     /**

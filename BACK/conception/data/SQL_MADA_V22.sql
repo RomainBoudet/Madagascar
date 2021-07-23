@@ -155,8 +155,8 @@ CREATE TABLE ville(
 -- Table: privilege
 ------------------------------------------------------------
 CREATE TABLE privilege(
-	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom           text_valid NOT NULL,
+	id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	nom             text_valid NOT NULL,
 	created_date    timestamptz NOT NULL DEFAULT now(),
 	updated_date    timestamptz,
 	CHECK (created_date < updated_date)
@@ -198,7 +198,7 @@ CREATE TABLE admin_verif_email(
 ------------------------------------------------------------
 CREATE TABLE admin_verif_telephone(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	verif_phone             BOOLEAN NOT NULL DEFAULT FALSE,
+	verif_phone             BOOL NOT NULL DEFAULT 'false',
 	date_verif_phone        timestamptz NOT NULL DEFAULT now(),
 	id_client               INT UNIQUE NOT NULL REFERENCES client(id)
 );
@@ -526,7 +526,7 @@ CREATE TABLE client_historique_password(
 ------------------------------------------------------------
 CREATE TABLE client_historique_connexion(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	connexion_succes              BOOL  NOT NULL,
+	connexion_succes              BOOLEAN  NOT NULL,
 	connexion_date                timestamptz NOT NULL DEFAULT now(),
 	id_client                     INT  NOT NULL REFERENCES client(id)
 );

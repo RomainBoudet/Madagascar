@@ -95,19 +95,19 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', clientAdresseController.getAllLiaisonVilleCodePostale);
+//router.get('/all', clientAdresseController.getAllLiaisonVilleCodePostale);
 
 router.get('/getone/:id(\\d+)',clientAdresseController.getOneVille);
 
 //router.get('/getByIdClient/:id(\\d+)', adminController.getPhoneByIdClient);
 
-router.post('/new', clientAdresseController. newLiaisonVilleCodePostal);
+router.post('/new', mainController. newShop);
 
 router.delete('/del/:id(\\d+)', clientAdresseController.deleteLiaisonVilleCodePostal);
 
 router.delete('/delByClient/:id(\\d+)', clientAdresseController.deleteByIdClient);
 
-router.patch('/update/:id(\\d+)', clientAdresseController.updateClientPays);
+router.patch('/update/:id(\\d+)', mainController.updateShop);
 
 
 

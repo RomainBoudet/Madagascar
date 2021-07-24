@@ -103,11 +103,11 @@ router.get('/getone/:id(\\d+)',clientAdresseController.getOneVille);
 
 router.post('/new', clientAdresseController.newVille);
 
-router.delete('/del/:id(\\d+)', clientAdresseController.delete);
+router.delete('/del/:id(\\d+)', clientAdresseController.deletePays);
 
 router.delete('/delByClient/:id(\\d+)', clientAdresseController.deleteByIdClient);
 
-router.patch('/update/:id(\\d+)', clientAdresseController.updateClientVille);
+router.patch('/update/:id(\\d+)', clientAdresseController.updateClientPays);
 
 
 

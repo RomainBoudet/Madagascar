@@ -1,5 +1,6 @@
 const ClientAdresse = require('../models/clientAdresse');
 const ClientVille = require('../models/clientVille');
+const ClientPays = require('../models/clientPays');
 
 /**
  * Une méthode qui va servir a intéragir avec le model ClientAdresse pour les intéractions des adresses des clients avec la BDD 
@@ -36,6 +37,17 @@ const clientAdresseController = {
             res.status(500).json(error.message);
         }
     },
+    getAllPays: async (req, res) => {
+        try {
+            const clients = await ClientPays.findAll();
+
+            res.status(200).json(clients);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllPays du clientAdresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
 
 
 
@@ -62,6 +74,18 @@ const clientAdresseController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOneVille du clientAdresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    getOnePays: async (req, res) => {
+        try {
+
+            const client = await ClientPays.findOne(req.params.id);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOnePays du clientAdresseController :',
                 error);
             res.status(500).json(error.message);
         }
@@ -128,6 +152,22 @@ const clientAdresseController = {
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newVille du clientAdresseController: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newPays: async (req, res) => {
+        try {
+
+            const data = {};
+
+            data.nom = req.body.nom;
+            
+            const newClient = new ClientPays(data);
+            await newClient.save();
+            res.json(newClient);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newPays du clientAdresseController: ${error.message}`);
             res.status(500).json(error.message);
         }
     },
@@ -271,6 +311,35 @@ const clientAdresseController = {
         }
     },
 
+    updateClientPays: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+
+            const updateClient = await ClientPays.findOne(id);
+
+            const nom = req.body.nom;          
+
+            let userMessage = {};
+
+            if (nom) {
+                updateClient.nom = nom;
+                userMessage.nom = 'Votre nouveau nom de pays a bien été enregistré ';
+            } else if (!nom) {
+                userMessage.nom = 'Votre nom de pays n\'a pas changé';
+            }
+
+            await updateClient.update();
+
+            res.json(userMessage);
+
+        } catch (error) {
+            console.log(`Erreur dans la méthode updateClientPays du clientAdresseController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
 
 
 
@@ -288,6 +357,22 @@ const clientAdresseController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode delete du clientAdresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    deletePays: async (req, res) => {
+
+        try {
+
+            const clientInDb = await ClientPays.findOne(req.params.id);
+
+            const client = await clientInDb.delete();
+
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deletePays du clientAdresseController :',
                 error);
             res.status(500).json(error.message);
         }

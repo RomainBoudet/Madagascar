@@ -17,21 +17,27 @@ class Facture {
     set date_facturation(val) {
         this.dateFacturation = val;
     }
-    set montant_HT(val) {
+
+    set montant_ht(val) {
         this.montantHT = val;
     }
-    set montant_TTC(val) {
+
+    set montant_ttc(val) {
         this.montantTTC = val;
     }
-    set montant_TVA(val) {
+
+    set montant_tva(val) {
         this.montantTVA = val;
     }
+
     set updated_date(val) {
         this.updatedDate = val;
     }
+
     set id_paiement(val) {
         this.idPaiement = val;
     }
+    
     set id_client(val) {
         this.idClient = val;
     }
@@ -142,7 +148,7 @@ class Facture {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.facture (reference, montant_HT, montant_TTC, montant_TVA, id_paiement, id_client) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;`,
+            `INSERT INTO mada.facture (reference, montant_HT, montant_TTC, montant_TVA, id_paiement, id_client) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;`,
             [this.reference, this.montantHT, this.montantTTC, this.montantTVA, this.idPaiement, this.idClient]
         );
 
@@ -153,9 +159,7 @@ class Facture {
         );
     }
 
-
-
-    /**
+ /**
      * Méthode chargé d'aller mettre à jour les informations relatives à un facture passé en paramétre
      * @param reference - la reférence d'une facture
      * @param montantHT - le montant HT d'una facture, 
@@ -167,18 +171,45 @@ class Facture {
      * @returns - les informations du facture mis à jour
      * @async - une méthode asynchrone
      */
+  async update() {
+    const {
+        rows,
+    } = await db.query(
+        `UPDATE mada.facture SET reference = $1, montant_HT = $2, montant_TTC = $3, montant_TVA = $4, id_paiement = $5, id_client = $6  WHERE id = $7 RETURNING *;`,
+        [this.reference, this.montantHT, this.montantTTC, this.montantTVA, this.idPaiement, this.idClient, this.id]
+    );
+    this.updatedDate = rows[0].updated_date;
+    console.log(
+        `le facture du client id : ${this.idClient} comprenant le nouveau numéro ${this.adminTelephone} a été mise à jour le ${this.updatedDate} !`
+    );
+}
+
+    /**
+     * Méthode chargé d'aller mettre à jour les informations relatives à un facture passé en paramétre
+     * @param reference - la reférence d'une facture
+     * @param montantHT - le montant HT d'una facture, 
+     * @param montantTTC - le montant TTC d'une facture,
+     * @param montantTVA - le montant TVA d'une facture
+     * @param idPaiement - l'identifiant d'un paiement
+     * @param idClient - l'id d'un client
+     * @returns - les informations du facture mis à jour
+     * @async - une méthode asynchrone
+     */
     async updateByIdClient() {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.facture SET reference = $1, montant_HT = $2, montant_TTC = $3, montant_TVA = $4, id_paiement = $5, id_client = $6  WHERE id_client = $7 RETURNING *;`,
-            [this.reference, this.montantHT, this.montantTTC, this.montantTVA, this.idPaiement, this.idClient, this.id]
+            `UPDATE mada.facture SET reference = $1, montant_HT = $2, montant_TTC = $3, montant_TVA = $4, id_paiement = $5  WHERE id_client = $6 RETURNING *;`,
+            [this.reference, this.montantHT, this.montantTTC, this.montantTVA, this.idPaiement, this.idClient]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(
             `le facture du client id : ${this.idClient} comprenant le nouveau numéro ${this.adminTelephone} a été mise à jour le ${this.updatedDate} !`
         );
     }
+
+
+
     /**
      * Méthode chargé d'aller supprimer un facture passé en paramétre
      * @param id - l'id d'un facture

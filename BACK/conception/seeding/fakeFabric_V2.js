@@ -177,12 +177,12 @@ const fakeData = async () => {
         const cities1 = [];
         // je fais tourner l'usine 5000 fois pour espere avoir beacoup de villes de dispo....je les stocke dans un tableau. Je les trie aprés via Set, je veux qu'elles soient uniques.
 
-        
-            for (let index = 1; index <= 5000; index++) {
 
-                cities1.push(faker.address.city());
-            }
-        
+        for (let index = 1; index <= 5000; index++) {
+
+            cities1.push(faker.address.city());
+        }
+
 
         // je convertis le tableau de valeur non unique en tableau de valeur unique via Set
         const villesUnique = [...new Set(cities1)];
@@ -202,7 +202,7 @@ const fakeData = async () => {
 
         //je redécoupe mon tableau a la valeur souhaité de la variable "volume". attention, celle ci ne devrait pas être sup a au max de mon tableau de base...
 
-        const cities = citiesUnique.slice(0, volume*2); // (volume * 2)-1 = 2001 -1 => pour être en adéquation avec le nombre d'adresse qui sera insérer en BDD. Rien d'obligé..
+        const cities = citiesUnique.slice(0, volume * 2); // (volume * 2)-1 = 2001 -1 => pour être en adéquation avec le nombre d'adresse qui sera insérer en BDD. Rien d'obligé..
 
 
         console.timeEnd(`Génération de ${volume} villes`);
@@ -577,28 +577,89 @@ const fakeData = async () => {
 
         consol.seed(`Début de la génération de fake factures`);
         console.time(`Génération de ${volume} factures`);
-        const factures = [];
-        const randomMontants = [];
+        const factures1 = [];
+        const factures2 = [];
+        const factures3 = [];
+        const factures4 = [];
+        const randomMontants1 = [];
+        const randomMontants2 = [];
+        const randomMontants3 = [];
+        const randomMontants4 = [];
         for (let index = 1; index <= volume * 2; index++) {
-            const randomMontant = faker.commerce.price();
 
-            randomMontants.push(randomMontant);
+            randomMontants1.push(faker.commerce.price());
+        }
+        for (let index = 1; index <= volume * 2; index++) {
+
+            randomMontants2.push(faker.commerce.price());
+        }
+        for (let index = 1; index <= volume * 2; index++) {
+
+            randomMontants3.push(faker.commerce.price());
+        }
+        for (let index = 1; index <= volume * 2; index++) {
+
+            randomMontants4.push(faker.commerce.price());
+        }
+
+
+
+        for (let index = 1; index <= volume; index++) {
+            const facture = {
+                id_client: index,
+                ref: `FACTURE/${9000+(Math.floor(Math.random() * (5000 - 1 + 1)) + 1)} `,
+                montant_HT: randomMontants1[index],
+                montant_TTC: (parseInt(randomMontants1[index]) + (parseInt(randomMontants1[index]) * 0.2)).toFixed(2),
+                montant_TVA: 0.2,
+                id_paiement: index,
+
+            };
+            factures1.push(facture);
         }
 
         for (let index = 1; index <= volume; index++) {
             const facture = {
                 id_client: index,
-                ref: `FACTURE/${9000+index} `,
-                montant_HT: randomMontants[index],
-                montant_TTC: (parseInt(randomMontants[index]) + (parseInt(randomMontants[index]) * 0.2)).toFixed(2),
+                ref: `FACTURE/${9000+((Math.floor(Math.random() * (10000 - 5001 + 1)) + 5001))} `,
+                montant_HT: randomMontants2[index],
+                montant_TTC: (parseInt(randomMontants2[index]) + (parseInt(randomMontants2[index]) * 0.2)).toFixed(2),
                 montant_TVA: 0.2,
                 id_paiement: index,
 
             };
-            factures.push(facture);
+            factures2.push(facture);
         }
+
+        for (let index = 1; index <= volume; index++) {
+            const facture = {
+                id_client: index,
+                ref: `FACTURE/${9000+((Math.floor(Math.random() * (15000 - 10001 + 1)) + 10001))} `,
+                montant_HT: randomMontants3[index],
+                montant_TTC: (parseInt(randomMontants3[index]) + (parseInt(randomMontants3[index]) * 0.2)).toFixed(2),
+                montant_TVA: 0.2,
+                id_paiement: index,
+
+            };
+            factures3.push(facture);
+        }
+
+        for (let index = 1; index <= volume; index++) {
+            const facture = {
+                id_client: index,
+                ref: `FACTURE/${9000+((Math.floor(Math.random() * (20000 - 15001 + 1)) + 15001))} `,
+                montant_HT: randomMontants4[index],
+                montant_TTC: (parseInt(randomMontants4[index]) + (parseInt(randomMontants4[index]) * 0.2)).toFixed(2),
+                montant_TVA: 0.2,
+                id_paiement: index,
+
+            };
+            factures4.push(facture);
+        }
+        //4 factures par client...
+
+
         console.timeEnd(`Génération de ${volume} factures`);
-        console.table(factures);
+        console.table(factures4);
         consol.seed(`Fin de la génération de fake factures`);
 
 
@@ -1146,17 +1207,29 @@ const fakeData = async () => {
         //! FACTURE
 
 
-        consol.seed(`Début de l'import de ${factures.length} factures`);
-        console.time(`Import de ${factures.length} factures`);
+        consol.seed(`Début de l'import de ${factures1.length*4} factures`);
+        console.time(`Import de ${factures1.length*4} factures`);
         const facturesInsert = "INSERT INTO mada.facture (reference, montant_HT, montant_TTC, montant_TVA, id_paiement, id_client) VALUES ($1, $2, $3, $4, $5, $6);";
 
-        for (const facture of factures) {
+        for (const facture of factures1) {
+            consol.seed(`Import de la facture de l'id_client : ${facture.id_client} avec pour ref : ${facture.ref} et id du paiement : ${facture.id_paiement}`);
+            await db.query(facturesInsert, [facture.ref, facture.montant_HT, facture.montant_TTC, facture.montant_TVA, facture.id_paiement, facture.id_client]);
+        }
+        for (const facture of factures2) {
+            consol.seed(`Import de la facture de l'id_client : ${facture.id_client} avec pour ref : ${facture.ref} et id du paiement : ${facture.id_paiement}`);
+            await db.query(facturesInsert, [facture.ref, facture.montant_HT, facture.montant_TTC, facture.montant_TVA, facture.id_paiement, facture.id_client]);
+        }
+        for (const facture of factures3) {
+            consol.seed(`Import de la facture de l'id_client : ${facture.id_client} avec pour ref : ${facture.ref} et id du paiement : ${facture.id_paiement}`);
+            await db.query(facturesInsert, [facture.ref, facture.montant_HT, facture.montant_TTC, facture.montant_TVA, facture.id_paiement, facture.id_client]);
+        }
+        for (const facture of factures4) {
             consol.seed(`Import de la facture de l'id_client : ${facture.id_client} avec pour ref : ${facture.ref} et id du paiement : ${facture.id_paiement}`);
             await db.query(facturesInsert, [facture.ref, facture.montant_HT, facture.montant_TTC, facture.montant_TVA, facture.id_paiement, facture.id_client]);
         }
 
-        consol.seed(`Fin de l'import de ${factures.length} factures`);
-        console.timeEnd(`Import de ${factures.length} factures`);
+        consol.seed(`Fin de l'import de ${factures1.length*4} factures`);
+        console.timeEnd(`Import de ${factures1.length*4} factures`);
 
 
         //! STOCK

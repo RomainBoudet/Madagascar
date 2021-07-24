@@ -182,7 +182,7 @@ const factureController = {
             const arrayDeleted = [];
             for (const factureInDb of facturesInDb) {
 
-                const factureHistoConn = await factureInDb.deleteByIdFacture();
+                const factureHistoConn = await factureInDb.deleteByIdClient();
                 arrayDeleted.push(factureHistoConn);
             }
 

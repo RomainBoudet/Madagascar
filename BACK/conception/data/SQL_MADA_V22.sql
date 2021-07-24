@@ -390,7 +390,7 @@ CREATE TABLE facture(
 	updated_date        timestamptz ,
 	CHECK (date_facturation < updated_date),
 
-	id_paiement         INT NOT NULL REFERENCES paiement(id),
+	id_paiement         INT NOT NULL REFERENCES paiement(id) ON DELETE CASCADE,
 	id_client			INT NOT NULL REFERENCES client(id)
 );
 

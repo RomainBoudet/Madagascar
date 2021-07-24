@@ -2,6 +2,7 @@ const ClientAdresse = require('../models/clientAdresse');
 const ClientVille = require('../models/clientVille');
 const ClientPays = require('../models/clientPays');
 const LiaisonVilleCodePostal = require ('../models/liaisonVilleCodePostal');
+const ClientCodePostal = require('../models/clientCodePostal');
 
 /**
  * Une méthode qui va servir a intéragir avec le model ClientAdresse pour les intéractions des adresses des clients avec la BDD 
@@ -49,13 +50,25 @@ const clientAdresseController = {
             res.status(500).json(error.message);
         }
     },
-    getAllLiaisonVilleCodePostale: async (req, res) => {
+    getAllLiaisonVilleCodePostal: async (req, res) => {
         try {
             const clients = await LiaisonVilleCodePostal.findAll();
 
             res.status(200).json(clients);
         } catch (error) {
-            console.trace('Erreur dans la méthode getAllLiaisonVilleCodePostale du clientAdresseController :',
+            console.trace('Erreur dans la méthode getAllLiaisonVilleCodePostal du clientAdresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getAllCodePostal: async (req, res) => {
+        try {
+            const clients = await ClientCodePostal.findAll();
+
+            res.status(200).json(clients);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllCodePostal du clientAdresseController :',
                 error);
             res.status(500).json(error.message);
         }
@@ -114,6 +127,20 @@ const clientAdresseController = {
             res.status(500).json(error.message);
         }
     },
+
+    getOneCodePostal: async (req, res) => {
+        try {
+
+            const client = await ClientCodePostal.findOne(req.params.id);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneCodePostal du clientAdresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
 
 
 
@@ -209,6 +236,22 @@ const clientAdresseController = {
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newLiaisonVilleCodePostal du clientAdresseController: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    newCodePostal: async (req, res) => {
+        try {
+
+            const data = {};
+
+            data.codePostal = req.body.codePostal;
+           
+            
+            const newClient = new ClientCodePostal(data);
+            await newClient.save();
+            res.json(newClient);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newCodePostal du clientAdresseController: ${error.message}`);
             res.status(500).json(error.message);
         }
     },
@@ -420,6 +463,39 @@ const clientAdresseController = {
         }
     },
 
+    updateCodePostal: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+
+            const updateClient = await ClientCodePostal.findOne(id);
+
+            const codePostal = req.body.codePostal;
+                    
+
+            let userMessage = {};
+
+            if (codePostal) {
+                updateClient.codePostal = codePostal;
+                userMessage.codePostal = 'Votre nouveau codePostal a bien été enregistré ';
+            } else if (!codePostal) {
+                userMessage.codePostal = 'Votre codePostal n\'a pas changé';
+            }
+            
+
+            await updateClient.update();
+
+            res.json(userMessage);
+
+        } catch (error) {
+            console.log(`Erreur dans la méthode updateCodePostal du clientAdresseController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
 
 
 
@@ -486,6 +562,22 @@ const clientAdresseController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteLiaisonVilleCodePostal du clientAdresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    deleteCodePostal: async (req, res) => {
+
+        try {
+
+            const clientInDb = await ClientCodePostal.findOne(req.params.id);
+
+            const client = await clientInDb.delete();
+
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteCodePostal du clientAdresseController :',
                 error);
             res.status(500).json(error.message);
         }

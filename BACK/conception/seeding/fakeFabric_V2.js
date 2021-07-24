@@ -137,19 +137,35 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake pays`);
-        console.time(`Génération de ${volume} pays`);
-        const countries = [];
+        console.time(`Génération d'un volume fixe de pays`);
+        const countriesNotUnique = [];
 
-        for (let index = 1; index <= volume; index++) {
+        // je fais tourner l'usine 500 fois pour espere avoir a peu prés tous les pays.... je les trie aprés via Set
+
+        for (let index = 1; index <= 500; index++) {
             const country = {
 
-                name: faker.address.country(),
+                nom: faker.address.country(),
 
             };
-            countries.push(country);
+            countriesNotUnique.push(country);
         }
-        console.timeEnd(`Génération de ${volume} pays`);
-        console.table(countries);
+
+        //je convertis le tableau d'objet en tableau de valeurs non unique
+        const countries = countriesNotUnique.map(function (x) {
+            return x.nom
+        });
+
+
+        // je convertis le tableau de valeur non unique en tableau de valeur unique
+        const countriesUnique = [...new Set(countries)];
+        // Pour des valeur unique dans un array. Je ne veux pas deux fois le même pays. 
+        //Le constructeur de Set prend un objet itérable, comme Array, et l'opérateur spread ... retransforme l'ensemble en Array
+        console.log('countriesUnique ==>> ', countriesUnique);
+
+
+        console.timeEnd(`Génération d'un volume fixe de pays`);
+        console.table(countriesUnique);
         consol.seed(`Fin de la génération de fake pays`);
 
 
@@ -158,21 +174,40 @@ const fakeData = async () => {
 
         consol.seed(`Début de la génération de fake villes`);
         console.time(`Génération de ${volume} villes`);
-        const cities = [];
+        const cities1 = [];
+        // je fais tourner l'usine 5000 fois pour espere avoir beacoup de villes de dispo....je les stocke dans un tableau. Je les trie aprés via Set, je veux qu'elles soient uniques.
 
-        for (let index = 1; index <= volume; index++) {
-            const city = {
+        
+            for (let index = 1; index <= 5000; index++) {
 
-                name: faker.address.city(),
-                id_pays: index,
+                cities1.push(faker.address.city());
+            }
+        
 
-            };
-            cities.push(city);
+        // je convertis le tableau de valeur non unique en tableau de valeur unique via Set
+        const villesUnique = [...new Set(cities1)];
+        // Pour des valeur unique dans un array. Je ne veux pas deux fois le même pays. 
+        //Le constructeur de Set prend un objet itérable, comme Array, et l'opérateur spread ... retransforme l'ensemble en Array
+
+        // je recréé le tableau d'objet avec maintenant que des villes uniques que j'utiliserais pour seeder.
+        const citiesUnique = [];
+        for (const elem of villesUnique) {
+            const ville = {
+                name: elem,
+                id_pays: Math.floor(Math.random() * (countriesUnique.length - 1 + 1)) + 1, //un random entre le nombre max de pays précédement généré et 1
+
+            }
+            citiesUnique.push(ville);
         }
+
+        //je redécoupe mon tableau a la valeur souhaité de la variable "volume". attention, celle ci ne devrait pas être sup a au max de mon tableau de base...
+
+        const cities = citiesUnique.slice(0, volume*2); // (volume * 2)-1 = 2001 -1 => pour être en adéquation avec le nombre d'adresse qui sera insérer en BDD. Rien d'obligé..
+
+
         console.timeEnd(`Génération de ${volume} villes`);
         console.table(cities);
         consol.seed(`Fin de la génération de fake villes`);
-
 
 
 
@@ -198,9 +233,55 @@ const fakeData = async () => {
         }
 
 
+        // Je souhaiterais générer un deuxieme jeu de données pour avoir deux fake adresses par client a insérer en BDD, mais en gardant pas seulement l'id du client mais aussi son prenom, son nom et son téléphone qui ont été généré automatiquement.
+        // je vais donc stocker ses infos (que je ne veux pas re-générer) dans un objets.
+        // Dans un autre objet, je vais regénérer des adresses sans nom prenom et téléphone du client.
+        // Je vais enfin pouvoir fusionner ces deux jeux de données pour avoir un deuxiéme tableau de données avec les des adresses différentes et des nom, prenom et téléphone de clients identique.
+
+        //je stocke au chaud les données déja générées
+        const custumers3 = [];
+        for (const user of custumers) {
+            const userBisForAdresse = {
+                prenom: user.prenom,
+                nom_famille: user.nom_famille,
+                telephone: user.telephone,
+            }
+            custumers3.push(userBisForAdresse);
+        }
+
+
+        // je génére un deuxiéme jeu de données ne comportant que des ligne1 d'adresse et le reste des éléments nécéssaire pour leur intégration en BDD...
+        const custumers2 = [];
+        for (let index = 1; index <= volume; index++) {
+            const user2 = {
+                id_for_pk: index,
+                ligne1: `${(Math.floor(Math.random() * (100 - 1 + 1)) + 1)} ${faker.address.streetPrefix()} ${faker.address.streetName()} `,
+                id_privilege: 1,
+                titre: "Bureau",
+            };
+            custumers2.push(user2);
+        }
+
+        // je peux maintenant fusionner les deux précédant jeux de données (avec le spread opérator) pour avoir un deuxieme jeu de données d'adresse complet avec les mêmes clients (nom, prenom et telephone) mais des adresses et titre d'adresses différents. custumers et custumersBis sont prêt a être insérer en BDD !
+        const custumersBis = [];
+        for (let index = 0; index < volume; index++) {
+
+            const user3 = {
+                ...custumers3[index],
+                ...custumers2[index],
+
+            }
+            custumersBis.push(user3);
+
+        }
+
+
+
         console.timeEnd(`Génération de ${volume} clients`);
         console.table(custumers);
+        console.table(custumersBis);
         consol.seed('Fin de la génération de fake clients');
+
 
 
         //! PANIER
@@ -262,7 +343,7 @@ const fakeData = async () => {
         consol.seed(`Début de la génération de fake image de produits`);
         console.time(`Génération de ${volume*3} image de produits`);
         const arrayNumber300 = Array.from({
-            length: volume*3
+            length: volume * 3
         }, (_, i) => i + 1); // un tableau avec des valeurs allant de 1 a 300 // si on veut commençer a zero => Array.from(Array(10).keys())
         const image_produits = [];
 
@@ -335,7 +416,7 @@ const fakeData = async () => {
 
         consol.seed(`Début de la génération de fake statut_commandes`);
         console.time(`Génération de ${volume} statut_commandes`);
-        
+
         const statut_commandes = [];
         const statutCommandes = [{
             nom: 'en attente',
@@ -534,7 +615,7 @@ const fakeData = async () => {
         const reductions = [];
         const soldes = ['soldes d\'hiver', 'soldes d\'été', 'soldes de printemps', 'soldes automne'];
         const actifOuNon = ['true', 'false'];
-        for (let index = 1; index <= volume/4; index++) {
+        for (let index = 1; index <= volume / 4; index++) {
             const reduction = {
                 idClient: index,
                 nom: soldes[Math.floor(Math.random() * soldes.length)],
@@ -573,17 +654,17 @@ const fakeData = async () => {
 
         consol.seed(`Début de la génération de fake ligne_commandes`);
         console.time(`Génération de ${volume*3} ligne_commandes`);
-        
+
         //const arrayNumberClient = Array.from(Array(101).keys()) // génére un tableau qui commence a zéro et va a 101
         const arrayNumberProduits = Array.from({
-            length: volume*3
+            length: volume * 3
         }, (_, i) => i + 1); // génére un tableau qui commence a 1 et va à 300
 
         const arrayNumberVolumeDivideBy2 = Array.from({
-            length: volume/2
+            length: volume / 2
         }, (_, i) => i + 1);
 
-        
+
         const ligne_commandes = [];
 
         for (let index = 1; index <= volume * 3; index++) {
@@ -630,7 +711,7 @@ const fakeData = async () => {
 
         consol.seed(`Début de la génération de fake ligne_paniers`);
         console.time(`Génération de ${volume*3} ligne_paniers`);
-        const arrayNumberPanier = Array.from(Array((volume*3)+1).keys())
+        const arrayNumberPanier = Array.from(Array((volume * 3) + 1).keys())
 
         const ligne_paniers = [];
 
@@ -723,7 +804,7 @@ const fakeData = async () => {
 
         const deductions = [];
 
-        for (let index = 1; index <= volume/4; index++) {
+        for (let index = 1; index <= volume / 4; index++) {
             const deduction = {
 
                 id_reduction: index,
@@ -840,16 +921,16 @@ const fakeData = async () => {
 
         //! PAYS
 
-        consol.seed(`Début de l'import de ${volume} pays`);
+        consol.seed(`Début de l'import de ${countriesUnique.length} pays`);
 
         const countriesInsert = "INSERT INTO mada.pays (nom) VALUES ($1);";
 
-        for (const country of countries) {
-            consol.seed(`Import du pays nommé : ${country.name}`);
-            await db.query(countriesInsert, [country.name]);
+        for (const country of countriesUnique) {
+            consol.seed(`Import du pays nommé : ${country.nom}`);
+            await db.query(countriesInsert, [country]);
         }
 
-        consol.seed(`Fin de l'import de ${volume} pays`);
+        consol.seed(`Fin de l'import de ${countriesUnique.length} pays`);
 
         //! VILLES
 
@@ -1049,6 +1130,12 @@ const fakeData = async () => {
         const client_adressesInsert = "INSERT INTO mada.client_adresse (prenom, nom_famille, ligne1, telephone, titre, id_client, id_ville) VALUES ($1, $2, $3 ,$4, $5, $6, $7);";
 
         for (const addressCustumer of custumers) {
+            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.ligne1} avec l'id : ${addressCustumer.id_for_pk}`);
+            await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nom_famille, addressCustumer.ligne1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.id_for_pk, addressCustumer.id_for_pk]);
+        }
+        // Deux fake adresses pour un même client ! :)
+
+        for (const addressCustumer of custumersBis) {
             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.ligne1} avec l'id : ${addressCustumer.id_for_pk}`);
             await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nom_famille, addressCustumer.ligne1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.id_for_pk, addressCustumer.id_for_pk]);
         }
@@ -1284,6 +1371,7 @@ const fakeData = async () => {
         await db.query(`INSERT INTO mada.admin_verif_telephone (verif_phone, id_client) VALUES ('true', ${process.env.ID});`);
         await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('true', ${process.env.ID});`);
         await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
+        await db.query(`UPDATE mada.client_adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`)
 
         consol.seed(`Admin mis en place en client id ${process.env.ID}`)
 

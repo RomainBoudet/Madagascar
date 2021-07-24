@@ -20,6 +20,7 @@ const {
   const clientController = require('./controllers/clientController');
   const panierController = require('./controllers/panierController');
   const clientHistoController = require ('./controllers/clientHistoController');
+  const clientAdresseController = require('./controllers/clientAdresseController');
   
   // implémentation de joi, avec un validator  dans le dossier "services".
   const {
@@ -94,21 +95,19 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', clientHistoController.getAllHistoPass);
+router.get('/all', clientAdresseController.getAllVille);
 
-//router.get('/getone/:id(\\d+)', adminController.getOnePhone);
+router.get('/getone/:id(\\d+)',clientAdresseController.getOneVille);
 
 //router.get('/getByIdClient/:id(\\d+)', adminController.getPhoneByIdClient);
 
-router.post('/new', adminController.newPrivilege);
+router.post('/new', clientAdresseController.newVille);
 
-//router.delete('/del/:id(\\d+)', adminController.deletePhone);
+router.delete('/del/:id(\\d+)', clientAdresseController.delete);
 
-router.delete('/delByClient/:id(\\d+)', adminController.deletePrivilege);
+router.delete('/delByClient/:id(\\d+)', clientAdresseController.deleteByIdClient);
 
-router.patch('/updatePhone/:id(\\d+)', adminController.updatePhone);
-
-
+router.patch('/update/:id(\\d+)', clientAdresseController.updateClientVille);
 
 
 
@@ -117,7 +116,9 @@ router.patch('/updatePhone/:id(\\d+)', adminController.updatePhone);
 
 
 
-router.post('/aut', clientController.aut);
+
+
+
 
 router.patch('/updateClient/:id(\\d+)', clientController.updateClient);
 
@@ -129,7 +130,7 @@ router.patch('/updateClient/:id(\\d+)', clientController.updateClient);
 //router.patch('/updateVerifPhone/:id(\\d+)', testController.updateVerifPhone);
 
 
-//router.post('/email', testController.getUserbyEmail);
+//router.post('/new', testController.getUserbyEmail);
 
 /**
  * Une inscription

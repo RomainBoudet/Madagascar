@@ -112,7 +112,7 @@ class AdminPhone {
             `le statut de l'admin_phone pour le idClient : ${idClient} a été demandé en BDD !`
         );
 
-        return new AdminPhone(rows[0]);
+        return rows.map((id) => new AdminPhone(id));
     }
 
     /**

@@ -106,7 +106,7 @@ class Panier {
       `l'historique de panier pour le idClient : ${idClient} a été demandé en BDD !`
     );
 
-    return rows.map((clientHistoConn) => new Panier(clientHistoConn));
+    return rows.map((panier) => new Panier(panier));
   }
 
 

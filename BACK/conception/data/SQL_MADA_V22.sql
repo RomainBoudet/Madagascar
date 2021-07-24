@@ -137,7 +137,7 @@ CREATE TABLE code_postal(
 ------------------------------------------------------------
 CREATE TABLE pays(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom      text_valid NOT NULL
+	nom      text_valid NOT NULL UNIQUE
 );
 
 
@@ -146,8 +146,8 @@ CREATE TABLE pays(
 ------------------------------------------------------------
 CREATE TABLE ville(
 	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom         text_valid NOT NULL,
-	id_pays     INT NOT NULL REFERENCES pays(id)
+	nom         text_valid NOT NULL UNIQUE,
+	id_pays     INT NOT NULL REFERENCES pays(id) ON DELETE CASCADE
 );
 
 
@@ -362,16 +362,16 @@ CREATE TABLE client_adresse(
 	prenom            text_valid NOT NULL,
 	nom_famille       text_valid NOT NULL,
 	ligne1            text_valid NOT NULL,
-	ligne2            text_valid ,
-	ligne3            text_valid ,
-	telephone         posint  NOT NULL, -- peut être égale a zéro...
+	ligne2            text,
+	ligne3            text,
+	telephone         phonenumber  NOT NULL, 
 	titre             text_valid NOT NULL,
 	created_date       timestamptz NOT NULL DEFAULT now(),
 	updated_date       timestamptz,
 	CHECK (created_date < updated_date),
 
 	id_client         INT  NOT NULL REFERENCES client(id),
-	id_ville          INT  NOT NULL REFERENCES ville(id)
+	id_ville          INT  NOT NULL REFERENCES ville(id) ON DELETE CASCADE
 	
 );
 
@@ -537,7 +537,7 @@ CREATE TABLE client_historique_connexion(
 ------------------------------------------------------------
 CREATE TABLE ville_a_codePostal (
 	id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	id_ville                          INT NOT NULL REFERENCES ville(id),
+	id_ville                          INT NOT NULL REFERENCES ville(id) ON DELETE CASCADE,
 	id_codePostal                    INT NOT NULL REFERENCES code_postal(id)
 );
 

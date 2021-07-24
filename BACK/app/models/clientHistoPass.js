@@ -106,7 +106,7 @@ class ClientHistoPass {
             `l'historique de password pour le idClient : ${idClient} a été demandé en BDD !`
         );
 
-        return rows.map((clientHistoConn) => new ClientHistoPass(clientHistoConn));
+        return rows.map((clientHistoPass) => new ClientHistoPass(clientHistoPass));
     }
 
     /**

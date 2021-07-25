@@ -533,7 +533,7 @@ const fakeData = async () => {
                 nom_transporteur: "TNT",
                 estime_arrive: "Livraison le lendemain pour toute commande avant 12h00",
                 description: "EXPRESS À DOMICILE POUR UNE LIVRAISON À DOMICILE EN FRANCE MÉTROPOLITAINE. LIVRAISON EN MAINS PROPRES ET CONTRE SIGNATURE DÈS LE LENDEMAIN DE L'EXPÉDITION DE VOTRE COMMANDE (1).(1) AVANT 13 HEURES OU EN DÉBUT D'APRÈS-MIDI EN ZONE RURALE.",
-                poid: (Math.random() * 15 - 1 + 1).toFixed(2),
+                poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
             },
@@ -543,7 +543,7 @@ const fakeData = async () => {
                 nom_transporteur: "Retrait sur le stand durant le prochain marché",
                 estime_arrive: "Durant le prochain marché. Nous contacter pour connaitre la date",
                 description: "Une livraison de la main a la main, sur notre stand",
-                poid: (Math.random() * 15 - 1 + 1).toFixed(2),
+                poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
             }, {
@@ -552,12 +552,13 @@ const fakeData = async () => {
                 nom_transporteur: "La poste Collisimmo",
                 estime_arrive: "Livraison dans les 48h a 72h",
                 description: "Le service colis de La Poste",
-                poid: (Math.random() * 15 - 1 + 1).toFixed(2),
+                poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
             }
 
         ];
+
 
         for (let index = 1; index <= volume*5; index++) {
             const livraison = {

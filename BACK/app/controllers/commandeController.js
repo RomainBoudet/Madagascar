@@ -1,6 +1,6 @@
 const Commande = require('../models/commande');
 const StatutCommande = require('../models/statutCommande');
-
+const LigneCommande = require('../models/ligneCommande');
 
 
 /**
@@ -21,6 +21,17 @@ const commandeController = {
             res.status(200).json(commandes);
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    getAllLigneCommande: async (req, res) => {
+        try {
+            const commandes = await LigneCommande.findAll();
+
+            res.status(200).json(commandes);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllLigneCommande du commandeController :',
                 error);
             res.status(500).json(error.message);
         }
@@ -53,6 +64,18 @@ const commandeController = {
             res.status(500).json(error.message);
         }
     },
+    getOneLigneCommande: async (req, res) => {
+        try {
+
+            const commande = await LigneCommande.findOne(req.params.id);
+            res.json(commande);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneLigneCommande du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
 
     getOneStatutCommande: async (req, res) => {
         try {
@@ -80,6 +103,19 @@ const commandeController = {
             res.status(500).json(error.message);
         }
     },
+    getLigneCommandeByIdCommande: async (req, res) => {
+        try {
+            
+            const commande = await LigneCommande.findByIdCommande(req.params.id);
+            res.json(commande);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getLigneCommandeByIdCommande du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
 
 
 
@@ -103,6 +139,24 @@ const commandeController = {
             res.json(newCommande);
         } catch (error) {
             console.log(`Erreur dans la méthode new du commandeController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    newLigneCommande: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.quantiteCommande = req.body.quantiteCommande;
+            data.idProduit = req.body.idProduit;
+            data.idCommande = req.body.idCommande;
+            
+            const newCommande = new LigneCommande(data);
+            
+            await newCommande.save();
+            res.json(newCommande);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newLigneCommande du commandeController : ${error.message}`);
             res.status(500).json(error.message);
         }
     },
@@ -153,7 +207,7 @@ const commandeController = {
 
             if (commentaire) {
                 updateCommande.commentaire = commentaire;
-                message.methode = 'Votre nouveau commentaire a bien été enregistré ';
+                message.commentaire = 'Votre nouveau commentaire a bien été enregistré ';
             } else if (!commentaire) {
                 message.commentaire = 'Votre nom de commentaire n\'a pas changé';
             }
@@ -180,6 +234,63 @@ const commandeController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode update du commandeController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    updateLigneCommande: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateCommande = await LigneCommande.findOne(id);
+
+
+            const quantiteCommande = req.body.quantiteCommande;
+            const idProduit = req.body.idProduit;
+            const idCommande = req.body.idCommande;
+        
+
+            let message = {};
+
+            if (quantiteCommande) {
+                updateCommande.quantiteCommande = quantiteCommande;
+                message.quantiteCommande = 'Votre nouveau quantiteCommande a bien été enregistré ';
+            } else if (!quantiteCommande) {
+                message.quantiteCommande = 'Votre quantiteCommande n\'a pas changé';
+            }
+
+
+            if (idProduit) {
+                updateCommande.idProduit = idProduit;
+                message.idProduit = 'Votre nouveau idProduit a bien été enregistré ';
+            } else if (!idProduit) {
+                message.idProduit = 'Votre idProduit n\'a pas changé';
+            }
+
+
+            if (idCommande) {
+                updateCommande.idCommande = idCommande;
+                message.idCommande = 'Votre nouveau idCommande a bien été enregistré ';
+            } else if (!idCommande) {
+                message.idCommande = 'Votre idCommande n\'a pas changé';
+            }
+
+
+            if (idClient) {
+                updateCommande.idClient = idClient;
+                message.idClient = 'Votre nouveau idClient a bien été enregistré ';
+            } else if (!idClient) {
+                message.idClient = 'Votre idClient n\'a pas changé';
+            }
+
+             await updateCommande.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateLigneCommande du commandeController ${error.message}`);
             res.status(500).json(error.message);
         }
     },
@@ -246,7 +357,23 @@ const commandeController = {
             res.status(500).json(error.message);
         }
     },
+    deleteLigneCommande: async (req, res) => {
 
+        try {
+
+            const commandeInDb = await LigneCommande.findOne(req.params.id);
+
+            const commande = await commandeInDb.delete();
+
+            res.json(commande);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteLigneCommande du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    
     deleteStatutCommande: async (req, res) => {
 
         try {
@@ -281,7 +408,28 @@ const commandeController = {
             res.json(arrayDeleted[0]);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode deleteUByIdClient du commandeController :',
+            console.trace('Erreur dans la méthode deleteByIdClient du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    deleteLigneCommandeByIdCommande: async (req, res) => {
+
+        try {
+
+            const commandesInDb = await LigneCommande.findByIdCommande(req.params.id);
+            const arrayDeleted = [];
+            for (const commandeInDb of commandesInDb) {
+
+                const commande = await commandeInDb.deleteByIdCommande();
+                arrayDeleted.push(commande);
+            }
+
+
+            res.json(arrayDeleted[0]);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteLigneCommandeByIdCommande du commandeController :',
                 error);
             res.status(500).json(error.message);
         }

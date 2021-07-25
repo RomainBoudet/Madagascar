@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npm run clearRedis && nodemon index.js ",
+    "start": "sudo kill -9 $(sudo lsof -t -i:3000) && npm run clearRedis && nodemon index.js ",
     "seed": "cd conception/seeding && node fakeFabric_V2.js",
     "test": "mocha",
     "clearRedis": "redis-cli --scan --pattern 'mjc:*' | xargs redis-cli DEL"

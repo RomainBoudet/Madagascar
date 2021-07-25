@@ -331,11 +331,10 @@ CREATE TABLE paiement(
 -- Table: livraison
 ------------------------------------------------------------
 CREATE TABLE livraison(
-	id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	frais_expedition   posreal  NOT NULL,
 	nom_transporteur   text_valid NOT NULL,
 	description		   text_valid NOT NULL,
-	date_envoi         timestamptz NOT NULL DEFAULT now(),
 	numero_suivi       text_valid,
 	URL_suivi          text_valid,
 	poid               posrealsup  NOT NULL,
@@ -461,8 +460,10 @@ CREATE TABLE sous_categorie_image(
 -- Table: ligne_commande
 ------------------------------------------------------------
 CREATE TABLE ligne_commande(
-	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite_commande   posintsup  NOT NULL,
+	created_date        timestamptz NOT NULL DEFAULT now(),
+	updated_date        timestamptz,
 
 	id_produit          INT  NOT NULL REFERENCES produit(id),
 	id_commande			INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
@@ -476,7 +477,9 @@ CREATE TABLE ligne_commande(
 ------------------------------------------------------------
 CREATE TABLE ligne_livraison(
 	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	quantite_livraison               posintsup  NOT NULL,
+	quantite_livraison  posintsup  NOT NULL,
+	created_date        timestamptz NOT NULL DEFAULT now(),
+	updated_date        timestamptz,
 
 	id_livraison                     INT  NOT NULL REFERENCES livraison(id) ON DELETE CASCADE,
 	id_commandeLigne                 INT  NOT NULL REFERENCES ligne_commande(id) ON DELETE CASCADE

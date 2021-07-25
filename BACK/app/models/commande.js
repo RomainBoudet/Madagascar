@@ -21,7 +21,7 @@ class Commande {
         this.updatedDate = val;
     }
 
-    set id_commandeStatut(val) {
+    set id_commandestatut(val) {
         this.idCommandeStatut = val;
     }
 

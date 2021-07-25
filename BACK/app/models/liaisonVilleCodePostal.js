@@ -12,7 +12,7 @@ class LiaisonVilleCodePostal {
         this.idVille = val;
     }
 
-    set id_codePostal(val) {
+    set id_codepostal(val) {
         this.idCodePostal = val;
     }
     

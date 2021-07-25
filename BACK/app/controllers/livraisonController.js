@@ -1,4 +1,5 @@
 const Livraison = require('../models/livraison');
+const LigneLivraison = require('../models/ligneLivraison');
 
 
 
@@ -24,6 +25,17 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
+    getAllLigneLivraison: async (req, res) => {
+        try {
+            const livraisons = await LigneLivraison.findAll();
+
+            res.status(200).json(livraisons);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllLigneLivraison du livraisonController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
     
     getOne: async (req, res) => {
         try {
@@ -33,6 +45,32 @@ const livraisonController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du livraisonController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    getOneLigneLivraison: async (req, res) => {
+        try {
+
+            const livraison = await LigneLivraison.findOne(req.params.id);
+            res.json(livraison);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneLigneLivraison du livraisonController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    
+    getByIdCommande: async (req, res) => {
+        try {
+            
+            const livraison = await Livraison.findByIdCommande(req.params.id);
+            res.json(livraison);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getByIdCommande du livraisonController :',
                 error);
             res.status(500).json(error.message);
         }
@@ -50,14 +88,16 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-    getByIdCommande: async (req, res) => {
+    
+    
+    getLigneLivraisonByIdLivraison: async (req, res) => {
         try {
             
-            const livraison = await Livraison.findByIdCommande(req.params.id);
+            const livraison = await LigneLivraison.findByIdLivraison(req.params.id);
             res.json(livraison);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode getByIdCommande du livraisonController :',
+            console.trace('Erreur dans la méthode getLigneLivraisonByIdLivraison du livraisonController :',
                 error);
             res.status(500).json(error.message);
         }
@@ -95,7 +135,26 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-    
+    newLigneLivraison: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.quantiteLivraison = req.body.quantiteLivraison;
+            data.idLivraison = req.body.idLivraison;
+            data.idCommandeLigne = req.body.idCommandeLigne;
+           
+
+            const newLivraison = new LigneLivraison(data);
+         
+            
+            await newLivraison.save();
+            res.json(newLivraison);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newLigneLivraison du livraisonController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
     
     update: async (req, res) => {
         try {
@@ -197,6 +256,57 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
+    updateLigneLivraison: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateLivraison = await LigneLivraison.findOne(id);
+
+
+            const quantiteLivraison = req.body.quantiteLivraison;
+            const idLivraison = req.body.idLivraison;
+            const idCommandeLigne = req.body.idCommandeLigne;
+        
+
+            let message = {};
+
+            if (quantiteLivraison) {
+                updateLivraison.quantiteLivraison = quantiteLivraison;
+                message.quantiteLivraison = 'Votre nouveau quantiteLivraison a bien été enregistré ';
+            } else if (!quantiteLivraison) {
+                message.quantiteLivraison = 'Votre quantiteLivraison n\'a pas changé';
+            }
+
+
+            if (idLivraison) {
+                updateLivraison.idLivraison = idLivraison;
+                message.idLivraison = 'Votre nouveau idLivraison a bien été enregistré ';
+            } else if (!idLivraison) {
+                message.idLivraison = 'Votre nom de idLivraison n\'a pas changé';
+            }
+
+
+            if (idCommandeLigne) {
+                updateLivraison.idCommandeLigne = idCommandeLigne;
+                message.idCommandeLigne = 'Votre nouveau idCommandeLigne a bien été enregistré ';
+            } else if (!idCommandeLigne) {
+                message.idCommandeLigne = 'Votre idCommandeLigne n\'a pas changé';
+            }
+
+           console.log("updateLivraison dans le controller ==>>", updateLivraison);
+
+             await updateLivraison.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la méthode updateLigneLivraison du livraisonController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
    
 
     delete: async (req, res) => {
@@ -211,6 +321,22 @@ const livraisonController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode delete du livraisonController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    deleteLigneLivraison: async (req, res) => {
+
+        try {
+
+            const livraisonInDb = await LigneLivraison.findOne(req.params.id);
+
+            const livraison = await livraisonInDb.delete();
+
+            res.json(livraison);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteLigneLivraison du livraisonController :',
                 error);
             res.status(500).json(error.message);
         }
@@ -259,6 +385,28 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
+    deleteLigneLivraisonByIdLivraison: async (req, res) => {
+
+        try {
+
+            const livraisonsInDb = await LigneLivraison.findByIdLivraison(req.params.id);
+            const arrayDeleted = [];
+            for (const livraisonInDb of livraisonsInDb) {
+
+                const livraison = await livraisonInDb.deleteByIdLivraison();
+                arrayDeleted.push(livraison);
+            }
+
+
+            res.json(arrayDeleted[0]);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteLigneLivraisonByIdLivraison du livraisonController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    
     
 
 

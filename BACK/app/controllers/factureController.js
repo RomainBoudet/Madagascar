@@ -140,7 +140,7 @@ const factureController = {
                 updateFacture.idClient = idClient;
                 message.idClient = 'Votre nouveau idClient a bien été enregistré ';
             } else if (!idClient) {
-                message.password = 'Votre idClient n\'a pas changé';
+                message.idClient = 'Votre idClient n\'a pas changé';
             }
 
              await updateFacture.update();
@@ -190,7 +190,7 @@ const factureController = {
             res.json(arrayDeleted[0]);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode deleteUByIdFacture du factureController :',
+            console.trace('Erreur dans la méthode deleteUByIdClient du factureController :',
                 error);
             res.status(500).json(error.message);
         }

@@ -37,7 +37,7 @@ class Facture {
     set id_paiement(val) {
         this.idPaiement = val;
     }
-    
+
     set id_client(val) {
         this.idClient = val;
     }
@@ -159,7 +159,7 @@ class Facture {
         );
     }
 
- /**
+    /**
      * Méthode chargé d'aller mettre à jour les informations relatives à un facture passé en paramétre
      * @param reference - la reférence d'une facture
      * @param montantHT - le montant HT d'una facture, 
@@ -171,42 +171,19 @@ class Facture {
      * @returns - les informations du facture mis à jour
      * @async - une méthode asynchrone
      */
-  async update() {
-    const {
-        rows,
-    } = await db.query(
-        `UPDATE mada.facture SET reference = $1, montant_HT = $2, montant_TTC = $3, montant_TVA = $4, id_paiement = $5, id_client = $6  WHERE id = $7 RETURNING *;`,
-        [this.reference, this.montantHT, this.montantTTC, this.montantTVA, this.idPaiement, this.idClient, this.id]
-    );
-    this.updatedDate = rows[0].updated_date;
-    console.log(
-        `le facture du client id : ${this.idClient} comprenant le nouveau numéro ${this.adminTelephone} a été mise à jour le ${this.updatedDate} !`
-    );
-}
-
-    /**
-     * Méthode chargé d'aller mettre à jour les informations relatives à un facture passé en paramétre
-     * @param reference - la reférence d'une facture
-     * @param montantHT - le montant HT d'una facture, 
-     * @param montantTTC - le montant TTC d'une facture,
-     * @param montantTVA - le montant TVA d'une facture
-     * @param idPaiement - l'identifiant d'un paiement
-     * @param idClient - l'id d'un client
-     * @returns - les informations du facture mis à jour
-     * @async - une méthode asynchrone
-     */
-    async updateByIdClient() {
+    async update() {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.facture SET reference = $1, montant_HT = $2, montant_TTC = $3, montant_TVA = $4, id_paiement = $5  WHERE id_client = $6 RETURNING *;`,
-            [this.reference, this.montantHT, this.montantTTC, this.montantTVA, this.idPaiement, this.idClient]
+            `UPDATE mada.facture SET reference = $1, montant_HT = $2, montant_TTC = $3, montant_TVA = $4, id_paiement = $5, id_client = $6  WHERE id = $7 RETURNING *;`,
+            [this.reference, this.montantHT, this.montantTTC, this.montantTVA, this.idPaiement, this.idClient, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(
             `le facture du client id : ${this.idClient} comprenant le nouveau numéro ${this.adminTelephone} a été mise à jour le ${this.updatedDate} !`
         );
     }
+
 
 
 

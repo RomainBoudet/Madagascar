@@ -100,23 +100,23 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', avisController.getAll);
+router.get('/all', panierController.getAllLignePanier);
 
-router.get('/getone/:id(\\d+)', avisController.getOne);
+router.get('/getone/:id(\\d+)', panierController.getOneLignePanier);
 
-router.get('/getByIdClient/:id(\\d+)', avisController.getByIdClient);
+router.get('/getByIdClient/:id(\\d+)', panierController.getByIdClient);
 
-router.get('/getByIdLivraison/:id(\\d+)', livraisonController.getLigneLivraisonByIdLivraison);
+router.get('/getLignePanierByIdClient/:id(\\d+)', panierController.getLignePanierByIdClient);
 
-router.post('/new', avisController.new);
+router.post('/new', panierController.newLignePanier);
 
-router.delete('/del/:id(\\d+)', avisController.delete);
+router.delete('/del/:id(\\d+)', panierController.deleteLignePanier);
 
-router.delete('/delByClient/:id(\\d+)', avisController.deleteByIdClient);
+router.delete('/delByClient/:id(\\d+)', panierController.deleteByIdClient);
 
-router.delete('/delByIdLivraison/:id(\\d+)', livraisonController.deleteLigneLivraisonByIdLivraison);
+router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', avisController.update);
+router.patch('/update/:id(\\d+)', panierController.updateLignePanier);
 
 
 

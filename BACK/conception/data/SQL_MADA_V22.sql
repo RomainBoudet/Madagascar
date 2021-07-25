@@ -481,8 +481,8 @@ CREATE TABLE ligne_livraison(
 	created_date        timestamptz NOT NULL DEFAULT now(),
 	updated_date        timestamptz,
 
-	id_livraison                     INT  NOT NULL REFERENCES livraison(id) ON DELETE CASCADE,
-	id_commandeLigne                 INT  NOT NULL REFERENCES ligne_commande(id) ON DELETE CASCADE
+	id_livraison        INT  NOT NULL REFERENCES livraison(id) ON DELETE CASCADE,
+	id_commandeLigne    INT  NOT NULL REFERENCES ligne_commande(id) ON DELETE CASCADE
 	
 );
 
@@ -493,11 +493,13 @@ CREATE TABLE ligne_livraison(
 -- Table: ligne_panier
 ------------------------------------------------------------
 CREATE TABLE ligne_panier(
-	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	quantite        posintsup  NOT NULL,
+	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	quantite            posintsup  NOT NULL,
+	created_date        timestamptz NOT NULL DEFAULT now(),
+	updated_date        timestamptz,
 
-	id_produit      INT  NOT NULL REFERENCES produit(id),
-	id_panier       INT  NOT NULL REFERENCES panier(id) ON DELETE CASCADE
+	id_produit          INT  NOT NULL REFERENCES produit(id),
+	id_panier           INT  NOT NULL REFERENCES panier(id) ON DELETE CASCADE
 );
 
 ------------------------------------------------------------

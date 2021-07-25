@@ -1375,7 +1375,7 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${produit_commande_retournes.length} produit_commande_retournes`);
         console.time(`Import de ${produit_commande_retournes.length} produit_commande_retournes`);
-        const produit_commande_retournesInsert = "INSERT INTO mada.produit_commande_retourne (quantite, commentaire, id_livraisonLigne) VALUES ($1, $2, $3);";
+        const produit_commande_retournesInsert = "INSERT INTO mada.produit_retour (quantite, commentaire, id_commandeLigne) VALUES ($1, $2, $3);";
 
         for (const produit_commande_retourne of produit_commande_retournes) {
             consol.seed(`Import de produit_commande_retourne pour l'id livraison ligne  : ${produit_commande_retourne.id_livraisonLigne}`);

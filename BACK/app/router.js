@@ -99,23 +99,23 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', commandeController.getAll);
+router.get('/all', commandeController.getAllProduitRetour);
 
-router.get('/getone/:id(\\d+)', livraisonController.getOneLigneLivraison);
+router.get('/getone/:id(\\d+)', commandeController.getOneProduitRetour);
 
 router.get('/getByIdClient/:id(\\d+)', livraisonController.getByIdClient);
 
 router.get('/getByIdLivraison/:id(\\d+)', livraisonController.getLigneLivraisonByIdLivraison);
 
-router.post('/new', commandeController.new);
+router.post('/new', commandeController.newProduitRetour);
 
-router.delete('/del/:id(\\d+)', livraisonController.deleteLigneLivraison);
+router.delete('/del/:id(\\d+)', commandeController.deleteProduitRetour);
 
 router.delete('/delByClient/:id(\\d+)', livraisonController.deleteByIdClient);
 
 router.delete('/delByIdLivraison/:id(\\d+)', livraisonController.deleteLigneLivraisonByIdLivraison);
 
-router.patch('/update/:id(\\d+)', livraisonController.updateLigneLivraison);
+router.patch('/update/:id(\\d+)', commandeController.updateProduitRetour);
 
 
 

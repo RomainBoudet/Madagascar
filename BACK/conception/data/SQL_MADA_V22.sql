@@ -503,12 +503,13 @@ CREATE TABLE ligne_panier(
 ------------------------------------------------------------
 -- Table: produit_commande_retourne
 ------------------------------------------------------------
-CREATE TABLE produit_commande_retourne(
-	id  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	quantite                    posint  NOT NULL DEFAULT 0,
+CREATE TABLE produit_retour(
+	id                           INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	quantite                     posint  NOT NULL DEFAULT 0,
 	created_date                 timestamptz NOT NULL DEFAULT now(),
-	commentaire                 text_valid NOT NULL,
-	id_livraisonLigne           INT  NOT NULL REFERENCES ligne_livraison(id) ON DELETE CASCADE
+	updated_date                 timestamptz,
+	commentaire                  text_valid NOT NULL,
+	id_commandeLigne             INT NOT NULL REFERENCES ligne_commande(id) ON DELETE CASCADE
 
 );
 

@@ -1,6 +1,7 @@
 const Commande = require('../models/commande');
 const StatutCommande = require('../models/statutCommande');
 const LigneCommande = require('../models/ligneCommande');
+const ProduitRetour = require('../models/produitRetour');
 
 
 /**
@@ -278,12 +279,6 @@ const commandeController = {
             }
 
 
-            if (idClient) {
-                updateCommande.idClient = idClient;
-                message.idClient = 'Votre nouveau idClient a bien été enregistré ';
-            } else if (!idClient) {
-                message.idClient = 'Votre idClient n\'a pas changé';
-            }
 
              await updateCommande.update();
             
@@ -434,6 +429,118 @@ const commandeController = {
             res.status(500).json(error.message);
         }
     },
+
+    //! PRODUIT RETOUR
+
+    getAllProduitRetour: async (req, res) => {
+        try {
+            const commandes = await ProduitRetour.findAll();
+
+            res.status(200).json(commandes);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllProduitRetour du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    getOneProduitRetour: async (req, res) => {
+        try {
+
+            const commande = await ProduitRetour.findOne(req.params.id);
+            res.json(commande);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneProduitRetour du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    newProduitRetour: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.quantite = req.body.quantite;
+            data.commentaire = req.body.commentaire;
+            data.idCommandeLigne = req.body.idCommandeLigne;
+       
+
+            const newCommande = new ProduitRetour(data);
+            
+            await newCommande.save();
+            res.json(newCommande);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newProduitRetour du commandeController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    updateProduitRetour: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateCommande = await ProduitRetour.findOne(id);
+
+
+            const quantite = req.body.quantite;
+            const commentaire = req.body.commentaire;
+            const idCommandeLigne = req.body.idCommandeLigne;
+        
+
+            let message = {};
+
+            if (quantite) {
+                updateCommande.quantite = quantite;
+                message.quantite = 'Votre nouveau quantite a bien été enregistré ';
+            } else if (!quantite) {
+                message.quantite = 'Votre quantite n\'a pas changé';
+            }
+
+
+            if (commentaire) {
+                updateCommande.commentaire = commentaire;
+                message.commentaire = 'Votre nouveau commentaire a bien été enregistré ';
+            } else if (!commentaire) {
+                message.commentaire = 'Votre commentaire n\'a pas changé';
+            }
+
+
+            if (idCommandeLigne) {
+                updateCommande.idCommandeLigne = idCommandeLigne;
+                message.idCommandeLigne = 'Votre nouveau idCommandeLigne a bien été enregistré ';
+            } else if (!idCommandeLigne) {
+                message.idCommandeLigne = 'Votre idCommandeLigne n\'a pas changé';
+            }
+
+
+             await updateCommande.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateProduitRetour du commandeController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    deleteProduitRetour : async (req, res) => {
+
+        try {
+
+            const commandeInDb = await ProduitRetour.findOne(req.params.id);
+
+            const commande = await commandeInDb.delete();
+
+            res.json(commande);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteProduitRetour  du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
 
 
 }

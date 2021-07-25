@@ -415,7 +415,7 @@ const fakeData = async () => {
         //! STATUT_COMMANDE
 
         consol.seed(`Début de la génération de fake statut_commandes`);
-        console.time(`Génération de ${volume} statut_commandes`);
+        console.time(`Génération de ${volume*5} statut_commandes`);
 
         const statut_commandes = [];
         const statutCommandes = [{
@@ -443,7 +443,7 @@ const fakeData = async () => {
             description: "La commande a remis au transporteur. Vous avez dû recevoir un email contenant le numéro de tracking vous permettant de suivre l'acheminement de votre colis. Ce numéro de tracking est également accessible dans votre compte client dans la rubrique Mes commandes / Onglet Expéditions"
         }]
 
-        for (let index = 1; index <= volume; index++) {
+        for (let index = 1; index <= volume*5; index++) {
             const statut_commande = {
 
 
@@ -452,7 +452,7 @@ const fakeData = async () => {
             };
             statut_commandes.push(statut_commande);
         }
-        console.timeEnd(`Génération de ${volume} statut_commandes`);
+        console.timeEnd(`Génération de ${volume*5} statut_commandes`);
         console.table(statut_commandes);
         consol.seed(`Fin de la génération de fake statut_commandes`);
 
@@ -460,13 +460,21 @@ const fakeData = async () => {
         //! COMMANDE
 
         consol.seed(`Début de la génération de fake commandes`);
-        console.time(`Génération de ${volume} commandes`);
+        console.time(`Génération de ${volume*5} commandes`);
+
+        const arrayNumberVolumeDivideBy2 = Array.from({
+            length: volume / 2
+        }, (_, i) => i + 1);
+
+        const arrayNumberVolume = Array.from({
+            length: volume
+        }, (_, i) => i + 1);
 
         const commandes = [];
 
-        for (let index = 1; index <= volume; index++) {
+        for (let index = 1; index <= volume*5; index++) {
             const commande = {
-                idClient: index,
+                idClient: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `COMMANDE/${9000+index} `, // une ref UNIQUE
                 commentaire: faker.lorem.words(),
                 id_commandeStatut: index,
@@ -474,7 +482,7 @@ const fakeData = async () => {
             };
             commandes.push(commande);
         }
-        console.timeEnd(`Génération de ${volume} commandes`);
+        console.timeEnd(`Génération de ${volume*5} commandes`);
         console.table(commandes);
         consol.seed(`Fin de la génération de fake commandes`);
 
@@ -483,10 +491,10 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake paiements`);
-        console.time(`Génération de ${volume} paiements`);
+        console.time(`Génération de ${volume*5} paiements`);
         const paiements = [];
 
-        for (let index = 1; index <= volume; index++) {
+        for (let index = 1; index <= volume*5; index++) {
             const paiement = {
 
                 ref: `PAIEMENT/${9000+index} `,
@@ -498,7 +506,7 @@ const fakeData = async () => {
             };
             paiements.push(paiement);
         }
-        console.timeEnd(`Génération de ${volume} paiements`);
+        console.timeEnd(`Génération de ${volume*5} paiements`);
         console.table(paiements);
         consol.seed(`Fin de la génération de fake paiements`);
 
@@ -506,7 +514,7 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake livraisons`);
-        console.time(`Génération de ${volume} livraisons`);
+        console.time(`Génération de ${volume*5} livraisons`);
         const livraisons = [];
 
         const transporteurs = [{
@@ -551,17 +559,19 @@ const fakeData = async () => {
 
         ];
 
-        for (let index = 1; index <= volume; index++) {
+        for (let index = 1; index <= volume*5; index++) {
             const livraison = {
 
                 randomTransport: transporteurs[Math.floor(Math.random() * transporteurs.length)],
-                indexClientCommande: index,
+                indexClientCommande: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
+                idCommande: index,
+
 
             };
             livraisons.push(livraison);
         }
 
-        console.timeEnd(`Génération de ${volume} livraisons`);
+        console.timeEnd(`Génération de ${volume*5} livraisons`);
         console.table(livraisons.randomTransport); // structure => [{randomTransport:{}}]  
         consol.seed(`Fin de la génération de fake livraisons`);
 
@@ -576,7 +586,7 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake factures`);
-        console.time(`Génération de ${volume} factures`);
+        console.time(`Génération de ${volume*5} factures`);
         const factures1 = [];
         const factures2 = [];
         const factures3 = [];
@@ -585,28 +595,28 @@ const fakeData = async () => {
         const randomMontants2 = [];
         const randomMontants3 = [];
         const randomMontants4 = [];
-        for (let index = 1; index <= volume * 2; index++) {
+        for (let index = 1; index <= volume * 6; index++) {
 
             randomMontants1.push(faker.commerce.price());
         }
-        for (let index = 1; index <= volume * 2; index++) {
+        for (let index = 1; index <= volume * 6; index++) {
 
             randomMontants2.push(faker.commerce.price());
         }
-        for (let index = 1; index <= volume * 2; index++) {
+        for (let index = 1; index <= volume * 6; index++) {
 
             randomMontants3.push(faker.commerce.price());
         }
-        for (let index = 1; index <= volume * 2; index++) {
+        for (let index = 1; index <= volume * 6; index++) {
 
             randomMontants4.push(faker.commerce.price());
         }
 
 
 
-        for (let index = 1; index <= volume; index++) {
+        for (let index = 1; index <= volume*5; index++) {
             const facture = {
-                id_client: index,
+                id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${9000+(Math.floor(Math.random() * (5000 - 1 + 1)) + 1)} `,
                 montant_HT: randomMontants1[index],
                 montant_TTC: (parseInt(randomMontants1[index]) + (parseInt(randomMontants1[index]) * 0.2)).toFixed(2),
@@ -617,9 +627,9 @@ const fakeData = async () => {
             factures1.push(facture);
         }
 
-        for (let index = 1; index <= volume; index++) {
+        for (let index = 1; index <= volume*5; index++) {
             const facture = {
-                id_client: index,
+                id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${9000+((Math.floor(Math.random() * (10000 - 5001 + 1)) + 5001))} `,
                 montant_HT: randomMontants2[index],
                 montant_TTC: (parseInt(randomMontants2[index]) + (parseInt(randomMontants2[index]) * 0.2)).toFixed(2),
@@ -630,9 +640,9 @@ const fakeData = async () => {
             factures2.push(facture);
         }
 
-        for (let index = 1; index <= volume; index++) {
+        for (let index = 1; index <= volume*5; index++) {
             const facture = {
-                id_client: index,
+                id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${9000+((Math.floor(Math.random() * (15000 - 10001 + 1)) + 10001))} `,
                 montant_HT: randomMontants3[index],
                 montant_TTC: (parseInt(randomMontants3[index]) + (parseInt(randomMontants3[index]) * 0.2)).toFixed(2),
@@ -643,9 +653,9 @@ const fakeData = async () => {
             factures3.push(facture);
         }
 
-        for (let index = 1; index <= volume; index++) {
+        for (let index = 1; index <= volume*5; index++) {
             const facture = {
-                id_client: index,
+                id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${9000+((Math.floor(Math.random() * (20000 - 15001 + 1)) + 15001))} `,
                 montant_HT: randomMontants4[index],
                 montant_TTC: (parseInt(randomMontants4[index]) + (parseInt(randomMontants4[index]) * 0.2)).toFixed(2),
@@ -658,7 +668,7 @@ const fakeData = async () => {
         //4 factures par client...
 
 
-        console.timeEnd(`Génération de ${volume} factures`);
+        console.timeEnd(`Génération de ${volume*5} factures`);
         console.table(factures4);
         consol.seed(`Fin de la génération de fake factures`);
 
@@ -714,21 +724,21 @@ const fakeData = async () => {
         //300 produits
 
         consol.seed(`Début de la génération de fake ligne_commandes`);
-        console.time(`Génération de ${volume*3} ligne_commandes`);
+        console.time(`Génération de ${volume*5} ligne_commandes`);
 
         //const arrayNumberClient = Array.from(Array(101).keys()) // génére un tableau qui commence a zéro et va a 101
         const arrayNumberProduits = Array.from({
             length: volume * 3
         }, (_, i) => i + 1); // génére un tableau qui commence a 1 et va à 300
 
-        const arrayNumberVolumeDivideBy2 = Array.from({
+        /* const arrayNumberVolumeDivideBy2 = Array.from({
             length: volume / 2
-        }, (_, i) => i + 1);
+        }, (_, i) => i + 1); */
 
 
         const ligne_commandes = [];
 
-        for (let index = 1; index <= volume * 3; index++) {
+        for (let index = 1; index <= volume * 5; index++) {
             const ligne_commande = {
                 index,
                 id_client: arrayNumberVolumeDivideBy2[Math.floor(Math.random() * arrayNumberVolumeDivideBy2.length)],
@@ -739,7 +749,7 @@ const fakeData = async () => {
             };
             ligne_commandes.push(ligne_commande);
         }
-        console.timeEnd(`Génération de ${volume*3} ligne_commandes`);
+        console.timeEnd(`Génération de ${volume*5} ligne_commandes`);
         console.table(ligne_commandes);
         consol.seed(`Fin de la génération de fake ligne_commandes`);
 
@@ -748,12 +758,12 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake ligne_livraisons`);
-        console.time(`Génération de ${volume*3} ligne_livraisons`);
+        console.time(`Génération de ${volume*15} ligne_livraisons`);
 
 
         const ligne_livraisons = [];
 
-        for (let index = 1; index <= volume * 3; index++) {
+        for (let index = 1; index <= volume * 15; index++) {
             const ligne_livraison = {
 
                 id_livraison: arrayNumberVolumeDivideBy2[Math.floor(Math.random() * arrayNumberVolumeDivideBy2.length)],
@@ -762,7 +772,7 @@ const fakeData = async () => {
             };
             ligne_livraisons.push(ligne_livraison);
         }
-        console.timeEnd(`Génération de ${volume*3} ligne_livraisons`);
+        console.timeEnd(`Génération de ${volume*15} ligne_livraisons`);
         console.table(ligne_livraisons);
         consol.seed(`Fin de la génération de fake ligne_livraisons`);
 
@@ -1176,8 +1186,9 @@ const fakeData = async () => {
 
         for (const livraison of livraisons) {
             consol.seed(`Import du livraison pour le client id ${livraison.indexClientCommande} et l'id commande ${livraison.indexClientCommande}`);
-            await db.query(livraisonsInsert, [livraison.randomTransport.frais_expedition, livraison.randomTransport.nom_transporteur, livraison.randomTransport.description, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.randomTransport.estime_arrive, livraison.indexClientCommande, livraison.indexClientCommande]);
+            await db.query(livraisonsInsert, [livraison.randomTransport.frais_expedition, livraison.randomTransport.nom_transporteur, livraison.randomTransport.description, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.randomTransport.estime_arrive, livraison.indexClientCommande, livraison.idCommande]);
         }
+       
 
         consol.seed(`Fin de l'import de ${livraisons.length} livraisons`);
         console.timeEnd(`Import de ${livraisons.length} livraisons`);

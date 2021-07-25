@@ -23,7 +23,7 @@ const {
   const factureController = require('./controllers/factureController');
   const clientAdresseController = require ('./controllers/clientAdresseController');
   const paiementController = require('./controllers/paiementController');
-  
+  const commandeController = require('./controllers/commandeController');
   
   // implémentation de joi, avec un validator  dans le dossier "services".
   const {
@@ -98,19 +98,19 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', paiementController.getAll);
+router.get('/all', commandeController.getAll);
 
-router.get('/getone/:id(\\d+)', paiementController.getOne);
+router.get('/getone/:id(\\d+)', commandeController.getOne);
 
-router.get('/getByIdClient/:id(\\d+)', paiementController.getByIdCommande);
+router.get('/getByIdClient/:id(\\d+)', commandeController.getByIdClient);
 
-router.post('/new', paiementController. new);
+router.post('/new', commandeController.new);
 
-router.delete('/del/:id(\\d+)', clientAdresseController.deleteLiaisonVilleCodePostal);
+router.delete('/del/:id(\\d+)', commandeController.delete);
 
-router.delete('/delByClient/:id(\\d+)', paiementController.deleteByIdCommande);
+router.delete('/delByClient/:id(\\d+)', commandeController.deleteByIdClient);
 
-router.patch('/update/:id(\\d+)', paiementController.update);
+router.patch('/update/:id(\\d+)', commandeController.update);
 
 
 

@@ -323,7 +323,7 @@ CREATE TABLE paiement(
 	montant               posrealsup  NOT NULL,
 	updated_date           timestamptz,
 	CHECK (date_paiement < updated_date),	
-	id_commande           INT  NOT NULL REFERENCES commande(id)
+	id_commande           INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
 );
 
 
@@ -345,7 +345,7 @@ CREATE TABLE livraison(
 	CHECK (created_date < updated_date),
 
 	id_client            INT  NOT NULL REFERENCES client(id),
-	id_commande          INT  NOT NULL REFERENCES commande(id)
+	id_commande          INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
 	
 
 	
@@ -465,7 +465,7 @@ CREATE TABLE ligne_commande(
 	quantite_commande   posintsup  NOT NULL,
 
 	id_produit          INT  NOT NULL REFERENCES produit(id),
-	id_commande			INT  NOT NULL REFERENCES commande(id)
+	id_commande			INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
 	
 );
 
@@ -478,8 +478,8 @@ CREATE TABLE ligne_livraison(
 	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite_livraison               posintsup  NOT NULL,
 
-	id_livraison                     INT  NOT NULL REFERENCES livraison(id),
-	id_commandeLigne                 INT  NOT NULL REFERENCES ligne_commande(id)
+	id_livraison                     INT  NOT NULL REFERENCES livraison(id) ON DELETE CASCADE,
+	id_commandeLigne                 INT  NOT NULL REFERENCES ligne_commande(id) ON DELETE CASCADE
 	
 );
 
@@ -505,7 +505,7 @@ CREATE TABLE produit_commande_retourne(
 	quantite                    posint  NOT NULL DEFAULT 0,
 	created_date                 timestamptz NOT NULL DEFAULT now(),
 	commentaire                 text_valid NOT NULL,
-	id_livraisonLigne           INT  NOT NULL REFERENCES ligne_livraison(id)
+	id_livraisonLigne           INT  NOT NULL REFERENCES ligne_livraison(id) ON DELETE CASCADE
 
 );
 

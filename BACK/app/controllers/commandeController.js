@@ -1,4 +1,6 @@
 const Commande = require('../models/commande');
+const StatutCommande = require('../models/statutCommande');
+
 
 
 /**
@@ -24,6 +26,21 @@ const commandeController = {
         }
     },
 
+    getAllStatutCommande: async (req, res) => {
+        try {
+            const commandes = await StatutCommande.findAll();
+
+            res.status(200).json(commandes);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllStatutCommande du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
     getOne: async (req, res) => {
         try {
 
@@ -37,6 +54,18 @@ const commandeController = {
         }
     },
 
+    getOneStatutCommande: async (req, res) => {
+        try {
+
+            const commande = await StatutCommande.findOne(req.params.id);
+            res.json(commande);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneStatutCommande du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
 
 
     getByIdClient: async (req, res) => {
@@ -74,6 +103,24 @@ const commandeController = {
             res.json(newCommande);
         } catch (error) {
             console.log(`Erreur dans la méthode new du commandeController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    newStatutCommande: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.statut = req.body.statut;
+            data.description = req.body.description;
+          
+
+            const newCommande = new StatutCommande(data);
+            
+            await newCommande.save();
+            res.json(newCommande);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newStatutCommande du commandeController : ${error.message}`);
             res.status(500).json(error.message);
         }
     },
@@ -137,6 +184,49 @@ const commandeController = {
         }
     },
 
+    updateStatutCommande: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateCommande = await StatutCommande.findOne(id);
+
+
+            const statut = req.body.statut;
+            const description = req.body.description;
+        
+
+            let message = {};
+
+            if (statut) {
+                updateCommande.statut = statut;
+                message.statut = 'Votre nouveau statut a bien été enregistré ';
+            } else if (!statut) {
+                message.statut = 'Votre statut n\'a pas changé';
+            }
+
+
+            if (description) {
+                updateCommande.description = description;
+                message.description = 'Votre nouveau description a bien été enregistré ';
+            } else if (!description) {
+                message.description = 'Votre nom de description n\'a pas changé';
+            }
+
+
+             await updateCommande.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateStatutCommande du commandeController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
 
 
 
@@ -152,6 +242,23 @@ const commandeController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode delete du commandeController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteStatutCommande: async (req, res) => {
+
+        try {
+
+            const commandeInDb = await StatutCommande.findOne(req.params.id);
+
+            const commande = await commandeInDb.delete();
+
+            res.json(commande);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteStatutCommande du commandeController :',
                 error);
             res.status(500).json(error.message);
         }

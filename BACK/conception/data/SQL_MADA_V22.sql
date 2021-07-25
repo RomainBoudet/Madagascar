@@ -235,7 +235,7 @@ CREATE INDEX idx_panier_id ON panier(id);
 -- Table: produit
 ------------------------------------------------------------
 CREATE TABLE produit(
-	id       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom            text_valid NOT NULL,
 	description    text_length NOT NULL,
 	prix_HT        posrealsup  NOT NULL,
@@ -249,7 +249,7 @@ CREATE INDEX idx_produit_nom ON produit(nom);
 -- Table: produit_image
 ------------------------------------------------------------
 CREATE TABLE produit_image(
-	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                      text_valid NOT NULL,
 	ordre                    posint NOT NULL,
 	URL                      text_valid NOT NULL,
@@ -260,7 +260,7 @@ CREATE TABLE produit_image(
 -- Table: avis
 ------------------------------------------------------------
 CREATE TABLE avis(
-	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	notation          posintsup  NOT NULL,
 	avis              text_valid NOT NULL,
 	titre             text_valid NOT NULL,
@@ -275,11 +275,11 @@ CREATE TABLE avis(
 -- Table: sous_categorie
 ------------------------------------------------------------
 CREATE TABLE sous_categorie(
-	id            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                         text_valid NOT NULL,
 	description                 text_length NOT NULL,
-	created_date                 timestamptz NOT NULL DEFAULT now(),
-	updated_date                 timestamptz,
+	created_date                timestamptz NOT NULL DEFAULT now(),
+	updated_date                timestamptz,
 	CHECK (created_date < updated_date),
 	id_categorie                INT NOT NULL REFERENCES categorie(id)
 );
@@ -288,7 +288,7 @@ CREATE TABLE sous_categorie(
 -- Table: statut_commande
 ------------------------------------------------------------
 CREATE TABLE statut_commande(
-	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	statut             text_valid NOT NULL,
 	description        text_length NOT NULL
 );
@@ -297,14 +297,14 @@ CREATE TABLE statut_commande(
 -- Table: commande
 ------------------------------------------------------------
 CREATE TABLE commande(
-	id     INT  GENERATED ALWAYS AS IDENTITY UNIQUE,
+	id                 INT  GENERATED ALWAYS AS IDENTITY UNIQUE,
 	reference          text_valid NOT NULL,
 	date_achat         timestamptz NOT NULL DEFAULT now(),
 	commentaire        text_valid NOT NULL,
 	updated_date        timestamptz,
 	CHECK (date_achat < updated_date),
 
-	id_commandeStatut   INT  NOT NULL REFERENCES statut_commande(id),
+	id_commandeStatut   INT  NOT NULL REFERENCES statut_commande(id) ON DELETE CASCADE,
 	id_client   	    INT  NOT NULL REFERENCES client(id)
 
 

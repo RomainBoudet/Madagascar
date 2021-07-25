@@ -98,19 +98,19 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', commandeController.getAll);
+router.get('/all', commandeController.getAllStatutCommande);
 
-router.get('/getone/:id(\\d+)', commandeController.getOne);
+router.get('/getone/:id(\\d+)', commandeController.getOneStatutCommande);
 
 router.get('/getByIdClient/:id(\\d+)', commandeController.getByIdClient);
 
-router.post('/new', commandeController.new);
+router.post('/new', commandeController.newStatutCommande);
 
-router.delete('/del/:id(\\d+)', commandeController.delete);
+router.delete('/del/:id(\\d+)', commandeController.deleteStatutCommande);
 
 router.delete('/delByClient/:id(\\d+)', commandeController.deleteByIdClient);
 
-router.patch('/update/:id(\\d+)', commandeController.update);
+router.patch('/update/:id(\\d+)', commandeController.updateStatutCommande);
 
 
 

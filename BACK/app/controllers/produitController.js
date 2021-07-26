@@ -6,6 +6,7 @@ const Fournie = require('../models/fournie');
 const Reduction = require('../models/reduction');
 const Tva = require('../models/tva');
 const Image = require('../models/image');
+const Categorie = require('../models/categorie');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Produit pour les intéractions avec la BDD
@@ -1089,6 +1090,117 @@ const produitController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteImageByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+    //! CATEGORIE ////////////////////////////////////////////////////////////////////////////////////////
+
+    getAllCategorie: async (req, res) => {
+        try {
+            const produits = await Categorie.findAll();
+
+            res.status(200).json(produits);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllCategorie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getOneCategorie: async (req, res) => {
+        try {
+
+            const produit = await Categorie.findOne(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneCategorie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newCategorie: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.nom = req.body.nom;
+            data.description = req.body.description;
+            data.ordre = req.body.ordre;
+          
+
+            const newProduit = new Categorie(data);
+            await newProduit.save();
+            res.json(newProduit);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newCategorie du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateCategorie: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateProduit = await Categorie.findOne(id);
+
+
+            const nom = req.body.nom;
+            const description = req.body.description;
+            const ordre = req.body.ordre;
+
+            let message = {};
+
+            if (nom) {
+                updateProduit.nom = nom;
+                message.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                message.nom = 'Votre nom n\'a pas changé';
+            }
+
+            if (description) {
+                updateProduit.description = description;
+                message.description = 'Votre nouveau description a bien été enregistré ';
+            } else if (!description) {
+                message.description = 'Votre description n\'a pas changé';
+            }
+
+            if (ordre) {
+                updateProduit.ordre = ordre;
+                message.ordre = 'Votre nouveau ordre a bien été enregistré ';
+            } else if (!ordre) {
+                message.ordre = 'Votre ordre n\'a pas changé';
+            }
+
+             await updateProduit.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateCategorie du produitController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteCategorie: async (req, res) => {
+
+        try {
+
+            const produitInDb = await Categorie.findOne(req.params.id);
+
+            const produit = await produitInDb.delete();
+
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteCategorie du produitController :',
                 error);
             res.status(500).json(error.message);
         }

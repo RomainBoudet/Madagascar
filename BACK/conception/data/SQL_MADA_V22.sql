@@ -465,7 +465,7 @@ CREATE TABLE sous_categorie_image(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                    text_valid NOT NULL ,
 	URL                    text_valid NOT NULL ,
-	id_sousCategorie       INT  NOT NULL REFERENCES sous_categorie(id)
+	id_sousCategorie       INT  NOT NULL REFERENCES sous_categorie(id) ON DELETE CASCADE
 );
 
 

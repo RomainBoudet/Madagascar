@@ -101,25 +101,27 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', produitController.getAllCategorie);
+router.get('/all', produitController.getAllSousCategorie);
+router.get('/all2', produitController.getAllCategorie);
 
-router.get('/getone/:id(\\d+)', produitController.getOneCategorie);
 
-router.get('/getByIdClient/:id(\\d+)', panierController.getByIdClient);
+router.get('/getone/:id(\\d+)', produitController.getOneSousCategorie);
+
+router.get('/getSousCategorieByIdCategorie/:id(\\d+)', produitController.getSousCategorieByIdCategorie);
 
 router.get('/getByIdProduit/:id(\\d+)', produitController.getImageByIdProduit);
 
-router.post('/new', produitController.newCategorie);
+router.post('/new', produitController.newSousCategorie);
 
 router.post('/newProd', produitController.new);
 
-router.delete('/del/:id(\\d+)', produitController.deleteCategorie);
+router.delete('/del/:id(\\d+)', produitController.deleteSousCategorie);
 
-router.delete('/delByIdProduit/:id(\\d+)', produitController.deleteImageByIdProduit);
+router.delete('/delByIdCategorie/:id(\\d+)', produitController.deleteSousCategorieByIdCategorie);
 
 router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', produitController.updateCategorie);
+router.patch('/update/:id(\\d+)', produitController.updateSousCategorie);
 
 
 

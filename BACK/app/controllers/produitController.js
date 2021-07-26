@@ -7,6 +7,8 @@ const Reduction = require('../models/reduction');
 const Tva = require('../models/tva');
 const Image = require('../models/image');
 const Categorie = require('../models/categorie');
+const SousCategorie = require('../models/sousCategorie');
+
 
 /**
  * Une méthode qui va servir a intéragir avec le model Produit pour les intéractions avec la BDD
@@ -1201,6 +1203,137 @@ const produitController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteCategorie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+    //! SOUS CATEGORIE ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    getAllSousCategorie: async (req, res) => {
+        try {
+            const sousCategories = await SousCategorie.findAll();
+
+            res.status(200).json(sousCategories);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllSousCategorie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    getOneSousCategorie: async (req, res) => {
+        try {
+
+            const sousCategorie = await SousCategorie.findOne(req.params.id);
+            res.json(sousCategorie);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneSousCategorie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    getSousCategorieByIdCategorie: async (req, res) => {
+        try {
+            
+            const sousCategorie = await SousCategorie.findByIdCategorie(req.params.id);
+            res.json(sousCategorie);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getSousCategorieByIdSousCategorie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    newSousCategorie: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.nom = req.body.nom;
+            data.description = req.body.description;
+            data.idCategorie = req.body.idCategorie;
+           
+            const newSousCategorie = new SousCategorie(data);
+            await newSousCategorie.save();
+            res.json(newSousCategorie);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newSousCategorie du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    updateSousCategorie: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateSousCategorie = await SousCategorie.findOne(id);
+
+            const nom = req.body.nom;
+            const description = req.body.description;
+            const idCategorie = req.body.idCategorie;
+    
+            let message = {};
+
+            if (nom) {
+                updateSousCategorie.nom = nom;
+                message.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                message.nom = 'Votre nom n\'a pas changé';
+            }
+            if (description) {
+                updateSousCategorie.description = description;
+                message.description = 'Votre nouveau description a bien été enregistré ';
+            } else if (!description) {
+                message.description = 'Votre nom de description n\'a pas changé';
+            }
+            if (idCategorie) {
+                updateSousCategorie.idCategorie = idCategorie;
+                messageidCategoriee = 'Votre nouveau idCategorie a bien été enregistré ';
+            } else if (!idCategorie) {
+                message.idCategorie = 'Votre idCategorie n\'a pas changé';
+            }
+           
+
+             await updateSousCategorie.update();
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateSousCategorie du produitController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    deleteSousCategorie: async (req, res) => {
+        try {
+            const sousCategorieInDb = await SousCategorie.findOne(req.params.id);
+            const sousCategorie = await sousCategorieInDb.delete();
+
+            res.json(sousCategorie);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteSousCategorie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    deleteSousCategorieByIdCategorie: async (req, res) => {
+
+        try {
+            const sousCategoriesInDb = await SousCategorie.findByIdCategorie(req.params.id);
+            const arrayDeleted = [];
+            for (const sousCategorieInDb of sousCategoriesInDb) {
+
+                const sousCategorieHistoConn = await sousCategorieInDb.deleteByIdCategorie();
+                arrayDeleted.push(sousCategorieHistoConn);
+            }
+            res.json(arrayDeleted[0]);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteSousCategorieByIdSousCategorie du produitController :',
                 error);
             res.status(500).json(error.message);
         }

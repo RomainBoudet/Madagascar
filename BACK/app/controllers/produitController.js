@@ -1,6 +1,7 @@
 const Produit = require('../models/produit');
 const Caracteristique = require('../models/caracteristique');
 const Stock = require('../models/stock');
+const Fournisseur = require('../models/fournisseur');
 
 
 /**
@@ -468,6 +469,112 @@ const produitController = {
             res.status(500).json(error.message);
         }
     },
+
+    //! FOURNISSEUR /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    getAllFournisseur: async (req, res) => {
+        try {
+            const produits = await Fournisseur.findAll();
+
+            res.status(200).json(produits);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllFournisseur du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getOneFournisseur: async (req, res) => {
+        try {
+
+            const produit = await Fournisseur.findOne(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneFournisseur du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newFournisseur: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.nom = req.body.nom;
+            data.logo = req.body.logo;
+        
+            const newProduit = new Fournisseur(data);
+            await newProduit.save();
+            res.json(newProduit);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newFournisseur du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateFournisseur: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateProduit = await Fournisseur.findOne(id);
+
+
+            const nom = req.body.nom;
+            const logo = req.body.logo;
+
+            let message = {};
+
+            if (nom) {
+                updateProduit.nom = nom;
+                message.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                message.nom = 'Votre nom n\'a pas changé';
+            }
+
+            if (logo) {
+                updateProduit.logo = logo;
+                message.logo = 'Votre nouveau logo a bien été enregistré ';
+            } else if (!logo) {
+                message.logo = 'Votre logo n\'a pas changé';
+            }
+
+
+             await updateProduit.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateFournisseur du produitController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
+    deleteFournisseur: async (req, res) => {
+
+        try {
+
+            const produitInDb = await Fournisseur.findOne(req.params.id);
+
+            const produit = await produitInDb.delete();
+
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteFournisseur du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
 
 
 

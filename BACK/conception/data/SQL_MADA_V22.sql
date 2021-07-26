@@ -91,7 +91,10 @@ CREATE TABLE shop(
 CREATE TABLE fournisseur(
 	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom               text_valid NOT NULL,
-	logo              text_valid
+	logo              text_valid,
+	created_date   timestamptz NOT NULL DEFAULT now(),
+	updated_date   timestamptz,
+	CHECK (created_date < updated_date)
 	
 );
 
@@ -569,7 +572,7 @@ CREATE TABLE deduit(
 ------------------------------------------------------------
 CREATE TABLE fournie(
 	id       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	id_fournisseur   INT  NOT NULL REFERENCES fournisseur(id),
+	id_fournisseur   INT  NOT NULL REFERENCES fournisseur(id) ON DELETE CASCADE,
 	id_produit       INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 

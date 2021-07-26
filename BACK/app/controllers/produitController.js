@@ -9,6 +9,8 @@ const Image = require('../models/image');
 const Categorie = require('../models/categorie');
 const SousCategorie = require('../models/sousCategorie');
 const SsCatImage = require('../models/ssCatImage');
+const CategorieImage = require('../models/categorieImage');
+
 
 
 
@@ -1389,7 +1391,6 @@ const produitController = {
         try {
 
             const data = {};
-        console.log("req.body", req.body);
             data.nom = req.body.nom;
             data.URL = req.body.URL;
             data.idSousCategorie = req.body.idSousCategorie;
@@ -1434,9 +1435,9 @@ const produitController = {
 
             if (idSousCategorie) {
                 updateProduit.idSousCategorie = idSousCategorie;
-                message.idSousCategorie = 'Votre nouveau idProduit a bien été enregistré ';
+                message.idSousCategorie = 'Votre nouveau idSousCategorie a bien été enregistré ';
             } else if (!idSousCategorie) {
-                message.idSousCategorie = 'Votre idProduit n\'a pas changé';
+                message.idSousCategorie = 'Votre idSousCategorie n\'a pas changé';
             }
 
 
@@ -1486,6 +1487,155 @@ const produitController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteSsCatImageByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    //! CATEGORIE IMAGE ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+   
+   
+    getAllCategorieImage: async (req, res) => {
+        try {
+            const produits = await CategorieImage.findAll();
+
+            res.status(200).json(produits);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllCategorieImage du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getOneCategorieImage: async (req, res) => {
+        try {
+
+            const produit = await CategorieImage.findOne(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneCategorieImage du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+    getCategorieImageByIdCategorie: async (req, res) => {
+        try {
+            
+            const produit = await CategorieImage.findByIdCategorie(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getCategorieImageByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newCategorieImage: async (req, res) => {
+        try {
+
+            const data = {};
+            data.nom = req.body.nom;
+            data.URL = req.body.URL;
+            data.idCategorie = req.body.idCategorie;
+        
+            const newProduit = new CategorieImage(data);
+            await newProduit.save();
+            res.json(newProduit);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newCategorieImage du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateCategorieImage: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateProduit = await CategorieImage.findOne(id);
+
+            const nom = req.body.nom;
+            const URL = req.body.URL;
+            const idCategorie = req.body.idCategorie;
+
+            let message = {};
+
+            if (nom) {
+                updateProduit.nom = nom;
+                message.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                message.nom = 'Votre nom n\'a pas changé';
+            }
+
+            if (URL) {
+                updateProduit.URL = URL;
+                message.URL = 'Votre nouveau URL a bien été enregistré ';
+            } else if (!URL) {
+                message.URL = 'Votre nom de URL n\'a pas changé';
+            }
+
+            if (idCategorie) {
+                updateProduit.idCategorie = idCategorie;
+                message.idCategorie = 'Votre nouveau idCategorie a bien été enregistré ';
+            } else if (!idCategorie) {
+                message.idCategorie = 'Votre idCategorie n\'a pas changé';
+            }
+
+
+             await updateProduit.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateCategorieImage du produitController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
+    deleteCategorieImage: async (req, res) => {
+
+        try {
+
+            const produitInDb = await CategorieImage.findOne(req.params.id);
+
+            const produit = await produitInDb.delete();
+
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteCategorieImage du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteCategorieImageByIdCategorie: async (req, res) => {
+
+        try {
+
+            const produitsInDb = await CategorieImage.findByIdCategorie(req.params.id);
+            const arrayDeleted = [];
+            for (const produitInDb of produitsInDb) {
+
+                const produit = await produitInDb.deleteByIdCategorie();
+                arrayDeleted.push(produit);
+            }
+
+            res.json(arrayDeleted[0]);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteCategorieImageByIdProduit du produitController :',
                 error);
             res.status(500).json(error.message);
         }

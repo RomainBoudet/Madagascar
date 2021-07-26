@@ -107,21 +107,21 @@ router.get('/all', produitController.getAllSsCatImage);
 
 //router.get('/getone/:id(\\d+)', produitController.getOneSousCategorie);
 
-router.get('/getone/:id(\\d+)', produitController.getOneSsCatImage);
+router.get('/getone/:id(\\d+)', produitController.getOneCategorieImage);
 
-router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getSsCatImageByIdSsCat);
+router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getCategorieImageByIdCategorie);
 
-router.post('/new', produitController.newSsCatImage);
+router.post('/new', produitController.newCategorieImage);
 
 router.post('/newProd', produitController.new);
 
-router.delete('/del/:id(\\d+)', produitController.deleteSsCatImage);
+router.delete('/del/:id(\\d+)', produitController.deleteCategorieImage);
 
-router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteSsCatImageByIdSsCat);
+router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteCategorieImageByIdCategorie);
 
 router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', produitController.updateSsCatImage);
+router.patch('/update/:id(\\d+)', produitController.updateCategorieImage);
 
 
 

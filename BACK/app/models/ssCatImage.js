@@ -133,6 +133,7 @@ class SsCatImage {
      * Méthode chargé d'aller mettre à jour les informations relatives à un sous_categorie_image passé en paramétre
      * @param nom - 
      * @param URL -  
+     * @param idSousCategorie - 
      * @param id - l'identifiant du champs a supprimer
      * @returns - les informations du sous_categorie_image mis à jour
      * @async - une méthode asynchrone

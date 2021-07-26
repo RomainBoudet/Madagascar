@@ -26,6 +26,7 @@ const {
   const commandeController = require('./controllers/commandeController');
   const livraisonController = require('./controllers/livraisonController');
   const avisController = require('./controllers/avisController');
+  const produitController = require('./controllers/produitController');
   
   // implémentation de joi, avec un validator  dans le dossier "services".
   const {
@@ -100,23 +101,23 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', panierController.getAllLignePanier);
+router.get('/all', produitController.getAll);
 
-router.get('/getone/:id(\\d+)', panierController.getOneLignePanier);
+router.get('/getone/:id(\\d+)', produitController.getOne);
 
 router.get('/getByIdClient/:id(\\d+)', panierController.getByIdClient);
 
-router.get('/getLignePanierByIdClient/:id(\\d+)', panierController.getLignePanierByIdClient);
+router.get('/getByIdCategorie/:id(\\d+)', produitController.getByIdCategorie);
 
-router.post('/new', panierController.newLignePanier);
+router.post('/new', produitController.new);
 
-router.delete('/del/:id(\\d+)', panierController.deleteLignePanier);
+router.delete('/del/:id(\\d+)', produitController.delete);
 
 router.delete('/delByClient/:id(\\d+)', panierController.deleteByIdClient);
 
 router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', panierController.updateLignePanier);
+router.patch('/update/:id(\\d+)', produitController.update);
 
 
 

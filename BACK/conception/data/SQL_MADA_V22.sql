@@ -239,6 +239,9 @@ CREATE TABLE produit(
 	nom            text_valid NOT NULL,
 	description    text_length NOT NULL,
 	prix_HT        posrealsup  NOT NULL,
+	created_date       timestamptz NOT NULL DEFAULT now(),
+	updated_date       timestamptz,
+	CHECK (created_date < updated_date),
 	id_categorie   INT NOT NULL REFERENCES categorie(id),
 	id_TVA         INT NOT NULL REFERENCES TVA(id)
 );
@@ -253,7 +256,7 @@ CREATE TABLE produit_image(
 	nom                      text_valid NOT NULL,
 	ordre                    posint NOT NULL,
 	URL                      text_valid NOT NULL,
-	id_produit               INT NOT NULL REFERENCES produit(id)
+	id_produit               INT NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 
 ------------------------------------------------------------
@@ -268,7 +271,7 @@ CREATE TABLE avis(
 	updated_date       timestamptz,
 	CHECK (created_date < updated_date),
 	id_client         INT NOT NULL REFERENCES client(id),
-	id_produit        INT NOT NULL REFERENCES produit(id)
+	id_produit        INT NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 
 ------------------------------------------------------------
@@ -405,7 +408,7 @@ CREATE TABLE stock(
 	created_date   timestamptz NOT NULL DEFAULT now(),
 	updated_date   timestamptz,
 	CHECK (created_date < updated_date),
-	id_produit    INT UNIQUE NOT NULL REFERENCES produit(id)
+	id_produit    INT UNIQUE NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 
 
@@ -428,7 +431,7 @@ CREATE TABLE caracteristique(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	couleur             text_valid NOT NULL,
 	taille              text_valid NOT NULL,
-	id_produit          INT  NOT NULL REFERENCES produit(id)
+	id_produit          INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 
 ------------------------------------------------------------
@@ -465,7 +468,7 @@ CREATE TABLE ligne_commande(
 	created_date        timestamptz NOT NULL DEFAULT now(),
 	updated_date        timestamptz,
 
-	id_produit          INT  NOT NULL REFERENCES produit(id),
+	id_produit          INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE,
 	id_commande			INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
 	
 );
@@ -498,7 +501,7 @@ CREATE TABLE ligne_panier(
 	created_date        timestamptz NOT NULL DEFAULT now(),
 	updated_date        timestamptz,
 
-	id_produit          INT  NOT NULL REFERENCES produit(id),
+	id_produit          INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE,
 	id_panier           INT  NOT NULL REFERENCES panier(id) ON DELETE CASCADE
 );
 
@@ -554,7 +557,7 @@ CREATE TABLE ville_a_codePostal (
 CREATE TABLE deduit(
 	id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	id_reduction   INT  NOT NULL REFERENCES reduction(id),
-	id_produit     INT  NOT NULL REFERENCES produit(id)
+	id_produit     INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 
 );
 
@@ -564,7 +567,7 @@ CREATE TABLE deduit(
 CREATE TABLE fournie(
 	id       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	id_fournisseur   INT  NOT NULL REFERENCES fournisseur(id),
-	id_produit       INT  NOT NULL REFERENCES produit(id)
+	id_produit       INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 
 COMMIT;

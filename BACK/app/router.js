@@ -101,23 +101,25 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', produitController.getAllCaracteristique);
+router.get('/all', produitController.getAllStock);
 
-router.get('/getone/:id(\\d+)', produitController.getOneCaracteristique);
+router.get('/getone/:id(\\d+)', produitController.getOneStock);
 
 router.get('/getByIdClient/:id(\\d+)', panierController.getByIdClient);
 
-router.get('/getByIdProduit/:id(\\d+)', produitController.getCaracteristiqueByIdProduit);
+router.get('/getByIdProduit/:id(\\d+)', produitController.getStockByIdProduit);
 
-router.post('/new', produitController.newCaracteristique);
+router.post('/new', produitController.newStock);
 
-router.delete('/del/:id(\\d+)', produitController.deleteCaracteristique);
+router.post('/newProd', produitController.new);
 
-router.delete('/delByIdProduit/:id(\\d+)', produitController.deleteCaracteristiqueByIdProduit);
+router.delete('/del/:id(\\d+)', produitController.deleteStock);
+
+router.delete('/delByIdProduit/:id(\\d+)', produitController.deleteStockByIdProduit);
 
 router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', produitController.updateCaracteristique);
+router.patch('/update/:id(\\d+)', produitController.updateStock);
 
 
 

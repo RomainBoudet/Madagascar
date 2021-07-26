@@ -1,5 +1,6 @@
 const Produit = require('../models/produit');
 const Caracteristique = require('../models/caracteristique');
+const Stock = require('../models/stock');
 
 
 /**
@@ -324,6 +325,149 @@ const produitController = {
     },
 
 
+
+
+    //! STOCK ///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    getAllStock: async (req, res) => {
+        try {
+            const produits = await Stock.findAll();
+
+            res.status(200).json(produits);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllStock du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getOneStock: async (req, res) => {
+        try {
+
+            const produit = await Stock.findOne(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneStock du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+    getStockByIdProduit: async (req, res) => {
+        try {
+            
+            const produit = await Stock.findByIdProduit(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getStockByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newStock: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.quantite = req.body.quantite;
+            data.idProduit = req.body.idProduit;
+        
+            const newProduit = new Stock(data);
+            await newProduit.save();
+            res.json(newProduit);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newStock du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateStock: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateProduit = await Stock.findOne(id);
+
+
+            const quantite = req.body.quantite;
+            const idProduit = req.body.idProduit;
+
+            let message = {};
+
+            if (quantite) {
+                updateProduit.quantite = quantite;
+                message.quantite = 'Votre nouveau quantite a bien été enregistré ';
+            } else if (!quantite) {
+                message.quantite = 'Votre quantite n\'a pas changé';
+            }
+
+            if (idProduit) {
+                updateProduit.idProduit = idProduit;
+                message.idProduit = 'Votre nouveau idProduit a bien été enregistré ';
+            } else if (!idProduit) {
+                message.idProduit = 'Votre idProduit n\'a pas changé';
+            }
+
+
+             await updateProduit.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateStock du produitController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
+    deleteStock: async (req, res) => {
+
+        try {
+
+            const produitInDb = await Stock.findOne(req.params.id);
+
+            const produit = await produitInDb.delete();
+
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteStock du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteStockByIdProduit: async (req, res) => {
+
+        try {
+
+            const produitsInDb = await Stock.findByIdProduit(req.params.id);
+            const arrayDeleted = [];
+            for (const produitInDb of produitsInDb) {
+
+                const produit = await produitInDb.deleteByIdProduit();
+                arrayDeleted.push(produit);
+            }
+
+            res.json(arrayDeleted[0]);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteStockByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
 
 
 

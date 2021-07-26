@@ -101,25 +101,25 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', produitController.getAllFournie);
+router.get('/all', produitController.getAllReduction);
 
-router.get('/getone/:id(\\d+)', produitController.getOneFournie);
+router.get('/getone/:id(\\d+)', produitController.getOneReduction);
 
 router.get('/getByIdClient/:id(\\d+)', panierController.getByIdClient);
 
 router.get('/getByIdProduit/:id(\\d+)', produitController.getStockByIdProduit);
 
-router.post('/new', produitController.newFournie);
+router.post('/new', produitController.newReduction);
 
 router.post('/newProd', produitController.new);
 
-router.delete('/del/:id(\\d+)', produitController.deleteFournie);
+router.delete('/del/:id(\\d+)', produitController.deleteReduction);
 
 router.delete('/delByIdProduit/:id(\\d+)', produitController.deleteStockByIdProduit);
 
 router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', produitController.updateFournie);
+router.patch('/update/:id(\\d+)', produitController.updateReduction);
 
 
 

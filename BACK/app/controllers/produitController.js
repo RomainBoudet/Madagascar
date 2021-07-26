@@ -3,6 +3,7 @@ const Caracteristique = require('../models/caracteristique');
 const Stock = require('../models/stock');
 const Fournisseur = require('../models/fournisseur');
 const Fournie = require('../models/fournie');
+const Reduction = require('../models/reduction');
 
 
 /**
@@ -672,6 +673,128 @@ const produitController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteFournie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+    //! REDUCTION ///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    getAllReduction: async (req, res) => {
+        try {
+            const produits = await Reduction.findAll();
+
+            res.status(200).json(produits);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllReduction du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getOneReduction: async (req, res) => {
+        try {
+
+            const produit = await Reduction.findOne(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneReduction du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newReduction: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.nom = req.body.nom;
+            data.pourcentageReduction = req.body.pourcentageReduction;
+            data.actif = req.body.actif;
+            data.periodeReduction = req.body.periodeReduction;
+
+            const newProduit = new Reduction(data);
+            await newProduit.save();
+            res.json(newProduit);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newReduction du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateReduction: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateProduit = await Reduction.findOne(id);
+
+
+            const nom = req.body.nom;
+            const pourcentageReduction = req.body.pourcentageReduction;
+            const actif = req.body.actif;
+            const periodeReduction = req.body.periodeReduction;
+
+            let message = {};
+
+            if (nom) {
+                updateProduit.nom = nom;
+                message.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                message.nom = 'Votre nom n\'a pas changé';
+            }
+
+            if (pourcentageReduction) {
+                updateProduit.pourcentageReduction = pourcentageReduction;
+                message.pourcentageReduction = 'Votre nouveau pourcentageReduction a bien été enregistré ';
+            } else if (!pourcentageReduction) {
+                message.pourcentageReduction = 'Votre pourcentageReduction n\'a pas changé';
+            }
+
+            if (actif) {
+                updateProduit.actif = actif;
+                message.actif = 'Votre nouveau actif a bien été enregistré ';
+            } else if (!actif) {
+                message.actif = 'Votre actif n\'a pas changé';
+            }
+
+            if (periodeReduction) {
+                updateProduit.periodeReduction = periodeReduction;
+                message.periodeReduction = 'Votre nouveau periodeReduction a bien été enregistré ';
+            } else if (!periodeReduction) {
+                message.periodeReduction = 'Votre periodeReduction n\'a pas changé';
+            }
+
+
+             await updateProduit.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateReduction du produitController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteReduction: async (req, res) => {
+
+        try {
+
+            const produitInDb = await Reduction.findOne(req.params.id);
+
+            const produit = await produitInDb.delete();
+
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteReduction du produitController :',
                 error);
             res.status(500).json(error.message);
         }

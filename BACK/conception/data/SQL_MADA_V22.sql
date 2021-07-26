@@ -28,6 +28,8 @@ SET search_path TO mada;
 CREATE DOMAIN posint AS INT CHECK (VALUE >= 0); -- un domaine permettant de créer un type de donnée nombre entier ne pouvant être négatif
 CREATE DOMAIN posintsup AS INT check (VALUE > 0); -- un domaine permettant de créer un type de donnée nombre entier strictement positif
 CREATE DOMAIN posreal AS DECIMAL(6,2) CHECK (VALUE >= 00.00); -- un domaine permettant de créer un type de donnée nombre réel, 2 chiffre aprés la virgule (précision de 6 et une échelle de 2 selon la nomanclature postgres), positif ou égal a zéro
+CREATE DOMAIN posrealpourc AS DECIMAL(3,2) CHECK (VALUE > 0.00) CHECK (VALUE < 1.00); -- un domaine permettant de créer un type de donnée nombre réel, 2 chiffre aprés la virgule (précision de 6 et une échelle de 2 selon la nomanclature postgres), positif ou égal a zéro
+
 CREATE DOMAIN posrealsup AS DECIMAL(6,2) CHECK (VALUE > 00.00);
 CREATE DOMAIN email AS text -- un domaine (type de donnée) permettant de vérifier la validité d'une adresse email via une regex
 	CHECK (
@@ -419,10 +421,13 @@ CREATE TABLE stock(
 -- Table: reduction
 ------------------------------------------------------------
 CREATE TABLE reduction(
-	id             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                     text_valid NOT NULL,
-	pourcentage_reduction   posreal  NOT NULL DEFAULT 00.00,
-	actif                   BOOL  NOT NULL,
+	pourcentage_reduction   posrealpourc  NOT NULL,
+	actif                   BOOLEAN  NOT NULL,
+	created_date            timestamptz NOT NULL DEFAULT now(),
+	updated_date            timestamptz,
+	CHECK (created_date < updated_date),
 	periode_reduction       DATERANGE 
 );
 
@@ -562,7 +567,7 @@ CREATE TABLE ville_a_codePostal (
 ------------------------------------------------------------
 CREATE TABLE deduit(
 	id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	id_reduction   INT  NOT NULL REFERENCES reduction(id),
+	id_reduction   INT  NOT NULL REFERENCES reduction(id) ON DELETE CASCADE,
 	id_produit     INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 
 );

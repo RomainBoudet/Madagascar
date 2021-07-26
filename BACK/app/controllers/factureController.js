@@ -186,7 +186,6 @@ const factureController = {
                 arrayDeleted.push(factureHistoConn);
             }
 
-
             res.json(arrayDeleted[0]);
 
         } catch (error) {

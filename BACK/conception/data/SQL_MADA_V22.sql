@@ -431,6 +431,9 @@ CREATE TABLE caracteristique(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	couleur             text_valid NOT NULL,
 	taille              text_valid NOT NULL,
+	created_date        timestamptz NOT NULL DEFAULT now(),
+	updated_date        timestamptz,
+	CHECK (created_date < updated_date),
 	id_produit          INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 

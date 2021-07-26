@@ -1,4 +1,5 @@
 const Produit = require('../models/produit');
+const Caracteristique = require('../models/caracteristique');
 
 
 /**
@@ -165,6 +166,164 @@ const produitController = {
             res.status(500).json(error.message);
         }
     },
+
+
+
+
+    //! CARACTERISTIQUE //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    getAllCaracteristique: async (req, res) => {
+        try {
+            const produits = await Caracteristique.findAll();
+
+            res.status(200).json(produits);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllCaracteristique du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getOneCaracteristique: async (req, res) => {
+        try {
+
+            const produit = await Caracteristique.findOne(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneCaracteristique du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+    getCaracteristiqueByIdProduit: async (req, res) => {
+        try {
+            
+            const produit = await Caracteristique.findByIdProduit(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getCaracteristiqueByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newCaracteristique: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.couleur = req.body.couleur;
+            data.taille = req.body.taille;
+            data.idProduit = req.body.idProduit;
+        
+            const newProduit = new Caracteristique(data);
+            await newProduit.save();
+            res.json(newProduit);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newCaracteristique du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateCaracteristique: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateProduit = await Caracteristique.findOne(id);
+
+
+            const couleur = req.body.couleur;
+            const taille = req.body.taille;
+            const idProduit = req.body.idProduit;
+
+            let message = {};
+
+            if (couleur) {
+                updateProduit.couleur = couleur;
+                message.couleur = 'Votre nouveau couleur a bien été enregistré ';
+            } else if (!couleur) {
+                message.couleur = 'Votre couleur n\'a pas changé';
+            }
+
+
+            if (taille) {
+                updateProduit.taille = taille;
+                message.taille = 'Votre nouveau taille a bien été enregistré ';
+            } else if (!taille) {
+                message.taille = 'Votre nom de taille n\'a pas changé';
+            }
+
+
+            if (idProduit) {
+                updateProduit.idProduit = idProduit;
+                message.idProduit = 'Votre nouveau idProduit a bien été enregistré ';
+            } else if (!idProduit) {
+                message.idProduit = 'Votre idProduit n\'a pas changé';
+            }
+
+
+             await updateProduit.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateCaracteristique du produitController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
+    deleteCaracteristique: async (req, res) => {
+
+        try {
+
+            const produitInDb = await Caracteristique.findOne(req.params.id);
+
+            const produit = await produitInDb.delete();
+
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteCaracteristique du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteCaracteristiqueByIdProduit: async (req, res) => {
+
+        try {
+
+            const produitsInDb = await Caracteristique.findByIdProduit(req.params.id);
+            const arrayDeleted = [];
+            for (const produitInDb of produitsInDb) {
+
+                const produit = await produitInDb.deleteByIdProduit();
+                arrayDeleted.push(produit);
+            }
+
+            res.json(arrayDeleted[0]);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteCaracteristiqueByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
 
 
 

@@ -1092,7 +1092,7 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${image_produits.length} images de produits`);
         console.time(`Import de ${image_produits.length} images de produits`);
-        const imageProduitsInsert = "INSERT INTO mada.produit_image (nom, ordre, URL, id_produit) VALUES ($1, $2, $3 ,$4);";
+        const imageProduitsInsert = "INSERT INTO mada.image (nom, ordre, URL, id_produit) VALUES ($1, $2, $3 ,$4);";
 
         for (const image_produit of image_produits) {
             consol.seed(`Import du product ayant pour nom : ${image_produit.nom} et idproduit : ${image_produit.id_produit}`);

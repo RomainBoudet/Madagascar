@@ -5,6 +5,7 @@ const Fournisseur = require('../models/fournisseur');
 const Fournie = require('../models/fournie');
 const Reduction = require('../models/reduction');
 const Tva = require('../models/tva');
+const Image = require('../models/image');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Produit pour les intéractions avec la BDD
@@ -926,6 +927,173 @@ const produitController = {
             res.status(500).json(error.message);
         }
     },
+
+
+
+
+
+
+    //! IMAGE //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    getAllImage: async (req, res) => {
+        try {
+            const produits = await Image.findAll();
+
+            res.status(200).json(produits);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllImage du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getOneImage: async (req, res) => {
+        try {
+
+            const produit = await Image.findOne(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneImage du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+    getImageByIdProduit: async (req, res) => {
+        try {
+            
+            const produit = await Image.findByIdProduit(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getImageByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newImage: async (req, res) => {
+        try {
+
+            const data = {};
+        
+            data.nom = req.body.nom;
+            data.ordre = req.body.ordre;
+            data.URL = req.body.URL;
+            data.idProduit = req.body.idProduit;
+        
+            const newProduit = new Image(data);
+            await newProduit.save();
+            res.json(newProduit);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newImage du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateImage: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateProduit = await Image.findOne(id);
+
+
+            const nom = req.body.nom;
+            const ordre = req.body.ordre;
+            const URL = req.body.URL;
+            const idProduit = req.body.idProduit;
+
+            let message = {};
+
+            if (nom) {
+                updateProduit.nom = nom;
+                message.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                message.nom = 'Votre nom n\'a pas changé';
+            }
+
+
+            if (ordre) {
+                updateProduit.ordre = ordre;
+                message.ordre = 'Votre nouveau ordre a bien été enregistré ';
+            } else if (!ordre) {
+                message.ordre = 'Votre nom de ordre n\'a pas changé';
+            }
+
+            if (URL) {
+                updateProduit.URL = URL;
+                message.URL = 'Votre nouveau URL a bien été enregistré ';
+            } else if (!URL) {
+                message.URL = 'Votre nom de URL n\'a pas changé';
+            }
+
+            if (idProduit) {
+                updateProduit.idProduit = idProduit;
+                message.idProduit = 'Votre nouveau idProduit a bien été enregistré ';
+            } else if (!idProduit) {
+                message.idProduit = 'Votre idProduit n\'a pas changé';
+            }
+
+
+             await updateProduit.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateImage du produitController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
+    deleteImage: async (req, res) => {
+
+        try {
+
+            const produitInDb = await Image.findOne(req.params.id);
+
+            const produit = await produitInDb.delete();
+
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteImage du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteImageByIdProduit: async (req, res) => {
+
+        try {
+
+            const produitsInDb = await Image.findByIdProduit(req.params.id);
+            const arrayDeleted = [];
+            for (const produitInDb of produitsInDb) {
+
+                const produit = await produitInDb.deleteByIdProduit();
+                arrayDeleted.push(produit);
+            }
+
+            res.json(arrayDeleted[0]);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteImageByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
 
 
 

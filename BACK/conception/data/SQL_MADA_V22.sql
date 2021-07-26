@@ -257,8 +257,8 @@ CREATE TABLE produit(
 	nom            text_valid NOT NULL,
 	description    text_length NOT NULL,
 	prix_HT        posrealsup  NOT NULL,
-	created_date       timestamptz NOT NULL DEFAULT now(),
-	updated_date       timestamptz,
+	created_date   timestamptz NOT NULL DEFAULT now(),
+	updated_date   timestamptz,
 	CHECK (created_date < updated_date),
 	id_categorie   INT REFERENCES categorie(id),
 	id_TVA         INT NOT NULL REFERENCES TVA(id),
@@ -268,13 +268,16 @@ CREATE TABLE produit(
 CREATE INDEX idx_produit_id ON produit(id);
 CREATE INDEX idx_produit_nom ON produit(nom);
 ------------------------------------------------------------
--- Table: produit_image
+-- Table: image
 ------------------------------------------------------------
-CREATE TABLE produit_image(
+CREATE TABLE image (
 	id                       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                      text_valid NOT NULL,
 	ordre                    posint NOT NULL,
 	URL                      text_valid NOT NULL,
+	created_date             timestamptz NOT NULL DEFAULT now(),
+	updated_date             timestamptz,
+	CHECK (created_date < updated_date),
 	id_produit               INT NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 

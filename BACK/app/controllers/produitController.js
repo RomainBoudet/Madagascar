@@ -2,6 +2,7 @@ const Produit = require('../models/produit');
 const Caracteristique = require('../models/caracteristique');
 const Stock = require('../models/stock');
 const Fournisseur = require('../models/fournisseur');
+const Fournie = require('../models/fournie');
 
 
 /**
@@ -574,6 +575,109 @@ const produitController = {
             res.status(500).json(error.message);
         }
     },
+
+
+
+    //! TABLE DE LIAISON : FOUNIE ///////////////////////////////////////////////////////////////////////////////
+
+
+
+
+    getAllFournie: async (req, res) => {
+        try {
+            const clients = await Fournie.findAll();
+
+            res.status(200).json(clients);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllFournie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    getOneFournie: async (req, res) => {
+        try {
+
+            const client = await Fournie.findOne(req.params.id);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneFournie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    newFournie: async (req, res) => {
+        try {
+
+            const data = {};
+
+            data.idFournisseur = req.body.idFournisseur;
+            data.idProduit = req.body.idProduit;
+            
+            const newClient = new Fournie(data);
+            await newClient.save();
+            res.json(newClient);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newFournie du produitController: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateFournie: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+
+            const updateClient = await Fournie.findOne(id);
+
+            const idFournisseur = req.body.idFournisseur;
+            const idProduit = req.body.idProduit;          
+
+            let userMessage = {};
+
+            if (idFournisseur) {
+                updateClient.idFournisseur = idFournisseur;
+                userMessage.idFournisseur = 'Votre nouveau idFournisseur de Fournie a bien été enregistré ';
+            } else if (!idFournisseur) {
+                userMessage.idFournisseur = 'Votre idFournisseur de Fournie n\'a pas changé';
+            }
+            if (idProduit) {
+                updateClient.idProduit = idProduit;
+                userMessage.idProduit = 'Votre nouveau idProduit de Fournie a bien été enregistré ';
+            } else if (!idProduit) {
+                userMessage.idProduit = 'Votre idProduit de Fournie n\'a pas changé';
+            }
+
+            await updateClient.update();
+
+            res.json(userMessage);
+
+        } catch (error) {
+            console.log(`Erreur dans la méthode updateFournie du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteFournie: async (req, res) => {
+
+        try {
+
+            const clientInDb = await Fournie.findOne(req.params.id);
+
+            const client = await clientInDb.delete();
+
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteFournie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
 
 
 

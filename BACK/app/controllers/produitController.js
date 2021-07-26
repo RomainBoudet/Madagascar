@@ -4,7 +4,7 @@ const Stock = require('../models/stock');
 const Fournisseur = require('../models/fournisseur');
 const Fournie = require('../models/fournie');
 const Reduction = require('../models/reduction');
-const Deduit = require('../models/deduit');
+const Tva = require('../models/tva');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Produit pour les intéractions avec la BDD
@@ -811,105 +811,121 @@ const produitController = {
 
 
 
-    //! TABLE DE LIAISON : DEDUIT /////////////////////////////////////////////////////////////////////////
+
+    //! TVA ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-getAllDeduit: async (req, res) => {
+    getAllTva: async (req, res) => {
         try {
-            const clients = await Deduit.findAll();
+            const produits = await Tva.findAll();
 
-            res.status(200).json(clients);
+            res.status(200).json(produits);
         } catch (error) {
-            console.trace('Erreur dans la méthode getAllDeduit du produitController :',
+            console.trace('Erreur dans la méthode getAllTva du produitController :',
                 error);
             res.status(500).json(error.message);
         }
     },
-    getOneDeduit: async (req, res) => {
+
+    getOneTva: async (req, res) => {
         try {
 
-            const client = await Deduit.findOne(req.params.id);
-            res.json(client);
+            const produit = await Tva.findOne(req.params.id);
+            res.json(produit);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode getOneDeduit du produitController :',
+            console.trace('Erreur dans la méthode getOneTva du produitController :',
                 error);
             res.status(500).json(error.message);
         }
     },
-    newDeduit: async (req, res) => {
+
+    newTva: async (req, res) => {
         try {
 
             const data = {};
+        
+            data.nom = req.body.nom;
+            data.taux = req.body.taux;
+            data.periodeTVA = req.body.periodeTVA;
+           
 
-            data.idReduction = req.body.idReduction;
-            data.idProduit = req.body.idProduit;
-            
-            const newClient = new Deduit(data);
-            await newClient.save();
-            res.json(newClient);
+            const newProduit = new Tva(data);
+            await newProduit.save();
+            res.json(newProduit);
         } catch (error) {
-            console.log(`Erreur dans la méthode newDeduit du produitController: ${error.message}`);
+            console.log(`Erreur dans la méthode newTva du produitController : ${error.message}`);
             res.status(500).json(error.message);
         }
     },
 
-    updateDeduit: async (req, res) => {
+    updateTva: async (req, res) => {
         try {
 
             const {
                 id
             } = req.params;
+            
+            const updateProduit = await Tva.findOne(id);
 
-            const updateClient = await Deduit.findOne(id);
 
-            const idReduction = req.body.idReduction;
-            const idProduit = req.body.idProduit;          
+            const nom = req.body.nom;
+            const taux = req.body.taux;
+            const periodeTVA = req.body.periodeTVA;
+            
 
-            let userMessage = {};
+            let message = {};
 
-            if (idReduction) {
-                updateClient.idReduction = idReduction;
-                userMessage.idReduction = 'Votre nouveau idReduction de Fournie a bien été enregistré ';
-            } else if (!idReduction) {
-                userMessage.idReduction = 'Votre idReduction de Fournie n\'a pas changé';
-            }
-            if (idProduit) {
-                updateClient.idProduit = idProduit;
-                userMessage.idProduit = 'Votre nouveau idProduit de Fournie a bien été enregistré ';
-            } else if (!idProduit) {
-                userMessage.idProduit = 'Votre idProduit de Fournie n\'a pas changé';
+            if (nom) {
+                updateProduit.nom = nom;
+                message.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                message.nom = 'Votre nom n\'a pas changé';
             }
 
-            await updateClient.update();
+            if (taux) {
+                updateProduit.taux = taux;
+                message.taux = 'Votre nouveau taux a bien été enregistré ';
+            } else if (!taux) {
+                message.taux = 'Votre taux n\'a pas changé';
+            }
 
-            res.json(userMessage);
+            if (periodeTVA) {
+                updateProduit.periodeTVA = periodeTVA;
+                message.aperiodeTVA= 'Votre nouveau periodeTVA a bien été enregistré ';
+            } else if (!periodeTVA) {
+                message.periodeTVA = 'Votre periodeTVA n\'a pas changé';
+            }
+
+            
+
+
+             await updateProduit.update();
+            
+            res.json(message);
 
         } catch (error) {
-            console.log(`Erreur dans la méthode updateDeduit du produitController : ${error.message}`);
+            console.log(`Erreur dans la methode updateTva du produitController ${error.message}`);
             res.status(500).json(error.message);
         }
     },
 
-    deleteDeduit: async (req, res) => {
+    deleteTva: async (req, res) => {
 
         try {
 
-            const clientInDb = await Deduit.findOne(req.params.id);
+            const produitInDb = await Tva.findOne(req.params.id);
 
-            const client = await clientInDb.delete();
+            const produit = await produitInDb.delete();
 
-            res.json(client);
+            res.json(produit);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode deleteDeduit du produitController :',
+            console.trace('Erreur dans la méthode deleteTva du produitController :',
                 error);
             res.status(500).json(error.message);
         }
     },
-
-
-
 
 
 

@@ -50,7 +50,7 @@ class Fournie {
 
 
     /**
-     * Méthode chargé d'aller chercher les informations relatives à une fournie passé en paramétre
+     * Méthode chargé d'aller chercher les informations relatives à un fournie passé en paramétre
      * @param id - un id d'un fournie
      * @returns - les informations d'une fournie demandées
      * @static - une méthode static
@@ -80,9 +80,9 @@ class Fournie {
     
 
     /**
-     * Méthode chargé d'aller insérer les informations relatives à un fournie d'une adresse de client 
-     * @param idFournisseur - identifiant d'une ville
-     * @param idProduit - l'identifiant d'un code postale
+     * Méthode chargé d'aller insérer les informations relatives à un fournie qui va lié fournisseur a produit
+     * @param idFournisseur - 
+     * @param idProduit -
      * @returns - les informations du Fournie demandées
      * @async - une méthode asynchrone
      */
@@ -97,14 +97,14 @@ class Fournie {
 
         this.id = rows[0].id;
         consol.model(
-            `le champs de liaison fournie id ${this.id} avec comme idVille ${this.idFournisseur} a été inséré avec succés !`
+            `le champs de liaison fournie id ${this.id} avec comme idFournisseur ${this.idFournisseur} a été inséré avec succés !`
         );
     }
 
     /**
      * Méthode chargé d'aller mettre à jour les informations relatives à un fournie passé en paramétre
-    * @param idFournisseur - identifiant d'une ville
-     * @param idProduit - l'identifiant d'un code postale
+    * @param idFournisseur - 
+     * @param idProduit -
      * @param id - l'identifiant d'une fournie à modifié
      * @returns - les informations du Pays mis à jour
      * @async - une méthode asynchrone
@@ -118,7 +118,7 @@ class Fournie {
         );
 
         console.log(
-            `le champs de liaison fournie id : ${this.id} avec l'idVille ${this.idFournisseur} a été mise à jour  !`
+            `le champs de liaison fournie id : ${this.id} avec l'idFournisseur ${this.idFournisseur} a été mise à jour  !`
         );
     }
 

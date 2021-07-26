@@ -4,7 +4,7 @@ const Stock = require('../models/stock');
 const Fournisseur = require('../models/fournisseur');
 const Fournie = require('../models/fournie');
 const Reduction = require('../models/reduction');
-
+const Deduit = require('../models/deduit');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Produit pour les intéractions avec la BDD
@@ -72,6 +72,7 @@ const produitController = {
             data.prixHT = req.body.prixHT;
             data.idCategorie = req.body.idCategorie;
             data.idTVA = req.body.idTVA;
+            data.idReduction = req.body.idReduction;
            
 
             const newProduit = new Produit(data);
@@ -98,6 +99,7 @@ const produitController = {
             const prixHT = req.body.prixHT;
             const idCategorie = req.body.idCategorie;
             const idTVA = req.body.idTVA;
+            const idReduction = req.body.idReduction
         
 
             let message = {};
@@ -138,6 +140,13 @@ const produitController = {
                 message.idTVA = 'Votre nouveau idTVA a bien été enregistré ';
             } else if (!idTVA) {
                 message.idTVA = 'Votre idTVA n\'a pas changé';
+            }
+
+            if (idReduction) {
+                updateProduit.idReduction = idReduction;
+                message.idReduction = 'Votre nouveau idReduction a bien été enregistré ';
+            } else if (!idReduction) {
+                message.idReduction = 'Votre idReduction n\'a pas changé';
             }
 
 
@@ -799,6 +808,106 @@ const produitController = {
             res.status(500).json(error.message);
         }
     },
+
+
+
+    //! TABLE DE LIAISON : DEDUIT /////////////////////////////////////////////////////////////////////////
+
+
+getAllDeduit: async (req, res) => {
+        try {
+            const clients = await Deduit.findAll();
+
+            res.status(200).json(clients);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllDeduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    getOneDeduit: async (req, res) => {
+        try {
+
+            const client = await Deduit.findOne(req.params.id);
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneDeduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    newDeduit: async (req, res) => {
+        try {
+
+            const data = {};
+
+            data.idReduction = req.body.idReduction;
+            data.idProduit = req.body.idProduit;
+            
+            const newClient = new Deduit(data);
+            await newClient.save();
+            res.json(newClient);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newDeduit du produitController: ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateDeduit: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+
+            const updateClient = await Deduit.findOne(id);
+
+            const idReduction = req.body.idReduction;
+            const idProduit = req.body.idProduit;          
+
+            let userMessage = {};
+
+            if (idReduction) {
+                updateClient.idReduction = idReduction;
+                userMessage.idReduction = 'Votre nouveau idReduction de Fournie a bien été enregistré ';
+            } else if (!idReduction) {
+                userMessage.idReduction = 'Votre idReduction de Fournie n\'a pas changé';
+            }
+            if (idProduit) {
+                updateClient.idProduit = idProduit;
+                userMessage.idProduit = 'Votre nouveau idProduit de Fournie a bien été enregistré ';
+            } else if (!idProduit) {
+                userMessage.idProduit = 'Votre idProduit de Fournie n\'a pas changé';
+            }
+
+            await updateClient.update();
+
+            res.json(userMessage);
+
+        } catch (error) {
+            console.log(`Erreur dans la méthode updateDeduit du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteDeduit: async (req, res) => {
+
+        try {
+
+            const clientInDb = await Deduit.findOne(req.params.id);
+
+            const client = await clientInDb.delete();
+
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteDeduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
 
 
 

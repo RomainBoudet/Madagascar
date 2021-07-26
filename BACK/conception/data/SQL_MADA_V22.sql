@@ -235,6 +235,19 @@ CREATE TABLE panier(
 
 CREATE INDEX idx_panier_id ON panier(id);
 
+------------------------------------------------------------
+-- Table: reduction
+------------------------------------------------------------
+CREATE TABLE reduction(
+	id                     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	nom                     text_valid NOT NULL,
+	pourcentage_reduction   posrealpourc  NOT NULL,
+	actif                   BOOLEAN  NOT NULL,
+	created_date            timestamptz NOT NULL DEFAULT now(),
+	updated_date            timestamptz,
+	CHECK (created_date < updated_date),
+	periode_reduction       DATERANGE 
+);
 
 ------------------------------------------------------------
 -- Table: produit
@@ -247,8 +260,9 @@ CREATE TABLE produit(
 	created_date       timestamptz NOT NULL DEFAULT now(),
 	updated_date       timestamptz,
 	CHECK (created_date < updated_date),
-	id_categorie   INT NOT NULL REFERENCES categorie(id),
-	id_TVA         INT NOT NULL REFERENCES TVA(id)
+	id_categorie   INT REFERENCES categorie(id),
+	id_TVA         INT NOT NULL REFERENCES TVA(id),
+	id_reduction   INT REFERENCES reduction(id)
 );
 
 CREATE INDEX idx_produit_id ON produit(id);
@@ -418,21 +432,6 @@ CREATE TABLE stock(
 
 
 ------------------------------------------------------------
--- Table: reduction
-------------------------------------------------------------
-CREATE TABLE reduction(
-	id                     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom                     text_valid NOT NULL,
-	pourcentage_reduction   posrealpourc  NOT NULL,
-	actif                   BOOLEAN  NOT NULL,
-	created_date            timestamptz NOT NULL DEFAULT now(),
-	updated_date            timestamptz,
-	CHECK (created_date < updated_date),
-	periode_reduction       DATERANGE 
-);
-
-
-------------------------------------------------------------
 -- Table: caracteristique
 ------------------------------------------------------------
 CREATE TABLE caracteristique(
@@ -561,16 +560,6 @@ CREATE TABLE ville_a_codePostal (
 	id_codePostal                    INT NOT NULL REFERENCES code_postal(id)
 );
 
-
-------------------------------------------------------------
--- Table: deduit
-------------------------------------------------------------
-CREATE TABLE deduit(
-	id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	id_reduction   INT  NOT NULL REFERENCES reduction(id) ON DELETE CASCADE,
-	id_produit     INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE
-
-);
 
 ------------------------------------------------------------
 -- Table: fournie

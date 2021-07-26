@@ -316,6 +316,11 @@ const fakeData = async () => {
         const products = [];
         const colors = ["rouge", "vert", "jaune", "bleu", "orange", "violet", "blanc", "noir"];
         const sizes = ["XL", "L", "M", "S", "XS"];
+        const arrayNumberVolumeDivideBy4 = Array.from({
+            length: volume / 4
+        }, (_, i) => i + 1);
+
+
         for (let index = 1; index <= volume * 3; index++) {
             const product = {
 
@@ -328,6 +333,7 @@ const fakeData = async () => {
                 index,
                 id_category: Math.floor(Math.random() * (100 - 1 + 1)) + 1,
                 id_taxRate: Math.floor(Math.random() * (2 - 1 + 1)) + 1, // un random entre 1 et 2
+                id_reduction: arrayNumberVolumeDivideBy4[Math.floor(Math.random() * arrayNumberVolumeDivideBy4.length)],
 
             };
             products.push(product);
@@ -867,27 +873,6 @@ const fakeData = async () => {
         consol.seed(`Fin de la génération de fake ville_a_codePostale`);
 
 
-        //! DEDUIT
-
-
-
-        consol.seed(`Début de la génération de fake deductions`);
-        console.time(`Génération de ${volume/4} deductions`);
-
-        const deductions = [];
-
-        for (let index = 1; index <= volume / 4; index++) {
-            const deduction = {
-
-                id_reduction: index,
-                id_produit: index,
-            };
-            deductions.push(deduction);
-        }
-        console.timeEnd(`Génération de ${volume/4} deductions`);
-        console.table(deductions);
-        consol.seed(`Fin de la génération de fake deduction`);
-
 
         //! FOURNIE 
 
@@ -1070,15 +1055,31 @@ const fakeData = async () => {
         consol.seed(`Fin de l'import de ${basquetProducts.length} panier`);
         console.timeEnd(`Import de ${basquetProducts.length} panier`);
 
+        //! REDUCTION
+
+
+        consol.seed(`Début de l'import de ${reductions.length} reductions`);
+        console.time(`Import de ${reductions.length} reductions`);
+        const reductionsInsert = "INSERT INTO mada.reduction (nom, pourcentage_reduction, actif, periode_reduction ) VALUES ($1, $2, $3, $4);";
+
+        for (const reduction of reductions) {
+            consol.seed(`Import de la reduction de nomée : ${reduction.nom} avec comme valeur : ${reduction.pourcentage_reduction}`);
+            await db.query(reductionsInsert, [reduction.nom, reduction.pourcentage_reduction, reduction.actif, reduction.periode_reduction]);
+        }
+
+        consol.seed(`Fin de l'import de ${reductions.length} reductions`);
+        console.timeEnd(`Import de ${reductions.length} reductions`);
+
+
         //! PRODUIT 
 
         consol.seed(`Début de l'import de ${products.length} produits`);
         console.time(`Import de ${products.length} produits`);
-        const productsInsert = "INSERT INTO mada.produit (nom, description, prix_HT, id_categorie, id_TVA) VALUES ($1, $2, $3 ,$4, $5);";
+        const productsInsert = "INSERT INTO mada.produit (nom, description, prix_HT, id_categorie, id_TVA, id_reduction) VALUES ($1, $2, $3 ,$4, $5, $6);";
 
         for (const product of products) {
-            consol.seed(`Import du product ayant pour nom : ${product.name} et id_category : ${product.id_category}`);
-            const result = await db.query(productsInsert, [product.name, product.description, product.price, product.id_category, product.id_taxRate]);
+            consol.seed(`Import du product ayant pour nom : ${product.name} et id_category : ${product.id_category} et id_reduction : ${product.id_reduction}`);
+            const result = await db.query(productsInsert, [product.name, product.description, product.price, product.id_category, product.id_taxRate, product.id_reduction]);
         }
 
         consol.seed(`Fin de l'import de ${products.length} produits`);
@@ -1259,21 +1260,7 @@ const fakeData = async () => {
         console.timeEnd(`Import de ${products.length} stocks`);
 
 
-        //! REDUCTION
-
-
-        consol.seed(`Début de l'import de ${reductions.length} reductions`);
-        console.time(`Import de ${reductions.length} reductions`);
-        const reductionsInsert = "INSERT INTO mada.reduction (nom, pourcentage_reduction, actif, periode_reduction ) VALUES ($1, $2, $3, $4);";
-
-        for (const reduction of reductions) {
-            consol.seed(`Import de la reduction de nomée : ${reduction.nom} avec comme valeur : ${reduction.pourcentage_reduction}`);
-            await db.query(reductionsInsert, [reduction.nom, reduction.pourcentage_reduction, reduction.actif, reduction.periode_reduction]);
-        }
-
-        consol.seed(`Fin de l'import de ${reductions.length} reductions`);
-        console.timeEnd(`Import de ${reductions.length} reductions`);
-
+        
         //! CARACTERISTIQUE
 
 
@@ -1416,20 +1403,6 @@ const fakeData = async () => {
         consol.seed(`Fin de l'import de ${ville_a_codePostales.length} ville_a_codePostales`);
         console.timeEnd(`Import de ${ville_a_codePostales.length} ville_a_codePostales`);
 
-
-        //! DEDUIT
-
-
-        consol.seed(`Début de l'import de ${deductions.length} reductions`);
-        console.time(`Import de ${deductions.length} reductions`);
-        const reductionInsert = "INSERT INTO mada.deduit (id_reduction, id_produit) VALUES ($1, $2);";
-
-        for (const reduction of deductions) {
-            consol.seed(`Import de reduction pour le produit id  : ${reduction.id_produit}`);
-            await db.query(reductionInsert, [reduction.id_reduction, reduction.id_produit]);
-        }
-        consol.seed(`Fin de l'import de ${deductions.length} reductions`);
-        console.timeEnd(`Import de ${deductions.length} reductions`);
 
 
         //! FOURNIT

@@ -11,6 +11,7 @@ class Produit {
     updatedDate;
     idCategorie;
     idTVA;
+    idReduction;
 
 
 
@@ -36,6 +37,10 @@ class Produit {
 
     set id_tva(val) {
         this.idTVA = val;
+    }
+
+    set id_reduction(val) {
+        this.idReduction = val;
     }
 
 
@@ -137,6 +142,7 @@ class Produit {
      * @param prixHT - le prix HT d'un produit,
      * @param idCategorie - l'identifiant d'une catégorie lié à un produit
      * @param idTVA - l'identifiant d' une TVA lié a un produit
+     * @param idReduction - l'identifiant d'une reduction
      * @returns - les informations du produit demandées
      * @async - une méthode asynchrone
      */
@@ -145,8 +151,8 @@ class Produit {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.produit (nom, description, prix_HT, created_date, id_categorie, id_TVA) VALUES ($1, $2, $3, now(), $4, $5) RETURNING *;`,
-            [this.nom, this.description, this.prixHT, this.idCategorie, this.idTVA]
+            `INSERT INTO mada.produit (nom, description, prix_HT, created_date, id_categorie, id_TVA, id_reduction) VALUES ($1, $2, $3, now(), $4, $5, $6) RETURNING *;`,
+            [this.nom, this.description, this.prixHT, this.idCategorie, this.idTVA, this.idReduction]
         );
 
         this.id = rows[0].id;
@@ -164,6 +170,7 @@ class Produit {
      * @param idCategorie - l'identifiant d'une catégorie lié à un produit
      * @param idTVA - l'identifiant d' une TVA lié a un produit
      * @param id - l'identifiant du champs a supprimer
+     * @param idReduction - l'identifiant d'une reduction
      * @returns - les informations du produit mis à jour
      * @async - une méthode asynchrone
      */
@@ -171,8 +178,8 @@ class Produit {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.produit SET nom = $1, description = $2, updated_date = now(), prix_HT = $3, id_categorie = $4, id_TVA = $5  WHERE id = $6 RETURNING *;`,
-            [this.nom, this.description, this.prixHT, this.idCategorie, this.idTVA, this.id]
+            `UPDATE mada.produit SET nom = $1, description = $2, updated_date = now(), prix_HT = $3, id_categorie = $4, id_TVA = $5, id_reduction = $6  WHERE id = $7 RETURNING *;`,
+            [this.nom, this.description, this.prixHT, this.idCategorie, this.idTVA, this.idReduction, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(

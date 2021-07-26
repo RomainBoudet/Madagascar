@@ -8,6 +8,8 @@ const Tva = require('../models/tva');
 const Image = require('../models/image');
 const Categorie = require('../models/categorie');
 const SousCategorie = require('../models/sousCategorie');
+const SsCatImage = require('../models/ssCatImage');
+
 
 
 /**
@@ -1334,6 +1336,156 @@ const produitController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteSousCategorieByIdSousCategorie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+    //! SOUS CATEGORIE IMAGE ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    getAllSsCatImage: async (req, res) => {
+        try {
+            const produits = await SsCatImage.findAll();
+
+            res.status(200).json(produits);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllSsCatImage du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getOneSsCatImage: async (req, res) => {
+        try {
+
+            const produit = await SsCatImage.findOne(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneSsCatImage du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+    getSsCatImageByIdSsCat: async (req, res) => {
+        try {
+            
+            const produit = await SsCatImage.findByIdSsCat(req.params.id);
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getSsCatImageByIdProduit du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    newSsCatImage: async (req, res) => {
+        try {
+
+            const data = {};
+        console.log("req.body", req.body);
+            data.nom = req.body.nom;
+            data.URL = req.body.URL;
+            data.idSousCategorie = req.body.idSousCategorie;
+        
+            const newProduit = new SsCatImage(data);
+            await newProduit.save();
+            res.json(newProduit);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newSsCatImage du produitController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+    updateSsCatImage: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+            
+            const updateProduit = await SsCatImage.findOne(id);
+
+            const nom = req.body.nom;
+            const URL = req.body.URL;
+            const idSousCategorie = req.body.idSousCategorie;
+
+            let message = {};
+
+            if (nom) {
+                updateProduit.nom = nom;
+                message.nom = 'Votre nouveau nom a bien été enregistré ';
+            } else if (!nom) {
+                message.nom = 'Votre nom n\'a pas changé';
+            }
+
+            if (URL) {
+                updateProduit.URL = URL;
+                message.URL = 'Votre nouveau URL a bien été enregistré ';
+            } else if (!URL) {
+                message.URL = 'Votre nom de URL n\'a pas changé';
+            }
+
+            if (idSousCategorie) {
+                updateProduit.idSousCategorie = idSousCategorie;
+                message.idSousCategorie = 'Votre nouveau idProduit a bien été enregistré ';
+            } else if (!idSousCategorie) {
+                message.idSousCategorie = 'Votre idProduit n\'a pas changé';
+            }
+
+
+             await updateProduit.update();
+            
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la methode updateSsCatImage du produitController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
+    deleteSsCatImage: async (req, res) => {
+
+        try {
+
+            const produitInDb = await SsCatImage.findOne(req.params.id);
+
+            const produit = await produitInDb.delete();
+
+            res.json(produit);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteSsCatImage du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteSsCatImageByIdSsCat: async (req, res) => {
+
+        try {
+
+            const produitsInDb = await SsCatImage.findByIdSsCat(req.params.id);
+            const arrayDeleted = [];
+            for (const produitInDb of produitsInDb) {
+
+                const produit = await produitInDb.deleteByIdSsCat();
+                arrayDeleted.push(produit);
+            }
+
+            res.json(arrayDeleted[0]);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteSsCatImageByIdProduit du produitController :',
                 error);
             res.status(500).json(error.message);
         }

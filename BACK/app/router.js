@@ -101,27 +101,27 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', produitController.getAllSousCategorie);
-router.get('/all2', produitController.getAllCategorie);
+router.get('/all', produitController.getAllSsCatImage);
+//router.get('/all2', produitController.getAllCategorie);
 
 
-router.get('/getone/:id(\\d+)', produitController.getOneSousCategorie);
+//router.get('/getone/:id(\\d+)', produitController.getOneSousCategorie);
 
-router.get('/getSousCategorieByIdCategorie/:id(\\d+)', produitController.getSousCategorieByIdCategorie);
+router.get('/getone/:id(\\d+)', produitController.getOneSsCatImage);
 
-router.get('/getByIdProduit/:id(\\d+)', produitController.getImageByIdProduit);
+router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getSsCatImageByIdSsCat);
 
-router.post('/new', produitController.newSousCategorie);
+router.post('/new', produitController.newSsCatImage);
 
 router.post('/newProd', produitController.new);
 
-router.delete('/del/:id(\\d+)', produitController.deleteSousCategorie);
+router.delete('/del/:id(\\d+)', produitController.deleteSsCatImage);
 
-router.delete('/delByIdCategorie/:id(\\d+)', produitController.deleteSousCategorieByIdCategorie);
+router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteSsCatImageByIdSsCat);
 
 router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', produitController.updateSousCategorie);
+router.patch('/update/:id(\\d+)', produitController.updateSsCatImage);
 
 
 

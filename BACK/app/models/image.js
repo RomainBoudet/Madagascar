@@ -141,7 +141,8 @@ class Image {
     /**
      * Méthode chargé d'aller mettre à jour les informations relatives à un image passé en paramétre
      * @param nom -
-     * @param ordre -  
+     * @param ordre -
+     * @param URL -    
      * @param idProduit -  
      * @param id - l'identifiant du champs a supprimer
      * @returns - les informations du image mis à jour

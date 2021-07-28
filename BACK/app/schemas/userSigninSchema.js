@@ -44,7 +44,7 @@ const userSigninSchema = Joi.object().keys({
       'string.pattern.base': 'Le format de votre email est incorrect',
     }),
   password: Joi.string()
-    //.pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
+    .pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
     .required()
     .trim()
     .messages({
@@ -57,9 +57,5 @@ const userSigninSchema = Joi.object().keys({
 module.exports = userSigninSchema;
 
 // source REGEX email : https://emailregex.com/
-
-//! Il faudra améliorer la REGEX pour ne pas laisser passer un firsname Lastname avec que des espaces...
-//! .pattern(new RegExp(/^[^\s]$/))  => accept aucun espace / Nous on veut tous les espace que tu veux mais au moins 2 caracteres autres et pas d'espaces autour de ce deux caractéres...
-
 //Cette syntaxe fonctionne aussi :
 //.pattern(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/).required()

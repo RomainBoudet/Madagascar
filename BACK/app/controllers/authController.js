@@ -29,7 +29,7 @@ const authController = {
 
             // On authentifie le user via son email et le password proposé
             const clientInDb = await Client.authenticate(email, password);
-            consol.controller("Les propriété du client demandé pour authentification : ", clientInDb);
+            console.log("Les propriété du client demandé pour authentification : ", clientInDb);
             if (!clientInDb) {
                 return response.status(404).json("Erreur d'authentification : l'email ou le mot de passe est incorrect ");
             }
@@ -37,24 +37,24 @@ const authController = {
 
             //le user existe et s'est correctement identifié, on stocke les infos qui vont bien dans la session
             request.session.user = {
-                firstname: clientInDb.custumerFirstName,
-                lastname: clientInDb.custumerLastName,
-                pseudo: clientInDb.custumerPseudo,
-                email: clientInDb.custumerEmail,
-                role: clientInDb.privilegeName,
+                prenom: clientInDb.prenom,
+                nomFamille: clientInDb.nomFamille,
+                email: clientInDb.email,
+                privilege: clientInDb.nom,
             };
 
-            consol.controller("request.session.user =>", request.session.user);
+            console.log("request.session.user =>", request.session.user);
 
             //LocalStorage => sensible aux attaques XSS // faille Cross site Scripting ! injection du contenu dans une page web
             //Cookies => sensible aux attaques CSRF // Cross Site Request Forgery , faille qui consiste simplement à faire exécuter à une victime une requête HTTP à son insu
 
-            //ici on envoie un petit token identique dans le body pour qu'il soit stocké en front dans le localstorage et lemême mais dnas un cookie. Quand le front passe ces deux informations au server, les deux token doivent matcher.
+            //Envoie token dans le body => localstorage 
+            //Envoie token identique en cookie => navigateur. Quand le front passe ces deux informations au server, les deux tokens doivent matcher.
 
 
             /* On créer le token CSRF qui partira avec le body */
             const xsrfToken = crypto.randomBytes(70).toString('hex');
-            consol.controller("xsrfToken =>", xsrfToken);
+            console.log("xsrfToken =>", xsrfToken);
 
             // On créer le cookie contenant token CSRF. On comparera les deux au retour.
             //sameSite: strict  => Le cookie concerné par cette instruction ne sera envoyé que si la requête provient du même site web
@@ -63,20 +63,18 @@ const authController = {
                 secure: true, // si true, la navigateur n'envoit que des cookie sur du HTTPS
                 sameSite: 'strict', //le mode Strict empêche l’envoi d’un cookie de session dans le cas d’un accès au site via un lien externe//https://blog.dareboost.com/fr/2017/06/securisation-cookies-attribut-samesite/
                 signed: true, // on devra utiliser req.signedCookies au retour ! 
-                maxAge: 1000 * 60 * 60 * 24,
-                //Maxage est non spécifié, cela crée un cookie de session automatiquement
+                expires: new Date(Date.now() + 10 * 3600000), // par défault une expiratione 10h après
             });
 
 
             /**
-             * Cette option n'est pas présente en front, mais laissons ce bout de code a disposition :)
-             * Si l'utilisateur a coché la case 'se souvenir de moi, on ajoute une heure de validité à sa session
+             * Si l'utilisateur a coché la case 'se souvenir de moi, on ajoute 7 jours de validité à sa session
              * il peut ainsi quitter son navigateur et revenir sur la page, il devrait rester connecté
              * on indique en date d'expiration la date courante + une heure (en millisecondes)
              */
-            /*  if (request.body.remember) {
-                 request.session.cookie.expires = new Date(Date.now() + 3600000);
-             } */
+             if (request.body.remember) {
+                 request.session.cookie.expires = new Date(Date.now() + 7 * 24 * 3600000); //je rajoute 7 jours de validité.
+             } 
 
 
 
@@ -84,14 +82,13 @@ const authController = {
             response.status(200).json({
                 xsrfToken: xsrfToken,
                 id: clientInDb.id,
-                pseudo: clientInDb.pseudo,
-                firstname: clientInDb.firstName,
-                lastname: clientInDb.lastName,
+                prenom: clientInDb.prenom,
+                nomFamille: clientInDb.nomFamille,
                 email: clientInDb.emailAddress,
-                role: clientInDb.group_name,
+                privilege: clientInDb.nom,
             });
 
-            consol.controller(`L'utilisateur ${clientInDb.firstName} ${clientInDb.lastName} a bien été authentifié.`);
+            console.log(`L'utilisateur ${clientInDb.prenom} ${clientInDb.nomFamille} a bien été authentifié.`);
 
 
 
@@ -112,7 +109,7 @@ const authController = {
 
             req.session.user = false;
             //on redirige sur la page d'accueil
-            consol.controller("client déconnecté ! valeur de req.user maintenant ==> ", req.session.user)
+            console.log("client déconnecté ! valeur de req.user maintenant ==> ", req.session.user)
             return res.status(200).json("L'utilisateur a été déconnecté");
 
         } catch (error) {

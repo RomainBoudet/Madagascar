@@ -101,7 +101,7 @@ const consol = require('./services/colorConsole');
  * @returns {JSON} 200 - Un utilisateur à bien été connecté
  */
 
-router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authController.login);
+router.post('/connexion', apiLimiter, trim, validateBody(userLoginSchema), authController.login);
 
 
 /**

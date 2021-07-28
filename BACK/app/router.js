@@ -36,6 +36,8 @@ const {
     validateBody
   } = require('./services/validator');
   const userLoginSchema = require('./schemas/userLoginSchema');
+  const userSigninSchema = require('./schemas/userSigninSchema');
+
   
   //Redis pour le cache
   const cacheGenerator = require('./services/cache');
@@ -85,7 +87,7 @@ const consol = require('./services/colorConsole');
   /**
  * Une connexion
  * @typedef {object} connexion
- * @property {string} pseudo - pseudo
+ * @property {string} email - email
  * @property {string} password - password
  */
 /**
@@ -93,13 +95,33 @@ const consol = require('./services/colorConsole');
  * Route sécurisée avec Joi et limité a 100 requetes par 10h pour le même user
  * @route POST /v1/connexion
  * @group connexion - Pour se connecter
- * @summary Autorise la connexion d'un utilisateur au site. Aprés validation de son email !
+ * @summary Autorise la connexion d'un utilisateur au site.
  * @param {connexion.Model} connexion.body.required - les informations qu'on doit fournir
  * @returns {JSON} 200 - Un utilisateur à bien été connecté
  */
 
 router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authController.login);
 
+
+/**
+ * Une inscription
+ * @typedef {object} inscription
+ * @property {string} prenom - prénom
+ * @property {string} NomFamille - nom de famille
+ * @property {string} email - email
+ * @property {string} password - password
+ * @property {string} passwordConfirm - la confirmation du password
+ */
+/**
+ * Autorise la connexion d'un utilisateur au site.
+ * Route sécurisée avec Joi
+ * @route POST /v1/inscription
+ * @group inscription - Pour s'inscire
+ * @summary Inscrit un utilisateur en base de donnée
+ * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
+ * @returns {JSON} 200 - les données d'un utilisateur ont été inséré en BDD, redirigé vers la page de connexon
+ */
+ router.post('/inscription', validateBody(userSigninSchema), clientController.signIn);
 
 //! Des routes de test pour mes models ...
 
@@ -123,7 +145,7 @@ router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteCa
 
 router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', produitController.updateCategorieImage);
+router.patch('/update/:id(\\d+)', clean, produitController.update);
 
 
 

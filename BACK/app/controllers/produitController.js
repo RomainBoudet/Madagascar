@@ -81,7 +81,8 @@ const produitController = {
             data.idCategorie = req.body.idCategorie;
             data.idTVA = req.body.idTVA;
             data.idReduction = req.body.idReduction;
-           
+            console.log("dans le controller req.body vaut ==>> ", req.body);
+
 
             const newProduit = new Produit(data);
             await newProduit.save();
@@ -108,7 +109,6 @@ const produitController = {
             const idCategorie = req.body.idCategorie;
             const idTVA = req.body.idTVA;
             const idReduction = req.body.idReduction
-        
 
             let message = {};
 

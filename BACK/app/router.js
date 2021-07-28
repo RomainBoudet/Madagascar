@@ -9,6 +9,8 @@ const {
   const auth = require('./middlewares/auth');
   const admin = require('./middlewares/admin');
   const dev = require('./middlewares/dev');
+
+  const clean = require('./middlewares/sanitizer');
   
   // le MW limitant le nombre de requetes pour un user (defense contre les attaques par Brute-Force)
   const rateLimit = require("express-rate-limit");
@@ -111,7 +113,7 @@ router.get('/getone/:id(\\d+)', produitController.getOneCategorieImage);
 
 router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getCategorieImageByIdCategorie);
 
-router.post('/new', produitController.newCategorieImage);
+router.post('/new', clean, produitController.new);
 
 router.post('/newProd', produitController.new);
 

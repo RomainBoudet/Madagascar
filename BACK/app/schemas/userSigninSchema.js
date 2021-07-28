@@ -15,33 +15,25 @@ const Joi = require('joi');
  * @property {string} email - l'adresse email d'un utilisateur doit correspondre a un format valide.
  * @return {json} messages - Un texte adapté en cas d'érreur, en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
-const userSigninSchema = Joi.object({
-  prenom: Joi.string()
+const userSigninSchema = Joi.object().keys({
+  prenom: Joi.string().trim()
     .min(2)
-    .trim()
-    .alphanum()
     .required()
-    //.pattern(/^[^<>&#=+*/|{}]$/)
-    //.pattern(/^\S{2,}$/)
+    .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
     .messages({
       'string.empty': `Le champs de votre prénom ne peut être vide !`,
       'string.min': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
-      'string.pattern.base': 'Le format de votre prénom est incorrect : il doit contenir au minimum 2 caractéres et ne pas être composé d\'espaces !',
-      'string.alphanum': 'Votre prénom ne doit contenir que des caractéres alpha-numériques',
+      'string.pattern.base': 'Le format de votre nom est incorrect : Il ne doit pas être composé d\'un de ces caractéres spéciaux : [<>&#=+*/"|] !',
     }),
 
-  nomFamille: Joi.string()
+  nomFamille: Joi.string().trim()
     .min(2)
-    .trim()
-    .alphanum()
     .required()
-    //.pattern(/^[^<>&#=+*/|{}]$/)
-    //.pattern(/^\S{2,}$/)
+    .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
     .messages({
       'string.empty': `Le champs de votre nom ne peut être vide !`,
       'string.min': `Votre nom doit avoir une longeur minimum de {#limit} caractéres !`,
-      'string.pattern.base': 'Le format de votre nom est incorrect : il doit contenir au minimum 2 caractéres et ne pas être composé d\'espaces ! ',
-      'string.alphanum': 'Votre nom de famille ne doit contenir que des caractéres alpha-numériques',
+      'string.pattern.base': 'Le format de votre nom est incorrect : Il ne doit pas être composé d\'un de ces caractéres : spéciaux [<>&#=+*/"|] !',
     }),
   email: Joi.string()
     .required()
@@ -52,13 +44,13 @@ const userSigninSchema = Joi.object({
       'string.pattern.base': 'Le format de votre email est incorrect',
     }),
   password: Joi.string()
-    .pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
+    //.pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
     .required()
     .trim()
     .messages({
       'string.pattern.base': 'Le format de votre mot de passe est incorrect : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & * ',
     }),
-  passwordConfirm: Joi.ref('password'),
+  passwordConfirm: Joi.ref('password')
 
 }).with('password', 'passwordConfirm');
 

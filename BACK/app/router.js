@@ -10,7 +10,8 @@ const {
   const admin = require('./middlewares/admin');
   const dev = require('./middlewares/dev');
 
-  const clean = require('./middlewares/sanitizer');
+  const {trim, clean} = require('./middlewares/sanitizer'); //trim => supression de <> + trim. Pour les routes avec password // clean => pour toutes les routes sans password (ou on n'a pas besoin de caractéres spéciaux..)
+
   
   // le MW limitant le nombre de requetes pour un user (defense contre les attaques par Brute-Force)
   const rateLimit = require("express-rate-limit");
@@ -121,7 +122,7 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été inséré en BDD, redirigé vers la page de connexon
  */
- router.post('/inscription', validateBody(userSigninSchema), clientController.signIn);
+ router.post('/inscription', trim, validateBody(userSigninSchema), clientController.signIn);
 
 //! Des routes de test pour mes models ...
 
@@ -135,7 +136,7 @@ router.get('/getone/:id(\\d+)', produitController.getOneCategorieImage);
 
 router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getCategorieImageByIdCategorie);
 
-router.post('/new', clean, produitController.new);
+router.post('/new', produitController.new);
 
 router.post('/newProd', produitController.new);
 
@@ -145,7 +146,7 @@ router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteCa
 
 router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', clean, produitController.update);
+router.patch('/update/:id(\\d+)', produitController.update);
 
 
 

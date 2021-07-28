@@ -98,7 +98,13 @@ const clientController = {
                 return response.json('Le format de l\'email est incorrect');
             }
 
+             if (!validator.isStrongPassword(password)) {
+                //(surplus de sécurité, en plus de la vérif de Joi...)Cette méthode, par défault, matche exactement avec la regex de Joi.
+                return response.json('Le format du mot de passe est incorrect : : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & *');
+            } 
+
             //on checke si le password et la vérif sont bien identiques
+            //encore une fois, vérif de sécu en plus de Joi..
             if (password !== passwordConfirm) {
                 return response.json(
                     'La confirmation du mot de passe est incorrecte'
@@ -106,15 +112,10 @@ const clientController = {
             }
             //on check si un utilisateur existe déjà avec cet email
             const userInDb = await Client.findByEmail(email);
-
-            // on check l'email :
             if (userInDb.email) {
                 //il y a déjà un utilisateur avec cet email, on envoie une erreur
                 return response.json('Cet email n\'est pas disponible');
             }
-
-
-            // on est OK pour une inscription en BDD ! hash du MDP => insertion en BDD
 
 
             /**
@@ -156,7 +157,6 @@ const clientController = {
 
                 //on généree un compte de service SMTP
                 // je créer un objet "transporteur" réutilisable à l'aide du transport SMTP par défaut
-                // (Pour tester sans créer d'email => https://mailtrap.io/ 
 
                 const transporter = nodemailer.createTransport({
                     host: 'smtp.gmail.com',
@@ -185,7 +185,7 @@ const clientController = {
             }
             main().catch(console.error);
 
-            // on renvoie un messge au FRONT !
+            // on renvoie un message au FRONT !
 
             console.log("userNowInDb =>", userNowInDb)
             response.status(200).json({

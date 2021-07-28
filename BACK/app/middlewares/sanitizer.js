@@ -15,7 +15,7 @@ const clean = (req, res, next) => {
         // j'aurais bien mis un tableau de caractéres comme ceci: ['>','<', '&', '"', '/', '|', '#', '{', '}','='] mais blacklist me prend aussi la virgule que je veux garder...
         //a l'avenir, une regex serait peut être préférable plutot qu'un module entrainant un package en plus avec ses potentielles failles...
         //a l'avenir il faudrait également logger les cas ou on a tenté d'insérer des caractéres spéciaux.
-      
+
         const theBody = req.body;
 
         for (let prop in theBody) {
@@ -47,7 +47,32 @@ const clean = (req, res, next) => {
         });
 
     }
+
+}
+//ici un petit MW special pour les routes avec passwords pour trimmer et interdire les balises mais pas les caractéres spéciaux que je veux dans les mots de passe. Le schema Joi prendra le relai pour plus de finesse mais Joi gére mal les trim...
+
+const trim = (req, res, next) => {
+
+    try {
+        const theBody = req.body;
+        for (let prop in theBody) {
+
+            theBody[prop] = validator.trim(theBody[prop]);
+            theBody[prop] = validator.blacklist(theBody[prop], ['>']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['<']);
+        }
+        next();
+
+    } catch (err) {
+
+        return res.status(500).json({
+            message: 'Erreur lors de l\'opération de sanitizer'
+        });
+
+    }
 }
 
-module.exports = clean;
-
+module.exports = {
+    clean,
+    trim
+};

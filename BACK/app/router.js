@@ -125,7 +125,7 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 
 //! Des routes de test pour mes models ...
 
-router.get('/all', produitController.getAllSsCatImage);
+router.get('/all', clientController.getAll);
 //router.get('/all2', produitController.getAllCategorie);
 
 
@@ -139,7 +139,7 @@ router.post('/new', clean, produitController.new);
 
 router.post('/newProd', produitController.new);
 
-router.delete('/del/:id(\\d+)', produitController.deleteCategorieImage);
+router.delete('/del/:id(\\d+)', clientController.delete);
 
 router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteCategorieImageByIdCategorie);
 

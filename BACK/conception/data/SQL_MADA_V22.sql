@@ -195,7 +195,7 @@ CREATE TABLE admin_verif_email(
 	id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	verif_email           BOOL  NOT NULL DEFAULT 'false',
 	date_verif_email      timestamptz NOT NULL DEFAULT now(),
-	id_client             INT UNIQUE NOT NULL REFERENCES client(id)
+	id_client             INT UNIQUE NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
 
 -----------------------------------------------------------
@@ -205,7 +205,7 @@ CREATE TABLE admin_verif_telephone(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	verif_phone             BOOL NOT NULL DEFAULT 'false',
 	date_verif_phone        timestamptz NOT NULL DEFAULT now(),
-	id_client               INT UNIQUE NOT NULL REFERENCES client(id)
+	id_client               INT UNIQUE NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
 
 ------------------------------------------------------------
@@ -216,7 +216,7 @@ CREATE TABLE admin_phone(
 	admin_telephone   phonenumber  NOT NULL,
 	created_date      timestamptz NOT NULL DEFAULT now(),
 	updated_date      timestamptz,
-	id_client         INT UNIQUE NOT NULL REFERENCES client(id),
+	id_client         INT UNIQUE NOT NULL REFERENCES client(id) ON DELETE CASCADE,
 	CHECK (created_date < updated_date)
 );
 
@@ -292,7 +292,7 @@ CREATE TABLE avis(
 	created_date       timestamptz NOT NULL DEFAULT now(),
 	updated_date       timestamptz,
 	CHECK (created_date < updated_date),
-	id_client         INT NOT NULL REFERENCES client(id),
+	id_client         INT NOT NULL REFERENCES client(id) ON DELETE CASCADE,
 	id_produit        INT NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 
@@ -330,7 +330,7 @@ CREATE TABLE commande(
 	CHECK (date_achat < updated_date),
 
 	id_commandeStatut   INT  NOT NULL REFERENCES statut_commande(id) ON DELETE CASCADE,
-	id_client   	    INT  NOT NULL REFERENCES client(id)
+	id_client   	    INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE
 
 
 );
@@ -368,7 +368,7 @@ CREATE TABLE livraison(
 	estime_arrive      text_valid,
 	CHECK (created_date < updated_date),
 
-	id_client            INT  NOT NULL REFERENCES client(id),
+	id_client            INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
 	id_commande          INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
 	
 
@@ -394,7 +394,7 @@ CREATE TABLE client_adresse(
 	updated_date       timestamptz,
 	CHECK (created_date < updated_date),
 
-	id_client         INT  NOT NULL REFERENCES client(id),
+	id_client         INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
 	id_ville          INT  NOT NULL REFERENCES ville(id) ON DELETE CASCADE
 	
 );
@@ -415,7 +415,7 @@ CREATE TABLE facture(
 	CHECK (date_facturation < updated_date),
 
 	id_paiement         INT NOT NULL REFERENCES paiement(id) ON DELETE CASCADE,
-	id_client			INT NOT NULL REFERENCES client(id)
+	id_client			INT NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
 
 
@@ -539,7 +539,7 @@ CREATE TABLE client_historique_password(
 	id   						  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	password_hash                 pass NOT NULL,
 	created_date    			  timestamptz NOT NULL DEFAULT now(),
-	id_client                     INT  NOT NULL REFERENCES client(id)
+	id_client                     INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
 
 
@@ -550,7 +550,7 @@ CREATE TABLE client_historique_connexion(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	connexion_succes              BOOLEAN  NOT NULL,
 	connexion_date                timestamptz NOT NULL DEFAULT now(),
-	id_client                     INT  NOT NULL REFERENCES client(id)
+	id_client                     INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
 
 

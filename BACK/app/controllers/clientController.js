@@ -1,6 +1,8 @@
 const Client = require('../models/client');
 const validator = require('validator');
 const nodemailer = require('nodemailer');
+const bcrypt = require('bcrypt');
+
 
 
 /**
@@ -84,7 +86,7 @@ const clientController = {
 
 
 
-    signIn: async (request, response) => {
+    signIn: async (req, response) => {
         try {
 
             const {prenom, nomFamille, email, password, passwordConfirm} = req.body;
@@ -103,7 +105,7 @@ const clientController = {
                 );
             }
             //on check si un utilisateur existe déjà avec cet email
-            const userInDb = await client.findByEmail(email);
+            const userInDb = await Client.findByEmail(email);
 
             // on check l'email :
             if (userInDb.email) {
@@ -128,7 +130,7 @@ const clientController = {
              * @type {object} 
              */
             const newUser = {
-                emailAddress: email,
+                email: email,
                 password: hashedPwd,
                 prenom,
                 nomFamille,
@@ -145,7 +147,7 @@ const clientController = {
              */
             await userNowInDb.save();
 
-            console.log(`L'utilisateur ${newUser.firstName} ${newUser.lastName} est désormais enregistré dans la BDD`);
+            console.log(`L'utilisateur ${newUser.prenom} ${newUser.nomFamille} est désormais enregistré dans la BDD`);
 
             //! on envoie un message de bienvenue par email
 
@@ -168,12 +170,11 @@ const clientController = {
 
                 // l'envoie d'email définit par l'object "transporter"
                 const info = await transporter.sendMail({
-                    from: 'lesgardiensdelalegende@gmail.com', //l'envoyeur
+                    from: process.env.EMAIL, //l'envoyeur
                     to: `${userNowInDb.email}`, // le ou les receveurs => `${request.body.email}`
                     subject: `Bienvenue sur le site d'artisanat Malgache`, // le sujet du mail
                     text: `Bonjour ${userNowInDb.prenom} ${userNowInDb.nomFamille}.`, // l'envoie du message en format "plain text" ET HTML, permet plus de souplesse pour le receveur, tout le monde n'accepte pas le format html pour des raisons de sécurité sur ces boites mails, moi le premier ! 
-                    html: emailheader + `<h3>Bonjour <span class="username"> ${userNowInDb.firstName} ${userNowInDb.lastName}, </span> </h3> <br>`
-                   + emailfooter,
+                    html:`<h3>Bonjour <span class="username"> ${userNowInDb.prenom} ${userNowInDb.nomFamille}, </span> </h3> <br>`,// Mail a finir de personalisé !!
                 });
 
                 console.log("Message sent: %s", info.messageId);
@@ -189,9 +190,9 @@ const clientController = {
             console.log("userNowInDb =>", userNowInDb)
             response.status(200).json({
                 email: userNowInDb.email,
-                firstName: userNowInDb.firstName,
-                lastName: userNowInDb.lastName,
-                message: "Vous pouvez dsormais vous connecter"
+                prenom: userNowInDb.prenom,
+                nomFamille: userNowInDb.nomFamille,
+                message: "Vous pouvez désormais vous connecter"
             });
 
 

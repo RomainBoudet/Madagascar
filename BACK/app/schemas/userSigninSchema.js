@@ -21,8 +21,8 @@ const userSigninSchema = Joi.object({
     .trim()
     .alphanum()
     .required()
-    .pattern(/^[^<>&#=+*/|{}]$/)
-    .pattern(/^\S{2,}$/)
+    //.pattern(/^[^<>&#=+*/|{}]$/)
+    //.pattern(/^\S{2,}$/)
     .messages({
       'string.empty': `Le champs de votre prénom ne peut être vide !`,
       'string.min': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
@@ -35,8 +35,8 @@ const userSigninSchema = Joi.object({
     .trim()
     .alphanum()
     .required()
-    .pattern(/^[^<>&#=+*/|{}]$/)
-    .pattern(/^\S{2,}$/)
+    //.pattern(/^[^<>&#=+*/|{}]$/)
+    //.pattern(/^\S{2,}$/)
     .messages({
       'string.empty': `Le champs de votre nom ne peut être vide !`,
       'string.min': `Votre nom doit avoir une longeur minimum de {#limit} caractéres !`,

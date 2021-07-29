@@ -41,6 +41,8 @@ const {
 } = require('./services/validator');
 const userLoginSchema = require('./schemas/userLoginSchema');
 const userSigninSchema = require('./schemas/userSigninSchema');
+const userUpdateSchema = require('./schemas/userUpdateSchema');
+
 
 
 //Redis pour le cache
@@ -153,6 +155,32 @@ router.post('/signin', dev, trim, validateBody(userSigninSchema), adminControlle
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
  */
 router.patch('/updateprivilege/:id(\\d+)', dev,clean, adminController.updatePrivilege);
+
+
+
+/**
+ * Un utilisateur
+ * @typedef {object} utilisateur
+ * @property {number} id - id du jeu
+ * @property {string} firstName - prénom
+ * @property {string} lastName - nom de famille
+ * @property {string} pseudo - pseudo
+ * @property {string} emailAddress - email
+ * @property {string} password - password
+ * @property {string} inscription - date d'inscription
+ * @property {string} avatar - chemin absolu jusqu' une image
+ * @property {string} group_id - références a la table qui détient les rôles
+ */
+/**
+ * Met a jour les informations d'un utilisateur.
+ * @route PATCH /v1/user/:id
+ * @group utilisateur - gestion de nos utilisateurs
+ * @summary Supprimme un utilisateur en base de donnée. Route mise en flush (REDIS)*** Nécéssite un role Admin***
+ * @param {user.Model} user.body.required
+ * @param {number} id.path.required - l'id à fournir
+ * @returns {JSON} 200 - les données d'un utilisateur ont été supprimées
+ */
+ router.patch('/user/:id(\\d+)', trim, validateBody(userUpdateSchema), clientController.updateClient);
 
 //! Des routes de test pour mes models ...
 

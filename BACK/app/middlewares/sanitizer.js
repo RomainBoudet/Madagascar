@@ -33,7 +33,10 @@ const clean = (req, res, next) => {
             theBody[prop] = validator.blacklist(theBody[prop], ['=']);
             theBody[prop] = validator.blacklist(theBody[prop], ['+']);
             theBody[prop] = validator.blacklist(theBody[prop], ['*']);
-            theBody[prop] = validator.blacklist(theBody[prop], ['-']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['@']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['$']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['%']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['_']);
 
             theBody[prop] = validator.trim(theBody[prop]);
         }
@@ -65,8 +68,21 @@ const trim = (req, res, next) => {
             theBody[prop] = validator.trim(theBody[prop]);
             theBody[prop] = validator.blacklist(theBody[prop], ['>']);
             theBody[prop] = validator.blacklist(theBody[prop], ['<']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['"']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['/']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['|']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['{']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['}']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['[']);
+            theBody[prop] = validator.blacklist(theBody[prop], [']']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['=']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['+']);
+            theBody[prop] = validator.blacklist(theBody[prop], ['_']);
+
         }
         next();
+
+        /* @#$%^&* */
 
     } catch (err) {
 

@@ -1,4 +1,6 @@
 const Client = require('../models/client');
+const Shop = require('../models/shop');
+
 const validator = require('validator');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
@@ -89,8 +91,14 @@ const clientController = {
     signIn: async (req, response) => {
         try {
 
-            const {prenom, nomFamille, email, password, passwordConfirm} = req.body;
-            
+            const {
+                prenom,
+                nomFamille,
+                email,
+                password,
+                passwordConfirm
+            } = req.body;
+
             // vérif de sécurité en plus de la REGEX de Joi
             //on ne recherche que l'email a un format valide
             if (!validator.isEmail(email)) {
@@ -98,10 +106,10 @@ const clientController = {
                 return response.json('Le format de l\'email est incorrect');
             }
 
-             if (!validator.isStrongPassword(password)) {
+            if (!validator.isStrongPassword(password)) {
                 //(surplus de sécurité, en plus de la vérif de Joi...)Cette méthode, par défault, matche exactement avec la regex de Joi.
                 return response.json('Le format du mot de passe est incorrect : : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & *');
-            } 
+            }
 
             //on checke si le password et la vérif sont bien identiques
             //encore une fois, vérif de sécu en plus de Joi..
@@ -164,7 +172,7 @@ const clientController = {
                     port: 465,
                     secure: true, // true for 465, false for other ports
                     auth: {
-                        user: process.env.EMAIL, 
+                        user: process.env.EMAIL,
                         pass: process.env.PASSWORD_EMAIL,
                     },
                 });
@@ -174,8 +182,8 @@ const clientController = {
                     from: process.env.EMAIL, //l'envoyeur
                     to: `${userNowInDb.email}`, // le ou les receveurs => `${request.body.email}`
                     subject: `Bienvenue sur le site d'artisanat Malgache`, // le sujet du mail
-                    text: `Bonjour ${userNowInDb.prenom} ${userNowInDb.nomFamille}.`, // l'envoie du message en format "plain text" ET HTML, permet plus de souplesse pour le receveur, tout le monde n'accepte pas le format html pour des raisons de sécurité sur ces boites mails, moi le premier ! 
-                    html:`<h3>Bonjour <span class="username"> ${userNowInDb.prenom} ${userNowInDb.nomFamille}, </span> </h3> <br>`,// Mail a finir de personalisé !!
+                    text: `Bonjour ${userNowInDb.prenom} ${userNowInDb.nomFamille}.`,
+                    html: `<h3>Bonjour <span class="username"> ${userNowInDb.prenom} ${userNowInDb.nomFamille}, </span> </h3> <br>`, // Mail a finir de personaliser !!
                 });
 
                 console.log("Message sent: %s", info.messageId);
@@ -206,8 +214,212 @@ const clientController = {
 
 
 
+    /**
+     * Methode chargé d'aller mettre a jour les informations relatives à un client
+     * @param {Express.Request} req - l'objet représentant la requête
+     * @param {Express.Response} res - l'objet représentant la réponse
+     * @param {req.params.id} req.params.id - le numéro identifiant un utilisateur précis
+     * @param {req.body} req.body - les informations d'un utilisateur 
 
-   
+     */
+    updateClient: async (req, res) => {
+
+
+        try {
+            //on vérifie si le user existe en BDD via à son ID
+            const userIdinDb = await Client.findOne(req.params.id);
+            // on extrait les infos du body //
+            const {
+                password,
+                newPassword,
+                newPasswordConfirm,
+                prenom,
+                nomFamille,
+                email,
+            } = req.body;
+            const oldEmail = userIdinDb.email; // on l'utilisera ultérieurement pour un envoi d'email...
+            let message = {};
+
+            // on vérifit si l'utilisateur existe en BDD
+            if (!userIdinDb.id === 'undefined' && userIdinDb.email === 'undefined') {
+                console.log(`Cet utilisateur n'est pas enregistré en base de données`)
+                return res.status(404).json(`Erreur lors de la mise a jour`)
+            };
+            //on vérifit que l'utiisateur a bien rentré son mot de passe pour changer un paramétre de son profil
+            if (!password) {
+                return res.status(403).json('Votre mot de passe est nécéssaire pour une mise a jour de votre profil')
+            };
+            
+            // on vérifit que l'utilisateur est bien authentifié .
+            if (await bcrypt.compare(password, userIdinDb.password)) {
+                console.log("L'utilisateur est bien authentifié !")
+            } else {
+                console.log("Le mot de passe proposé pour changer le profil n'est pas valide !")
+                return res.status(403).json('Erreur lors de la mise a jour')
+            };
+            //on check si le password et la vérif sont bien identiques
+            if (newPassword !== newPasswordConfirm) {
+                console.log("confirmation du nouveau mot de passe incorect")
+                return res.json(
+                    'La confirmation du nouveau mot de passe est incorrecte'
+                );
+            };
+
+            // on ne change que les paramètres envoyés
+
+            if (prenom) {
+                userIdinDb.prenom = prenom;
+                message.prenom = 'Votre nouveau prénom a bien été enregistré';
+            } else if (!prenom) {
+                message.prenom = 'Votre prénom n\'a pas changé';
+            }
+
+            if (nomFamille) {
+                userIdinDb.nomFamille = nomFamille;
+                message.nomFamille = 'Votre nouveau nom de famille a bien été enregistré';
+            } else if (!nomFamille) {
+                message.nomFamille = 'Votre nom de famille n\'a pas changé';
+            }
+
+            if (!email || email === 'undefined') {
+                userIdinDb.email = userIdinDb.email;
+                message.emailAdress = 'Votre email n\'a pas changé';
+            } else {
+               
+                if (email !== userIdinDb.email && (validator.isEmail(email) === true)) {
+                    userIdinDb.email = email;
+                    console.log("Votre mail est modifié.");
+                    message.email = 'Votre nouvel email a bien été enregistré';
+                    message.général = 'Vous avez changé votre email, par mesure de sécurité, une notification par email vous a été envoyé sur votre ancien et nouvel email, vous confirmant la mise a jour de votre profil. Votre précédent email a été supprimé de la base de donnée, vous ne recevrez plus d\'envoie de notre part sur cet email. Les changements précédent ont bien été enregistré.';
+                } else if (email === userIdinDb.email) {
+                    console.log("Votre ancien mail est conservé.");
+                    message.email = 'Votre email est le même que precedemment';
+                    message.général = 'Un email vous a été envoyé vous confirmant la mise a jour de votre profil. les changements précédent ont bien été enregistré.'
+
+                } else if (email !== userIdinDb.email && (validator.isEmail(email) === false)) {
+                    console.log("Le format de votre nouvel mail est incorect, votre ancien mail est conservé.");
+                    message.email = 'Le format de votre nouvel email est incorect, votre ancien email est conservé.';
+                    message.général = 'Un email vous a été envoyé vous confirmant la mise a jour de votre profil. les changements précédent ont bien été enregistré.'
+                }
+
+            }
+
+
+
+
+
+            // on vérifit le password : si un nouveau est inséré, on le compare à la confirmation, on le hash et on le met dans l'objet.
+            if (newPassword && newPassword !== userIdinDb.password && newPassword === newPasswordConfirm) {
+
+                console.log("le changement du mot de passe est demandé. Un nouveau mot de passe valide a été proposé")
+
+                const hashedPwd = await bcrypt.hash(newPassword, 10);
+                userIdinDb.password = hashedPwd;
+
+                message.password = 'le changement du mot de passe est demandé. Un nouveau mot de passe valide a bien été enregistré';
+
+            } else if (newPassword === password) {
+                console.log("Le nouveau mot de passe n'a pas grand chose de nouveau..");
+                message.password = 'Votre nouveau mot de passe est le même que precedemment';
+            } else if (!newPassword) {
+                console.log("l'ancien mot de passe est conservé.")
+                message.password = 'Votre ancien mot de passe est conservé';
+            }
+
+            console.log("userInDb apres les modif et avant la mise en BDD => ", userIdinDb);
+            const newUser = new Client(userIdinDb);
+
+            await newUser.update();
+
+            //! on envois deux mails (sur le nouveau et l'ancien) par sécurité en cas de changement d'adresse email dans le profil ! 
+            //! ici envoie d'un mail sur la nouvelle adresse pour confirmer le changemet d'information au user ! 
+
+            const shop = await Shop.findOne(process.env.IDSITE); // cela me permet de stocker les infos propre au site en BDD (nom du site, tel et mail de contact, et phrase de bienvenue personalisable). Si l'admin du site veux les changer, j'ai juste a inséer en BDD les nouvelles données, ce qui les répercuteras les modif partout il y aura besoin. 
+
+            async function main() {
+
+                const transporter = nodemailer.createTransport({
+                    host: process.env.HOST,
+                    port: 465,
+                    secure: true, // true for 465, false for other ports
+                    auth: {
+                        user: process.env.EMAIL,
+                        pass: process.env.PASSWORD_EMAIL,
+                    },
+                });
+                const info = await transporter.sendMail({
+                    from: shop.emailContact, //l'envoyeur
+                    to: newUser.email,
+                    subject: `Vos modification d'information sur le site de vente en ligne ${shop.nom} ont bien été pris en compte ! ✔`,
+                    text: `Bonjour ${newUser.prenom} ${newUser.nomFamille},`,
+                    html: `<h3>Bonjour <span class="username"> ${newUser.prenom} ${newUser.nomFamille}, </span> </h3> <br> Vous avez récemment changé vos informations personnelles dans la configuration de votre compte. 😊 <br>
+                    Vos changement ont bien été pris en compte ! ✔️<br>
+                    En vous remerciant et en espérant vous revoir bientôt sur ${shop.nom} !<br> 🤗
+                    Bonne journée. <br>`, // le contenu du mail en format html.
+                });
+
+                console.log("Message sent: %s", info.messageId);
+                // le message envoyé ressemble a ça : <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+                console.log(`Email bien envoyé a ${newUser.prenom} ${newUser.nomFamille} via la nouvelle adresse email: ${newUser.email} : ${info.response}`);
+                // Email bien envoyé : 250 2.0.0 OK  1615639005 y16sm12341865wrh.3 - gsmtp => si tout va bien !
+
+            }
+            main().catch("Erreur lors de l'envois du nouveau mail dans la méthode updateClient", console.error);
+
+            //! fin du premier envoi d'email a la nouvelle adresse mail du user
+
+
+
+            if (email !== oldEmail && email !== 'undefined' ) {
+
+                //! ici envoie d'un mail sur son ancienne adresse email pour confirmer le changemet d'information au user par sécurité ! 
+                //! Un attaquant qui tenterais de changer un mail dans le profil aprés avoir dérobé le mot de passe du user serait démasqué et le user s'en rendrait compte sur sa boite mail.
+                async function main() {
+
+                    const transporter = nodemailer.createTransport({
+                        host: process.env.HOST,
+                        port: 465,
+                        secure: true,
+                        auth: {
+                            user: process.env.EMAIL,
+                            pass: process.env.PASSWORD_EMAIL,
+                        },
+                    });
+
+                    const info = await transporter.sendMail({
+                        from: shop.emailContact,
+                        to: oldEmail,
+                        subject: `Vos modification d'information sur le site de vente en ligne ${shop.nom} ont bien été pris en compte ! ✔`,
+                        text: `Bonjour ${newUser.prenom} ${newUser.nomFamille},`,
+                        html: `<h3>Bonjour <span class="username"> ${newUser.prenom} ${newUser.nomFamille}, </span> </h3>   <br>
+                        Vous avez récemment changé vos informations personnelles dans la configuration de votre compte. 😊 <br>
+                        Vos changement ont bien été pris en compte ! ✔️<br>
+                        Vous avez changé d'adresse email, Ce sera le dernier email sur cette adresse.<br>
+                        Une notification vous a également été envoyé sur votre nouvel email.<br>
+                        En vous remerciant et en espérant vous revoir sur ${shop.nom} ! 🤗<br>
+                        Bonne journée.`,
+                    });
+
+                    console.log("Message sent: %s", info.messageId);
+                    // le message envoyé ressemble a ça : <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+                    console.log(`Email bien envoyé a ${newUser.prenom} ${newUser.nomFamille} via l'ancienne adresse email: ${oldEmail} : ${info.response}`);
+                    // Email bien envoyé : 250 2.0.0 OK  1615639005 y16sm12341865wrh.3 - gsmtp => si tout va bien !
+
+                }
+                main().catch("Erreur lors de l'envois de l'ancien mail dans la méthode updateClient", console.error);
+
+            }
+
+            res.status(200).json(message);
+
+            console.log(`L'utilisateur ${newUser.prenom} ${newUser.nomFamille} avec l'id : ${newUser.id} a bien été modifié.`);
+
+        } catch (error) {
+            res.status(500).json({message:'Erreur lors de la mise a jour des données'});
+            console.log("Erreur dans la méthode updateClient du clientController : ", error);
+        }
+    },
+
 
 
 
@@ -230,66 +442,7 @@ const clientController = {
         }
     },
 
-    updateClient: async (req, res) => {
-        try {
 
-            const {
-                id
-            } = req.params;
-
-            const updateClient = await Client.findOne(id);
-
-
-            const prenom = req.body.prenom;
-            const nomFamille = req.body.nomFamille;
-            const email = req.body.email;
-            const password = req.body.password;
-
-
-            let message = {};
-
-            if (prenom) {
-                updateClient.prenom = prenom;
-                message.prenom = 'Votre nouveau prenom a bien été enregistré ';
-            } else if (!prenom) {
-                message.prenom = 'Votre prenom n\'a pas changé';
-            }
-
-
-            if (nomFamille) {
-                updateClient.nomFamille = nomFamille;
-                message.nomFamille = 'Votre nouveau nom de famille a bien été enregistré ';
-            } else if (!nomFamille) {
-                message.nomFamille = 'Votre nom de famille n\'a pas changé';
-            }
-
-
-            if (email) {
-                updateClient.email = email;
-                message.email = 'Votre nouveau email a bien été enregistré ';
-            } else if (!email) {
-                message.email = 'Votre email n\'a pas changé';
-            }
-
-
-            if (password) {
-                updateClient.password = password;
-                message.password = 'Votre nouveau password a bien été enregistré ';
-            } else if (!password) {
-                message.password = 'Votre password n\'a pas changé';
-            }
-
-            await updateClient.update();
-            // si je veux renvoyer les données ET les infos textuels de ce qui a été modifié dans le même objet : spread opérator
-            //const userMessage = {...message, ...newClient};
-            // et je devrais renommer les clés de l'objet "message" pour qu'elles ne soient pas identique avec l'autre objet..
-            res.json(message);
-
-        } catch (error) {
-            console.log(`Erreur dans la methode updateClient du clientController ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
 
 
 

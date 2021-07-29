@@ -1424,6 +1424,13 @@ const fakeData = async () => {
         consol.seed(`Admin mis en place en client id ${process.env.ID}`)
 
 
+        //! Mise en place des infos propre au site (nom, phrase de biencvenue, contact..etc.)
+
+        consol.seed("Mise en place des infos du site dans la BDD");
+        await db.query(`INSERT INTO mada.shop (nom, texte_intro, email_contact, telephone) VALUES('${process.env.SITE}','${process.env.TEXTEINTRO}', '${process.env.EMAILCONTACTSITE}', '${process.env.TELEPHONESITE}');`);
+        consol.seed(`Données du site mis en place pour le site ${process.env.SITE}`);
+
+
         console.timeEnd("Génération de la fonction fakeData");
         consol.admin("FIN DE L'IMPORT");
 

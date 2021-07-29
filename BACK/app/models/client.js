@@ -117,7 +117,7 @@ class Client {
   }
 
 /**
-   * Méthode chargé d'aller authentifier un client passé en paramétre
+   * Méthode chargé d'aller authentifier un client passé en paramétre et de logger la tentative de connexion en bdd
    * @param - un email d'un client
    * @param - un password d'un client
    * @returns - les informations du client si il a put s'authentifier

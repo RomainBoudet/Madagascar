@@ -74,6 +74,9 @@ const consol = require('../services/colorConsole');
       return next();
   
     } catch (err) {
+      console.trace(
+        'Erreur dans la méthode Admin du Mw Admin :',
+        err);
       return res.status(500).json({
         message: 'Erreur lors de l\'autentification'
       });

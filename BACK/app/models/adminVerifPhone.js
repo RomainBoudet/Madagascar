@@ -105,10 +105,10 @@ class AdminVerifPhone {
         }
 
         consol.model(
-            `le statut de l'email pour le idClient : ${idClient} a été demandé en BDD !`
+            `le statut du numéro de téléphone pour le idClient : ${idClient} a été demandé en BDD !`
         );
 
-        return rows.map((id) => new AdminVerifPhone(id));
+        return new AdminVerifPhone(rows[0]);
     }
 
     /**

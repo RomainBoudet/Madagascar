@@ -116,12 +116,11 @@ const clientHistoController = {
 
             const data = {};
 
-            data.connexionSucces = req.body.connexionSucces;
             data.idClient = req.body.idClient;
 
             console.log("req.body ==> ", req.body);
             const newClient = new ClientHistoConn(data);
-            await newClient.save();
+            await newClient.true();
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newHistoConn du clientHistoController : ${error.message}`);

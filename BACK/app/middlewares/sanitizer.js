@@ -42,9 +42,13 @@ const clean = (req, res, next) => {
 
     } catch (err) {
 
+        console.trace(
+            'Erreur dans la méthode clean du sanitizer :',
+            err);
+        
         return res.status(500).json({
-            message: 'Erreur lors de l\'opération de sanitizer'
-        });
+            message: 'Erreur dans le sanitizer'
+          });
 
     }
 
@@ -55,6 +59,7 @@ const trim = (req, res, next) => {
 
     try {
         const theBody = req.body;
+
         for (let prop in theBody) {
 
             theBody[prop] = validator.trim(theBody[prop]);
@@ -65,9 +70,12 @@ const trim = (req, res, next) => {
 
     } catch (err) {
 
-        return res.status(500).json({
-            message: 'Erreur lors de l\'opération de sanitizer'
-        });
+        console.trace(
+            'Erreur dans la méthode trim du sanitizer :',
+            err);
+            return res.status(500).json({
+                message: 'Erreur dans le sanitizer'
+              });
 
     }
 }

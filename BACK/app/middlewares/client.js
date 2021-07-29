@@ -7,9 +7,9 @@ const consol = require('../services/colorConsole');
 
 /**
  * Auth Middleware
- * @module middleware/auth
+ * @module middleware/client
  */
- const auth = async (req, res, next) => {
+ const client = async (req, res, next) => {
 
     try {
   
@@ -78,13 +78,16 @@ const consol = require('../services/colorConsole');
       next();
   
     } catch (err) {
+      console.trace(
+        'Erreur dans la méthode Client du MW Client :',
+        err);
       return res.status(500).json({
         message: 'Erreur lors de l\'autentification'
       });
     }
   }
   
-  module.exports = auth;
+  module.exports = client;
   
   // pour tester dans postman, mettre en key dans le header : x-xsrf-token
   // et comme valeur, la valeur d'un token xsrf token obtenue via une connexion

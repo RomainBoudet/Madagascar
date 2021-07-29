@@ -143,22 +143,12 @@ const fakeData = async () => {
         // je fais tourner l'usine 500 fois pour espere avoir a peu prés tous les pays.... je les trie aprés via Set
 
         for (let index = 1; index <= 500; index++) {
-            const country = {
 
-                nom: faker.address.country(),
-
-            };
-            countriesNotUnique.push(country);
+            countriesNotUnique.push(faker.address.country());
         }
 
-        //je convertis le tableau d'objet en tableau de valeurs non unique
-        const countries = countriesNotUnique.map(function (x) {
-            return x.nom
-        });
-
-
         // je convertis le tableau de valeur non unique en tableau de valeur unique
-        const countriesUnique = [...new Set(countries)];
+        const countriesUnique = [...new Set(countriesNotUnique)];
         // Pour des valeur unique dans un array. Je ne veux pas deux fois le même pays. 
         //Le constructeur de Set prend un objet itérable, comme Array, et l'opérateur spread ... retransforme l'ensemble en Array
         console.log('countriesUnique ==>> ', countriesUnique);
@@ -449,7 +439,7 @@ const fakeData = async () => {
             description: "La commande a remis au transporteur. Vous avez dû recevoir un email contenant le numéro de tracking vous permettant de suivre l'acheminement de votre colis. Ce numéro de tracking est également accessible dans votre compte client dans la rubrique Mes commandes / Onglet Expéditions"
         }]
 
-        for (let index = 1; index <= volume*5; index++) {
+        for (let index = 1; index <= volume * 5; index++) {
             const statut_commande = {
 
 
@@ -478,7 +468,7 @@ const fakeData = async () => {
 
         const commandes = [];
 
-        for (let index = 1; index <= volume*5; index++) {
+        for (let index = 1; index <= volume * 5; index++) {
             const commande = {
                 idClient: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `COMMANDE/${9000+index} `, // une ref UNIQUE
@@ -500,7 +490,7 @@ const fakeData = async () => {
         console.time(`Génération de ${volume*5} paiements`);
         const paiements = [];
 
-        for (let index = 1; index <= volume*5; index++) {
+        for (let index = 1; index <= volume * 5; index++) {
             const paiement = {
 
                 ref: `PAIEMENT/${9000+index} `,
@@ -566,7 +556,7 @@ const fakeData = async () => {
         ];
 
 
-        for (let index = 1; index <= volume*5; index++) {
+        for (let index = 1; index <= volume * 5; index++) {
             const livraison = {
 
                 randomTransport: transporteurs[Math.floor(Math.random() * transporteurs.length)],
@@ -621,7 +611,7 @@ const fakeData = async () => {
 
 
 
-        for (let index = 1; index <= volume*5; index++) {
+        for (let index = 1; index <= volume * 5; index++) {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${9000+(Math.floor(Math.random() * (5000 - 1 + 1)) + 1)} `,
@@ -634,7 +624,7 @@ const fakeData = async () => {
             factures1.push(facture);
         }
 
-        for (let index = 1; index <= volume*5; index++) {
+        for (let index = 1; index <= volume * 5; index++) {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${9000+((Math.floor(Math.random() * (10000 - 5001 + 1)) + 5001))} `,
@@ -647,7 +637,7 @@ const fakeData = async () => {
             factures2.push(facture);
         }
 
-        for (let index = 1; index <= volume*5; index++) {
+        for (let index = 1; index <= volume * 5; index++) {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${9000+((Math.floor(Math.random() * (15000 - 10001 + 1)) + 10001))} `,
@@ -660,7 +650,7 @@ const fakeData = async () => {
             factures3.push(facture);
         }
 
-        for (let index = 1; index <= volume*5; index++) {
+        for (let index = 1; index <= volume * 5; index++) {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${9000+((Math.floor(Math.random() * (20000 - 15001 + 1)) + 15001))} `,
@@ -697,7 +687,7 @@ const fakeData = async () => {
             const reduction = {
                 idClient: index,
                 nom: soldes[Math.floor(Math.random() * soldes.length)],
-                pourcentage_reduction: (Math.random()* (0.99 - 0.01) + 0.01).toFixed(2), // random entre 0.99 et 0.1 pour des %
+                pourcentage_reduction: (Math.random() * (0.99 - 0.01) + 0.01).toFixed(2), // random entre 0.99 et 0.1 pour des %
                 actif: actifOuNon[Math.floor(Math.random() * actifOuNon.length)],
                 periode_reduction: `[${(faker.date.past()).toISOString().slice(0, 10)}, ${(faker.date.soon()).toISOString().slice(0, 10)}]`, // on récupére que la partie qui convient de la date pour satifaire le format DATERANGE de postgres
                 //periode_reduction: `[${(faker.date.past()).toISOString()}, ${(faker.date.soon()).toISOString()}]`,
@@ -1190,7 +1180,7 @@ const fakeData = async () => {
             consol.seed(`Import du livraison pour le client id ${livraison.indexClientCommande} et l'id commande ${livraison.indexClientCommande}`);
             await db.query(livraisonsInsert, [livraison.randomTransport.frais_expedition, livraison.randomTransport.nom_transporteur, livraison.randomTransport.description, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.randomTransport.estime_arrive, livraison.indexClientCommande, livraison.idCommande]);
         }
-       
+
 
         consol.seed(`Fin de l'import de ${livraisons.length} livraisons`);
         console.timeEnd(`Import de ${livraisons.length} livraisons`);
@@ -1260,7 +1250,7 @@ const fakeData = async () => {
         console.timeEnd(`Import de ${products.length} stocks`);
 
 
-        
+
         //! CARACTERISTIQUE
 
 
@@ -1426,8 +1416,8 @@ const fakeData = async () => {
 
         consol.seed("Mise en place d'un admin dans la BDD");
         await db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE}', email='${process.env.EMAILTEST}', prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}' WHERE id = ${process.env.ID}; `);
-        await db.query(`INSERT INTO mada.admin_verif_telephone (verif_phone, id_client) VALUES ('true', ${process.env.ID});`);
-        await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('true', ${process.env.ID});`);
+        await db.query(`INSERT INTO mada.admin_verif_telephone (verif_phone, id_client) VALUES ('false', ${process.env.ID});`);
+        await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('false', ${process.env.ID});`);
         await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
         await db.query(`UPDATE mada.client_adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`)
 
@@ -1443,7 +1433,7 @@ const fakeData = async () => {
         console.trace(
             'Erreur dans la méthode fakeData de la fakeFabric :',
             error);
-        res.status(500).json(error.message);
+
 
     }
 };

@@ -124,7 +124,6 @@ const clientController = {
              * @function
              */
             const hashedPwd = await bcrypt.hash(password, 10)
-            console.log(password, 'est devenu', hashedPwd);
 
             /**
              * Un fichier json qui contient les informations de l'utilisateur préparé pour être inséré en BDD
@@ -139,7 +138,7 @@ const clientController = {
 
 
             /**
-             * On créer une nouvelle instance de User 
+             * On créer une nouvelle instance de client 
              * */
             const userNowInDb = new Client(newUser);
 
@@ -147,6 +146,8 @@ const clientController = {
              * On l'envoie en BDD pour être enregistré
              */
             await userNowInDb.save();
+
+
 
             console.log(`L'utilisateur ${newUser.prenom} ${newUser.nomFamille} est désormais enregistré dans la BDD`);
 
@@ -187,7 +188,6 @@ const clientController = {
 
             // on renvoie un message au FRONT !
 
-            console.log("userNowInDb =>", userNowInDb)
             response.status(200).json({
                 email: userNowInDb.email,
                 prenom: userNowInDb.prenom,
@@ -205,6 +205,9 @@ const clientController = {
     },
 
 
+
+
+   
 
 
 

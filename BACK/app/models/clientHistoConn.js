@@ -115,25 +115,48 @@ class ClientHistoConn {
 
 
     /**
-     * Méthode chargé d'aller insérer les informations relatives à un utilisateur passé en paramétre
+     * Méthode chargé d'aller passer a true la valeur de la connexion d'un utilisateur passé en paramétre
      * @param  connexionSucces - le succes ou non de connexion d'un client
      * @param  idClient - l'id du client lié au succes de connexion
      * @returns - les informations du client_historique_connexion demandées
      * @async - une méthode asynchrone
      */
-    async save() {
-        console.log(this);
+    static async true(idClient) {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.client_historique_connexion (connexion_succes, id_client) VALUES ($1, $2) RETURNING *;`,
-            [this.connexionSucces, this.idClient]
+            `INSERT INTO mada.client_historique_connexion (connexion_succes, id_client) VALUES ('true', $1) RETURNING *;`,
+            [idClient]
         );
 
         this.id = rows[0].id;
+        this.connexionSucces = rows[0].connexion_succes;
         this.connexionDate = rows[0].connexion_date;
         consol.model(
-            `le client id ${this.idClient} a effectué une connexion avec le status  ${this.connexionSucces} à la date du : ${this.connexionDate} !`
+            `le client id ${idClient} a effectué une connexion avec le status  ${this.connexionSucces} à la date du : ${this.connexionDate} !`
+        );
+    }
+
+    /**
+     * Méthode chargé d'aller passer a false la valeur de la connexion d'un utilisateur passé en paramétre
+     * @param  connexionSucces - le succes ou non de connexion d'un client
+     * @param  idClient - l'id du client lié au succes de connexion
+     * @returns - les informations du client_historique_connexion demandées
+     * @async - une méthode asynchrone
+     */
+    static  async false(idClient) {
+        const {
+            rows,
+        } = await db.query(
+            `INSERT INTO mada.client_historique_connexion (connexion_succes, id_client) VALUES ('false', $1) RETURNING *;`,
+            [idClient]
+        );
+
+        this.id = rows[0].id;
+        this.connexionSucces = rows[0].connexion_succes;
+        this.connexionDate = rows[0].connexion_date;
+        consol.model(
+            `le client id ${idClient} a effectué une connexion avec le status  ${this.connexionSucces} à la date du : ${this.connexionDate} !`
         );
     }
 

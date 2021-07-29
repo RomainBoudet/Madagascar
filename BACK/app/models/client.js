@@ -1,6 +1,7 @@
 const db = require('../database');
 const bcrypt = require('bcrypt');
 const consol = require('../services/colorConsole');
+const ClientHistoConn = require('../models/clientHistoConn');
 
 class Client {
 
@@ -142,9 +143,11 @@ class Client {
 
       if (await bcrypt.compare(password, rows[0].password)) {
         consol.model(`l'utilisateur avec l'email ${email} a été authentifié avec succés !`);
+        await ClientHistoConn.true(rows[0].id);
         return new Client(rows[0])
       } else {
         consol.model(`Echec. L'utilisateur avec l'email ${email} n'a pas été authentifié !`);
+        await ClientHistoConn.false(rows[0].id);
         return null;
       }
     }
@@ -178,6 +181,33 @@ class Client {
   }
 
 
+  /**
+   * Méthode chargé d'aller insérer les informations relatives à un admin passé en paramétre
+   * @param prenom - le prénom d'un admin
+   * @param nomFamille - le nom de famille d'un admin
+   * @param email  - l'email' d'un admin
+   * @param password - le password d'un admin
+   * @param idPrivilege - le privilege admin
+   * @returns - les informations du client demandées
+   * @async - une méthode asynchrone
+   */
+   async saveAdmin() {
+    const {
+      rows,
+    } = await db.query(
+      `INSERT INTO mada.client (prenom, nom_famille, email, password, id_privilege) VALUES ($1,$2,$3,$4,'2') RETURNING*;`,
+      [this.prenom, this.nomFamille, this.email, this.password]
+    );
+
+    this.id = rows[0].id;
+    this.idPrivilege = rows[0].id_privilege;
+    this.createdDate = rows[0].created_date;
+    consol.model(
+      `l' admin id ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été inséré à la date du ${this.createdDate} avec l'idPrivilege numéro ${this.idPrivilege}  !`
+    );
+  }
+
+
 
   /**
   * Méthode chargé d'aller mettre à jour les informations relatives à un client passé en paramétre
@@ -189,7 +219,6 @@ class Client {
   * @async - une méthode asynchrone
   */
   async update() {
-    console.log("this dans le model => ", this);
     const {
       rows,
     } = await db.query(
@@ -197,11 +226,42 @@ class Client {
       [this.prenom, this.nomFamille, this.email, this.password, this.id]
     );
 
+    this.idPrivilege = rows[0].id_privilege;
+    this.updatedDate = rows[0].updated_date;
+    
     consol.model(
-      `le client id : ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été mise à jour !`
+      `le client id : ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été mise à jour le ${this.updatedDate} !`
     );
     return new Client(rows[0]);
   }
+
+
+/**
+  * Méthode chargé d'aller mettre à jour les informations relatives à un client passé en paramétre
+  * @param id - l'identifiant d'un client
+  * @returns - les informations du client mis à jour
+  * @async - une méthode asynchrone
+  */
+ async updatePrivilege() {
+  const {
+    rows,
+  } = await db.query(
+    `UPDATE mada.client SET id_privilege = '2', updated_date = now() WHERE id = $1 RETURNING *;`,
+    [this.id]
+  );
+
+  this.idPrivilege = rows[0].id_privilege;
+  this.updatedDate = rows[0].updated_date;
+  this.prenom = rows[0].prenom;
+  this.nomFamille = rows[0].nom_famille;
+
+  consol.model(
+    `le client id : ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} et comme nouveau privilege numéro ${this.idPrivilege} a été mise à jour le ${this.updatedDate} !`
+  );
+  return new Client(rows[0]);
+}
+
+
 /**
   * Méthode chargé d'aller supprimer un client passé en paramétre
   * @param id - l'id d'un article

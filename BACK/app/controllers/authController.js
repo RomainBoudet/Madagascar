@@ -1,6 +1,8 @@
 const Client = require('../models/client');
 const crypto = require('crypto');
 const consol = require('../services/colorConsole');
+const AdminVerifPhone = require('../models/adminVerifPhone');
+const AdminVerifEmail = require('../models/adminVerifEmail');
 
 
 /**
@@ -29,7 +31,6 @@ const authController = {
 
             // On authentifie le user via son email et le password proposé
             const clientInDb = await Client.authenticate(email, password);
-            console.log("Les propriété du client demandé pour authentification : ", clientInDb);
             if (!clientInDb) {
                 return response.status(404).json("Erreur d'authentification : l'email ou le mot de passe est incorrect ");
             }
@@ -43,18 +44,14 @@ const authController = {
                 privilege: clientInDb.nom,
             };
 
-            console.log("request.session.user =>", request.session.user);
-
             //LocalStorage => sensible aux attaques XSS // faille Cross site Scripting ! injection du contenu dans une page web
             //Cookies => sensible aux attaques CSRF // Cross Site Request Forgery , faille qui consiste simplement à faire exécuter à une victime une requête HTTP à son insu
-
             //Envoie token dans le body => localstorage 
             //Envoie token identique en cookie => navigateur. Quand le front passe ces deux informations au server, les deux tokens doivent matcher.
 
 
             /* On créer le token CSRF qui partira avec le body */
             const xsrfToken = crypto.randomBytes(70).toString('hex');
-            console.log("xsrfToken =>", xsrfToken);
 
             // On créer le cookie contenant token CSRF. On comparera les deux au retour.
             //sameSite: strict  => Le cookie concerné par cette instruction ne sera envoyé que si la requête provient du même site web
@@ -77,6 +74,58 @@ const authController = {
              } 
 
 
+             // un petit rappel de passage ...
+
+             if (clientInDb.nom === 'Administrateur' || clientInDb.nom === 'Developpeur' )  {
+
+                const adminInDbPhone = await AdminVerifPhone.findByIdClient(clientInDb.id);
+                const adminInDbEmail = await AdminVerifEmail.findByIdClient(clientInDb.id);
+
+               
+                if (adminInDbPhone.verifPhone === false && adminInDbEmail.verifEmail === false) {
+
+                    response.status(200).json({
+                        xsrfToken: xsrfToken,
+                        id: clientInDb.id,
+                        prenom: clientInDb.prenom,
+                        nomFamille: clientInDb.nomFamille,
+                        email: clientInDb.emailAddress,
+                        privilege: clientInDb.nom,
+                        message: "Bonjour hÔ vénérable Administrateur ! Merci de faire vérifier votre email et numéro de téléphone à l'avenir 😉 "
+                    });
+
+                    return;
+
+                } else if (adminInDbPhone.verifPhone === false && adminInDbEmail.verifEmail === true) {
+
+                    response.status(200).json({
+                        xsrfToken: xsrfToken,
+                        id: clientInDb.id,
+                        prenom: clientInDb.prenom,
+                        nomFamille: clientInDb.nomFamille,
+                        email: clientInDb.emailAddress,
+                        privilege: clientInDb.nom,
+                        message: "Bonjour hÔ vénérable Administrateur ! Merci de faire vérifier votre numéro de téléphone à l'avenir 😉 "
+                    });
+
+                    return;
+
+                } else if (adminInDbPhone.verifPhone === true && adminInDbEmail.verifEmail === false) {
+
+                    response.status(200).json({
+                        xsrfToken: xsrfToken,
+                        id: clientInDb.id,
+                        prenom: clientInDb.prenom,
+                        nomFamille: clientInDb.nomFamille,
+                        email: clientInDb.emailAddress,
+                        privilege: clientInDb.nom,
+                        message: "Bonjour hÔ vénérable Administrateur ! Merci de faire vérifier votre email à l'avenir 😉 "
+                    });
+
+                    return;
+                }
+
+             }
 
             // On envoie une reponse JSON concernant les infos du user avec le token a comparé avec celui dans le cookie.
             response.status(200).json({
@@ -88,10 +137,8 @@ const authController = {
                 privilege: clientInDb.nom,
             });
 
+
             console.log(`L'utilisateur ${clientInDb.prenom} ${clientInDb.nomFamille} a bien été authentifié.`);
-
-
-
 
 
         } catch (error) {

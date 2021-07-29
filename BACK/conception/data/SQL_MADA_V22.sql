@@ -192,8 +192,8 @@ CREATE INDEX idx_client_id ON client(id);
 -- Table: admin_verif_email
 ------------------------------------------------------------
 CREATE TABLE admin_verif_email(
-	id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	verif_email           BOOL  NOT NULL DEFAULT 'false',
+	id                    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	verif_email           BOOLEAN  NOT NULL DEFAULT 'false',
 	date_verif_email      timestamptz NOT NULL DEFAULT now(),
 	id_client             INT UNIQUE NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
@@ -202,8 +202,8 @@ CREATE TABLE admin_verif_email(
 -- Table: admin_verif_telephone
 ------------------------------------------------------------
 CREATE TABLE admin_verif_telephone(
-	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	verif_phone             BOOL NOT NULL DEFAULT 'false',
+	id                      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	verif_phone             BOOLEAN NOT NULL DEFAULT 'false',
 	date_verif_phone        timestamptz NOT NULL DEFAULT now(),
 	id_client               INT UNIQUE NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );

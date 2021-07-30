@@ -2,6 +2,7 @@ const Client = require('../models/client');
 const Shop = require('../models/shop');
 const AdminVerifEmail = require('../models/adminVerifEmail');
 const AdminVerifPhone = require('../models/adminVerifPhone');
+const ClientHistoPass = require('../models/clientHistoPass');
 
 const crypto = require('crypto');
 const validator = require('validator');
@@ -233,7 +234,6 @@ const clientController = {
             //on vérifie si le user existe en BDD via à son ID
             const userIdinDb = await Client.findOne(req.params.id);
             // on extrait les infos du body //
-            console.log(userIdinDb);
             const {
                 password,
                 newPassword,
@@ -270,7 +270,6 @@ const clientController = {
                 );
             };
 
-            const userModifications = {};
             // on ne change que les paramètres envoyés
 
             if (prenom) {
@@ -316,9 +315,9 @@ const clientController = {
 
                 const hashedPwd = await bcrypt.hash(newPassword, 10);
                 userIdinDb.password = hashedPwd;
-
+                const oldPass = new ClientHistoPass(userIdinDb);
+                await oldPass.save();
                 message.password = 'le changement du mot de passe est demandé. Un nouveau mot de passe valide a bien été enregistré';
-                console.log(typeof newPassword, typeof password);
             }
             if (newPassword === password) {
                 console.log("Le nouveau mot de passe n'a pas grand chose de nouveau..");
@@ -329,8 +328,6 @@ const clientController = {
                 message.password = 'Votre ancien mot de passe est conservé';
             }
 
-            console.log("req.body ==>> ", req.body);
-            console.log("userIdinDb ==>> ", userIdinDb);
             const newUser = new Client(userIdinDb);
 
             await newUser.update();
@@ -464,7 +461,7 @@ const clientController = {
 
             const jwtContent = {
                 userId: `${userInDb.id}`,
-                jti: userInDb.id + "_" + crypto.randomBytes(5).toString('base64')
+                jti: userInDb.id + "_" + crypto.randomBytes(9).toString('base64')
 
             };
 
@@ -524,7 +521,7 @@ const clientController = {
 
 
 
-    verifyEmail: async (req, res, err) => { //! ne pas oublier de changer les vue EJS quand on passera au front !
+    verifyEmail: async (req, res, err) => {
         try {
 
             const {
@@ -548,11 +545,11 @@ const clientController = {
                 return decoded
             });
 
-            const shop = await Shop.findOne(process.env.IDSITE);
-
             if (userInDb.statut) {
                 console.log(`Le mail ${userInDb.email} à déja été authentifié avec succés !`);
-                return res.json({message:`Bonjour ${userInDb.prenom}, votre mail ${userInDb.email} a déja été authentifié avec succés ! Vous pouvez désormais fermer cette page.`})
+                return res.json({
+                    message: `Bonjour ${userInDb.prenom}, votre mail ${userInDb.email} a déja été authentifié avec succés ! Vous pouvez désormais fermer cette page.`
+                })
                 /* return res.status(200).render('verifyEmail', {
                     userInDb,
                     shop
@@ -560,19 +557,22 @@ const clientController = {
 
             } else if (!decodedToken.userId === userInDb.id && decodedToken.iss == `${userInDb.prenom} ${userInDb.nom}`) {
                 console.log(`une érreur est apparu =>`, err)
-                return res.json({message:`Bonjour ${userInDb.prenom}, votre mail ${userInDb.email} n'a pas put être identifié suite a une érreur ! Vous pouvez désormais fermer cette page.`})
+                return res.json({
+                    message: `Bonjour ${userInDb.prenom}, votre mail ${userInDb.email} n'a pas put être identifié suite a une érreur ! Vous pouvez désormais fermer cette page.`
+                })
                 /* return res.status(401).render('verifyEmailFail', {
                     userInDb,
                     shop
                 }); */
 
             } else {
-                console.log(shop);
                 await AdminVerifEmail.true(userInDb.id);
 
                 console.log(`Le mail ${userInDb.email} à été authentifié avec succés !`);
                 //res.status(200).render('verifyEmailWin', {userInDb, shop})
-                return res.json({message: `Bonjour ${userInDb.prenom}, votre mail ${userInDb.email} a été authentifié avec succés ! Vous pouvez désormais fermer cette page.`})
+                return res.json({
+                    message: `Bonjour ${userInDb.prenom}, votre mail ${userInDb.email} a été authentifié avec succés ! Vous pouvez désormais fermer cette page.`
+                })
 
             }
 
@@ -585,7 +585,226 @@ const clientController = {
 
     },
 
-    
+
+
+
+    new_pwd: async (req, res) => {
+
+        try {
+            const {
+                email
+            } = req.body;
+
+            if (!validator.isEmail(email)) {
+                console.log("le format du mot de passe ne convient pas au validator")
+                return res.status(403).json(
+                    'le format de l\'email est incorrect'
+                );
+            }
+
+            const userInDb = await Client.findByEmail(email);
+
+            if (typeof userInDb.id === undefined) {
+                console.log(`l'email ${email} n'existe pas en BDD !`);
+                res.status(404).json("cet email n'existe pas, assurez vous de l'avoir écris correctement.");
+            }
+
+            // Je construit un secret dynamique de déchiffrage du token !  => Pour rendre le lien unique est invalide a la seconde où l'utilisateur rentre un nouveau pssword, je prend son hash existant que je concaténe a sa date d'inscription pour en faire la clé secrete du token !
+            // Ainsi lorsque l'utilisateur met à jour son mot de passe, nous remplacerons l'ancien hachage par le nouveau, et personne ne pourra plus accéder à la clé secrète qui aura disparu !!
+            //Avec la combinaison du hachage du mot de passe de l'utilisateur et de la createdAtdate, le JWT devient un jeton à usage unique, car une fois que l'utilisateur a changé son mot de passe, les appels successifs à cette route généreront un nouveau hachage de mot de passe, et viendront ainsi invalider la clé secrète qui référence le mot de passe .
+
+            // mais pourquoi doubler avec sa date d'inscription => cela permet de garantir que si le mot de passe de l'utilisateur était la cible d'une attaque précédente (sur un autre site web ou l'utilisateur a mis le même password), la date de création de l'utilisateur rendra la clé secrète unique à partir du mot de passe potentiellement divulgué. Même si l'attaquant a craké le code de notre utilisateur, comment pourra-t'il savoir la date, jusqu'a la seconde précise, de création du compte de notre l'utilisateur  ? Bon chance.... 😝 !! 
+
+            const secret = `${userInDb.password}_${userInDb.createdDate}`
+            console.log("secret => ", secret);
+            // on génére un new token aprés les vérif de base :
+
+            const jwtOptions = {
+                issuer: `${userInDb.prenom} ${userInDb.nomFamille}`,
+                audience: 'envoiresetpwd',
+                algorithm: 'HS512',
+                expiresIn: '1h' // si l'utilisateur ne valide pas un new password dans l'heure, le token sera invalide.
+            };
+
+            const jwtContent = {
+                userId: `${userInDb.id}`,
+                jti: userInDb.id + "_" + crypto.randomBytes(9).toString('base64'),
+
+            };
+
+            const newToken = await jsonwebtoken.sign(jwtContent, secret, jwtOptions);
+            console.log("newToken =>", newToken);
+
+
+            async function main() {
+
+
+                const host = req.get('host');
+
+                const link = `https://${host}/v1/user/reset_pwd?userId=${userInDb.id}&token=${newToken}`;
+                //console.log("ici link vaut => ", link);
+                //console.log("newToken => ", newToken);
+
+                const transporter = nodemailer.createTransport({
+                    host: process.env.HOST,
+                    port: 465,
+                    secure: true,
+                    auth: {
+                        user: process.env.EMAIL,
+                        pass: process.env.PASSWORD_EMAIL,
+                    },
+                });
+
+                const shop = await Shop.findOne(process.env.IDSITE);
+
+
+                const info = await transporter.sendMail({
+                    from: process.env.MAIL,
+                    to: `${userInDb.email}`,
+                    subject: `${shop.nom} : Changement de votre mot de passe`,
+                    text: `Bonjour ${userInDb.prenom} ${userInDb.nomFamille}, merci de cliquer sur le lien pour vérifier votre email auprés du site ${shop.nom}. ${link}`,
+                    html: `<h3>Bonjour <span class="username"> ${userInDb.prenom} ${userInDb.nomFamille}, </span> </h3> <br>
+                  <p>Vous souhaitez réinitialiser votre mot de passe du site ${shop.nom}.</p> <br> 
+                  <p>Merci de cliquer sur le lien pour changer votre mot de passe. </p> <br>
+                  <a href="${link}">cliquez ici pour changer votre mot de passe. </a><br>`,
+                });
+
+                console.log("Message sent: %s", info.messageId);
+                // le message envoyé ressemble a ça : <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+                console.log(`Un email de confirmation à bien été envoyé a ${userInDb.prenom} ${userInDb.nomFamille} via l'adresse email: ${userInDb} : ${info.response}`);
+                // Email bien envoyé : 250 2.0.0 OK  1615639005 y16sm12341865wrh.3 - gsmtp => si tout va bien !
+
+            }
+            main().catch(console.error);
+
+
+            res.json("Merci de consulter vos emails et de cliquer sur le lien envoyé pour renouveller votre mot de passe.");
+
+        } catch (error) {
+
+            console.trace(
+                'Erreur dans la méthode resendEmailLink du clientController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+    reset_pwd: async (req, res, err) => {
+        try {
+
+            // je récupére des infos de la query (userId et token) et du body (newPassword, password)
+            const {
+                userId,
+                token
+            } = req.query;
+
+
+            const {
+                passwordConfirm,
+                newPassword,
+            } = req.body;
+
+            // ETAPE 1 avant de d'insérer quoi que ce soit en BDD ou de verifier que les passwords soient identiques, je m'assure de l'identité de l'utilisateur en déchiffrant le token avec la clé dynamique crée dans la méthode new_pwd. 
+
+            const userInDb = await Client.findOne(userId);
+
+            // premiere vérif, je vérifis le pseudo dans le body et l'id dans la query, si une des deux n'existe pas ou pas égale au même utilisateur.. au revoir !
+            if (typeof userInDb.id === 'undefined') {
+                console.log("Bonjour, c'est gentil d'être passé mais votre identité n'a pas été reconnu 🤨")
+                res.json("Bonjour, c'est gentil d'être passé mais votre identité n'a pas été reconnu 🤨 ")
+            }
+
+            // Je reconstitue ma clé secrete pour décoder le token.
+            const secret = `${userInDb.password}_${userInDb.createdDate}`
+
+
+            const decodedToken = await jsonwebtoken.verify(token, secret, {
+                audience: 'envoiresetpwd',
+                issuer: `${userInDb.prenom} ${userInDb.nomFamille}`
+            }, function (err, decoded) {
+
+                if (err) {
+                    console.log("La validation de l'identité a échoué : le token émis ne correspond pas au token déchiffré !")
+                    res.json("La validation de votre identité pour renouveller votre mot de passe a échoué.", err)
+                }
+                return decoded
+            });
+
+            //ETAPE 2 => check vérif password, hash, mise en BDD et renvoie message + info au Front !
+
+            //on check si le password et la vérif sont bien identiques
+            if (newPassword !== passwordConfirm) {
+                console.log("confirmation du nouveau mot de passe incorect")
+                res.statut(400).json('La confirmation du nouveau mot de passe est incorrecte');
+            }
+
+            // On hash le mot de passe avant la mise en BDD :
+            const password = await bcrypt.hash(newPassword, 10);
+
+            const newUser = {
+                id: userInDb.id,
+                password,
+            };
+
+            const userUpdatePasssword = new Client(newUser);
+            await userUpdatePasssword.updatePwd();
+            const oldPass = new ClientHistoPass(userInDb);
+            await oldPass.save();
+
+            console.log(`Le password de ${userInDb.prenom} ${userInDb.nomFamille}  à été modifié avec succés !`);
+
+            res.status(200).json({
+                message: `Bonjour ${userInDb.prenom} ${userInDb.nomFamille}, votre mot de passe a été modifié avec succés ! Un email de confirmation vous a été envoyé.`
+            })
+            // ETAPE 3 :
+            // On renvoit un petit mail a l'utilisateur pour lui confirmer le changement de mot de passe ! Histoire de bien flooder sa boite mail ! ça fait plaisir... 😁
+
+            async function main() {
+
+
+                const transporter = nodemailer.createTransport({
+                    host: process.env.HOST,
+                    port: 465,
+                    secure: true,
+                    auth: {
+                        user: process.env.EMAIL,
+                        pass: process.env.PASSWORD_EMAIL,
+                    },
+                });
+
+                const shop = await Shop.findOne(process.env.IDSITE);
+
+                const info = await transporter.sendMail({
+                    from: process.env.MAIL,
+                    to: userInDb.email,
+                    subject: `Vos modification d'information sur le site ${shop.nom} ont bien été pris en compte ! ✔`, 
+                    text: `Bonjour ${userInDb.prenom} ${userInDb.nomFamille}, Votre changement de mot de passe ont bien été pris en compte sur le site ${shop.nom} !`, 
+                    html: `<h3>Bonjour <span class="username"> ${userInDb.prenom} ${userInDb.nomFamille}, </span> </h3> <br>
+                    <p>Vous vous êtes inscrit sur le site ${shop.nom}.</p>
+                    <p> Votre changement de mot de passe à bien été pris en compte ! ✔️ </p> <br>
+                    <p>En vous remerciant et en espérant vous revoir bientôt sur ${shop.nom} ! 🤗</p>
+                    <p> Bonne journée.</p> <br>
+                    <a href="http://localhost:8080"> ${shop.nom} </a><br>`, 
+                });
+
+                console.log("Message sent: %s", info.messageId);
+                // le message envoyé ressemble a ça : <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+                console.log(`Email bien envoyé a ${userInDb.prenom} ${userInDb.nomFamille} via l'adresse email: ${userInDb.email} : ${info.response}`);
+                // Email bien envoyé : 250 2.0.0 OK  1615639005 y16sm12341865wrh.3 - gsmtp => si tout va bien !
+
+            }
+            main().catch("Erreur lors de l'envois du mail dans la méthode updateUser", console.error);
+
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode reset_pwd du clientController :',
+                error);
+            res.status(500).json(error.message);
+        }
+
+    },
+
 
 
 

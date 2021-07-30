@@ -45,6 +45,7 @@ const userSigninSchema = require('./schemas/userSigninSchema');
 const userUpdateSchema = require('./schemas/userUpdateSchema');
 const verifyEmailSchema = require('./schemas/verifyEmailSchema');
 const resendEmailLinkSchema =require('./schemas/resendEmailLinkSchema');
+const resetPwdSchema = require('./schemas/resetPwdSchema');
 
 
 
@@ -216,7 +217,7 @@ router.post('/resendEmailLink', validateBody(verifyEmailSchema), clientControlle
  * @param {evenement.Model} evenement.body.required
  * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
  */
-router.post('/verifyEmail', validateQuery(resendEmailLinkSchema), clientController.verifyEmail);
+router.post('/verifyEmail', clean, validateQuery(resendEmailLinkSchema), clientController.verifyEmail);
 
 
 
@@ -228,7 +229,7 @@ router.post('/verifyEmail', validateQuery(resendEmailLinkSchema), clientControll
  * @param {evenement.Model} evenement.body.required
  * @returns {JSON} 200 - Un email a été délivré
  */
-// router.post('/user/new_pwd', validateBody(verifyEmailSchema), clientController.new_pwd);
+router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientController.new_pwd);
  // ETAPE 2 => envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
  
  /**
@@ -239,7 +240,7 @@ router.post('/verifyEmail', validateQuery(resendEmailLinkSchema), clientControll
   * @param {evenement.Model} evenement.body.required
   * @returns {JSON} 200 - Un nouveau mot de passe est entré en BDD
   */
- //router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailLinkSchema), clientController.reset_pwd);
+ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailLinkSchema), clientController.reset_pwd);
 
 //! Des routes de test pour mes models ...
 

@@ -305,6 +305,20 @@ class Client {
     return new Client(rows[0]);
   }
 
+  /**
+  * Méthode chargé d'aller mettre a jour un mot de passe passé en paramétre
+  * @param id - l'id d'un client
+  * @param password - le password d'un client
+  * @async - une méthode asynchrone
+  */
+  async updatePwd() {
+    const {
+      rows,
+    } = await db.query(`UPDATE mada.client SET password= $1 WHERE id = $2;`, [this.password, this.id]);
+
+    console.log(`Le password du client id ${this.id} a été mise à jour avec succés !`);
+  }
+
 
 }
 

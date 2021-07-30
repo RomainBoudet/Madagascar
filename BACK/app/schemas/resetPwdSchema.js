@@ -15,22 +15,12 @@ const Joi = require('joi');
  */
 
  const resetPwdSchema = Joi.object({
-    pseudo: Joi.string()
-    .min(3).max(40)
-    .pattern(/^\S{3,}$/)
-    .alphanum()
-    .required()
-    .messages({
-    'string.empty': `Le champs de votre pseudo ne peut être vide !`,
-     'string.min': `Votre pseudo doit doit avoir un minimum de {#limit} caractéres!`,
-     'string.max': ` Votre pseudo doit doit avoir un maximum de {#limit} caractéres !`,
-     'string.pattern.base':' Le format de votre pseudo est incorrect : il doit contenir au minimum 3 caractéres et ne pas être composé d\'espaces !',
-     'string.alphanum': 'Votre pseudo ne doit contenir que des caractéres alpha-numériques',
-   }),
    newPassword: Joi.string()
      .pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
      .required()
+     .max(200)
      .messages({
+      'string.max': `Votre mot de passe doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Le champs de votre password ne peut être vide !`,
       'string.pattern.base':'Le format de votre mot de passe est incorrect : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & * ',
      }),

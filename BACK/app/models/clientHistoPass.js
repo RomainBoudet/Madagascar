@@ -117,18 +117,17 @@ class ClientHistoPass {
      * @async - une méthode asynchrone
      */
     async save() {
-        console.log(this);
         const {
             rows,
         } = await db.query(
             `INSERT INTO mada.client_historique_password (password_hash, id_client) VALUES ($1, $2) RETURNING *;`,
-            [this.passwordHash, this.idClient]
+            [this.password, this.id]
         );
 
         this.id = rows[0].id;
         this.createdDate = rows[0].created_date;
         consol.model(
-            `l'ancien password hash id ${this.id} avec comme hash ${this.passwordHash} a été inséré à la date du ${this.createdDate} !`
+            `l'ancien password hash id ${this.id} avec comme hash ${this.password} a été inséré à la date du ${this.createdDate} !`
         );
     }
 

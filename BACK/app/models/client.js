@@ -61,6 +61,34 @@ class Client {
     return rows.map((client) => new Client(client));
   }
 
+  /**
+   * Méthode chargé d'aller chercher les informations relatives à un client passé en paramétre
+   * @param id - un id d'un client
+   * @returns - les informations du client demandées
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+   static async findUnique(id) {
+
+
+    const {
+      rows,
+    } = await db.query(
+       'SELECT * FROM mada.client WHERE client.id = $1;',
+      [id]
+    );
+
+    if (!rows[0]) {
+      throw new Error("Aucun client avec cet id");
+    }
+
+    consol.model(
+      `le client id : ${id} a été demandé en BDD !`
+    );
+
+    return new Client(rows[0]);
+  }
+
 
   /**
    * Méthode chargé d'aller chercher les informations relatives à un client passé en paramétre
@@ -75,7 +103,7 @@ class Client {
     const {
       rows,
     } = await db.query(
-      'SELECT * FROM mada.client WHERE client.id = $1;',
+       'SELECT client.*, admin_verif_email.verif_email as statut FROM mada.client JOIN mada.admin_verif_email ON admin_verif_email.id_client=client.id WHERE client.id = $1;',
       [id]
     );
 
@@ -102,7 +130,8 @@ class Client {
     const {
       rows,
     } = await db.query(
-      `SELECT * FROM mada.client WHERE client.email = $1;;`,
+      `SELECT client.*, admin_verif_email.verif_email as statut FROM mada.client JOIN mada.admin_verif_email 
+      ON admin_verif_email.id_client=client.id WHERE client.email = $1;`,
       [email]
     );
 
@@ -136,11 +165,6 @@ class Client {
       consol.model("Aucun client avec cet email en BDD");
       return null
     } else {
-      consol.model(
-        `Une authentification à été demandé pour le client : ${email} !`
-      );
-      consol.model(`Le password de ${email} en BDD est ${rows[0].password} et celui proposé est ${password}.`);
-
       if (await bcrypt.compare(password, rows[0].password)) {
         consol.model(`l'utilisateur avec l'email ${email} a été authentifié avec succés !`);
         await ClientHistoConn.true(rows[0].id);
@@ -178,6 +202,7 @@ class Client {
     consol.model(
       `le client id ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été inséré à la date du ${this.createdDate} !`
     );
+    
   }
 
 
@@ -205,6 +230,8 @@ class Client {
     consol.model(
       `l' admin id ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été inséré à la date du ${this.createdDate} avec l'idPrivilege numéro ${this.idPrivilege}  !`
     );
+    return new Client(rows[0]);
+
   }
 
 

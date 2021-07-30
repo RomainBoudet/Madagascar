@@ -113,7 +113,7 @@ class AdminVerifPhone {
 
     /**
      * Méthode chargé d'aller insérer les informations relatives à un utilisateur passé en paramétre
-     * @param verifEmail - le staut 'true' ou 'false' d'un email d'un client ayant le privilege Admin. Ici TRUE en dur..
+     * @param verifEmail - le statut 'true' d'un email d'un client ayant le privilege Admin.
      * @param idClient - l'id d'un client ayanty le privilege Admin
      * @returns - les informations du adminVerifPhone demandées
      * @async - une méthode asynchrone
@@ -123,7 +123,7 @@ class AdminVerifPhone {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.admin_verif_telephone (verif_phone, id_client) VALUES (TRUE, $1) RETURNING *;`,
+            `INSERT INTO mada.admin_verif_telephone (verif_phone, date_verif_phone, id_client) VALUES ('true', now(), $1) RETURNING *;`,
             [this.idClient]
         );
 
@@ -132,6 +132,28 @@ class AdminVerifPhone {
         this.createdDate = rows[0].date_verif_phone;
         consol.model(
             `le adminVerifPhone id ${this.id} avec comme statut ${this.verifPhone} a été inséré à la date du ${this.createdDate} !`
+        );
+    }
+    /**
+     * Méthode chargé d'aller insérer les informations relatives à un utilisateur passé en paramétre
+     * @param verifEmail - le statut 'false' d'un email d'un client ayant le privilege Admin. 
+     * @param idClient - l'id d'un client ayanty le privilege Admin
+     * @returns - les informations du adminVerifPhone demandées
+     * @async - une méthode asynchrone
+     */
+     static async false(id) {
+
+        const {
+            rows,
+        } = await db.query(
+            `INSERT INTO mada.admin_verif_telephone (verif_phone, id_client) VALUES ('false', $1) RETURNING *;`,
+            [id]
+        );
+
+        this.verifPhone = rows[0].verif_phone;
+        this.createdDate = rows[0].date_verif_phone;
+        consol.model(
+            `le adminVerifPhone id ${id} avec comme statut ${this.verifPhone} a été inséré à la date du ${this.createdDate} !`
         );
     }
 

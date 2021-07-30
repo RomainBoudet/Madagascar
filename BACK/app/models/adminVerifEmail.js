@@ -118,20 +118,44 @@ class AdminVerifEmail {
      * @returns - les informations du adminVerifEmail demandées
      * @async - une méthode asynchrone
      */
-    async true() {
+    static async true(id) {
 
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES (TRUE, $1) RETURNING *;`,
-            [this.idClient]
+            `UPDATE mada.admin_verif_email SET verif_email = 'true', date_verif_email = now() WHERE id_client = $1 RETURNING *;`,
+            [id]
         );
 
-        this.id = rows[0].id;
+     
         this.verifEmail = rows[0].verif_email;
         this.createdDate = rows[0].date_verif_email;
         consol.model(
-            `le adminVerifEmail id ${this.id} avec comme statut ${this.verifEmail} a été inséré à la date du ${this.createdDate} !`
+            `le adminVerifEmail id ${id} avec comme statut ${this.verifEmail} a été mis a jour à la date du ${this.createdDate} !`
+        );
+    }
+
+     /**
+     * Méthode chargé d'aller insérer les informations relatives à un utilisateur passé en paramétre
+     * @param verifEmail - le statut 'false' d'un email d'un client ayant le privilege Admin.
+     * @param idClient - l'id d'un client ayanty le privilege Admin
+     * @returns - les informations du adminVerifEmail demandées
+     * @async - une méthode asynchrone
+     */
+      static async false(id) {
+
+        const {
+            rows,
+        } = await db.query(
+            `INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('false', $1) RETURNING *;`,
+            [id]
+        );
+
+     
+        this.verifEmail = rows[0].verif_email;
+        this.createdDate = rows[0].date_verif_email;
+        consol.model(
+            `le adminVerifEmail id ${id} avec comme statut ${this.verifEmail} a été inséré à la date du ${this.createdDate} !`
         );
     }
 

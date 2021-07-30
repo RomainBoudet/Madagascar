@@ -39,9 +39,12 @@ const {
   validateQuery,
   validateBody
 } = require('./services/validator');
+//Schema validation Joi
 const userLoginSchema = require('./schemas/userLoginSchema');
 const userSigninSchema = require('./schemas/userSigninSchema');
 const userUpdateSchema = require('./schemas/userUpdateSchema');
+const verifyEmailSchema = require('./schemas/verifyEmailSchema');
+const resendEmailLinkSchema =require('./schemas/resendEmailLinkSchema');
 
 
 
@@ -111,6 +114,14 @@ router.get('/', mainController.init);
 
 router.post('/connexion', apiLimiter, trim, validateBody(userLoginSchema), authController.login);
 
+/**
+ * Permet la déconnexion d'un utilisateur au site. Nécéssite un token dans le cookie le xsrfToken du local storage
+ * @route GET /v1/deconnexion
+ * @group deconnexion - Pour se déconnecter
+ * @summary déconnecte un utilisateur - on reset les infos du user en session
+ * @returns {JSON} 200 - Un utilisateur a bien été déconnecté
+ */
+ router.get('/deconnexion', client, authController.deconnexion);
 
 /**
  * Une inscription
@@ -142,7 +153,7 @@ router.post('/inscription', trim, validateBody(userSigninSchema), clientControll
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
  */
-router.post('/signin', dev, trim, validateBody(userSigninSchema), adminController.signInAdmin);
+router.post('/signin', trim, validateBody(userSigninSchema), adminController.signInAdmin);
 
 
 /**
@@ -182,6 +193,54 @@ router.patch('/updateprivilege/:id(\\d+)', dev,clean, adminController.updatePriv
  */
  router.patch('/user/:id(\\d+)', trim, validateBody(userUpdateSchema), clientController.updateClient);
 
+
+ //Routes pour procédure de vérification de mail 
+//ETAPE 1 => Route pour prendre un email dans le body, verifis ce qu'il faut, envoi un mail avec URL sécurisé incorporé + tolken, qui renvoit sur la route verifyEmail
+/**
+ * Envoie un email pour que l'admin qui le souhaite puisse vérifier son email.
+ * @route POST /resendEmailLink'
+ * @group Vérification du mail
+ * @summary Prend un mail en entrée et renvoie un email dessus si celui çi est présent en BDD.  Cliquer sur le lien dans l'email l'enmenera sur la route /verifyemail  
+ * @param {evenement.Model} evenement.body.required
+ * @returns {JSON} 200 - Un email a été délivré
+ */
+router.post('/resendEmailLink', validateBody(verifyEmailSchema), clientController.resendEmailLink);
+
+
+//ETAPE 2 => Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
+/**
+ * Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
+ * @route GET /verifyEmail
+ * @group Vérification du mail
+ * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD. Front géré par le server.
+ * @param {evenement.Model} evenement.body.required
+ * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
+ */
+router.post('/verifyEmail', validateQuery(resendEmailLinkSchema), clientController.verifyEmail);
+
+
+
+/**
+ * Envoie un email si l'utilisateur ne se souvient plus de son mot de passe, pour mettre en place un nouveau mot de passe de maniére sécurisé.
+ * @route POST /user/new_pwd
+ * @group Changement du mot de passe
+ * @summary Prend un mail en entrée et renvoie un email dessus si celui çi est présent en BDD.  Cliquer sur le lien dans l'email l'enmenera sur la route /user/reset_pwd ou l'attent un formulaire
+ * @param {evenement.Model} evenement.body.required
+ * @returns {JSON} 200 - Un email a été délivré
+ */
+// router.post('/user/new_pwd', validateBody(verifyEmailSchema), clientController.new_pwd);
+ // ETAPE 2 => envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
+ 
+ /**
+ *  envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
+ *  @route POST /user/reset_pwd
+  * @group Changement du mot de passe
+  * @summary  Reset du mot de passe. prend en entrée, newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
+  * @param {evenement.Model} evenement.body.required
+  * @returns {JSON} 200 - Un nouveau mot de passe est entré en BDD
+  */
+ //router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailLinkSchema), clientController.reset_pwd);
+
 //! Des routes de test pour mes models ...
 
 router.get('/all', clientController.getAll);
@@ -190,7 +249,7 @@ router.get('/all', clientController.getAll);
 
 //router.get('/getone/:id(\\d+)', produitController.getOneSousCategorie);
 
-router.get('/getone/:id(\\d+)', produitController.getOneCategorieImage);
+router.get('/getone/:id(\\d+)', produitController.getOne);
 
 router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getCategorieImageByIdCategorie);
 
@@ -216,7 +275,6 @@ router.patch('/update/:id(\\d+)', produitController.update);
 
 
 
-router.patch('/updateClient/:id(\\d+)', clientController.updateClient);
 
 //router.patch('/updatePanier/:id(\\d+)', testController.updatePanier);
 

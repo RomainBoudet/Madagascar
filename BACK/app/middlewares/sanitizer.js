@@ -33,7 +33,6 @@ const clean = (req, res, next) => {
             theBody[prop] = validator.blacklist(theBody[prop], ['=']);
             theBody[prop] = validator.blacklist(theBody[prop], ['+']);
             theBody[prop] = validator.blacklist(theBody[prop], ['*']);
-            theBody[prop] = validator.blacklist(theBody[prop], ['@']);
             theBody[prop] = validator.blacklist(theBody[prop], ['$']);
             theBody[prop] = validator.blacklist(theBody[prop], ['%']);
             theBody[prop] = validator.blacklist(theBody[prop], ['_']);
@@ -82,7 +81,7 @@ const trim = (req, res, next) => {
         }
         next();
 
-        /* @#$%^&* */
+        /* le password doit contenir => @#$%^&* */
 
     } catch (err) {
 

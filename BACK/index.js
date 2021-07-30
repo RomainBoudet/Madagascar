@@ -24,8 +24,6 @@ const uuid = require(`uuid`)
 //passage de notre api en http2
 const spdy = require('spdy');
 
-//la version native de node, a testé si plus de temps => https://nodejs.org/api/http2.html#http2_server_side_example
-//const http2 = require('http2');
 
 //connect-redis permet d'utiliser Redis avec express-session pour stocker les cookies de la session sur Redis et non en mémoire (pas bien en prod!)
 let RedisStore = require('connect-redis')(session);
@@ -69,13 +67,13 @@ app.use(express.urlencoded({
     extended: true
 }));
 
-// Seulement si je renvoie des Vue ejs.. 
-// je récupére un uuid que je vais passer a l'objet locals pour le récupérer dans ma vue, et au passage le faire changer dans mas CSP égalemnt de maniére dynamique
+
+// je récupére un uuid que je vais passer a l'objet locals pour le récupérer dans ma vue, et au passage le faire changer dans ma CSP égalemnt de maniére dynamique
 // Même si uuid n'a pas de dépendance...a voir si j'ai intéret a le remplacer par crypto.randomBytes() ... ?
-/* app.use((req, res, next) => {
+ app.use((req, res, next) => {
     res.locals.nonce = uuid.v4()
     next()
-}) */
+}) 
 
 
 //helmet : https://expressjs.com/fr/advanced/best-practice-security.html 

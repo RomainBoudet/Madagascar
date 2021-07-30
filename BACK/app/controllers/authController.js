@@ -69,19 +69,21 @@ const authController = {
              * il peut ainsi quitter son navigateur et revenir sur la page, il devrait rester connecté
              * on indique en date d'expiration la date courante + une heure (en millisecondes)
              */
-             if (request.body.remember) {
-                 request.session.cookie.expires = new Date(Date.now() + 7 * 24 * 3600000); //je rajoute 7 jours de validité.
-             } 
+            if (request.body.remember) {
+                request.session.cookie.expires = new Date(Date.now() + 7 * 24 * 3600000); //je rajoute 7 jours de validité.
+            }
 
+            
+            // un petit rappel de passage ...
 
-             // un petit rappel de passage ...
-
-             if (clientInDb.nom === 'Administrateur' || clientInDb.nom === 'Developpeur' )  {
+            if (clientInDb.nom === 'Administrateur' || clientInDb.nom === 'Developpeur') {
 
                 const adminInDbPhone = await AdminVerifPhone.findByIdClient(clientInDb.id);
                 const adminInDbEmail = await AdminVerifEmail.findByIdClient(clientInDb.id);
 
-               
+
+
+
                 if (adminInDbPhone.verifPhone === false && adminInDbEmail.verifEmail === false) {
 
                     response.status(200).json({
@@ -125,7 +127,7 @@ const authController = {
                     return;
                 }
 
-             }
+            }
 
             // On envoie une reponse JSON concernant les infos du user avec le token a comparé avec celui dans le cookie.
             response.status(200).json({

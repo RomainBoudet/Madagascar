@@ -109,7 +109,11 @@ const adminController = {
             /**
              * On l'envoie en BDD pour être enregistré EN TANT QU'ADMIN
              */
-            await userNowInDb.saveAdmin();
+          
+            const user = await userNowInDb.saveAdmin();
+            console.log(user.id);
+            await AdminVerifEmail.false(user.id);
+            await AdminVerifPhone.false(user.id);
 
 
 
@@ -144,7 +148,7 @@ const adminController = {
 
                 console.log("Message sent: %s", info.messageId);
                 // le message envoyé ressemble a ça : <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-                console.log(`Un email de vérification bien envoyé a ${userNowInDb.prenom} ${userNowInDb.nomFamille} via l'adresse email: ${userNowInDb.email} : ${info.response}`);
+                console.log(`Un email de bienvenue à bien été envoyé a ${userNowInDb.prenom} ${userNowInDb.nomFamille} via l'adresse email: ${userNowInDb.email} : ${info.response}`);
                 // Email bien envoyé : 250 2.0.0 OK  1615639005 y16sm12341865wrh.3 - gsmtp => si tout va bien !
 
             }

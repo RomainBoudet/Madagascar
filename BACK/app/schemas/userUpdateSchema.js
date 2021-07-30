@@ -23,7 +23,7 @@ const userUpdateSchema = Joi.object({
     .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
     .messages({
       'string.min': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
-      'string.max': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+      'string.max': `Votre prenom doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.pattern.base': 'Le format de votre prénom est incorrect : il doit contenir au minimum 2 caractéres et ne pas être composé d\'espaces !',
       'string.alphanum': 'Votre prénom ne doit contenir que des caractéres alpha-numériques',
     }),
@@ -32,7 +32,7 @@ const userUpdateSchema = Joi.object({
     .max(200)
     .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
     .messages({
-      'string.max': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+      'string.max': `Votre nom de famille doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.min': `Votre nom doit avoir une longeur minimum de {#limit} caractéres !`,
       'string.pattern.base': 'Le format de votre nom est incorrect : il doit contenir au minimum 2 caractéres et ne pas être composé d\'espaces ! ',
       'string.alphanum': 'Votre nom de famille ne doit contenir que des caractéres alpha-numériques',
@@ -41,7 +41,7 @@ const userUpdateSchema = Joi.object({
     .max(200)
     .pattern(new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
     .messages({
-      'string.max': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+      'string.max': `Votre email doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.pattern.base': 'Le format de votre email est incorrect',
     }),
   password: Joi.string()
@@ -49,19 +49,22 @@ const userUpdateSchema = Joi.object({
     .pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
     .required()
     .messages({
-      'string.max': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+      'string.max': `Votre mot de passe doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Votre mot de passe est nécéssaire pour une mise a jour de votre profil`,
       'string.pattern.base': 'Le format de votre mot de passe est incorrect : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & * ',
     }),
+  
   newPassword: Joi.string()
     .max(200)
     .pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
     .messages({
-      'string.max': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+      'string.max': `Votre mot de passe doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.pattern.base': 'Le format de votre mot de passe est incorrect : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & * ',
+      'any.ref':'La confiration du mot de passe et le nouveau mot de passe ne sont pas identique !'
     }),
-  newPasswordConfirm: Joi.ref('newPassword'),
-
+  newPasswordConfirm: Joi.ref('newPassword')
+ 
+  
 }).with('newPassword', 'newPasswordConfirm');
 
 module.exports = userUpdateSchema;

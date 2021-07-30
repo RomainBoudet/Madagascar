@@ -22,7 +22,7 @@ const userSigninSchema = Joi.object().keys({
     .required()
     .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
     .messages({
-      'string.max': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+      'string.max': `Votre prenom doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Le champs de votre prénom ne peut être vide !`,
       'string.min': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
       'string.pattern.base': 'Le format de votre nom est incorrect : Il ne doit pas être composé d\'un de ces caractéres spéciaux : [<>&#=+*/"|] !',
@@ -34,7 +34,7 @@ const userSigninSchema = Joi.object().keys({
     .required()
     .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
     .messages({
-      'string.max': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+      'string.max': `Votre nom de famille doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Le champs de votre nom ne peut être vide !`,
       'string.min': `Votre nom doit avoir une longeur minimum de {#limit} caractéres !`,
       'string.pattern.base': 'Le format de votre nom est incorrect : Il ne doit pas être composé d\'un de ces caractéres : spéciaux [<>&#=+*/"|] !',
@@ -45,7 +45,7 @@ const userSigninSchema = Joi.object().keys({
     .trim()
     .pattern(new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
     .messages({
-      'string.max': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+      'string.max': `Votre email doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Le champs de votre email ne peut être vide !`,
       'string.pattern.base': 'Le format de votre email est incorrect',
     }),
@@ -55,7 +55,7 @@ const userSigninSchema = Joi.object().keys({
     .max(200)
     .trim()
     .messages({
-      'string.max': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+      'string.max': `Votre mot de passe doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.pattern.base': 'Le format de votre mot de passe est incorrect : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & * ',
     }),
   passwordConfirm: Joi.ref('password')

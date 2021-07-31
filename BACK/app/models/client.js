@@ -61,6 +61,28 @@ class Client {
     return rows.map((client) => new Client(client));
   }
 
+
+  /**
+   * Méthode chargé d'aller compter le nombre de clients en base
+   * @returns - tous les clients présent en BDD
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+   static async count() {
+    const {
+      rows
+    } = await db.query('SELECT COUNT(*) FROM mada.client');
+
+    if (!rows[0]) {
+      throw new Error("Aucun client dans la BDD");
+    }
+    consol.model(
+      `Il existe ${rows.count} clients en BDD !`
+    );
+
+    return new Client(rows[0]);
+  }
+
   /**
    * Méthode chargé d'aller chercher les informations relatives à un client passé en paramétre
    * @param id - un id d'un client

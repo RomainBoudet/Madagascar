@@ -2,12 +2,30 @@ const validator = require('validator');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const AdminVerifEmail = require('../models/adminVerifEmail');
-const AdminVerifPhone = require('../models/adminVerifPhone');
 const AdminPhone = require('../models/adminPhone');
 const Privilege = require('../models/privilege');
 const Client = require('../models/client');
+const {
+    formatLong
+} = require('../services/date');
 
+//Config Twillio
+const MessagingResponse = require('twilio').twiml.MessagingResponse;
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioNumber = process.env.TWILIO_NUMBER;
+const twilio = require('twilio')(accountSid, authToken);
 
+//! a l'avenir, remplacer tous ça par le service date...
+const now = new Date(); // l'instant exact de la requête dans un format qui m'écorche pas les yeux ;)
+const options = {
+    weekday: "long",
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric"
+};
+const dat = (now.toLocaleDateString("fr", options)) + " " + now.toLocaleTimeString();
+const date = dat.charAt(0).toUpperCase() + dat.slice(1);
 
 /**
  * Un objet qui contient des méthodes permettant d'intéragir avec les emails et téléphones des admins pour assurer leur verification avant utilisation
@@ -32,7 +50,9 @@ const adminController = {
 
 
             await updateClient.updatePrivilege();
-            const message = {message:`Votre nouveau privilege a bien été enregistré pour le client id ${id}`};
+            const message = {
+                message: `Votre nouveau privilege a bien été enregistré pour le client id ${id}`
+            };
 
             res.json(message);
 
@@ -109,12 +129,10 @@ const adminController = {
             /**
              * On l'envoie en BDD pour être enregistré EN TANT QU'ADMIN
              */
-          
+
             const user = await userNowInDb.saveAdmin();
             console.log(user.id);
             await AdminVerifEmail.false(user.id);
-            await AdminVerifPhone.false(user.id);
-
 
 
             console.log(`L'admin ${newUser.prenom} ${newUser.nomFamille} est désormais enregistré dans la BDD`);
@@ -173,19 +191,157 @@ const adminController = {
     },
 
 
+    // attention le nom du service friendly name dans twilio sera le nom donné dans le sms (Votre code de vérification <friendly name> est 992253)
+    // le nom de l'expéditeur apparait comme : AUTHMSG
+
+    //changer la longeur du mot de passe ! et le nom du service  ==>> https://www.twilio.com/docs/verify/api/service
+    /* client.verify.services('VAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+             .update({codeLength: 7, friendlyName:'mon petit nom!'})
+             .then(service => console.log(service.codeLength)); */
 
 
-    getAllPhoneVerif: async (req, res) => {
+
+    //https://www.twilio.com/docs/verify/verifying-transactions-psd2#
+    /* client.verify.services
+                 .create({psd2Enabled: true, friendlyName: 'My PSD2 Service'})
+                 .then(service => console.log(service.psd2Enabled)); */
+
+    //PSD2 Verification
+    /* client.verify.services('VAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+      .verificationChecks
+      .create({
+         to: '+15017122661',
+         amount: '€39.99',
+         payee: 'Acme Inc.',
+         code: '1234'
+       })
+      .then(verification_check => console.log(verification_check.status)); */
+
+
+    //pour une vérif par appel :
+    /* client.verify.services('VAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+           .verifications
+           .create({sendDigits: '350', to: '+15017122661', channel: 'call'})
+           .then(verification => console.log(verification.sid)); */
+
+
+    //pour retrouver des infos sur un numéro :: https://www.twilio.com/docs/lookup/api
+    /* const client = require('twilio')(accountSid, authToken);
+
+client.lookups.v1.phoneNumbers('+15108675310')
+                 .fetch({type: ['carrier']})
+                 .then(phone_number => console.log(phone_number.carrier)); */
+
+    smsVerify: async (req, res) => {
+
+        // pas d'appel inutile a l'API, on vérifit d'abord..
+        
+
+        twilio.verify.services(process.env.SERVICE_SID_VERIFY)
+            .verifications
+            .create({
+                locale: 'fr',
+                to: req.body.phoneNumber, //quand numéro twilio ok => req.body.phoneNumber // pour un numéro dynamique. // Si le numéro est en base, il a été testé. On prend direct du formulaire, on test avec twilio.verify et si ok on envoit le format E164 en base direct ! pas d'insertion en base sans test !
+                channel: 'sms'
+            })
+            .then(verification => console.log(verification.status));
+
+        //stockage en session du numéro et pour le réutiliser dans la méthode du smsCheck
+
+        req.session.phoneNumber = req.body.phoneNumber;
+
+        res.status(200).json('Un code par sms vous a été envoyé ! Merci de bien vouloir le renseigner pour terminer le vérification');
+
+
         try {
-            const resultats = await AdminVerifPhone.findAll();
-
-            res.status(200).json(resultats);
-        } catch (error) {
-            console.trace('Erreur dans la méthode getAllPhoneVerif du adminController :',
+            console.trace(
+                'Erreur dans la méthode smsVerify du clientController :',
                 error);
             res.status(500).json(error.message);
+
+        } catch (error) {
+
         }
     },
+
+
+    smsCheck: async (req, res) => {
+
+        const statut = await twilio.verify.services(process.env.SERVICE_SID_VERIFY)
+            .verificationChecks
+            .create({
+                to: req.session.phoneNumber,
+            })
+        if (statut.status === 'approved') {
+
+            // le numéro est dispo en format E 164 dans l'objet statut.to !
+    
+            const data = {};
+            data.idClient = req.session.user.idClient;
+            data.adminTelephone = statut.to;
+            const newPhone = new AdminPhone(data); // et j'insére en BDD dans al foulée le numéro fraichement vérifié.
+            await newPhone.save();
+
+            return res.status(200).json('Votre numéro de téléphone a été authentifié avec succés !')
+
+        } else {
+            res.status(403).json('Votre numéro de téléphone n\'a pas put être authentifié.')
+        }
+
+        try {
+            console.trace(
+                'Erreur dans la méthode smsCheck du clientController :',
+                error);
+            res.status(500).json(error.message);
+
+        } catch (error) {
+
+        }
+    },
+
+
+
+
+
+    smsEnvoi: async (req, res) => {
+
+        if (req.body.Body == 'clients?') {
+
+            const clients = await Client.count()
+            twilio.messages.create({
+                    body: `Il existe ${clients.count} clients enregitré en bdd le ${date}.`,
+                    from: process.env.TWILIO_NUMBER,
+                    to: process.env.MYNUMBERFORMAT64,
+                })
+                .then(message => console.log(message.sid));
+
+
+            res.status(200).json('sms envoyé ;)');
+        } else
+
+            res.json('c\'est mieux avaec un body adéquat...');
+
+        try {
+            console.trace(
+                'Erreur dans la méthode smsEnvoi du clientController :',
+                error);
+            res.status(500).json(error.message);
+
+        } catch (error) {
+
+        }
+    },
+
+
+
+
+
+
+
+
+
+
+
 
     getAllEmailVerif: async (req, res) => {
         try {
@@ -228,18 +384,7 @@ const adminController = {
 
 
 
-    getOnePhoneVerif: async (req, res) => {
-        try {
 
-            const resultat = await AdminVerifPhone.findOne(req.params.id);
-            res.json(resultat);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getOnePhoneVerif du adminController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
 
     getOneEmailVerif: async (req, res) => {
         try {
@@ -284,18 +429,7 @@ const adminController = {
 
 
 
-    getPhoneVerifByIdClient: async (req, res) => {
-        try {
-            console.log(req.params);
-            const resultat = await AdminVerifPhone.findByIdClient(req.params.id);
-            res.json(resultat);
 
-        } catch (error) {
-            console.trace('Erreur dans la méthode getPhoneVerifByIdClient du adminController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
 
     getEmailVerifByIdClient: async (req, res) => {
         try {
@@ -330,21 +464,7 @@ const adminController = {
 
 
 
-    newVerifPhone: async (req, res) => {
-        try {
 
-            const data = {};
-
-            data.idClient = req.body.idClient;
-
-            const newClient = new AdminVerifPhone(data);
-            await newClient.true();
-            res.json(newClient);
-        } catch (error) {
-            console.log(`Erreur dans la méthode newVerifPhone du adminController : ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
 
     newVerifEmail: async (req, res) => {
         try {
@@ -398,22 +518,7 @@ const adminController = {
 
 
 
-    deleteVerifPhone: async (req, res) => {
 
-        try {
-
-            const phoneInDb = await AdminVerifPhone.findOne(req.params.id);
-
-            const phoneDeleted = await phoneInDb.delete();
-
-            res.json(phoneDeleted);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteVerifPhone du adminController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
 
     deleteVerifEmail: async (req, res) => {
 
@@ -471,27 +576,7 @@ const adminController = {
 
 
 
-    deleteVerifPhoneByIdClient: async (req, res) => {
 
-        try {
-
-            const clientsInDb = await AdminVerifPhone.findByIdClient(req.params.id);
-            const arrayDeleted = [];
-            for (const clientInDb of clientsInDb) {
-
-                const clientHistoConn = await clientInDb.deleteByIdClient();
-                arrayDeleted.push(clientHistoConn);
-            }
-
-
-            res.json(arrayDeleted[0]);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteVerifPhoneByIdClient du adminController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
 
     deleteVerifEmailByIdClient: async (req, res) => {
 
@@ -541,45 +626,7 @@ const adminController = {
 
 
 
-    updateVerifPhone: async (req, res) => {
-        try {
 
-            const {
-                id
-            } = req.params;
-
-            const updateClient = await AdminVerifPhone.findByIdClient(id);
-            console.log(updateClient);
-
-            const verifPhone = req.body.verifPhone;
-            const idClient = req.body.idClient;
-            let userMessage = {};
-
-
-            if (verifPhone) {
-                updateClient.verifPhone = verifPhone;
-                userMessage.verifPhone = 'Votre nouveau verifPhone a bien été enregistré ';
-            } else if (!verifPhone) {
-                userMessage.verifPhone = 'Votre verifPhone n\'a pas changé';
-            }
-
-            if (idClient) {
-                updateClient.idClient = idClient;
-                userMessage.idClient = 'Votre nouveau idClient a bien été enregistré ';
-            } else if (!idClient) {
-                userMessage.idClient = 'Votre idClient n\'a pas changé';
-            }
-
-
-            await updateClient.update();
-
-            res.json(userMessage);
-
-        } catch (error) {
-            console.log(`Erreur dans la méthode updateVerifPhone du adminController : ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
 
     updateVerifEmail: async (req, res) => {
         try {

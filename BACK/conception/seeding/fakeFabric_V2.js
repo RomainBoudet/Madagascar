@@ -211,7 +211,7 @@ const fakeData = async () => {
             const user = {
                 id_for_pk: index,
                 ligne1: `${(Math.floor(Math.random() * (100 - 1 + 1)) + 1)} ${faker.address.streetPrefix()} ${faker.address.streetName()} `,
-                telephone: faker.phone.phoneNumberFormat(),
+                telephone: `+33${Math.floor(Math.random() * ((999999999 - 100000000) - 1 + 1)) + 100000000}`, //Math.floor(Math.random() * (max - min + 1)) + min
                 prenom: faker.name.firstName(),
                 nom_famille: faker.name.lastName(),
                 email: index + faker.internet.email(), // l'ajout de l'index me permet de n'avoir que des emails unique (postgres ok)
@@ -1416,9 +1416,8 @@ const fakeData = async () => {
 
         consol.seed("Mise en place d'un admin dans la BDD");
         await db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE}', email='${process.env.EMAILTEST}', prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}' WHERE id = ${process.env.ID}; `);
-        await db.query(`INSERT INTO mada.admin_verif_telephone (verif_phone, id_client) VALUES ('false', ${process.env.ID});`);
         await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('false', ${process.env.ID});`);
-        await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
+        //await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
         await db.query(`UPDATE mada.client_adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`)
 
         consol.seed(`Admin mis en place en client id ${process.env.ID}`)

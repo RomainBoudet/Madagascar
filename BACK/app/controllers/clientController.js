@@ -1,7 +1,6 @@
 const Client = require('../models/client');
 const Shop = require('../models/shop');
 const AdminVerifEmail = require('../models/adminVerifEmail');
-const AdminVerifPhone = require('../models/adminVerifPhone');
 const ClientHistoPass = require('../models/clientHistoPass');
 
 const crypto = require('crypto');
@@ -9,6 +8,7 @@ const validator = require('validator');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const jsonwebtoken = require('jsonwebtoken');
+
 
 
 
@@ -160,7 +160,6 @@ const clientController = {
              */
             const user = await userNowInDb.save();
             await AdminVerifEmail.false(user.id);
-            await AdminVerifPhone.false(user.id);
 
             console.log(`L'utilisateur ${newUser.prenom} ${newUser.nomFamille} est désormais enregistré dans la BDD`);
 
@@ -778,14 +777,14 @@ const clientController = {
                 const info = await transporter.sendMail({
                     from: process.env.MAIL,
                     to: userInDb.email,
-                    subject: `Vos modification d'information sur le site ${shop.nom} ont bien été pris en compte ! ✔`, 
-                    text: `Bonjour ${userInDb.prenom} ${userInDb.nomFamille}, Votre changement de mot de passe ont bien été pris en compte sur le site ${shop.nom} !`, 
+                    subject: `Vos modification d'information sur le site ${shop.nom} ont bien été pris en compte ! ✔`,
+                    text: `Bonjour ${userInDb.prenom} ${userInDb.nomFamille}, Votre changement de mot de passe ont bien été pris en compte sur le site ${shop.nom} !`,
                     html: `<h3>Bonjour <span class="username"> ${userInDb.prenom} ${userInDb.nomFamille}, </span> </h3> <br>
                     <p>Vous vous êtes inscrit sur le site ${shop.nom}.</p>
                     <p> Votre changement de mot de passe à bien été pris en compte ! ✔️ </p> <br>
                     <p>En vous remerciant et en espérant vous revoir bientôt sur ${shop.nom} ! 🤗</p>
                     <p> Bonne journée.</p> <br>
-                    <a href="http://localhost:8080"> ${shop.nom} </a><br>`, 
+                    <a href="http://localhost:8080"> ${shop.nom} </a><br>`,
                 });
 
                 console.log("Message sent: %s", info.messageId);
@@ -805,10 +804,7 @@ const clientController = {
 
     },
 
-
-
-
-
+    
 
 
     delete: async (req, res) => {

@@ -240,7 +240,7 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
   * @param {evenement.Model} evenement.body.required
   * @returns {JSON} 200 - Un nouveau mot de passe est entré en BDD
   */
- router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailLinkSchema), clientController.reset_pwd);
+ router.post('/user/reset_pwd', trim, validateBody(resetPwdSchema), validateQuery(resendEmailLinkSchema), clientController.reset_pwd);
 
 //! Des routes de test pour mes models ...
 
@@ -265,6 +265,13 @@ router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteCa
 router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
 router.patch('/update/:id(\\d+)', produitController.update);
+
+router.post('/smsVerify', adminController.smsVerify);
+
+router.post('/sms', clean, adminController.smsEnvoi);
+
+router.post('/smsCheck', clean, adminController.smsCheck);
+
 
 
 

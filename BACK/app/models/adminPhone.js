@@ -136,6 +136,8 @@ class AdminPhone {
         consol.model(
             `le admin_phone id ${this.id} a été inséré à la date du ${this.createdDate} !`
         );
+        return new AdminPhone(rows[0]);
+
     }
 
 

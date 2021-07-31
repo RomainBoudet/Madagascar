@@ -46,10 +46,11 @@ CREATE DOMAIN postale_code_fr AS text -- un domaine (type de donnée) permettant
 -- Depuis 2009, la Poste s'est attribué la boîte postale Entreprise 999 : « Service consommateurs, 99999 LA POSTE​ ».Une entreprise organisant un seul concours peut donc se faire adresser son courrier à sa boîte 99123.
 -- les armées peuvent commencer par 00
 
+-- on stock en format E.164 => ^\+[1-9]\d{1,14}$  ==>> ^\+[1-9]\d{10}$ pour la france, réduit a 10  https://www.twilio.com/docs/glossary/what-e164 
 CREATE DOMAIN phonenumber AS text -- un domaine (type de donnée) permettant de vérifier la validité d'un numéro de téléphone via une regex
 	CHECK (
 
-		VALUE ~* '^(0|\\+33|0033)[1-9][0-9]{8}$'
+		VALUE ~* '^\+[1-9]\d{10}$'
 	);
 
 CREATE DOMAIN pass as text  -- un domaine (type de donnée) permettant de vérifier la validité d'un mot de passe en hash via une regex (fonctionne uniquement avec bcrypt qui commence ces hash de la même maniére)
@@ -198,15 +199,6 @@ CREATE TABLE admin_verif_email(
 	id_client             INT UNIQUE NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
 
------------------------------------------------------------
--- Table: admin_verif_telephone
-------------------------------------------------------------
-CREATE TABLE admin_verif_telephone(
-	id                      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	verif_phone             BOOLEAN NOT NULL DEFAULT 'false',
-	date_verif_phone        timestamptz,
-	id_client               INT UNIQUE NOT NULL REFERENCES client(id) ON DELETE CASCADE
-);
 
 ------------------------------------------------------------
 -- Table: admin_phone

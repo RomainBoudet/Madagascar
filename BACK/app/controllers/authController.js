@@ -1,7 +1,6 @@
 const Client = require('../models/client');
 const crypto = require('crypto');
 const consol = require('../services/colorConsole');
-const AdminVerifPhone = require('../models/adminVerifPhone');
 const AdminVerifEmail = require('../models/adminVerifEmail');
 
 
@@ -38,11 +37,13 @@ const authController = {
 
             //le user existe et s'est correctement identifié, on stocke les infos qui vont bien dans la session
             request.session.user = {
+                idClient: clientInDb.id,
                 prenom: clientInDb.prenom,
                 nomFamille: clientInDb.nomFamille,
                 email: clientInDb.email,
                 privilege: clientInDb.nom,
             };
+
 
             //LocalStorage => sensible aux attaques XSS // faille Cross site Scripting ! injection du contenu dans une page web
             //Cookies => sensible aux attaques CSRF // Cross Site Request Forgery , faille qui consiste simplement à faire exécuter à une victime une requête HTTP à son insu
@@ -78,13 +79,10 @@ const authController = {
 
             if (clientInDb.nom === 'Administrateur' || clientInDb.nom === 'Developpeur') {
 
-                const adminInDbPhone = await AdminVerifPhone.findByIdClient(clientInDb.id);
                 const adminInDbEmail = await AdminVerifEmail.findByIdClient(clientInDb.id);
 
 
-
-
-                if (adminInDbPhone.verifPhone === false && adminInDbEmail.verifEmail === false) {
+                if (adminInDbEmail.verifEmail === false) {
 
                     response.status(200).json({
                         xsrfToken: xsrfToken,
@@ -93,41 +91,12 @@ const authController = {
                         nomFamille: clientInDb.nomFamille,
                         email: clientInDb.emailAddress,
                         privilege: clientInDb.nom,
-                        message: "Bonjour hÔ vénérable Administrateur ! Merci de faire vérifier votre email et numéro de téléphone à l'avenir 😉 "
+                        message: "Bonjour hÔ vénérable Administrateur ! Merci de faire vérifier votre email 😉 "
                     });
 
                     return;
 
-                } else if (adminInDbPhone.verifPhone === false && adminInDbEmail.verifEmail === true) {
-
-                    response.status(200).json({
-                        xsrfToken: xsrfToken,
-                        id: clientInDb.id,
-                        prenom: clientInDb.prenom,
-                        nomFamille: clientInDb.nomFamille,
-                        email: clientInDb.emailAddress,
-                        privilege: clientInDb.nom,
-                        message: "Bonjour hÔ vénérable Administrateur ! Merci de faire vérifier votre numéro de téléphone à l'avenir 😉 "
-                    });
-
-                    return;
-
-                } else if (adminInDbPhone.verifPhone === true && adminInDbEmail.verifEmail === false) {
-
-                    response.status(200).json({
-                        xsrfToken: xsrfToken,
-                        id: clientInDb.id,
-                        prenom: clientInDb.prenom,
-                        nomFamille: clientInDb.nomFamille,
-                        email: clientInDb.emailAddress,
-                        privilege: clientInDb.nom,
-                        message: "Bonjour hÔ vénérable Administrateur ! Merci de faire vérifier votre email à l'avenir 😉 "
-                    });
-
-                    return;
-                }
-
-            }
+            }};
 
             // On envoie une reponse JSON concernant les infos du user avec le token a comparé avec celui dans le cookie.
             response.status(200).json({

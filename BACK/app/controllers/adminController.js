@@ -5,6 +5,7 @@ const AdminVerifEmail = require('../models/adminVerifEmail');
 const AdminPhone = require('../models/adminPhone');
 const Privilege = require('../models/privilege');
 const Client = require('../models/client');
+const Paiement = require('../models/paiement');
 const {
     formatLong
 } = require('../services/date');
@@ -16,7 +17,7 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioNumber = process.env.TWILIO_NUMBER;
 const twilio = require('twilio')(accountSid, authToken);
 
-//! a l'avenir, remplacer tous ça par le service date...
+//! a l'avenir, remplacer tout ça par le service date...
 const now = new Date(); // l'instant exact de la requête dans un format qui m'écorche pas les yeux ;)
 const options = {
     weekday: "long",
@@ -191,121 +192,80 @@ const adminController = {
     },
 
 
-    // attention le nom du service friendly name dans twilio sera le nom donné dans le sms (Votre code de vérification <friendly name> est 992253)
-    // le nom de l'expéditeur apparait comme : AUTHMSG
-
-    //changer la longeur du mot de passe ! et le nom du service  ==>> https://www.twilio.com/docs/verify/api/service
-    /* client.verify.services('VAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-             .update({codeLength: 7, friendlyName:'mon petit nom!'})
-             .then(service => console.log(service.codeLength)); */
-
-
-
-    //https://www.twilio.com/docs/verify/verifying-transactions-psd2#
-    /* client.verify.services
-                 .create({psd2Enabled: true, friendlyName: 'My PSD2 Service'})
-                 .then(service => console.log(service.psd2Enabled)); */
-
-    //PSD2 Verification
-    /* client.verify.services('VAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-      .verificationChecks
-      .create({
-         to: '+15017122661',
-         amount: '€39.99',
-         payee: 'Acme Inc.',
-         code: '1234'
-       })
-      .then(verification_check => console.log(verification_check.status)); */
-
-
-    //pour une vérif par appel :
-    /* client.verify.services('VAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-           .verifications
-           .create({sendDigits: '350', to: '+15017122661', channel: 'call'})
-           .then(verification => console.log(verification.sid)); */
-
-
-    //pour retrouver des infos sur un numéro :: https://www.twilio.com/docs/lookup/api
-    /* const client = require('twilio')(accountSid, authToken);
-
-client.lookups.v1.phoneNumbers('+15108675310')
-                 .fetch({type: ['carrier']})
-                 .then(phone_number => console.log(phone_number.carrier)); */
+    //Le délai d'attente max lors de la vérification du code est de 10 minutes max => https://www.twilio.com/docs/verify/api/verification-check
+    // la doc :https://www.twilio.com/docs/verify/api/verification  
+    /*Pour valider un phoneNumber en front on utilisera => const number = client.lookups.phoneNumbers(req.body.phoneNumber).fetch(); //https://www.twilio.com/docs/lookup/api  API gratuite : https://www.twilio.com/fr/lookup  */
+    // et on regardera : https://www.youtube.com/watch?v=gjh5gOalYcM
 
     smsVerify: async (req, res) => {
 
-        // pas d'appel inutile a l'API, on vérifit d'abord..
-        
-
-        twilio.verify.services(process.env.SERVICE_SID_VERIFY)
-            .verifications
-            .create({
-                locale: 'fr',
-                to: req.body.phoneNumber, //quand numéro twilio ok => req.body.phoneNumber // pour un numéro dynamique. // Si le numéro est en base, il a été testé. On prend direct du formulaire, on test avec twilio.verify et si ok on envoit le format E164 en base direct ! pas d'insertion en base sans test !
-                channel: 'sms'
-            })
-            .then(verification => console.log(verification.status));
-
-        //stockage en session du numéro et pour le réutiliser dans la méthode du smsCheck
-
-        req.session.phoneNumber = req.body.phoneNumber;
-
-        res.status(200).json('Un code par sms vous a été envoyé ! Merci de bien vouloir le renseigner pour terminer le vérification');
-
-
         try {
+            // pas d'appel inutile a l'API, on vérifit d'abord..
+            const phoneInDb = await AdminPhone.findOne(req.session.user.idClient);
+
+            if (phoneInDb === null) {
+
+                twilio.verify.services(process.env.SERVICE_SID_VERIFY)
+                    .verifications
+                    .create({
+                        locale: 'fr',
+                        to: req.body.phoneNumber,
+                        channel: 'sms',
+                    })
+                    .then(verification => console.log(verification.status));
+
+                //stockage en session du numéro et pour le réutiliser dans la méthode du smsCheck
+                req.session.phoneNumber = req.body.phoneNumber;
+                res.status(200).json('Un code par sms vous a été envoyé ! Merci de bien vouloir le renseigner pour terminer le vérification');
+
+            } else {
+                return res.status(200).json('Votre numéro de téléphone a déja été vérifié avec succés !');
+            }
+        } catch (error) {
             console.trace(
                 'Erreur dans la méthode smsVerify du clientController :',
                 error);
             res.status(500).json(error.message);
-
-        } catch (error) {
-
         }
     },
 
 
     smsCheck: async (req, res) => {
 
-        const statut = await twilio.verify.services(process.env.SERVICE_SID_VERIFY)
-            .verificationChecks
-            .create({
-                to: req.session.phoneNumber,
-            })
-        if (statut.status === 'approved') {
-
-            // le numéro est dispo en format E 164 dans l'objet statut.to !
-    
-            const data = {};
-            data.idClient = req.session.user.idClient;
-            data.adminTelephone = statut.to;
-            const newPhone = new AdminPhone(data); // et j'insére en BDD dans al foulée le numéro fraichement vérifié.
-            await newPhone.save();
-
-            return res.status(200).json('Votre numéro de téléphone a été authentifié avec succés !')
-
-        } else {
-            res.status(403).json('Votre numéro de téléphone n\'a pas put être authentifié.')
-        }
-
         try {
+            const statut = await twilio.verify.services(process.env.SERVICE_SID_VERIFY)
+                .verificationChecks
+                .create({
+                    to: req.session.phoneNumber,
+                    code: req.body.code,
+                })
+            if (statut.status === 'approved') {
+
+                const data = {};
+                data.idClient = req.session.user.idClient;
+                data.adminTelephone = statut.to;
+                const newPhone = new AdminPhone(data); // et j'insére en BDD le numéro fraichement vérifié.
+                await newPhone.save();
+
+                return res.status(200).json('Votre numéro de téléphone a été authentifié avec succés !')
+
+            } else {
+                res.status(403).json('Votre numéro de téléphone n\'a pas put être authentifié.')
+            }
+
+        } catch (error) {
             console.trace(
                 'Erreur dans la méthode smsCheck du clientController :',
                 error);
             res.status(500).json(error.message);
-
-        } catch (error) {
-
         }
     },
 
 
-
-
-
     smsEnvoi: async (req, res) => {
 
-        if (req.body.Body == 'clients?') {
+        try {
+            // if (req.body.Body === 'clients?') {
 
             const clients = await Client.count()
             twilio.messages.create({
@@ -317,26 +277,60 @@ client.lookups.v1.phoneNumbers('+15108675310')
 
 
             res.status(200).json('sms envoyé ;)');
-        } else
+            //} else
 
-            res.json('c\'est mieux avaec un body adéquat...');
+            // res.status(404).json('c\'est mieux avaec un body adéquat...');
 
-        try {
+        } catch (error) {
             console.trace(
                 'Erreur dans la méthode smsEnvoi du clientController :',
                 error);
             res.status(500).json(error.message);
 
-        } catch (error) {
-
         }
     },
 
+    //https://www.twilio.com/docs/sms/tutorials/how-to-receive-and-reply-node-js
+    smsRespond: async (req, res) => {
 
+        try {
+            console.log("req.body", req.body.Body);
+            if (req.body.Body == 'Clients?') {
+                const clients = await Client.count()
+                twilio.messages.create({
+                        body: `Il existe ${clients.count} clients enregitré en bdd le ${date}.`,
+                        from: process.env.TWILIO_NUMBER,
+                        to: process.env.MYNUMBERFORMAT64,
+                    })
+                    .then(message => console.log(message.sid));
 
+                return res.status(200).json('sms en réponse a "client?" bien envoyé.');
 
+            } else if (req.body.Body == 'Paiement?') {
 
+                const paiement = await Paiement.getLastPaiement()
+                twilio.messages.create({
+                    body: `Dernier paiement le ${formatLong(paiement.datePaiement)}, montant : ${paiement.montant}€.`,
+                    from: process.env.TWILIO_NUMBER,
+                    to: process.env.MYNUMBERFORMAT64,
+                })
+                .then(message => console.log(message.sid));
 
+            return res.status(200).json('sms en réponse a "paiement?" bien envoyé.');
+
+            } else {
+
+                return res.status(404).json("Aucune commande avec ce paramétre")
+
+            }
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode smsRespond du clientController :',
+                error);
+            res.status(500).json(error.message);
+
+        }
+    },
 
 
 
@@ -710,7 +704,63 @@ client.lookups.v1.phoneNumbers('+15108675310')
 
 
 
+    // Pour vérifier un payement, twillio nous fournit également une méthode psd2 => Payment Service Directive 2  => https://www.twilio.com/blog/dynamic-linking-psd2      //https://www.twilio.com/docs/verify/verifying-transactions-psd2#
+    smsVerifypsd2: async (req, res) => {
+        try {
+            twilio.verify.services(process.env.SERVICE_SID_MADASHOP)
+                .verifications
+                .create({
+                    locale: 'fr',
+                    amount: '€39.99', //a dynamiser si on utilise la méthode...
+                    payee: 'MADAshop', // 
+                    to: req.body.phoneNumber,
+                    channel: 'sms'
+                })
+            req.session.phoneNumber = req.body.phoneNumber;
+            return res.status(200).json('Un code par sms vous a été envoyé ! Merci de bien vouloir le renseigner pour terminer le vérification');
 
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode smsVerify du clientController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+    smsCheckpsd2: async (req, res) => {
+
+        try {
+            const statut = await twilio.verify.services(process.env.SERVICE_SID_MADASHOP)
+                .verificationChecks
+                .create({
+                    to: req.session.phoneNumber,
+                    amount: req.body.amount,
+                    payee: req.body.payee,
+                    code: req.body.code,
+                })
+            console.log(statut);
+            if (statut.status === 'approved') {
+
+                const data = {};
+                data.idClient = req.session.user.idClient;
+                data.adminTelephone = statut.to;
+                const newPhone = new AdminPhone(data);
+                await newPhone.save();
+
+                return res.status(200).json('Votre numéro de téléphone a été authentifié avec succés !')
+
+            } else {
+                res.status(403).json('Votre numéro de téléphone n\'a pas put être authentifié.')
+            }
+
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode smsCheck du clientController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
 
 
 

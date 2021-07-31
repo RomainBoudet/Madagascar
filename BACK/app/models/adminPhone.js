@@ -75,7 +75,8 @@ class AdminPhone {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun admin_phone avec cet id");
+            return null
+            //throw new Error("Aucun admin_phone avec cet id");
         }
 
         consol.model(

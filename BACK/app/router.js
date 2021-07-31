@@ -94,7 +94,7 @@ const apiLimiter = rateLimit({
  * @group acceuil
  * @returns {JSON} 200 - la page d'acceuil
  */
-router.get('/', mainController.init);
+//router.get('/', mainController.init);
 
 
 /**
@@ -268,11 +268,11 @@ router.patch('/update/:id(\\d+)', produitController.update);
 
 router.post('/smsVerify', adminController.smsVerify);
 
-router.post('/sms', clean, adminController.smsEnvoi);
+router.get('/sms', clean, adminController.smsEnvoi);
 
 router.post('/smsCheck', clean, adminController.smsCheck);
 
-
+router.post('/', adminController.smsRespond);
 
 
 

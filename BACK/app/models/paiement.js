@@ -201,6 +201,24 @@ class Paiement {
     }
 
 
+    static async getLastPaiement(){
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.paiement ORDER BY paiement.date_paiement DESC LIMIT 1;');
+
+        if (!rows[0]) {
+            throw new Error("Aucun paiement en BDD ");
+        }
+
+        consol.model(
+            `le dernier paiement a été demandé en BDD !`
+        );
+
+        return new Paiement(rows[0]);
+    }
 
 }
 

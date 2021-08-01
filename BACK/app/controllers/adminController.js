@@ -291,6 +291,9 @@ const adminController = {
     },
 
     //https://www.twilio.com/docs/sms/tutorials/how-to-receive-and-reply-node-js
+    // pour tester via ngrok => (en ligne de commande) ngrok http https://localhost:3000 -region eu
+    // a insérer dans la console Twillio => dans l'onglet Active number, dans Messaging, A MESSAGE COMES IN Webhook, => https://4b4c0118e42b.eu.ngrok.io/v1/response
+
     smsRespond: async (req, res) => {
 
         try {

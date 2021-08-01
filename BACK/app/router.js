@@ -11,9 +11,9 @@ const admin = require('./middlewares/admin');
 const dev = require('./middlewares/dev');
 
 const {
-  trim,
+  cleanPassword,
   clean
-} = require('./middlewares/sanitizer'); //trim => supression de <> + trim. Pour les routes avec password // clean => pour toutes les routes sans password (ou on n'a pas besoin de caractéres spéciaux..)
+} = require('./middlewares/sanitizer'); //cleanPassword => supression de <> + cleanPassword. Pour les routes avec password // clean => pour toutes les routes sans password (ou on n'a pas besoin de caractéres spéciaux..)
 
 
 // le MW limitant le nombre de requetes pour un user (defense contre les attaques par Brute-Force)
@@ -44,8 +44,9 @@ const userLoginSchema = require('./schemas/userLoginSchema');
 const userSigninSchema = require('./schemas/userSigninSchema');
 const userUpdateSchema = require('./schemas/userUpdateSchema');
 const verifyEmailSchema = require('./schemas/verifyEmailSchema');
-const resendEmailLinkSchema =require('./schemas/resendEmailLinkSchema');
+const resendEmailSchema =require('./schemas/resendEmailSchema');
 const resetPwdSchema = require('./schemas/resetPwdSchema');
+const phoneNumber = require('./schemas/phoneNumber');
 
 
 
@@ -85,16 +86,25 @@ const apiLimiter = rateLimit({
 //! pour autoriser une route aux modérateurs ET au administrateurs :
 //on ajoute "moderateur" apres la route  ex = router.get('/produits', moderateur, produitController.allproduits);
 
-
+/*//! RAPPEL de la nomanclature des MW possible :
+cache = le résultat de la route est stoké dans REDIS si ce ce n'est pas déja le cas
+flush = Pour les route en post. Le déclenchement de cette route va vider toutes les données présentes dans REDIS pour ne pas donner des fausses données ultérieurement (invalidation temporel)
+clean = sanitize et bloque quasi tous les caractéres spéciaux sauf le @ et la ponctuation (!?;.:,-), tout le reste disparait sans préavis
+cleanPassword = sanitize mais plus light. Conçu pour être posé sur les routes des demande de password. autorise les caractéres spéciaux demandé dans les mot de passe (@#$%^&*) en plus de la pnctuation.
+dev = n'autorise que les privilege "Developeur" sur la route auquel il est aposé.
+admin = autorise les "Developpeur" et les "Administrateur" sur la route auquel il est aposé.
+client = autorise les "Client", "Developpeur" et "Administrateur" sur la route, seules les personnnes non connecté seront refusé.
+apiLimiter = restreint l'accée de la route selon l'ip du visiteur. Si plus de 100 tentavives de connexion en 10 heure, accés est refusé jusqu'a la fin des 10h.
+aut */
 
 /**
- * Page d'acceuil du site des Gardiens de la légende
+ * Page d'acceuil de swagger
  * @route GET /v1/
  * @summary Une magnifique documentation swagger :)
  * @group acceuil
  * @returns {JSON} 200 - la page d'acceuil
  */
-//router.get('/', mainController.init);
+router.get('/', mainController.init);
 
 
 /**
@@ -113,12 +123,12 @@ const apiLimiter = rateLimit({
  * @returns {JSON} 200 - Un utilisateur à bien été connecté
  */
 
-router.post('/connexion', apiLimiter, trim, validateBody(userLoginSchema), authController.login);
+router.post('/connexion', apiLimiter, cleanPassword, validateBody(userLoginSchema), authController.login);
 
 /**
  * Permet la déconnexion d'un utilisateur au site. Nécéssite un token dans le cookie le xsrfToken du local storage
  * @route GET /v1/deconnexion
- * @group deconnexion - Pour se déconnecter
+ * @group connexion - Pour se déconnecter
  * @summary déconnecte un utilisateur - on reset les infos du user en session
  * @returns {JSON} 200 - Un utilisateur a bien été déconnecté
  */
@@ -135,14 +145,14 @@ router.post('/connexion', apiLimiter, trim, validateBody(userLoginSchema), authC
  */
 /**
  * Permet l'inscription d'un utilisateur au site.
- * Route sécurisée avec Joi
+ * Route sécurisée avec Joi et validator
  * @route POST /v1/inscription
  * @group inscription - Pour s'inscire
  * @summary Inscrit un utilisateur en base de donnée
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été inséré en BDD, redirigé vers la page de connexon
  */
-router.post('/inscription', trim, validateBody(userSigninSchema), clientController.signIn);
+router.post('/inscription', cleanPassword, validateBody(userSigninSchema), clientController.signIn);
 
 
 /**
@@ -154,7 +164,7 @@ router.post('/inscription', trim, validateBody(userSigninSchema), clientControll
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
  */
-router.post('/signin', trim, validateBody(userSigninSchema), adminController.signInAdmin);
+router.post('/signin', dev, cleanPassword, validateBody(userSigninSchema), adminController.signInAdmin);
 
 
 /**
@@ -162,11 +172,11 @@ router.post('/signin', trim, validateBody(userSigninSchema), adminController.sig
  * Route sécurisée avec Joi et MW Developpeur
  * @route PATCH /v1/updatePrivilege
  * @group Admin - Pour upgrader les privileges d'un utilisateurt en admin
- * @summary Transforme un client en administrateur en base de donnée
+ * @summary Transforme un client en administrateur dans la base de donnée
  * @param {inscription.Model} req.params - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
  */
-router.patch('/updateprivilege/:id(\\d+)', dev,clean, adminController.updatePrivilege);
+router.patch('/updateprivilege/:id(\\d+)', dev, clean, adminController.updatePrivilege);
 
 
 
@@ -174,59 +184,56 @@ router.patch('/updateprivilege/:id(\\d+)', dev,clean, adminController.updatePriv
  * Un utilisateur
  * @typedef {object} utilisateur
  * @property {number} id - id du jeu
- * @property {string} firstName - prénom
- * @property {string} lastName - nom de famille
- * @property {string} pseudo - pseudo
- * @property {string} emailAddress - email
+ * @property {string} prenom - prénom
+ * @property {string} nomFamille - nom de famille
+ * @property {string} email - email
  * @property {string} password - password
- * @property {string} inscription - date d'inscription
- * @property {string} avatar - chemin absolu jusqu' une image
- * @property {string} group_id - références a la table qui détient les rôles
  */
 /**
  * Met a jour les informations d'un utilisateur.
  * @route PATCH /v1/user/:id
  * @group utilisateur - gestion de nos utilisateurs
- * @summary Supprimme un utilisateur en base de donnée. Route mise en flush (REDIS)*** Nécéssite un role Admin***
- * @param {user.Model} user.body.required
+ * @summary Met a jour un utilisateur en base de donnée. Un email est envoyé pour signaler les changements. Si changement d'email, un second email est également envoyé sur l'ancienne adresse pour signaler le changement.
+ * @param {utilisateur.Model} utiisateur.body.required
  * @param {number} id.path.required - l'id à fournir
- * @returns {JSON} 200 - les données d'un utilisateur ont été supprimées
+ * @returns {JSON} 200 - les données d'un utilisateur ont été mises a jour
  */
- router.patch('/user/:id(\\d+)', trim, validateBody(userUpdateSchema), clientController.updateClient);
+ router.patch('/user/:id(\\d+)', cleanPassword, validateBody(userUpdateSchema), clientController.updateClient);
 
 
  //Routes pour procédure de vérification de mail 
 //ETAPE 1 => Route pour prendre un email dans le body, verifis ce qu'il faut, envoi un mail avec URL sécurisé incorporé + tolken, qui renvoit sur la route verifyEmail
+
 /**
  * Envoie un email pour que l'admin qui le souhaite puisse vérifier son email.
  * @route POST /resendEmailLink'
- * @group Vérification du mail
- * @summary Prend un mail en entrée et renvoie un email dessus si celui çi est présent en BDD.  Cliquer sur le lien dans l'email l'enmenera sur la route /verifyemail  
- * @param {evenement.Model} evenement.body.required
+ * @group utilisateur
+ * @summary Prend un mail en entrée et renvoie un email si celui çi est présent en BDD.  Cliquer sur le lien dans l'email envoyé enmenera sur la route /verifyemail  
+ * @param {utilisateur.Model} utiisateur.body.required
  * @returns {JSON} 200 - Un email a été délivré
  */
-router.post('/resendEmailLink', validateBody(verifyEmailSchema), clientController.resendEmailLink);
+router.post('/resendEmailLink', clean, admin, validateBody(resendEmailSchema), clientController.resendEmailLink);
 
 
 //ETAPE 2 => Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
 /**
  * Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
  * @route GET /verifyEmail
- * @group Vérification du mail
+ * @group utilisateur
  * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD. Front géré par le server.
- * @param {evenement.Model} evenement.body.required
+ * @param {utilisateur.Model} utiisateur.query.required
  * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
  */
-router.post('/verifyEmail', clean, validateQuery(resendEmailLinkSchema), clientController.verifyEmail);
+router.post('/verifyEmail', clean, admin, validateQuery(verifyEmailSchema), clientController.verifyEmail);
 
 
 
 /**
  * Envoie un email si l'utilisateur ne se souvient plus de son mot de passe, pour mettre en place un nouveau mot de passe de maniére sécurisé.
  * @route POST /user/new_pwd
- * @group Changement du mot de passe
+ * @group utilisateur
  * @summary Prend un mail en entrée et renvoie un email dessus si celui çi est présent en BDD.  Cliquer sur le lien dans l'email l'enmenera sur la route /user/reset_pwd ou l'attent un formulaire
- * @param {evenement.Model} evenement.body.required
+ * @param {utilisateur.Model} utilisateur.body.required
  * @returns {JSON} 200 - Un email a été délivré
  */
 router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientController.new_pwd);
@@ -235,14 +242,40 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
  /**
  *  envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
  *  @route POST /user/reset_pwd
-  * @group Changement du mot de passe
-  * @summary  Reset du mot de passe. prend en entrée, newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
-  * @param {evenement.Model} evenement.body.required
+  * @group utilisateur
+  * @summary  Reset du mot de passe. prend en entrée, newPassword et passwordConfirm dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
+  * @param {utilisateur.Model} utilisateur.body.required
   * @returns {JSON} 200 - Un nouveau mot de passe est entré en BDD
   */
- router.post('/user/reset_pwd', trim, validateBody(resetPwdSchema), validateQuery(resendEmailLinkSchema), clientController.reset_pwd);
+ router.post('/user/reset_pwd', cleanPassword, validateBody(resetPwdSchema), validateQuery(resendEmailSchema), clientController.reset_pwd);
 
-//! Des routes de test pour mes models ...
+
+/**
+ * Un administrateur
+ * @typedef {object} administrateur
+ */
+/**
+ * Envoie un sms sur un numéro de télephone pour vérifier ce téléphone.
+ * @route POST /admin/smsVerify
+ * @group administrateur
+ * @summary Utilise l'API de Twillio. Permet de vérifier un numéro de téléphone
+ * @param {administrateur.Model} administrateur.body.required
+ * @returns {JSON} 200 - Un code par sms a été envoyé
+ */
+ router.post('/admin/smsVerify', admin, clean, validateBody(phoneNumber), adminController.smsVerify);
+
+router.get('/admin/smsSend', admin, clean, adminController.smsEnvoi);
+
+router.post('/admin/smsCheck', admin, clean, adminController.smsCheck);
+
+router.post('/admin/smsResponse', admin, clean, adminController.smsRespond);
+
+
+
+
+
+
+ //! Des routes de test pour mes models ...
 
 router.get('/all', clientController.getAll);
 //router.get('/all2', produitController.getAllCategorie);
@@ -266,13 +299,7 @@ router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierB
 
 router.patch('/update/:id(\\d+)', produitController.update);
 
-router.post('/smsVerify', adminController.smsVerify);
 
-router.get('/sms', clean, adminController.smsEnvoi);
-
-router.post('/smsCheck', clean, adminController.smsCheck);
-
-router.post('/', adminController.smsRespond);
 
 
 

@@ -57,7 +57,7 @@ const clean = (req, res, next) => {
 }
 //ici un petit MW special pour les routes avec passwords pour trimmer et interdire les balises mais pas les caractéres spéciaux que je veux dans les mots de passe. Le schema Joi prendra le relai pour plus de finesse mais Joi gére mal les trim...
 
-const trim = (req, res, next) => {
+const cleanPassword = (req, res, next) => {
 
     try {
         const theBody = req.body;
@@ -97,5 +97,5 @@ const trim = (req, res, next) => {
 
 module.exports = {
     clean,
-    trim
+    cleanPassword
 };

@@ -116,7 +116,7 @@ router.get('/', mainController.init);
  * Autorise la connexion d'un utilisateur au site.
  * Route sécurisée avec Joi et limité a 100 requetes par 10h pour le même user
  * @route POST /v1/connexion
- * @group connexion - Pour se connecter
+ * @group connexion - Pour se connecter ou se déconnecter
  * @summary Autorise la connexion d'un utilisateur au site.
  * @param {connexion.Model} connexion.body.required - les informations qu'on doit fournir
  * @returns {JSON} 200 - Un utilisateur à bien été connecté
@@ -127,7 +127,7 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
 /**
  * Permet la déconnexion d'un utilisateur au site. Nécéssite un token dans le cookie le xsrfToken du local storage
  * @route GET /v1/deconnexion
- * @group connexion - Pour se déconnecter
+ * @group connexion - 
  * @summary déconnecte un utilisateur - on reset les infos du user en session
  * @returns {JSON} 200 - Un utilisateur a bien été déconnecté
  */
@@ -146,7 +146,7 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
  * Permet l'inscription d'un utilisateur au site.
  * Route sécurisée avec Joi et validator
  * @route POST /v1/inscription
- * @group inscription - Pour s'inscire
+ * @group inscription - Pour s'inscire 
  * @summary Inscrit un utilisateur en base de donnée
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été inséré en BDD, redirigé vers la page de connexon
@@ -158,7 +158,7 @@ router.post('/inscription', validateBody(userSigninSchema), clientController.sig
  * Permet l'inscription d'un administrateur au site.
  * Route sécurisée avec Joi et MW Developpeur
  * @route POST /v1/signin
- * @group inscription - Pour s'inscire
+ * @group administrateur - Des méthodes a dispositions des administrateurs
  * @summary Inscrit un administrateur en base de donnée
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
@@ -181,14 +181,14 @@ router.post('/signin', dev, validateBody(userSigninSchema), adminController.sign
  */
 /**
  * Met a jour les informations d'un utilisateur.
- * @route PATCH /v1/user/:id
- * @group utilisateur - gestion de nos utilisateurs
+ * @route PATCH /user/update/:id
+ * @group utilisateur - Des méthodes a dispositions des utilisateurs
  * @summary Met a jour un utilisateur en base de donnée. Un email est envoyé pour signaler les changements. Si changement d'email, un second email est également envoyé sur l'ancienne adresse pour signaler le changement.
  * @param {utilisateur.Model} utiisateur.body.required
  * @param {number} id.path.required - l'id à fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été mises a jour
  */
- router.patch('/user/:id(\\d+)', client, validateBody(userUpdateSchema), clientController.updateClient);
+ router.patch('/user/update/:id(\\d+)', client, validateBody(userUpdateSchema), clientController.updateClient);
 
 /**
  * Envoie un email si l'utilisateur ne se souvient plus de son mot de passe, pour mettre en place un nouveau mot de passe de maniére sécurisé.
@@ -220,7 +220,7 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
  * Permet de donner le privilege Administrateur a un client.
  * Route sécurisée avec Joi et MW Developpeur
  * @route PATCH /v1/updatePrivilege
- * @group adminitrateur - Pour upgrader les privileges d'un utilisateurt en admin
+ * @group administrateur - Des méthodes a dispositions des administrateurs
  * @summary Transforme un client en administrateur dans la base de donnée
  * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
@@ -243,7 +243,7 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
   * Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
   * @route GET /verifyEmail
   * @group administrateur
-  * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD. Front géré par le server.
+  * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD.
   * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
   */
  router.post('/verifyEmail', clean, admin, validateQuery(verifyEmailSchema), clientController.verifyEmail);
@@ -261,7 +261,7 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
  * Reçoi un code pour vérifier un numéro de téléphone et si le code est correct, le téléphone est enregistré en BDD sous format E. 164.
  * @route POST /admin/smsCheck
  * @group administrateur
- * @summary Utilise l'API de Twillio. Permet de vérifier un numéro de téléphone
+ * @summary Utilise l'API de Twillio. C'est le retour de la route smsVerify. Insert un téléphone vérifié d'un admin en BDD
  * @param {administrateur.Model} administrateur.body.required
  * @returns {JSON} 200 - Un un json informant que le téléphone a été authentifié
  */
@@ -272,10 +272,18 @@ router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminCont
  * @route GET /admin/smsSend
  * @group administrateur
  * @summary Utilise l'API de Twillio. Permet d'envoyer un sms sur le numéro souhaité
- * @param {administrateur.Model} administrateur.body.required
  * @returns {JSON} 200 -Renvoie un sms au numéro souhaité.
  */
  router.get('/admin/smsSend', admin, adminController.smsSend);
+
+ /**
+ * Faire appel a la méthode smsBalance envoi un sms avec la balance du compte Twilio. I
+ * @route GET /dev/smsBalance
+ * @group developpeur
+ * @summary Utilise l'API de Twillio. Renvoie la balance du compte par sms au numéro souhaité.
+ * @returns {JSON} 200 -Renvoie la balance du compte par sms au numéro souhaité.
+ */
+  router.get('/dev/smsBalance', dev, adminController.smsBalance);
 
 /**
  * Faire appel a la méthode smsResponse envoi un sms avec le contenu voulu selon le contenu d'un sms envoyé. A modifier selon les besoins d'envoie de SMS. Il pourrait être intéressant d'envoyer l'adresse a laquel envoyé le colis pour la derniére commande par example. 
@@ -290,7 +298,7 @@ router.post('/admin/smsRespond', clean, adminController.smsRespond);
 
 /**
  * Renvoie tous les clients en bdd 
- * @route POST /admin/user/all
+ * @route GET /admin/user/all
  * @group administrateur
  * @summary Renvoie tous les client en BDD
  * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
@@ -299,7 +307,7 @@ router.post('/admin/smsRespond', clean, adminController.smsRespond);
 
 /**
  * Renvoie un client selon son id
- * @route POST /admin/user/all
+ * @route GET /admin/user/all
  * @group administrateur
  * @summary Renvoie tous les client en BDD
  * @returns {JSON} 200 -Renvoie la liste des clients en BDD.

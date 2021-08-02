@@ -276,7 +276,7 @@ const adminController = {
     smsSend: async (_, res) => {
 
         if (!(validator.isMobilePhone(process.env.TWILIO_NUMBER, 'en-GB', {strictMode:true}) && validator.isMobilePhone(process.env.MYNUMBERFORMAT64, 'fr-FR', {strictMode:true}) )) {
-            return res.status(200).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
+            return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
         }
         try {
             const clients = await Client.count()
@@ -287,7 +287,32 @@ const adminController = {
 
                 })
                 .then(message => console.log(message.sid));
-            res.status(200).json('Sms envoyé bien envoyé !');
+            res.status(200).json('Sms bien envoyé !');
+
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode smsSend du clientController :',
+                error);
+            res.status(500).json('Erreur lors de la vérification de votre numéro de téléphone');
+        }
+    },
+
+    smsBalance: async (_, res) => {
+
+        if (!(validator.isMobilePhone(process.env.TWILIO_NUMBER, 'en-GB', {strictMode:true}) && validator.isMobilePhone(process.env.MYNUMBERFORMAT64, 'fr-FR', {strictMode:true}) )) {
+            return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
+        }
+        try {
+            const balance = await twilio.balance.fetch()
+                twilio.messages.create({
+                        body: `La balance du compte Twillio est de ${balance.balance}$.`,
+                        from: process.env.TWILIO_NUMBER,
+                        to: process.env.MYNUMBERFORMAT64,
+                    })
+                    .then(message => console.log(message.sid));
+
+                return res.status(200).json('Sms bien envoyé !');
+            
 
         } catch (error) {
             console.trace(
@@ -303,7 +328,7 @@ const adminController = {
     // pas plus de 153 caractéres par envoi.... !
     smsRespond: async (req, res) => {
         if (!(validator.isMobilePhone(process.env.TWILIO_NUMBER, 'en-GB', {strictMode:true}) && validator.isMobilePhone(process.env.MYNUMBERFORMAT64, 'fr-FR', {strictMode:true}) )) {
-            return res.status(200).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
+            return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
         }
         try {
             if (req.body.Body == 'Clients ?') {

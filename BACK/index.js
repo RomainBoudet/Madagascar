@@ -12,14 +12,12 @@ const logger = require('./app/services/logger');
 
 // on require les modules nécéssaire : 
 const cors = require('cors');
-const expressSanitizer = require('express-sanitizer');
 const express = require('express');
 const session = require('express-session');
 const redisSession = require('redis');
 const helmet = require('helmet');
 const router = require('./app/router');
 const cookieParser = require("cookie-parser");
-const uuid = require(`uuid`)
 
 //passage de notre api en http2
 const spdy = require('spdy');
@@ -38,6 +36,7 @@ const port = process.env.PORT || 5000;
 //-----------------------------------------------------------------------------------
 const expressSwagger = require('express-swagger-generator')(app);
 let optionsSwagger = require('./swagger-config.json');
+const cleanPass = require('./app/middlewares/sanitiz');
 optionsSwagger.basedir = __dirname; // __dirname désigne le dossier du point d'entrée
 optionsSwagger.swaggerDefinition.host = `localhost:${port}`;
 expressSwagger(optionsSwagger);
@@ -50,8 +49,6 @@ app.set('views', 'app/views');
 
 //Nos Middlewares :
 //-----------------------------------------------------------------------------------
-//On se prémunit des failles xss avec ce module qui filtre, comme Joi avec .alphanum() (ou il est installé), nos entrés, en enlevant tout tag 
-app.use(expressSanitizer());
 
 // module de log d'identification : me donne l'ip, l'heure et l'url de chaque connexion => en console ET en dur dans le dossier logs
 app.use(logger);
@@ -67,14 +64,8 @@ app.use(express.urlencoded({
     extended: true
 }));
 
-
-// je récupére un uuid que je vais passer a l'objet locals pour le récupérer dans ma vue, et au passage le faire changer dans ma CSP égalemnt de maniére dynamique
-// Même si uuid n'a pas de dépendance...a voir si j'ai intéret a le remplacer par crypto.randomBytes() ... ?
- app.use((req, res, next) => {
-    res.locals.nonce = uuid.v4()
-    next()
-}) 
-
+//On se prémunit des failles xss avec ce module qui filtre, en enlevant tout tag. Un filtre par défault ici qui laisse passer certains caractéres spéciaux pour MdP. Un filtre plus restrictif sera appilqué 
+app.use(cleanPass);
 
 //helmet : https://expressjs.com/fr/advanced/best-practice-security.html 
 //https://blog.risingstack.com/node-js-security-checklist/

@@ -11,8 +11,7 @@ const admin = require('./middlewares/admin');
 const dev = require('./middlewares/dev');
 
 const {
-  cleanPassword,
-  clean
+  clean,
 } = require('./middlewares/sanitizer'); //cleanPassword => supression de <> + cleanPassword. Pour les routes avec password // clean => pour toutes les routes sans password (ou on n'a pas besoin de caractéres spéciaux..)
 
 
@@ -123,7 +122,7 @@ router.get('/', mainController.init);
  * @returns {JSON} 200 - Un utilisateur à bien été connecté
  */
 
-router.post('/connexion', apiLimiter, cleanPassword, validateBody(userLoginSchema), authController.login);
+router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authController.login);
 
 /**
  * Permet la déconnexion d'un utilisateur au site. Nécéssite un token dans le cookie le xsrfToken du local storage
@@ -152,7 +151,7 @@ router.post('/connexion', apiLimiter, cleanPassword, validateBody(userLoginSchem
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été inséré en BDD, redirigé vers la page de connexon
  */
-router.post('/inscription', cleanPassword, validateBody(userSigninSchema), clientController.signIn);
+router.post('/inscription', validateBody(userSigninSchema), clientController.signIn);
 
 
 /**
@@ -164,7 +163,7 @@ router.post('/inscription', cleanPassword, validateBody(userSigninSchema), clien
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
  */
-router.post('/signin', dev, cleanPassword, validateBody(userSigninSchema), adminController.signInAdmin);
+router.post('/signin', dev, validateBody(userSigninSchema), adminController.signInAdmin);
 
 
 
@@ -189,7 +188,7 @@ router.post('/signin', dev, cleanPassword, validateBody(userSigninSchema), admin
  * @param {number} id.path.required - l'id à fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été mises a jour
  */
- router.patch('/user/:id(\\d+)', cleanPassword, client, validateBody(userUpdateSchema), clientController.updateClient);
+ router.patch('/user/:id(\\d+)', client, validateBody(userUpdateSchema), clientController.updateClient);
 
 /**
  * Envoie un email si l'utilisateur ne se souvient plus de son mot de passe, pour mettre en place un nouveau mot de passe de maniére sécurisé.
@@ -210,7 +209,7 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
   * @param {utilisateur.Model} utilisateur.body.required
   * @returns {JSON} 200 - Un nouveau mot de passe est entré en BDD
   */
- router.post('/user/reset_pwd', cleanPassword, validateBody(resetPwdSchema), validateQuery(resendEmailSchema), clientController.reset_pwd);
+ router.post('/user/reset_pwd',  validateBody(resetPwdSchema), validateQuery(resendEmailSchema), clientController.reset_pwd);
 
 
 /**
@@ -270,13 +269,13 @@ router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminCont
 
 /**
  * Faire appel a la méthode smsSend envoi un sms avec le contenu voulu. Ici un exemple générique qui renvoie le nombre d'enregistrement dans la table clients, a chaque demande. A modifier selon les besoins d'envoie de SMS...
- * @route POST /admin/smsSend
+ * @route GET /admin/smsSend
  * @group administrateur
  * @summary Utilise l'API de Twillio. Permet d'envoyer un sms sur le numéro souhaité
  * @param {administrateur.Model} administrateur.body.required
  * @returns {JSON} 200 -Renvoie un sms au numéro souhaité.
  */
- router.get('/admin/smsSend', admin, clean, adminController.smsSend);
+ router.get('/admin/smsSend', admin, adminController.smsSend);
 
 /**
  * Faire appel a la méthode smsResponse envoi un sms avec le contenu voulu selon le contenu d'un sms envoyé. A modifier selon les besoins d'envoie de SMS. Il pourrait être intéressant d'envoyer l'adresse a laquel envoyé le colis pour la derniére commande par example. 

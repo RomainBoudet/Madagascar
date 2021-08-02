@@ -34,7 +34,6 @@
     "email-validator": "^2.0.4",
     "express-jwt": "^6.0.0",
     "express-rate-limit": "^5.2.6",
-    "express-sanitizer": "^1.0.6",
     "express-session": "^1.17.2",
     "express-swagger-generator": "^1.1.17",
     "faker": "^5.5.3",

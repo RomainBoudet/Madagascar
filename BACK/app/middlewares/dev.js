@@ -23,7 +23,7 @@ const consol = require('../services/colorConsole');
   
       /* On vérifie que le xsrToken est présent dans les cookies de la session */
       if (!cookieXsrfToken) {
-        consol.dev('Il n\'y a pas de token dans le cookie de session')
+        console.log('Il n\'y a pas de token dans le cookie de session')
         return res.status(401).json({
           message: 'Il n\'y a pas de token dans le cookie de session'
         });
@@ -32,7 +32,7 @@ const consol = require('../services/colorConsole');
   
       /* On vérifie que le token CSRF est présent dans les en-têtes de la requête */
       if (!headers || !headers['x-xsrf-token']) {
-        consol.dev('Il n\'y a pas de token CRSF dans le header')
+        console.log('Il n\'y a pas de token CRSF dans le header')
         return res.status(401).json({
           message: 'Il n\'y a pas de token CRSF dans le header'
         });
@@ -40,12 +40,12 @@ const consol = require('../services/colorConsole');
   
       const headerXsrfToken = headers['x-xsrf-token'];
   
-      consol.dev("headerXsrfToken =>", headerXsrfToken);
-      consol.dev("cookieXsrfToken =>", cookieXsrfToken);
+      console.log("headerXsrfToken =>", headerXsrfToken);
+      console.log("cookieXsrfToken =>", cookieXsrfToken);
   
       /* On vérifie que le token CSRF correspond à celui présent dans le JWT  */
       if (headerXsrfToken !== cookieXsrfToken) {
-        consol.dev('Probléme de token csrf dans le admin MW')
+        console.log('Probléme de token csrf dans le admin MW')
         return res.status(401).json({
           message: 'Probléme de token csrf'
         });
@@ -59,14 +59,14 @@ const consol = require('../services/colorConsole');
       }
       
       //est-ce que l'utilisateur a le role developper
-      if (req.session.user.role !== 'Developper') {
+      if (req.session.user.privilege !== 'Developpeur') {
         return res.status(403).json({
           message: 'Vous n\'avez pas les droit nécéssaires pour accéder a la ressource.'
         })
       }
   
       
-      consol.dev(`L'utilisateur ${req.session.user.pseudo} avec le role ${req.session.user.role} a bien été authentifié via le developper MW !`);
+      console.log(`L'utilisateur ${req.session.user.prenom} avec le role ${req.session.user.privilege} a bien été authentifié via le developper MW !`);
   
       /* On passe l'utilisateur dans notre requête afin que celui-ci soit disponible pour les prochains middlewares */
       //req.user = user;

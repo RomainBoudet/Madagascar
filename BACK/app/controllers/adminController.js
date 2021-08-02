@@ -202,14 +202,18 @@ const adminController = {
     /*Pour valider un phoneNumber en front on utilisera => const number = client.lookups.phoneNumbers(req.body.phoneNumber).fetch(); //https://www.twilio.com/docs/lookup/api  API gratuite : https://www.twilio.com/fr/lookup  */
     // et on regardera : https://www.youtube.com/watch?v=gjh5gOalYcM
 
-    smsVerify: async (req, res) => {
+    smsVerify: async (req, res, error) => {
 
         try {
             // pas d'appel inutile a l'API, on vérifit d'abord..
-            console.log(req.body.phoneNumber);
+            console.log(typeof req.body.phoneNumber);
             const phoneInDb = await AdminPhone.findOne(req.session.user.idClient);
-
-            if (phoneInDb === null) {
+        
+            if (!phoneInDb === null) {
+                return res.status(200).json('Votre numéro de téléphone a déja été vérifié avec succés !')
+            }
+            //Malgrés la validator en backup, ne pas oublier que Joi sanctionnera avant si le format neconvient pas...
+            if (validator.isMobilePhone(req.body.phoneNumber, 'fr-FR', {strictMode:true})) {
 
                 twilio.verify.services(process.env.SERVICE_SID_VERIFY)
                     .verifications
@@ -225,13 +229,14 @@ const adminController = {
                 res.status(200).json('Un code par sms vous a été envoyé ! Merci de bien vouloir le renseigner pour terminer le vérification');
 
             } else {
-                return res.status(200).json('Votre numéro de téléphone a déja été vérifié avec succés !');
+                console.log('Votre numéro de téléphone ne correspond pas au format souhaité !');
+                return res.status(404).json('Erreur dans la méthode smsVerify du clientController');
             }
         } catch (error) {
             console.trace(
                 'Erreur dans la méthode smsVerify du clientController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).json('Erreur lors de la vérification de votre numéro de téléphone');
         }
     },
 
@@ -263,13 +268,16 @@ const adminController = {
             console.trace(
                 'Erreur dans la méthode smsCheck du clientController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).json('Erreur lors de la vérification de votre numéro de téléphone');
         }
     },
 
     // pas plus de 153 caractéres pa envoi.... !
     smsSend: async (_, res) => {
 
+        if (!(validator.isMobilePhone(process.env.TWILIO_NUMBER, 'en-GB', {strictMode:true}) && validator.isMobilePhone(process.env.MYNUMBERFORMAT64, 'fr-FR', {strictMode:true}) )) {
+            return res.status(200).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
+        }
         try {
             const clients = await Client.count()
             twilio.messages.create({
@@ -285,7 +293,7 @@ const adminController = {
             console.trace(
                 'Erreur dans la méthode smsSend du clientController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).json('Erreur lors de la vérification de votre numéro de téléphone');
         }
     },
 
@@ -294,6 +302,9 @@ const adminController = {
     // a insérer dans la console Twillio => dans l'onglet Active number, dans Messaging, A MESSAGE COMES IN Webhook, => https://4b4c0118e42b.eu.ngrok.io/v1/response
     // pas plus de 153 caractéres par envoi.... !
     smsRespond: async (req, res) => {
+        if (!(validator.isMobilePhone(process.env.TWILIO_NUMBER, 'en-GB', {strictMode:true}) && validator.isMobilePhone(process.env.MYNUMBERFORMAT64, 'fr-FR', {strictMode:true}) )) {
+            return res.status(200).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
+        }
         try {
             if (req.body.Body == 'Clients ?') {
                 const clients = await Client.count()
@@ -350,7 +361,7 @@ const adminController = {
             console.trace(
                 'Erreur dans la méthode smsRespond du clientController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).json('Erreur lors de la vérification de votre numéro de téléphone');
 
         }
     },

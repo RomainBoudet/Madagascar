@@ -23,31 +23,31 @@ const consol = require('../services/colorConsole');
   
       /* On vérifie que le xsrToken est présent dans les cookies de la session */
       if (!cookieXsrfToken) {
-        consol.auth('Il n\'y a pas de token dans le cookie de session')
+        console.log('Il n\'y a pas de token dans le cookie de session')
         return res.status(401).json({
           message: 'Il n\'y a pas de token dans le cookie de session '
         });
       }
   
-      consol.auth('le cookie xsrf est bien présent');
+      console.log('le cookie xsrf est bien présent');
   
       /* On vérifie que le token CSRF est présent dans les en-têtes de la requête */
       if (!headers || !headers['x-xsrf-token']) {
-        consol.auth('Il n\'y a pas de token CRSF dans le header')
+        console.log('Il n\'y a pas de token CRSF dans le header')
         return res.status(401).json({
           message: 'Il n\'y a pas de token CRSF dans le header'
         });
       }
-      consol.auth('le header xsrf est bien présent');
+      console.log('le header xsrf est bien présent');
   
       const headerXsrfToken = headers['x-xsrf-token'];
   
-      //consol.auth("headerXsrfToken =>", headerXsrfToken);
-      //consol.auth("cookieXsrfToken =>", cookieXsrfToken);
+      //console.log("headerXsrfToken =>", headerXsrfToken);
+      //console.log("cookieXsrfToken =>", cookieXsrfToken);
   
       /* On vérifie que le token CSRF correspond à celui présent dans le JWT  */
       if (headerXsrfToken !== cookieXsrfToken) {
-        consol.auth('Probléme de token csrf dans le auth MW')
+        console.log('Probléme de token csrf dans le auth MW')
         return res.status(401).json({
           message: 'Probléme de token csrf'
         });
@@ -63,14 +63,14 @@ const consol = require('../services/colorConsole');
       }
   
       //est-ce que l'utilisateur a le role developper
-      if (req.session.user.role !== 'Developper' && req.session.user.role !== 'Administrateur' && req.session.user.role !== 'Custumer') {
+      if (req.session.user.privilege !== 'Developpeur' && req.session.user.privilege !== 'Administrateur' && req.session.user.privilege !== 'Client') {
         return res.status(403).json({
           message: 'Vous n\'avez pas les droit nécéssaires pour accéder a la ressource (auth).'
         })
       }
   
   
-      consol.auth(`L'utilisateur ${req.session.user.pseudo} avec le role ${req.session.user.role} a bien été authentifié via le auth MW !`);
+      console.log(`L'utilisateur ${req.session.user.prenom} avec le role ${req.session.user.privilege} a bien été authentifié via le auth MW !`);
   
       /* On passe l'utilisateur dans notre requête afin que celui-ci soit disponible pour les prochains middlewares */
       //req.user = user;

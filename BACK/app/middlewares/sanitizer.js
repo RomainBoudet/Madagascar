@@ -1,6 +1,7 @@
 const validator = require('validator');
 
 
+
 /**
  * sanitizer Middleware
  * @module middleware/clean
@@ -46,17 +47,16 @@ const clean = (req, res, next) => {
         console.trace(
             'Erreur dans la méthode clean du sanitizer :',
             err);
-        
+
         return res.status(500).json({
             message: 'Erreur dans le sanitizer'
-          });
+        });
 
     }
 
 }
-//ici un petit MW special pour les routes avec passwords pour trimmer et interdire les balises mais pas les caractéres spéciaux que je veux dans les mots de passe. Le schema Joi prendra le relai pour plus de finesse mais Joi gére mal les trim...
-
-const cleanPassword = (req, res, next) => {
+//le MW suivant n'est pas utilisé et a été remplacé par un MW direct dans l'index, en amont.
+ const cleanPassword = (req, res, next) => {
 
     try {
         const theBody = req.body;
@@ -79,21 +79,23 @@ const cleanPassword = (req, res, next) => {
         }
         next();
 
-        /* le password doit contenir => @#$%^&* */
+         //le password doit pouvoir contenir => @#$%^&* et le phone number : +
 
     } catch (err) {
 
         console.trace(
-            'Erreur dans la méthode trim du sanitizer :',
+            'Erreur dans la méthode cleanPassword du sanitizer :',
             err);
             return res.status(500).json({
                 message: 'Erreur dans le sanitizer'
               });
 
     }
-}
+} 
+
 
 module.exports = {
     clean,
     cleanPassword
+
 };

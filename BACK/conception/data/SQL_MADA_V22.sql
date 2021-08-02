@@ -567,6 +567,24 @@ CREATE TABLE fournie(
 
 
 
+
+CREATE TABLE twillio(
+
+id                   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+twillio_number       phonenumber UNIQUE,
+dev_number           phonenumber UNIQUE,
+client_number        phonenumber UNIQUE,
+account_sid          text UNIQUE,
+auth_token           text UNIQUE,
+sid_verify           text UNIQUE,
+created_date         timestamptz NOT NULL DEFAULT now(),
+updated_date         timestamptz,
+CHECK (created_date < updated_date)
+
+);
+
+
+
 --------------------------------
 -- Création des principales vues 
 --------------------------------

@@ -565,6 +565,37 @@ CREATE TABLE fournie(
 	id_produit       INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE
 );
 
+
+
+--------------------------------
+-- Création des principales vues 
+--------------------------------
+
+-- Une vue pour les principales infos concernant les clients : 
+
+CREATE VIEW mada.all_custumer AS
+SELECT 
+	client.prenom,
+	client.nom_famille,
+	client.email,
+	client_adresse.ligne1,
+	client_adresse.ligne2,
+	client_adresse.ligne3,
+	client_adresse.telephone,
+	pays.nom as pays,
+	code_postal.code_postal,
+	ville.nom as ville,
+	privilege.nom as privilege
+FROM mada.client
+JOIN mada.privilege ON client.id_privilege = privilege.id
+JOIN mada.client_adresse ON client_adresse.id_client  = client.id
+JOIN mada.ville ON client_adresse.id_ville = ville.id
+JOIN mada.pays ON pays.id = ville.id_pays
+JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
+JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
+ORDER BY client.prenom ASC;
+
+
 COMMIT;
 
 

@@ -76,8 +76,9 @@ class Client {
     if (!rows[0]) {
       throw new Error("Aucun client dans la BDD");
     }
+    const count = rows[0].count;
     consol.model(
-      `Il existe ${rows.count} clients en BDD !`
+      `Il existe ${count} clients en BDD !`
     );
 
     return new Client(rows[0]);
@@ -340,6 +341,28 @@ class Client {
 
     console.log(`Le password du client id ${this.id} a été mise à jour avec succés !`);
   }
+
+  /**
+   * Méthode chargé d'aller chercher toutes les informations relatives à tous les clients
+   * @returns - tous les clients présent en BDD
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+   static async findAllWithJoint() {
+    const {
+      rows
+    } = await db.query('SELECT client.*,  FROM mada.client ORDER BY client.id ASC');
+
+    if (!rows[0]) {
+      throw new Error("Aucun client dans la BDD");
+    }
+    consol.model(
+      `les informations des ${rows.length} clients ont été demandé !`
+    );
+
+    return rows.map((client) => new Client(client));
+  }
+
 
 
 }

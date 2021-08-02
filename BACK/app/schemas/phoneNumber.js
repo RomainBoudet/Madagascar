@@ -11,7 +11,6 @@ const Joi = require('joi');
  * @property {string} phoneNumber - Le numéro de téléphone d'un administrateur
  * @return {json} messages - Un texte adapté en cas d'érreur, en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
-
  const phoneNumber = Joi.object({
    phoneNumber: Joi.string()
      .pattern(new RegExp(/^\+[1-9]\d{10}$/))

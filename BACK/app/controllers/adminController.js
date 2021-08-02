@@ -9,9 +9,14 @@ const Paiement = require('../models/paiement');
 const {
     formatLong
 } = require('../services/date');
+const {
+    exec
+} = require("child_process");
+
 
 //Config Twillio
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
+const phoneNumber = require('../schemas/phoneNumber');
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioNumber = process.env.TWILIO_NUMBER;
@@ -201,6 +206,7 @@ const adminController = {
 
         try {
             // pas d'appel inutile a l'API, on vérifit d'abord..
+            console.log(req.body.phoneNumber);
             const phoneInDb = await AdminPhone.findOne(req.session.user.idClient);
 
             if (phoneInDb === null) {
@@ -261,44 +267,35 @@ const adminController = {
         }
     },
 
-
-    smsEnvoi: async (req, res) => {
+    // pas plus de 153 caractéres pa envoi.... !
+    smsSend: async (_, res) => {
 
         try {
-            // if (req.body.Body === 'clients?') {
-
             const clients = await Client.count()
             twilio.messages.create({
                     body: `Il existe ${clients.count} clients enregitré en bdd le ${date}.`,
                     from: process.env.TWILIO_NUMBER,
                     to: process.env.MYNUMBERFORMAT64,
+
                 })
                 .then(message => console.log(message.sid));
-
-
-            res.status(200).json('sms envoyé ;)');
-            //} else
-
-            // res.status(404).json('c\'est mieux avaec un body adéquat...');
+            res.status(200).json('Sms envoyé bien envoyé !');
 
         } catch (error) {
             console.trace(
-                'Erreur dans la méthode smsEnvoi du clientController :',
+                'Erreur dans la méthode smsSend du clientController :',
                 error);
             res.status(500).json(error.message);
-
         }
     },
 
     //https://www.twilio.com/docs/sms/tutorials/how-to-receive-and-reply-node-js
     // pour tester via ngrok => (en ligne de commande) ngrok http https://localhost:3000 -region eu
     // a insérer dans la console Twillio => dans l'onglet Active number, dans Messaging, A MESSAGE COMES IN Webhook, => https://4b4c0118e42b.eu.ngrok.io/v1/response
-
+    // pas plus de 153 caractéres par envoi.... !
     smsRespond: async (req, res) => {
-
         try {
-            console.log("req.body", req.body.Body);
-            if (req.body.Body == 'Clients?') {
+            if (req.body.Body == 'Clients ?') {
                 const clients = await Client.count()
                 twilio.messages.create({
                         body: `Il existe ${clients.count} clients enregitré en bdd le ${date}.`,
@@ -307,19 +304,42 @@ const adminController = {
                     })
                     .then(message => console.log(message.sid));
 
-                return res.status(200).json('sms en réponse a "client?" bien envoyé.');
+                return;
 
-            } else if (req.body.Body == 'Paiement?') {
+            } else if (req.body.Body == 'Paiement ?') {
 
                 const paiement = await Paiement.getLastPaiement()
                 twilio.messages.create({
-                    body: `Dernier paiement le ${formatLong(paiement.datePaiement)}, montant : ${paiement.montant}€.`,
-                    from: process.env.TWILIO_NUMBER,
-                    to: process.env.MYNUMBERFORMAT64,
-                })
-                .then(message => console.log(message.sid));
+                        body: `Dernier paiement le ${formatLong(paiement.datePaiement)}, montant : ${paiement.montant}€.`,
+                        from: process.env.TWILIO_NUMBER,
+                        to: process.env.MYNUMBERFORMAT64,
+                    })
+                    .then(message => console.log(message.sid));
 
-            return res.status(200).json('sms en réponse a "paiement?" bien envoyé.');
+                return;
+
+            } else if (req.body.Body == 'ça roule ?') {
+
+                twilio.messages.create({
+                        body: `Ouaip, ça roule, on s'occupe 😉`,
+                        from: process.env.TWILIO_NUMBER,
+                        to: process.env.MYNUMBERFORMAT64,
+                    })
+                    .then(message => console.log(message.sid));
+
+                return;
+
+            } else if (req.body.Body == 'Balance ?') {
+
+                const balance = await twilio.balance.fetch()
+                twilio.messages.create({
+                        body: `La balance du compte Twillio est de ${balance.balance}$.`,
+                        from: process.env.TWILIO_NUMBER,
+                        to: process.env.MYNUMBERFORMAT64,
+                    })
+                    .then(message => console.log(message.sid));
+
+                return;
 
             } else {
 
@@ -334,11 +354,6 @@ const adminController = {
 
         }
     },
-
-
-
-
-
 
     getAllEmailVerif: async (req, res) => {
         try {
@@ -479,22 +494,7 @@ const adminController = {
         }
     },
 
-    newPhone: async (req, res) => {
-        try {
 
-            const data = {};
-
-            data.idClient = req.body.idClient;
-            data.adminTelephone = req.body.adminTelephone;
-
-            const newClient = new AdminPhone(data);
-            await newClient.save();
-            res.json(newClient);
-        } catch (error) {
-            console.log(`Erreur dans la méthode newPhone du adminController : ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
 
     newPrivilege: async (req, res) => {
         try {
@@ -655,9 +655,7 @@ const adminController = {
                 userMessage.idClient = 'Votre idClient n\'a pas changé';
             }
 
-
             await updateClient.update();
-
             res.json(userMessage);
 
         } catch (error) {

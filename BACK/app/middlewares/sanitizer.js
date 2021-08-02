@@ -31,7 +31,6 @@ const clean = (req, res, next) => {
             theBody[prop] = validator.blacklist(theBody[prop], ['[']);
             theBody[prop] = validator.blacklist(theBody[prop], [']']);
             theBody[prop] = validator.blacklist(theBody[prop], ['=']);
-            theBody[prop] = validator.blacklist(theBody[prop], ['+']);
             theBody[prop] = validator.blacklist(theBody[prop], ['*']);
             theBody[prop] = validator.blacklist(theBody[prop], ['$']);
             theBody[prop] = validator.blacklist(theBody[prop], ['%']);
@@ -75,7 +74,6 @@ const cleanPassword = (req, res, next) => {
             theBody[prop] = validator.blacklist(theBody[prop], ['[']);
             theBody[prop] = validator.blacklist(theBody[prop], [']']);
             theBody[prop] = validator.blacklist(theBody[prop], ['=']);
-            theBody[prop] = validator.blacklist(theBody[prop], ['+']);
             theBody[prop] = validator.blacklist(theBody[prop], ['_']);
 
         }

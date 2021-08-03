@@ -106,14 +106,17 @@ class AdminPhone {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun admin_phone avec cet idClient");
+            return null 
         }
+        /*  if (!rows[0]) {
+            throw new Error("Aucun admin_phone avec cet idClient");
+        } */
 
         consol.model(
             `le statut de l'admin_phone pour le idClient : ${idClient} a été demandé en BDD !`
         );
 
-        return rows.map((id) => new AdminPhone(id));
+        return new AdminPhone(rows[0]);
     }
 
     /**

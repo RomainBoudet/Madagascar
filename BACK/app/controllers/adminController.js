@@ -6,6 +6,7 @@ const AdminPhone = require('../models/adminPhone');
 const Privilege = require('../models/privilege');
 const Client = require('../models/client');
 const Paiement = require('../models/paiement');
+const Twillio = require('../models/twillio');
 const {
     formatLong
 } = require('../services/date');
@@ -15,12 +16,8 @@ const {
 
 
 //Config Twillio
-const MessagingResponse = require('twilio').twiml.MessagingResponse;
-const phoneNumber = require('../schemas/phoneNumber');
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioNumber = process.env.TWILIO_NUMBER;
-const twilio = require('twilio')(accountSid, authToken);
+//const dataTwillio = async () => await Twillio.findFirst();
+//const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
 
 //! a l'avenir, remplacer tout ça par le service date...
 const now = new Date(); // l'instant exact de la requête dans un format qui m'écorche pas les yeux ;)
@@ -197,6 +194,8 @@ const adminController = {
     },
 
 
+    //! TWILLIO SMS -------------------------------------------------------------------------------------------------------------------------------
+
     //Le délai d'attente max lors de la vérification du code est de 10 minutes max => https://www.twilio.com/docs/verify/api/verification-check
     // la doc :https://www.twilio.com/docs/verify/api/verification  
     /*Pour valider un phoneNumber en front on utilisera => const number = client.lookups.phoneNumbers(req.body.phoneNumber).fetch(); //https://www.twilio.com/docs/lookup/api  API gratuite : https://www.twilio.com/fr/lookup  */
@@ -204,10 +203,12 @@ const adminController = {
 
     smsVerify: async (req, res, error) => {
 
+        const dataTwillio = await Twillio.findFirst();
+        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+
         try {
             // pas d'appel inutile a l'API, on vérifit d'abord..
-            console.log(typeof req.body.phoneNumber);
-            const phoneInDb = await AdminPhone.findOne(req.session.user.idClient);
+            const phoneInDb = await AdminPhone.findByIdClient(req.session.user.idClient);
         
             if (!phoneInDb === null) {
                 return res.status(200).json('Votre numéro de téléphone a déja été vérifié avec succés !')
@@ -215,7 +216,7 @@ const adminController = {
             //Malgrés la validator en backup, ne pas oublier que Joi sanctionnera avant si le format neconvient pas...
             if (validator.isMobilePhone(req.body.phoneNumber, 'fr-FR', {strictMode:true})) {
 
-                twilio.verify.services(process.env.SERVICE_SID_VERIFY)
+                twilio.verify.services(dataTwillio.sidVerify)
                     .verifications
                     .create({
                         locale: 'fr',
@@ -242,6 +243,8 @@ const adminController = {
 
 
     smsCheck: async (req, res) => {
+        const dataTwillio = await Twillio.findFirst();
+        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
 
         try {
             const statut = await twilio.verify.services(process.env.SERVICE_SID_VERIFY)
@@ -274,16 +277,18 @@ const adminController = {
 
     // pas plus de 153 caractéres pa envoi.... !
     smsSend: async (_, res) => {
+        const dataTwillio = await Twillio.findFirst();
+        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
 
-        if (!(validator.isMobilePhone(process.env.TWILIO_NUMBER, 'en-GB', {strictMode:true}) && validator.isMobilePhone(process.env.MYNUMBERFORMAT64, 'fr-FR', {strictMode:true}) )) {
+        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {strictMode:true}) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {strictMode:true}) )) {
             return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
         }
         try {
             const clients = await Client.count()
             twilio.messages.create({
                     body: `Il existe ${clients.count} clients enregitré en bdd le ${date}.`,
-                    from: process.env.TWILIO_NUMBER,
-                    to: process.env.MYNUMBERFORMAT64,
+                    from: dataTwillio.twillioNumber,
+                    to: dataTwillio.devNumber,
 
                 })
                 .then(message => console.log(message.sid));
@@ -297,37 +302,16 @@ const adminController = {
         }
     },
 
-    smsBalance: async (_, res) => {
-
-        if (!(validator.isMobilePhone(process.env.TWILIO_NUMBER, 'en-GB', {strictMode:true}) && validator.isMobilePhone(process.env.MYNUMBERFORMAT64, 'fr-FR', {strictMode:true}) )) {
-            return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
-        }
-        try {
-            const balance = await twilio.balance.fetch()
-                twilio.messages.create({
-                        body: `La balance du compte Twillio est de ${balance.balance}$.`,
-                        from: process.env.TWILIO_NUMBER,
-                        to: process.env.MYNUMBERFORMAT64,
-                    })
-                    .then(message => console.log(message.sid));
-
-                return res.status(200).json('Sms bien envoyé !');
-            
-
-        } catch (error) {
-            console.trace(
-                'Erreur dans la méthode smsSend du clientController :',
-                error);
-            res.status(500).json('Erreur lors de la vérification de votre numéro de téléphone');
-        }
-    },
+    
 
     //https://www.twilio.com/docs/sms/tutorials/how-to-receive-and-reply-node-js
     // pour tester via ngrok => (en ligne de commande) ngrok http https://localhost:3000 -region eu
     // a insérer dans la console Twillio => dans l'onglet Active number, dans Messaging, A MESSAGE COMES IN Webhook, => https://4b4c0118e42b.eu.ngrok.io/v1/response
     // pas plus de 153 caractéres par envoi.... !
     smsRespond: async (req, res) => {
-        if (!(validator.isMobilePhone(process.env.TWILIO_NUMBER, 'en-GB', {strictMode:true}) && validator.isMobilePhone(process.env.MYNUMBERFORMAT64, 'fr-FR', {strictMode:true}) )) {
+        const dataTwillio = await Twillio.findFirst();
+        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {strictMode:true}) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {strictMode:true}) )) {
             return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
         }
         try {
@@ -335,8 +319,8 @@ const adminController = {
                 const clients = await Client.count()
                 twilio.messages.create({
                         body: `Il existe ${clients.count} clients enregitré en bdd le ${date}.`,
-                        from: process.env.TWILIO_NUMBER,
-                        to: process.env.MYNUMBERFORMAT64,
+                        from: dataTwillio.twillioNumber,
+                        to: dataTwillio.devNumber,
                     })
                     .then(message => console.log(message.sid));
 
@@ -347,8 +331,8 @@ const adminController = {
                 const paiement = await Paiement.getLastPaiement()
                 twilio.messages.create({
                         body: `Dernier paiement le ${formatLong(paiement.datePaiement)}, montant : ${paiement.montant}€.`,
-                        from: process.env.TWILIO_NUMBER,
-                        to: process.env.MYNUMBERFORMAT64,
+                        from: dataTwillio.twillioNumber,
+                        to: dataTwillio.devNumber,
                     })
                     .then(message => console.log(message.sid));
 
@@ -358,8 +342,8 @@ const adminController = {
 
                 twilio.messages.create({
                         body: `Ouaip, ça roule, on s'occupe 😉`,
-                        from: process.env.TWILIO_NUMBER,
-                        to: process.env.MYNUMBERFORMAT64,
+                        from: dataTwillio.twillioNumber,
+                        to: dataTwillio.devNumber,
                     })
                     .then(message => console.log(message.sid));
 
@@ -370,8 +354,8 @@ const adminController = {
                 const balance = await twilio.balance.fetch()
                 twilio.messages.create({
                         body: `La balance du compte Twillio est de ${balance.balance}$.`,
-                        from: process.env.TWILIO_NUMBER,
-                        to: process.env.MYNUMBERFORMAT64,
+                        from: dataTwillio.twillioNumber,
+                        to: dataTwillio.devNumber,
                     })
                     .then(message => console.log(message.sid));
 
@@ -390,6 +374,181 @@ const adminController = {
 
         }
     },
+
+    //! TWILLIO MANAGEMENT -------------------------------------------------------------------------------------------------------------------------
+
+    smsBalance: async (_, res) => {
+        const dataTwillio = await Twillio.findFirst();
+        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+
+        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {strictMode:true}) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {strictMode:true}) )) {
+            return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
+        }
+        try {
+            const balance = await twilio.balance.fetch()
+                twilio.messages.create({
+                        body: `La balance du compte Twillio est de ${balance.balance}$.`,
+                        from: dataTwillio.twillioNumber,
+                        to: dataTwillio.devNumber,
+                    })
+                    .then(message => console.log(message.sid));
+
+                return res.status(200).json('Sms bien envoyé !');
+            
+
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode smsSend du clientController :',
+                error);
+            res.status(500).json('Erreur lors de la vérification de votre numéro de téléphone');
+        }
+    },
+
+    getAllTwillio: async (req, res) => {
+        try {
+            const resultats = await Twillio.findAll();
+
+            res.status(200).json(resultats);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllTwillio du adminController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getOneTwillio: async (req, res) => {
+        try {
+
+            const resultat = await Twillio.findOne(req.params.id);
+            res.json(resultat);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getOneTwillio du adminController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+    newTwillio: async (req, res) => {
+        try {
+
+            const data = {};
+
+            data.twillioNumber = req.body.twillioNumber;
+            data.devNumber = req.body.devNumber;
+            data.clientNumber = req.body.clientNumber;
+            data.accountSid = req.body.accountSid;
+            data.authToken = req.body.authToken;
+            data.sidVerify = req.body.sidVerify;
+            console.log(data);
+            const newClient = new Twillio(data);
+            await newClient.save();
+            res.json(newClient);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newTwillio du adminController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    updateTwillio: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+
+            const updateClient = await Twillio.findOne(id);
+
+            const twillioNumber = req.body.twillioNumber;
+            const devNumber = req.body.devNumber;
+            const clientNumber = req.body.clientNumber;
+            const accountSid = req.body.accountSid;
+            const authToken= req.body.authToken;
+            const sidVerify= req.body.sidVerify;
+            
+            let userMessage = {};
+
+            if (twillioNumber) {
+                updateClient.twillioNumber = twillioNumber;
+                userMessage.twillioNumber = 'Votre nouveau twillioNumber a bien été enregistré ';
+            } else if (!twillioNumber) {
+                userMessage.twillioNumber = 'Votre twillioNumber n\'a pas changé';
+            }
+
+
+            if (devNumber) {
+                updateClient.devNumber = devNumber;
+                userMessage.devNumber = 'Votre nouveau devNumber a bien été enregistré ';
+            } else if (!devNumber) {
+                userMessage.devNumber = 'Votre devNumber n\'a pas changé';
+            }
+
+            if (clientNumber) {
+                updateClient.clientNumber = clientNumber;
+                userMessage.clientNumber = 'Votre nouveau clientNumber a bien été enregistré ';
+            } else if (!clientNumber) {
+                userMessage.clientNumber = 'Votre clientNumber n\'a pas changé';
+            }
+            if (accountSid) {
+                updateClient.accountSid = accountSid;
+                userMessage.accountSid = 'Votre nouveau accountSid a bien été enregistré ';
+            } else if (!accountSid) {
+                userMessage.accountSid = 'Votre accountSid n\'a pas changé';
+            }
+            if (authToken) {
+                updateClient.authToken = authToken;
+                userMessage.authToken = 'Votre nouveau authToken a bien été enregistré ';
+            } else if (!authToken) {
+                userMessage.authToken = 'Votre authToken n\'a pas changé';
+            }
+            if (sidVerify) {
+                updateClient.sidVerify = sidVerify;
+                userMessage.sidVerify = 'Votre nouveau sidVerify a bien été enregistré ';
+            } else if (!sidVerify) {
+                userMessage.sidVerify = 'Votre sidVerify n\'a pas changé';
+            }
+            if (devNumber) {
+                updateClient.devNumber = devNumber;
+                userMessage.devNumber = 'Votre nouveau devNumber a bien été enregistré ';
+            } else if (!devNumber) {
+                userMessage.devNumber = 'Votre devNumber n\'a pas changé';
+            }
+
+
+            await updateClient.update();
+
+            res.json(userMessage);
+
+        } catch (error) {
+            console.log(`Erreur dans la méthode updateTwillio du adminController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+    deleteTwillio: async (req, res) => {
+
+        try {
+
+            const twillioInDb = await Twillio.findOne(req.params.id);
+
+            const twillioDeleted = await twillioInDb.delete();
+
+            res.json(twillioDeleted);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteTwillio du adminController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+
+
+
+
+
+
+
+
 
     getAllEmailVerif: async (req, res) => {
         try {

@@ -73,6 +73,28 @@ class Twillio {
         return rows.map((twillio) => new Twillio(twillio));
     }
 
+    /**
+     * Méthode chargé d'aller chercher les informations relatives la premiére info twillio
+     * @returns - la 1ére info twillio présent en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findFirst() {
+        const {
+            rows
+        } = await db.query('SELECT * FROM mada.twillio ORDER BY twillio.id ASC LIMIT 1');
+
+        if (!rows[0]) {
+            throw new Error("Aucun twillio dans la BDD");
+        }
+        this.id = rows[0].id;
+        consol.model(
+            `la première info avec l'id ${this.id} a été demandées !`
+        );
+        
+        return new Twillio(rows[0]);
+    }
+
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à une info twillio via son id passée en paramétre
@@ -115,14 +137,14 @@ class Twillio {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.twillio (quantite, created_date, id_produit) VALUES ($1, now(), $2) RETURNING *;`,
-            [this.quantite, this.idProduit]
+            `INSERT INTO mada.twillio (twillio_number, dev_number, client_number, account_sid, auth_token, sid_verify, created_date) VALUES ($1, $2, $3, $4, $5, $6, now()) RETURNING *;`,
+            [this.twillioNumber, this.devNumber, this.clientNumber, this.accountSid, this.authToken, this.sidVerify]
         );
 
         this.id = rows[0].id;
         this.createdDate = rows[0].created_date;
         consol.model(
-            `la twillio id ${this.id} a été inséré à la date du ${this.createdDate} pour le produit id ${this.idProduit} !`
+            `la twillio id ${this.id} a été inséré à la date du ${this.createdDate} !`
         );
     }
 
@@ -142,7 +164,7 @@ class Twillio {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.twillio SET twillio_number = $1, dev_number = $2, client_number = $3, account_sid = $4, auth_token = $5 sid_verify = $6, updated_date = now() WHERE id = $7,  RETURNING *;`,
+            `UPDATE mada.twillio SET twillio_number = $1, dev_number = $2, client_number = $3, account_sid = $4, auth_token = $5, sid_verify = $6, updated_date = now() WHERE id = $7  RETURNING *;`,
             [this.twillioNumber, this.devNumber, this.clientNumber, this.accountSid, this.authToken, this.sidVerify, this.id]
         );
         this.updatedDate = rows[0].updated_date;

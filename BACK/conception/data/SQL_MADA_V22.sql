@@ -50,8 +50,10 @@ CREATE DOMAIN postale_code_fr AS text -- un domaine (type de donnée) permettant
 CREATE DOMAIN phonenumber AS text -- un domaine (type de donnée) permettant de vérifier la validité d'un numéro de téléphone via une regex
 	CHECK (
 
-		VALUE ~* '^\+[1-9]\d{10}$'
+		VALUE ~* '^\+[1-9]\d{10,14}$'
 	);
+
+
 
 CREATE DOMAIN pass as text  -- un domaine (type de donnée) permettant de vérifier la validité d'un mot de passe en hash via une regex (fonctionne uniquement avec bcrypt qui commence ces hash de la même maniére)
 CHECK (
@@ -571,12 +573,12 @@ CREATE TABLE fournie(
 CREATE TABLE twillio(
 
 id                   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-twillio_number       phonenumber UNIQUE,
-dev_number           phonenumber UNIQUE,
+twillio_number       phonenumber NOT NULL UNIQUE,
+dev_number           phonenumber NOT NULL UNIQUE,
 client_number        phonenumber UNIQUE,
-account_sid          text UNIQUE,
-auth_token           text UNIQUE,
-sid_verify           text UNIQUE,
+account_sid          text UNIQUE NOT NULL,
+auth_token           text UNIQUE NOT NULL,
+sid_verify           text UNIQUE NOT NULL,
 created_date         timestamptz NOT NULL DEFAULT now(),
 updated_date         timestamptz,
 CHECK (created_date < updated_date)

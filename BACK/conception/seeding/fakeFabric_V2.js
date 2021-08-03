@@ -1429,6 +1429,11 @@ const fakeData = async () => {
         await db.query(`INSERT INTO mada.shop (nom, texte_intro, email_contact, telephone) VALUES('${process.env.SITE}','${process.env.TEXTEINTRO}', '${process.env.EMAILCONTACTSITE}', '${process.env.TELEPHONESITE}');`);
         consol.seed(`Données du site mis en place pour le site ${process.env.SITE}`);
 
+        consol.seed("Mise en place des infos Twillio dans la BDD");
+        await db.query(`INSERT INTO mada.twillio (twillio_number, dev_number, client_number, account_sid, auth_token, sid_verify, created_date) VALUES ('${process.env.TWILIO_NUMBER}', '${process.env.DEV_NUMBER}', '${process.env.DEV_NUMBER}', '${process.env.TWILIO_ACCOUNT_SID}', '${process.env.TWILIO_AUTH_TOKEN}', '${process.env.SERVICE_SID_VERIFY}', now());`);
+        consol.seed(`Fin de la mise en place des données pour Twillio`);
+
+
 
         console.timeEnd("Génération de la fonction fakeData");
         consol.admin("FIN DE L'IMPORT");

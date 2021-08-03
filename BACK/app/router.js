@@ -43,7 +43,7 @@ const userLoginSchema = require('./schemas/userLoginSchema');
 const userSigninSchema = require('./schemas/userSigninSchema');
 const userUpdateSchema = require('./schemas/userUpdateSchema');
 const verifyEmailSchema = require('./schemas/verifyEmailSchema');
-const resendEmailSchema =require('./schemas/resendEmailSchema');
+const resendEmailSchema = require('./schemas/resendEmailSchema');
 const resetPwdSchema = require('./schemas/resetPwdSchema');
 const phoneNumberSchema = require('./schemas/phoneNumber');
 const codeSchema = require('./schemas/codeSchema');
@@ -106,6 +106,7 @@ aut */
 router.get('/', mainController.init);
 
 
+//! ROUTES UTILISATEUR ----------------
 /**
  * Une connexion
  * @typedef {object} connexion
@@ -131,7 +132,7 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
  * @summary déconnecte un utilisateur - on reset les infos du user en session
  * @returns {JSON} 200 - Un utilisateur a bien été déconnecté
  */
- router.get('/deconnexion', client, authController.deconnexion);
+router.get('/deconnexion', client, authController.deconnexion);
 
 /**
  * Une inscription
@@ -166,10 +167,6 @@ router.post('/inscription', validateBody(userSigninSchema), clientController.sig
 router.post('/signin', dev, validateBody(userSigninSchema), adminController.signInAdmin);
 
 
-
-
-
-
 /**
  * Un utilisateur
  * @typedef {object} utilisateur
@@ -188,7 +185,7 @@ router.post('/signin', dev, validateBody(userSigninSchema), adminController.sign
  * @param {number} id.path.required - l'id à fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été mises a jour
  */
- router.patch('/user/update/:id(\\d+)', client, validateBody(userUpdateSchema), clientController.updateClient);
+router.patch('/user/update/:id(\\d+)', client, validateBody(userUpdateSchema), clientController.updateClient);
 
 /**
  * Envoie un email si l'utilisateur ne se souvient plus de son mot de passe, pour mettre en place un nouveau mot de passe de maniére sécurisé.
@@ -199,36 +196,24 @@ router.post('/signin', dev, validateBody(userSigninSchema), adminController.sign
  * @returns {JSON} 200 - Un email a été délivré
  */
 router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientController.new_pwd);
- // ETAPE 2 => envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
- 
- /**
+// ETAPE 2 => envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
+
+/**
  *  envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
  *  @route POST /user/reset_pwd
-  * @group utilisateur
-  * @summary  Reset du mot de passe. prend en entrée, newPassword et passwordConfirm dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
-  * @param {utilisateur.Model} utilisateur.body.required
-  * @returns {JSON} 200 - Un nouveau mot de passe est entré en BDD
-  */
- router.post('/user/reset_pwd',  validateBody(resetPwdSchema), validateQuery(resendEmailSchema), clientController.reset_pwd);
+ * @group utilisateur
+ * @summary  Reset du mot de passe. prend en entrée, newPassword et passwordConfirm dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
+ * @param {utilisateur.Model} utilisateur.body.required
+ * @returns {JSON} 200 - Un nouveau mot de passe est entré en BDD
+ */
+router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailSchema), clientController.reset_pwd);
 
+//! ROUTES ADMINISTRATEUR ----------------
 
 /**
  * Un administrateur
  * @typedef {object} administrateur
  */
-/**
- * Permet de donner le privilege Administrateur a un client.
- * Route sécurisée avec Joi et MW Developpeur
- * @route PATCH /v1/updatePrivilege
- * @group administrateur - Des méthodes a dispositions des administrateurs
- * @summary Transforme un client en administrateur dans la base de donnée
- * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
- * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
- */
- router.patch('/updateprivilege/:id(\\d+)', dev, clean, adminController.updatePrivilege);
-
-//Routes pour procédure de vérification de mail 
-//ETAPE 1 => Route pour prendre un email dans le body, verifis ce qu'il faut, envoi un mail avec URL sécurisé incorporé + tolken, qui renvoit sur la route verifyEmail
 /**
  * Envoie un email pour que l'admin qui le souhaite puisse vérifier son email.
  * @route POST /resendEmailLink'
@@ -236,17 +221,17 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
  * @summary Prend un mail en entrée et renvoie un email si celui çi est présent en BDD.  Cliquer sur le lien dans l'email envoyé enmenera sur la route /verifyemail  
  * @returns {JSON} 200 - Un email a été délivré
  */
- router.post('/resendEmailLink', clean, admin, validateBody(resendEmailSchema), clientController.resendEmailLink);
+router.post('/resendEmailLink', clean, admin, validateBody(resendEmailSchema), clientController.resendEmailLink);
 
- //ETAPE 2 => Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
- /**
-  * Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
-  * @route GET /verifyEmail
-  * @group administrateur
-  * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD.
-  * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
-  */
- router.post('/verifyEmail', clean, admin, validateQuery(verifyEmailSchema), clientController.verifyEmail);
+//ETAPE 2 => Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
+/**
+ * Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
+ * @route GET /verifyEmail
+ * @group administrateur
+ * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD.
+ * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
+ */
+router.post('/verifyEmail', clean, admin, validateQuery(verifyEmailSchema), clientController.verifyEmail);
 /**
  * Permet d'enregitrer en BDD et de vérifier un téléphone par l'envoie d'un sms sur le numéro.
  * @route POST /admin/smsVerify
@@ -255,7 +240,7 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
  * @param {administrateur.Model} administrateur.body.required
  * @returns {JSON} 200 - Un code par sms a été envoyé
  */
- router.post('/admin/smsVerify', admin, clean, validateBody(phoneNumberSchema), adminController.smsVerify);
+router.post('/admin/smsVerify', admin, clean, validateBody(phoneNumberSchema), adminController.smsVerify);
 //
 /**
  * Reçoi un code pour vérifier un numéro de téléphone et si le code est correct, le téléphone est enregistré en BDD sous format E. 164.
@@ -274,16 +259,38 @@ router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminCont
  * @summary Utilise l'API de Twillio. Permet d'envoyer un sms sur le numéro souhaité
  * @returns {JSON} 200 -Renvoie un sms au numéro souhaité.
  */
- router.get('/admin/smsSend', admin, adminController.smsSend);
+router.get('/admin/smsSend', admin, adminController.smsSend);
+
+/**
+ * Renvoie tous les clients en bdd 
+ * @route GET /admin/user/all
+ * @group administrateur
+ * @summary Renvoie tous les client en BDD
+ * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
+ */
+ router.get('/admin/user/all', admin, clientController.getAll);
 
  /**
+  * Renvoie un client selon son id
+  * @route GET /admin/user/all
+  * @group administrateur
+  * @summary Renvoie tous les client en BDD
+  * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
+  */
+ router.get('admin/user/getone/:id(\\d+)', clientController.getOne);
+
+
+
+//! ROUTES DEVELOPPEUR ----------------
+
+/**
  * Faire appel a la méthode smsBalance envoi un sms avec la balance du compte Twilio. I
  * @route GET /dev/smsBalance
- * @group developpeur
+ * @group Developpeur - Twillio
  * @summary Utilise l'API de Twillio. Renvoie la balance du compte par sms au numéro souhaité.
  * @returns {JSON} 200 -Renvoie la balance du compte par sms au numéro souhaité.
  */
-  router.get('/dev/smsBalance', dev, adminController.smsBalance);
+router.get('/dev/smsBalance', dev, adminController.smsBalance);
 
 /**
  * Faire appel a la méthode smsResponse envoi un sms avec le contenu voulu selon le contenu d'un sms envoyé. A modifier selon les besoins d'envoie de SMS. Il pourrait être intéressant d'envoyer l'adresse a laquel envoyé le colis pour la derniére commande par example. 
@@ -297,22 +304,62 @@ router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminCont
 router.post('/admin/smsRespond', clean, adminController.smsRespond);
 
 /**
- * Renvoie tous les clients en bdd 
- * @route GET /admin/user/all
- * @group administrateur
- * @summary Renvoie tous les client en BDD
- * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
+ * Renvoie tous les infos twillio
+ * @route GET /dev/allTwillio
+ * @group Developpeur - twillio
+ * @summary  Renvoie les informations de connexion au compte twillio
+ * @returns {JSON} 200 - Renvoie les informations souhaitées
  */
- router.get('/admin/user/all', admin, clientController.getAll);
+router.get('/dev/allTwillio', dev, adminController.getAllTwillio);
 
 /**
- * Renvoie un client selon son id
- * @route GET /admin/user/all
- * @group administrateur
- * @summary Renvoie tous les client en BDD
- * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
+ * Renvoie une ligne d'infos twillio
+ * @route GET /dev/oneTwillio
+ * @group Developpeur - twillio
+ * @summary  Renvoie une information de connexion lié a un compte twillio
+ * @returns {JSON} 200 - Renvoie les informations souhaitées
  */
-router.get('admin/user/getone/:id(\\d+)', clientController.getOne);
+router.get('/dev/oneTwillio/:id(\\d+)', dev, adminController.getOneTwillio);
+
+/**
+ * Insére une ligne d'infos twillio
+ * @route POST /dev/newTwillio
+ * @group Developpeur - twillio
+ * @summary  Insére une information de connexion lié a un compte twillio
+ * @returns {JSON} 200 - Renvoie les informations souhaitées
+ */
+router.post('/dev/newTwillio', dev, adminController.newTwillio);
+
+/**
+ * Met a jour une ligne d'infos twillio
+ * @route PATCH /dev/newTwillio
+ * @group Developpeur - twillio
+ * @summary  Met a jour une information de connexion lié a un compte twillio
+ * @returns {JSON} 200 - Renvoie les informations mis a jour
+ */
+router.patch('/dev/updateTwillio/:id(\\d+)', dev, adminController.updateTwillio);
+
+/**
+ * Supprime une ligne d'infos twillio
+ * @route DELETE /dev/newTwillio
+ * @group Developpeur - twillio
+ * @summary  Supprime une information de connexion lié a un compte twillio
+ * @returns {JSON} 200 - Renvoie les informations supprimé
+ */
+router.delete('/dev/deleteTwillio/:id(\\d+)', dev, adminController.deleteTwillio);
+
+/**
+ * Permet de donner le privilege Administrateur a un client.
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route PATCH /v1/updatePrivilege
+ * @group Developpeur - 
+ * @summary Transforme un client en administrateur dans la base de donnée
+ * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
+ * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
+ */
+ router.patch('/updateprivilege/:id(\\d+)', dev, clean, adminController.updatePrivilege);
+
+
 
 
 
@@ -348,7 +395,7 @@ router.patch('/update/:id(\\d+)', produitController.update);
  * Redirection vers une page 404
  */
 router.use((req, res) => {
-  //res.redirect(`https://localhost:${port}/api-docs#/`);
+  //res.redirect(`https://localhost:3000/api-docs#/`);
   res.status(404).json(`La route choisie n\'existe pas : Pour la liste des routes existantes, saisir cette URL dans le navigateur => https://localhost:${port}/api-docs#/`);
 });
 

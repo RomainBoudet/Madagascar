@@ -56,7 +56,7 @@ app.use(logger);
 // le parser JSON qui récupère le payload quand il y en a un et le transforme en objet JS disponible sous request.body
 app.use(express.json());
 
-//cookie parser, qui me permet d'avoir accés a req.cookies dans mes MW auth, admin
+//cookie parser, qui me permet d'avoir accés a req.cookies dans mes MW auth, admin, en transformant mes cookies en un bel objet  
 app.use(cookieParser(process.env.SECRET));
 
 // on va devoir gérer des données en POST, on ajoute le middleware urlencoded pour récupérer les infos dans request.body 
@@ -114,7 +114,7 @@ app.use(
             client: redisClient
         }), // et nos cookies sont stockés sur REDIS !
         resave: true, // Resauver la session à chaque requête -> pour prolonger la durée de vie
-        saveUninitialized: true, // Permet de sauver automatiquement la session d'un visiteur sans que j'ai à l'intialiser moi-même
+        saveUninitialized: false, // Permet de sauver automatiquement la session d'un visiteur sans que j'ai à l'intialiser moi-même
         secret: process.env.SECRET, // le .env est dans la variable SECRET du .env.back
         cookie: {
             secure: true, //si true, la navigateur n'envoit que des cookie sur du HTTPS

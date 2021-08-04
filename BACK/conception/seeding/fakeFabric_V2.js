@@ -319,7 +319,8 @@ const fakeData = async () => {
                 price: faker.commerce.price(),
                 color: colors[Math.floor(Math.random() * colors.length)], //faker.internet.color => hex
                 size: sizes[Math.floor(Math.random() * sizes.length)],
-                quantity: Math.floor(Math.random() * (10 - 1 + 1)) + 1, // un random entre 1 et 10
+                quantity: Math.floor(Math.random() * (10 - 1 + 1)) + 1, // un random entre 1 et 10\u{002A}\u{FE0F}\u{20E3}
+                image:faker.image.imageUrl(),
                 index,
                 id_category: Math.floor(Math.random() * (100 - 1 + 1)) + 1,
                 id_taxRate: Math.floor(Math.random() * (2 - 1 + 1)) + 1, // un random entre 1 et 2
@@ -1065,11 +1066,11 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${products.length} produits`);
         console.time(`Import de ${products.length} produits`);
-        const productsInsert = "INSERT INTO mada.produit (nom, description, prix_HT, id_categorie, id_TVA, id_reduction) VALUES ($1, $2, $3 ,$4, $5, $6);";
+        const productsInsert = "INSERT INTO mada.produit (nom, description, prix_HT, image_mini, id_categorie, id_TVA, id_reduction) VALUES ($1, $2, $3 ,$4, $5, $6, $7);";
 
         for (const product of products) {
             consol.seed(`Import du product ayant pour nom : ${product.name} et id_category : ${product.id_category} et id_reduction : ${product.id_reduction}`);
-            const result = await db.query(productsInsert, [product.name, product.description, product.price, product.id_category, product.id_taxRate, product.id_reduction]);
+            const result = await db.query(productsInsert, [product.name, product.description, product.price, product.image, product.id_category, product.id_taxRate, product.id_reduction]);
         }
 
         consol.seed(`Fin de l'import de ${products.length} produits`);

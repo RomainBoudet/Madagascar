@@ -125,9 +125,9 @@ const authController = {
         try {
 
 
-            req.session.user = false;
+            req.session.destroy();
             //on redirige sur la page d'accueil
-            console.log("client déconnecté ! valeur de req.user maintenant ==> ", req.session.user)
+            console.log("client déconnecté ! valeur de req.session maintenant ==> ", req.session)
             return res.status(200).json("L'utilisateur a été déconnecté");
 
         } catch (error) {
@@ -138,10 +138,6 @@ const authController = {
         }
 
     },
-
-
-
-
 
 }
 

@@ -132,7 +132,7 @@ router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authControl
  * @summary déconnecte un utilisateur - on reset les infos du user en session
  * @returns {JSON} 200 - Un utilisateur a bien été déconnecté
  */
-router.get('/deconnexion', client, authController.deconnexion);
+router.get('/deconnexion', authController.deconnexion);
 
 /**
  * Une inscription
@@ -359,8 +359,37 @@ router.delete('/dev/deleteTwillio/:id(\\d+)', dev, adminController.deleteTwillio
  */
  router.patch('/updateprivilege/:id(\\d+)', dev, clean, adminController.updatePrivilege);
 
+//! methodes pour la gestion du panier
+/**
+ * Une route pour voir ce qu"on a dans le panier
+ * route accessible a tous 
+ * @route GET/user/panier
+ * @group Panier - Gestion du panier
+ * @summary Affiche les articles d'un panier selon la session
+ * @returns {JSON} 200 - les articles présent dans ce panier et leurs caractéristiques
+ */
+//router.get('/user/panier', panierController.getPanier);
 
 
+/**
+ * Une route pour ajouter un article dans le panier
+ * route accessible a tous 
+ * @route GET/user/addPanier
+ * @group Panier - Gestion du panier
+ * @summary Ajoute un article dans le panier
+ * @returns {JSON} 200 - les articles ajouté dans ce panier et leurs caractéristiques
+ */
+router.get('/user/addPanier/:id(\\d+)', panierController.addArticlePanier);
+
+/**
+ * Une route pour supprimer un article dans le panier
+ * route accessible a tous 
+ * @route GET/user/delPanier
+ * @group Panier - Gestion du panier
+ * @summary Supprime un article dans le panier
+ * @returns {JSON} 200 - les articles supprimé dans ce panier et leurs caractéristiques
+ */
+ router.delete('/user/delPanier/:id(\\d+)', panierController.delArticlePanier);
 
 
 

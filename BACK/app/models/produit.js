@@ -7,6 +7,7 @@ class Produit {
     nom;
     description;
     prixHT;
+    imageMini;
     createdDate;
     updatedDate;
     idCategorie;
@@ -29,6 +30,10 @@ class Produit {
 
     set updated_date(val) {
         this.updatedDate = val;
+    }
+
+    set image_mini(val) {
+        this.imageMini = val;
     }
 
     set id_categorie(val) {
@@ -90,20 +95,25 @@ class Produit {
         const {
             rows,
         } = await db.query(
-            'SELECT * FROM mada.produit WHERE produit.id = $1;',
+            'SELECT * FROM mada.view_produit WHERE id = $1;',
             [id]
         );
+
 
         if (!rows[0]) {
             throw new Error("Aucun produit avec cet id");
         }
 
+        console.log("rows[0] dans le model => ",rows[0]);
         consol.model(
             `le produit id : ${id} a été demandé en BDD !`
         );
 
         return new Produit(rows[0]);
     }
+
+
+
 
 
 
@@ -127,7 +137,6 @@ class Produit {
         if (!rows[0]) {
             throw new Error("Aucun produit avec cet idCategorie");
         }
-
         consol.model(
             `la produit pour le idClient : ${idCategorie} a été demandé en BDD !`
         );
@@ -140,6 +149,7 @@ class Produit {
      * @param nom - le nom d'une produit
      * @param description - la description d'un produit, 
      * @param prixHT - le prix HT d'un produit,
+     * @param imageMini - une image destiné au panier en petit format
      * @param idCategorie - l'identifiant d'une catégorie lié à un produit
      * @param idTVA - l'identifiant d' une TVA lié a un produit
      * @param idReduction - l'identifiant d'une reduction
@@ -151,8 +161,8 @@ class Produit {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.produit (nom, description, prix_HT, created_date, id_categorie, id_TVA, id_reduction) VALUES ($1, $2, $3, now(), $4, $5, $6) RETURNING *;`,
-            [this.nom, this.description, this.prixHT, this.idCategorie, this.idTVA, this.idReduction]
+            `INSERT INTO mada.produit (nom, description, prix_HT, image_mini, created_date, id_categorie, id_TVA, id_reduction) VALUES ($1, $2, $3, $4, now(), $5, $6, $7) RETURNING *;`,
+            [this.nom, this.description, this.prixHT, this.imageMini, this.idCategorie, this.idTVA, this.idReduction]
         );
 
         this.id = rows[0].id;
@@ -167,6 +177,7 @@ class Produit {
      * @param nom - le nom d'une produit
      * @param description - la description d'un produit, 
      * @param prixHT - le prix HT d'un produit,
+     * @param imageMini - une image destiné au panier en petit format
      * @param idCategorie - l'identifiant d'une catégorie lié à un produit
      * @param idTVA - l'identifiant d' une TVA lié a un produit
      * @param id - l'identifiant du champs a supprimer
@@ -178,8 +189,8 @@ class Produit {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.produit SET nom = $1, description = $2, updated_date = now(), prix_HT = $3, id_categorie = $4, id_TVA = $5, id_reduction = $6  WHERE id = $7 RETURNING *;`,
-            [this.nom, this.description, this.prixHT, this.idCategorie, this.idTVA, this.idReduction, this.id]
+            `UPDATE mada.produit SET nom = $1, description = $2, updated_date = now(), prix_HT = $3, image_mini = $4, id_categorie = $5, id_TVA = $6, id_reduction = $7  WHERE id = $8 RETURNING *;`,
+            [this.nom, this.description, this.prixHT, this.imageMini, this.idCategorie, this.idTVA, this.idReduction, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(

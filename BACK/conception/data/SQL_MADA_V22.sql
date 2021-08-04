@@ -251,6 +251,7 @@ CREATE TABLE produit(
 	nom            text_valid NOT NULL,
 	description    text_length NOT NULL,
 	prix_HT        posrealsup  NOT NULL,
+	image_mini	   text_valid NOT NULL,
 	created_date   timestamptz NOT NULL DEFAULT now(),
 	updated_date   timestamptz,
 	CHECK (created_date < updated_date),
@@ -593,7 +594,7 @@ CHECK (created_date < updated_date)
 
 -- Une vue pour les principales infos concernant les clients : 
 
-CREATE VIEW mada.all_custumer AS
+CREATE VIEW mada.view_custumer AS
 SELECT 
 	client.prenom,
 	client.nom_famille,
@@ -615,6 +616,25 @@ JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
 JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
 ORDER BY client.prenom ASC;
 
+
+
+CREATE VIEW mada.view_produit AS 
+SELECT
+produit.nom as produit,
+produit.prix_HT as prix,
+produit.image_mini as image,
+caracteristique.couleur as couleur,
+caracteristique.taille as taille,
+stock.quantite as stock,
+reduction.pourcentage_reduction as reduction,
+produit.id,
+tva.taux as tva
+FROM mada.produit 
+JOIN mada.categorie ON produit.id_categorie = categorie.id
+JOIN mada.tva ON produit.id_tva = tva.id
+JOIN mada.reduction ON produit.id_reduction = reduction.id
+JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
+JOIN mada.stock ON stock.id_produit = produit.id;
 
 COMMIT;
 

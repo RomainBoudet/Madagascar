@@ -316,7 +316,7 @@ const fakeData = async () => {
 
                 name: faker.commerce.productName(),
                 description: faker.commerce.productDescription(),
-                price: faker.commerce.price(),
+                price: faker.commerce.price(10, 100),
                 color: colors[Math.floor(Math.random() * colors.length)], //faker.internet.color => hex
                 size: sizes[Math.floor(Math.random() * sizes.length)],
                 quantity: Math.floor(Math.random() * (10 - 1 + 1)) + 1, // un random entre 1 et 10\u{002A}\u{FE0F}\u{20E3}
@@ -688,7 +688,7 @@ const fakeData = async () => {
             const reduction = {
                 idClient: index,
                 nom: soldes[Math.floor(Math.random() * soldes.length)],
-                pourcentage_reduction: (Math.random() * (0.99 - 0.01) + 0.01).toFixed(2), // random entre 0.99 et 0.1 pour des %
+                pourcentage_reduction: (Math.random() * (0.5 - 0.01) + 0.01).toFixed(2), // random entre 0.5 et 0.1 pour des %
                 actif: actifOuNon[Math.floor(Math.random() * actifOuNon.length)],
                 periode_reduction: `[${(faker.date.past()).toISOString().slice(0, 10)}, ${(faker.date.soon()).toISOString().slice(0, 10)}]`, // on récupére que la partie qui convient de la date pour satifaire le format DATERANGE de postgres
                 //periode_reduction: `[${(faker.date.past()).toISOString()}, ${(faker.date.soon()).toISOString()}]`,

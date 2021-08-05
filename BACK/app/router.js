@@ -368,7 +368,7 @@ router.delete('/dev/deleteTwillio/:id(\\d+)', dev, adminController.deleteTwillio
  * @summary Affiche les articles d'un panier selon la session
  * @returns {JSON} 200 - les articles présent dans ce panier et leurs caractéristiques
  */
-//router.get('/user/panier', panierController.getPanier);
+router.get('/user/panier', panierController.getPanier);
 
 
 /**

@@ -103,8 +103,6 @@ class Produit {
         if (!rows[0]) {
             throw new Error("Aucun produit avec cet id");
         }
-
-        console.log("rows[0] dans le model => ",rows[0]);
         consol.model(
             `le produit id : ${id} a été demandé en BDD !`
         );

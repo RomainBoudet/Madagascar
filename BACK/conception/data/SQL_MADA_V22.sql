@@ -125,7 +125,7 @@ CREATE TABLE TVA(
 	id         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	taux          posrealpourc  NOT NULL,
 	nom           text_valid NOT NULL,
-	periode_TVA   DATERANGE NOT NULL DEFAULT '[2021-01-01, 2099-12-24]' -- [] => on inclut les deux bornes // () => on exclut les deux bornes // (] => on exclut la 1iere borne .... etc.)
+	periode_TVA   DATERANGE NOT NULL DEFAULT '[2021-01-01, 2999-12-24]' -- [] => on inclut les deux bornes // () => on exclut les deux bornes // (] => on exclut la 1iere borne .... etc.)
 );
 
 

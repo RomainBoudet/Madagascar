@@ -15,35 +15,58 @@ const Produit = require('../models/produit');
  */
 const panierController = {
 
-    /* getPanier: async (req, res) => {
+    getPanier: async (req, res) => {
 
         try {
             req.session.panierViewCount = (req.session.panierViewCount || 0) + 1;
 
-            // if (!req.session.cart) {
-             //   req.session.cart = [];
-           // } 
-
             const cart = req.session.cart;
 
-            let taxFreeTotal = 0;
-            let tva = 0;
-            let total = 0;
-            let coutTransporteur = 9.99;
+            let totalHT = 0;
+            let totalTTC = 0;
+            let coutTransporteurDefault = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
 
             if (cart) {
-                taxFreeTotal = cart.reduce(
+
+                //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier. Si la réduction est de 0, cette valeur sera identique au prix...
+                cart.map(article => article.prixHTAvecReduc = parseFloat((article.prix * (1 - article.reduction)).toFixed(2)));
+
+
+                totalHT1 = cart.reduce(
                     (accumulator, item) => {
-                        return (accumulator || 0) + (item.price * item.quantity)
-                    },
-                    0
+
+                        return (accumulator || 0) + (item.prixHTAvecReduc * item.quantite)
+                    }, 0
                 );
 
-                tva = Math.round(taxFreeTotal * 0.2 * 100) / 100;
-                total = Math.round((taxFreeTotal + tva + coutTransporteur) * 100) / 100;
+                totalTTC1 = cart.reduce(
+                    (accumulator, item) => {
+                        return ((accumulator || 0) + ((item.prixHTAvecReduc * (parseFloat(item.tva) + 1)) * item.quantite))
+                    }, 0
+                );
+
+                totalTVA1 = cart.reduce(
+                    (accumulator, item) => {
+                        return (accumulator || 0) + ((item.prixHTAvecReduc * parseFloat(item.tva)) * item.quantite)
+                    }, 0
+                );
+                // pour que mes valeur dans le json soit bien des chiffre ne dépassant pas deux chiffres aprés la virgule.
+                const totalHT = parseFloat(totalHT1.toFixed(2));
+                const totalTTC = parseFloat(totalTTC1.toFixed(2));
+                const totalTVA = parseFloat(totalTVA1.toFixed(2));
+                // On renvoit les infos calculés au front !
+                res.status(200).json({
+                    totalHT,
+                    totalTTC,
+                    totalTVA,
+                    coutTransporteurDefault,
+                    cart,
+                });
+
+            } else {
+                res.status(200).json('Votre panier est vide');
             }
 
-            res.status(200).json(clients);
         } catch (error) {
             console.trace('Erreur dans la méthode getPanier du panierController :',
                 error);
@@ -51,19 +74,29 @@ const panierController = {
         }
 
 
-    }, */
+    },
 
     addArticlePanier: async (req, res) => {
         try {
-
             // je recupére l'id de l'article à ajouter au panier
             const articleId = parseInt(req.params.id, 10);
+            // Je vérifie qu'il est en stock pour pouvoir l'ajouter au panier
+            const monArticle = await Produit.findOne(articleId);
+            if (monArticle.stock < 1) {
+                // l'article n'est plus en stock !
+               return res.json("Cet article n'est plus disponible !")
+            }
+
+
+
+
+
+
             //je verifie qu'il existe
             if (!req.session.cart) {
-                // s'il n'éxiste pas je 'linitialise avec un tableau vide
+                // s'il n'éxiste pas je l'initialise avec un tableau vide
                 req.session.cart = [];
             }
-            console.log("req.session avant l'ajout d'un article => ",req.session);
             // je cherche dans le panier si un article existe déjà (grace à l'id)
             // si on le trouve on le récupére dans la variable article
             let article = req.session.cart.find(
@@ -74,18 +107,36 @@ const panierController = {
                 // Si article est vide, le panier ne contient pas encore cette article
                 // donc on va chercher les info de l'article en BDD puis on l'ajoute au panier avec une qty de 1
 
-                const monArticle = await Produit.findOne(articleId);
-                console.log("monArticle ==> ", monArticle);
+                //const monArticle = await Produit.findOne(articleId);
                 monArticle.quantite = 1;
+                monArticle.tva = parseFloat(monArticle.tva);
+                monArticle.reduction = parseFloat(monArticle.reduction);
+                monArticle.prix = parseFloat(monArticle.prix);
+
+                console.log("monArticle.stock =>", monArticle.stock);
+                console.log("monArticle.quantite =>", monArticle.quantite);
+
+                if (monArticle.quantite > monArticle.stock) {
+                  return res.status(200).json("Il n'existe pas assez d'article en stock pour la quantité choisie !")
+                }
+
+               /*  if (monArticle.quantite = monArticle.stock) {
+                    monArticle.message = "vous avez mis dans le panier le dernier article disponible !"
+                } */
+
                 req.session.cart.push(monArticle);
-                console.log("req.session.cart aprés le 1er ajout =>",req.session.cart);
-                res.json(`L'article avec l'id ${articleId} a bien été placé dans votre paner !`)
+                console.log("req.session.cart aprés le 1er ajout =>", req.session.cart);
+                res.status(200).json(`L'article avec l'id ${articleId} a bien été placé dans votre paner !`)
 
             } else {
                 // Si on a trouvé l'article alors on va incrementer la qté
+                if (article.quantite >= article.stock) {
+                    console.log("Il n'existe pas assez d'article en stock pour la quantité choisie !");
+                   return res.status(200).json("Il n'existe pas assez d'article en stock pour la quantité choisie !")
+                }
                 article.quantite++;
-                console.log("req.session.cart aprés ajout si l'article était déja présent =>",req.session.cart);
-                res.json(`L'article avec l'id ${articleId} a bien été ajouté a votre paner !`)
+                console.log("req.session.cart aprés ajout si l'article était déja présent =>", req.session.cart);
+                res.status(200).json(`L'article avec l'id ${articleId} a bien été ajouté a votre paner !`)
             }
 
         } catch (error) {
@@ -120,7 +171,7 @@ const panierController = {
             );
 
             res.json(`un article avec l'id ${articleId} a bien été supprimer de votre panier si il était présent !`)
-            console.log("req.session.cart aprés une supression d'article =>",req.session.cart);
+            console.log("req.session.cart aprés une supression d'article =>", req.session.cart);
 
         } catch (error) {
             console.trace('Erreur dans la méthode delArticlePanier du panierController :',

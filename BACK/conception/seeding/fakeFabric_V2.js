@@ -338,24 +338,24 @@ const fakeData = async () => {
         //! PRODUIT_IMAGE
 
         consol.seed(`Début de la génération de fake image de produits`);
-        console.time(`Génération de ${volume*3} image de produits`);
+        console.time(`Génération de ${volume*7} image de produits`);
         const arrayNumber300 = Array.from({
             length: volume * 3
         }, (_, i) => i + 1); // un tableau avec des valeurs allant de 1 a 300 // si on veut commençer a zero => Array.from(Array(10).keys())
         const image_produits = [];
 
-        for (let index = 1; index <= volume * 3; index++) {
+        for (let index = 1; index <= volume * 17; index++) {
             const image_produit = {
 
                 nom: faker.lorem.word(),
                 ordre: Math.floor(Math.random() * (5 - 1 + 1)) + 1, // un random entre 1 et 5
-                URL: faker.image.imageUrl(),
+                URL: faker.image.image(),
                 id_produit: arrayNumber300[Math.floor(Math.random() * arrayNumber300.length)],
                 index,
             };
             image_produits.push(image_produit);
         }
-        console.timeEnd(`Génération de ${volume*3} image de produits`);
+        console.timeEnd(`Génération de ${volume*7} image de produits`);
         console.table(image_produits);
         consol.seed(`Fin de la génération de fake image de produits`);
 
@@ -364,13 +364,13 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake avis`);
-        console.time(`Génération de ${volume*3} avis`);
+        console.time(`Génération de ${volume*17} avis`);
         const arrayNumber100 = Array.from({
             length: volume
         }, (_, i) => i + 1); // un tableau avec des valeurs allant de 1 a 100 // si on veut commençer a zero => Array.from(Array(10).keys())
         const avis = [];
 
-        for (let index = 1; index <= volume * 3; index++) {
+        for (let index = 1; index <= volume * 17; index++) {
             const avi = {
 
                 notation: Math.floor(Math.random() * (5 - 1 + 1)) + 1, // un random entre 1 et 5,
@@ -382,7 +382,7 @@ const fakeData = async () => {
             };
             avis.push(avi);
         }
-        console.timeEnd(`Génération de ${volume*3} avis`);
+        console.timeEnd(`Génération de ${volume*17} avis`);
         console.table(avis);
         consol.seed(`Fin de la génération de fake avis`);
 

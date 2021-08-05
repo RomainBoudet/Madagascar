@@ -111,6 +111,34 @@ class Produit {
     }
 
 
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à un produit via son id passée en paramétre
+     * @param - un id d'un produit
+     * @returns - les informations du produit demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findOnePlus(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.view_produit_plus WHERE id = $1;',
+            [id]
+        );
+
+
+        if (!rows[0]) {
+            throw new Error("Aucun produit avec cet id");
+        }
+        consol.model(
+            `le produit id : ${id} a été demandé en BDD !`
+        );
+
+        return new Produit(rows[0]);
+    }
+
 
 
 

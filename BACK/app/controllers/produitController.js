@@ -41,7 +41,20 @@ const produitController = {
     getOne: async (req, res) => {
         try {
 
-            const produit = await Produit.findOne(req.params.id);
+            /* function financial(x) {
+                return Number.parseFloat(x).toFixed(2);
+              } /*/ // ne fonctionne pas...(?) le chiffre sort en string..
+
+
+            const produit = await Produit.findOnePlus(req.params.id);
+
+            produit.tva = parseFloat(produit.tva);
+            produit.reduction = parseFloat(produit.reduction);
+            produit.prix = parseFloat(produit.prix);
+            produit.prixHTAvecReduc = parseFloat((produit.prix * (1 - produit.reduction)).toFixed(2));
+            produit.prixTTC = parseFloat((produit.prixHTAvecReduc * (parseFloat(produit.tva) + 1)).toFixed(2));
+
+            console.log(`les données compléte du produit id ${produit.id} avec le nom ${produit.produit} ont bien été retourné au Front !`);
             res.json(produit);
 
         } catch (error) {
@@ -55,7 +68,7 @@ const produitController = {
 
     getByIdCategorie: async (req, res) => {
         try {
-            
+
             const produit = await Produit.findByIdCategorie(req.params.id);
             res.json(produit);
 
@@ -74,7 +87,7 @@ const produitController = {
         try {
 
             const data = {};
-        
+
             data.nom = req.body.nom;
             data.description = req.body.description;
             data.prixHT = req.body.prixHT;
@@ -99,7 +112,7 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await Produit.findOne(id);
 
 
@@ -158,8 +171,8 @@ const produitController = {
             }
 
 
-             await updateProduit.update();
-            
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {
@@ -224,7 +237,7 @@ const produitController = {
 
     getCaracteristiqueByIdProduit: async (req, res) => {
         try {
-            
+
             const produit = await Caracteristique.findByIdProduit(req.params.id);
             res.json(produit);
 
@@ -239,11 +252,11 @@ const produitController = {
         try {
 
             const data = {};
-        
+
             data.couleur = req.body.couleur;
             data.taille = req.body.taille;
             data.idProduit = req.body.idProduit;
-        
+
             const newProduit = new Caracteristique(data);
             await newProduit.save();
             res.json(newProduit);
@@ -259,7 +272,7 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await Caracteristique.findOne(id);
 
 
@@ -293,8 +306,8 @@ const produitController = {
             }
 
 
-             await updateProduit.update();
-            
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {
@@ -380,7 +393,7 @@ const produitController = {
 
     getStockByIdProduit: async (req, res) => {
         try {
-            
+
             const produit = await Stock.findByIdProduit(req.params.id);
             res.json(produit);
 
@@ -395,10 +408,10 @@ const produitController = {
         try {
 
             const data = {};
-        
+
             data.quantite = req.body.quantite;
             data.idProduit = req.body.idProduit;
-        
+
             const newProduit = new Stock(data);
             await newProduit.save();
             res.json(newProduit);
@@ -414,7 +427,7 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await Stock.findOne(id);
 
 
@@ -438,8 +451,8 @@ const produitController = {
             }
 
 
-             await updateProduit.update();
-            
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {
@@ -521,10 +534,10 @@ const produitController = {
         try {
 
             const data = {};
-        
+
             data.nom = req.body.nom;
             data.logo = req.body.logo;
-        
+
             const newProduit = new Fournisseur(data);
             await newProduit.save();
             res.json(newProduit);
@@ -540,7 +553,7 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await Fournisseur.findOne(id);
 
 
@@ -564,8 +577,8 @@ const produitController = {
             }
 
 
-             await updateProduit.update();
-            
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {
@@ -631,7 +644,7 @@ const produitController = {
 
             data.idFournisseur = req.body.idFournisseur;
             data.idProduit = req.body.idProduit;
-            
+
             const newClient = new Fournie(data);
             await newClient.save();
             res.json(newClient);
@@ -651,7 +664,7 @@ const produitController = {
             const updateClient = await Fournie.findOne(id);
 
             const idFournisseur = req.body.idFournisseur;
-            const idProduit = req.body.idProduit;          
+            const idProduit = req.body.idProduit;
 
             let userMessage = {};
 
@@ -729,7 +742,7 @@ const produitController = {
         try {
 
             const data = {};
-        
+
             data.nom = req.body.nom;
             data.pourcentageReduction = req.body.pourcentageReduction;
             data.actif = req.body.actif;
@@ -750,7 +763,7 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await Reduction.findOne(id);
 
 
@@ -790,8 +803,8 @@ const produitController = {
             }
 
 
-             await updateProduit.update();
-            
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {
@@ -852,11 +865,11 @@ const produitController = {
         try {
 
             const data = {};
-        
+
             data.nom = req.body.nom;
             data.taux = req.body.taux;
             data.periodeTVA = req.body.periodeTVA;
-           
+
 
             const newProduit = new Tva(data);
             await newProduit.save();
@@ -873,14 +886,14 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await Tva.findOne(id);
 
 
             const nom = req.body.nom;
             const taux = req.body.taux;
             const periodeTVA = req.body.periodeTVA;
-            
+
 
             let message = {};
 
@@ -900,16 +913,16 @@ const produitController = {
 
             if (periodeTVA) {
                 updateProduit.periodeTVA = periodeTVA;
-                message.aperiodeTVA= 'Votre nouveau periodeTVA a bien été enregistré ';
+                message.aperiodeTVA = 'Votre nouveau periodeTVA a bien été enregistré ';
             } else if (!periodeTVA) {
                 message.periodeTVA = 'Votre periodeTVA n\'a pas changé';
             }
 
-            
 
 
-             await updateProduit.update();
-            
+
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {
@@ -973,7 +986,7 @@ const produitController = {
 
     getImageByIdProduit: async (req, res) => {
         try {
-            
+
             const produit = await Image.findByIdProduit(req.params.id);
             res.json(produit);
 
@@ -988,12 +1001,12 @@ const produitController = {
         try {
 
             const data = {};
-        
+
             data.nom = req.body.nom;
             data.ordre = req.body.ordre;
             data.URL = req.body.URL;
             data.idProduit = req.body.idProduit;
-        
+
             const newProduit = new Image(data);
             await newProduit.save();
             res.json(newProduit);
@@ -1009,7 +1022,7 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await Image.findOne(id);
 
 
@@ -1050,8 +1063,8 @@ const produitController = {
             }
 
 
-             await updateProduit.update();
-            
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {
@@ -1133,11 +1146,11 @@ const produitController = {
         try {
 
             const data = {};
-        
+
             data.nom = req.body.nom;
             data.description = req.body.description;
             data.ordre = req.body.ordre;
-          
+
 
             const newProduit = new Categorie(data);
             await newProduit.save();
@@ -1154,7 +1167,7 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await Categorie.findOne(id);
 
 
@@ -1185,8 +1198,8 @@ const produitController = {
                 message.ordre = 'Votre ordre n\'a pas changé';
             }
 
-             await updateProduit.update();
-            
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {
@@ -1241,7 +1254,7 @@ const produitController = {
     },
     getSousCategorieByIdCategorie: async (req, res) => {
         try {
-            
+
             const sousCategorie = await SousCategorie.findByIdCategorie(req.params.id);
             res.json(sousCategorie);
 
@@ -1255,11 +1268,11 @@ const produitController = {
         try {
 
             const data = {};
-        
+
             data.nom = req.body.nom;
             data.description = req.body.description;
             data.idCategorie = req.body.idCategorie;
-           
+
             const newSousCategorie = new SousCategorie(data);
             await newSousCategorie.save();
             res.json(newSousCategorie);
@@ -1274,13 +1287,13 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateSousCategorie = await SousCategorie.findOne(id);
 
             const nom = req.body.nom;
             const description = req.body.description;
             const idCategorie = req.body.idCategorie;
-    
+
             let message = {};
 
             if (nom) {
@@ -1301,9 +1314,9 @@ const produitController = {
             } else if (!idCategorie) {
                 message.idCategorie = 'Votre idCategorie n\'a pas changé';
             }
-           
 
-             await updateSousCategorie.update();
+
+            await updateSousCategorie.update();
             res.json(message);
 
         } catch (error) {
@@ -1376,7 +1389,7 @@ const produitController = {
 
     getSsCatImageByIdSsCat: async (req, res) => {
         try {
-            
+
             const produit = await SsCatImage.findByIdSsCat(req.params.id);
             res.json(produit);
 
@@ -1394,7 +1407,7 @@ const produitController = {
             data.nom = req.body.nom;
             data.URL = req.body.URL;
             data.idSousCategorie = req.body.idSousCategorie;
-        
+
             const newProduit = new SsCatImage(data);
             await newProduit.save();
             res.json(newProduit);
@@ -1410,7 +1423,7 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await SsCatImage.findOne(id);
 
             const nom = req.body.nom;
@@ -1441,8 +1454,8 @@ const produitController = {
             }
 
 
-             await updateProduit.update();
-            
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {
@@ -1494,8 +1507,8 @@ const produitController = {
 
     //! CATEGORIE IMAGE ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   
-   
+
+
     getAllCategorieImage: async (req, res) => {
         try {
             const produits = await CategorieImage.findAll();
@@ -1525,7 +1538,7 @@ const produitController = {
 
     getCategorieImageByIdCategorie: async (req, res) => {
         try {
-            
+
             const produit = await CategorieImage.findByIdCategorie(req.params.id);
             res.json(produit);
 
@@ -1543,7 +1556,7 @@ const produitController = {
             data.nom = req.body.nom;
             data.URL = req.body.URL;
             data.idCategorie = req.body.idCategorie;
-        
+
             const newProduit = new CategorieImage(data);
             await newProduit.save();
             res.json(newProduit);
@@ -1559,7 +1572,7 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             const updateProduit = await CategorieImage.findOne(id);
 
             const nom = req.body.nom;
@@ -1590,8 +1603,8 @@ const produitController = {
             }
 
 
-             await updateProduit.update();
-            
+            await updateProduit.update();
+
             res.json(message);
 
         } catch (error) {

@@ -387,9 +387,24 @@ router.get('/user/addPanier/:id(\\d+)', panierController.addArticlePanier);
  * @route GET/user/delPanier
  * @group Panier - Gestion du panier
  * @summary Supprime un article dans le panier
- * @returns {JSON} 200 - les articles supprimé dans ce panier et leurs caractéristiques
+ * @returns {JSON} 200 - les articles restant dans le panier et leurs caractéristiques
  */
  router.delete('/user/delPanier/:id(\\d+)', panierController.delArticlePanier);
+
+
+ //! ROUTES POUR LA VUE D'UN ARTICLE
+
+
+/**
+ * Une route pour voirun article en particuler
+ * route accessible a tous 
+ * @route GET/user/panier
+ * @group Panier - Gestion du panier
+ * @summary Affiche les articles d'un panier selon la session
+ * @returns {JSON} 200 - les articles présent dans ce panier et leurs caractéristiques
+ */
+router.get('/user/article/:id(\\d+)', produitController.getOne);
+
 
 
 

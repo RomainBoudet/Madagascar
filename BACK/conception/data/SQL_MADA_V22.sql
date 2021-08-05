@@ -630,11 +630,36 @@ reduction.pourcentage_reduction as reduction,
 produit.id,
 tva.taux as tva
 FROM mada.produit 
-JOIN mada.categorie ON produit.id_categorie = categorie.id
 JOIN mada.tva ON produit.id_tva = tva.id
 JOIN mada.reduction ON produit.id_reduction = reduction.id
 JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
 JOIN mada.stock ON stock.id_produit = produit.id;
+
+CREATE VIEW mada.view_produit_plus AS 
+SELECT
+produit.nom as produit,
+produit.description as description,
+produit.prix_HT as prix,
+caracteristique.couleur as couleur,
+caracteristique.taille as taille,
+stock.quantite as stock,
+reduction.pourcentage_reduction as reduction,
+tva.taux as tva,
+categorie.nom as categorie,
+json_agg(image.URL) image,
+json_agg(avis.avis) avis,
+produit.id
+FROM mada.produit 
+JOIN mada.categorie ON produit.id_categorie = categorie.id
+JOIN mada.tva ON produit.id_tva = tva.id
+JOIN mada.reduction ON produit.id_reduction = reduction.id
+JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
+JOIN mada.stock ON stock.id_produit = produit.id
+JOIN mada.image ON image.id_produit = produit.id
+JOIN mada.avis ON avis.id_produit = produit.id
+GROUP BY produit, produit.description, prix, couleur, taille, stock, reduction, tva, categorie, produit.id
+ORDER BY produit.id;
+
 
 COMMIT;
 

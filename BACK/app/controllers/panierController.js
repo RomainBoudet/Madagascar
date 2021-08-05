@@ -31,7 +31,6 @@ const panierController = {
                 //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier. Si la réduction est de 0, cette valeur sera identique au prix...
                 cart.map(article => article.prixHTAvecReduc = parseFloat((article.prix * (1 - article.reduction)).toFixed(2)));
 
-
                 totalHT1 = cart.reduce(
                     (accumulator, item) => {
 
@@ -78,23 +77,15 @@ const panierController = {
 
     addArticlePanier: async (req, res) => {
         try {
-            // je recupére l'id de l'article à ajouter au panier
             const articleId = parseInt(req.params.id, 10);
             // Je vérifie qu'il est en stock pour pouvoir l'ajouter au panier
             const monArticle = await Produit.findOne(articleId);
             if (monArticle.stock < 1) {
-                // l'article n'est plus en stock !
                return res.json("Cet article n'est plus disponible !")
-            }
-
-
-
-
-
+            };
 
             //je verifie qu'il existe
             if (!req.session.cart) {
-                // s'il n'éxiste pas je l'initialise avec un tableau vide
                 req.session.cart = [];
             }
             // je cherche dans le panier si un article existe déjà (grace à l'id)
@@ -118,11 +109,7 @@ const panierController = {
 
                 if (monArticle.quantite > monArticle.stock) {
                   return res.status(200).json("Il n'existe pas assez d'article en stock pour la quantité choisie !")
-                }
-
-               /*  if (monArticle.quantite = monArticle.stock) {
-                    monArticle.message = "vous avez mis dans le panier le dernier article disponible !"
-                } */
+                };
 
                 req.session.cart.push(monArticle);
                 console.log("req.session.cart aprés le 1er ajout =>", req.session.cart);

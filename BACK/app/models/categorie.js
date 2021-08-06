@@ -69,7 +69,7 @@ class Categorie {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun categorie avec cet id");
+            throw new Error("Aucune categorie avec cet id");
         }
 
         consol.model(

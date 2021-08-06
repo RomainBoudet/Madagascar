@@ -169,30 +169,7 @@ const panierController = {
     },
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//! GESTION DU PANIER EN BDD (et non plus en session)-----------------------------------
 
 
     getAll: async (req, res) => {
@@ -211,7 +188,7 @@ const panierController = {
         try {
 
             const client = await Panier.findOne(req.params.id);
-            res.json(client);
+            res.status(200).json(client);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du panierController :',
@@ -224,7 +201,7 @@ const panierController = {
         try {
             console.log(req.params);
             const client = await Panier.findByIdClient(req.params.id);
-            res.json(client);
+            res.status(200).json(client);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du panierController :',
@@ -232,8 +209,6 @@ const panierController = {
             res.status(500).json(error.message);
         }
     },
-
-
 
 
 
@@ -248,7 +223,7 @@ const panierController = {
             console.log("req.body ==> ", req.body);
             const newClient = new Panier(data);
             await newClient.save();
-            res.json(newClient);
+            res.status(200).json(newClient);
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau panier: ${error.message}`);
             res.status(500).json(error.message);
@@ -287,7 +262,7 @@ const panierController = {
 
             await updateClient.update();
 
-            res.json(userMessage);
+            res.status(200).json(userMessage);
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau panier: ${error.message}`);
@@ -306,7 +281,7 @@ const panierController = {
 
             const client = await clientInDb.delete();
 
-            res.json(client);
+            res.status(200).json(client);
 
         } catch (error) {
             console.trace('Erreur dans la méthode delete du panierController :',
@@ -327,7 +302,7 @@ const panierController = {
                 const clientHistoConn = await clientInDb.deleteByIdClient();
                 arrayDeleted.push(clientHistoConn);
             }
-            res.json(arrayDeleted[0]);
+            res.status(200).json(arrayDeleted[0]);
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteByIdClien du panierController :',
@@ -360,7 +335,7 @@ const panierController = {
         try {
 
             const client = await LignePanier.findOne(req.params.id);
-            res.json(client);
+            res.status(200).json(client);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du panierController :',
@@ -373,7 +348,7 @@ const panierController = {
         try {
             console.log(req.params);
             const client = await LignePanier.findByIdPanier(req.params.id);
-            res.json(client);
+            res.status(200).json(client);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du panierController :',
@@ -393,7 +368,7 @@ const panierController = {
 
             const newClient = new LignePanier(data);
             await newClient.save();
-            res.json(newClient);
+            res.status(200).json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newLignePanier du panierController : ${error.message}`);
             res.status(500).json(error.message);
@@ -439,7 +414,7 @@ const panierController = {
 
             await updateClient.update();
 
-            res.json(userMessage);
+            res.status(200).json(userMessage);
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau panier: ${error.message}`);
@@ -455,7 +430,7 @@ const panierController = {
 
             const client = await clientInDb.delete();
 
-            res.json(client);
+            res.status(200).json(client);
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteLignePanier du panierController :',
@@ -463,7 +438,6 @@ const panierController = {
             res.status(500).json(error.message);
         }
     },
-
 
     deleteLignePanierByIdPanier: async (req, res) => {
 
@@ -478,7 +452,7 @@ const panierController = {
             }
 
 
-            res.json(arrayDeleted[0]);
+            res.status(200).json(arrayDeleted[0]);
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteLignePanierByIdPanier du panierController :',

@@ -255,7 +255,7 @@ CREATE TABLE produit(
 	created_date   timestamptz NOT NULL DEFAULT now(),
 	updated_date   timestamptz,
 	CHECK (created_date < updated_date),
-	id_categorie   INT REFERENCES categorie(id),
+	id_categorie   INT REFERENCES categorie(id) ON DELETE CASCADE,
 	id_TVA         INT NOT NULL REFERENCES TVA(id),
 	id_reduction   INT REFERENCES reduction(id)
 );
@@ -301,7 +301,7 @@ CREATE TABLE sous_categorie(
 	created_date                timestamptz NOT NULL DEFAULT now(),
 	updated_date                timestamptz,
 	CHECK (created_date < updated_date),
-	id_categorie                INT NOT NULL REFERENCES categorie(id)
+	id_categorie                INT NOT NULL REFERENCES categorie(id) ON DELETE CASCADE
 );
 
 ------------------------------------------------------------
@@ -449,7 +449,7 @@ CREATE TABLE categorie_image(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom                text_valid NOT NULL,
 	URL                text_valid NOT NULL,
-	id_categorie       INT  NOT NULL REFERENCES categorie(id)
+	id_categorie       INT  NOT NULL REFERENCES categorie(id) ON DELETE CASCADE
 );
 
 

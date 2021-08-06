@@ -71,7 +71,7 @@ const produitController = {
     },
 
 
-    
+
 
     articleByCategorieId: async (req, res) => {
         try {
@@ -91,31 +91,13 @@ const produitController = {
         }
     },
 
-    
-
-    getByIdCategorie: async (req, res) => {
-        try {
-
-            const produit = await Produit.findByIdCategorie(req.params.id);
-            res.json(produit);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getByIdCategorie du produitController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
 
 
 
 
 
 
-
-
-
-
-
+    //! PRODUIT 
 
 
 
@@ -1170,7 +1152,7 @@ const produitController = {
         try {
 
             const produit = await Categorie.findOne(req.params.id);
-            res.json(produit);
+            res.status(200).json(produit);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOneCategorie du produitController :',
@@ -1191,7 +1173,7 @@ const produitController = {
 
             const newProduit = new Categorie(data);
             await newProduit.save();
-            res.json(newProduit);
+            res.status(200).json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newCategorie du produitController : ${error.message}`);
             res.status(500).json(error.message);
@@ -1237,7 +1219,7 @@ const produitController = {
 
             await updateProduit.update();
 
-            res.json(message);
+            res.status(200).json(message);
 
         } catch (error) {
             console.log(`Erreur dans la methode updateCategorie du produitController ${error.message}`);
@@ -1253,7 +1235,7 @@ const produitController = {
 
             const produit = await produitInDb.delete();
 
-            res.json(produit);
+            res.status(200).json(produit);
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteCategorie du produitController :',

@@ -816,11 +816,6 @@ const adminController = {
 
 
 
-
-
-
-
-
     updateVerifEmail: async (req, res) => {
         try {
 
@@ -860,56 +855,20 @@ const adminController = {
         }
     },
 
-    updatePhone: async (req, res) => {
-        try {
-
-            const {
-                id
-            } = req.params;
-
-            const updateClient = await AdminPhone.findByIdClient(id);
-
-            const adminTelephone = req.body.adminTelephone;
-            const idClient = req.body.idClient;
-
-            let userMessage = {};
-
-            if (adminTelephone) {
-                updateClient.adminTelephone = adminTelephone;
-                userMessage.adminTelephone = 'Votre nouveau adminTelephone a bien été enregistré ';
-            } else if (!adminTelephone) {
-                userMessage.adminTelephone = 'Votre adminTelephone n\'a pas changé';
-            }
-
-
-            if (idClient) {
-                updateClient.idClient = idClient;
-                userMessage.idClient = 'Votre nouveau idClient a bien été enregistré ';
-            } else if (!idClient) {
-                userMessage.idClient = 'Votre idClient n\'a pas changé';
-            }
-
-            await updateClient.updateByIdClient();
-
-            res.json(userMessage);
-
-        } catch (error) {
-            console.log(`Erreur dans la méthode updatePhone du adminController : ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
-
+    
 
 
     // Pour vérifier un payement, twillio nous fournit également une méthode psd2 => Payment Service Directive 2  => https://www.twilio.com/blog/dynamic-linking-psd2      //https://www.twilio.com/docs/verify/verifying-transactions-psd2#
     smsVerifypsd2: async (req, res) => {
+        const dataTwillio = await Twillio.findFirst();
+        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
         try {
-            twilio.verify.services(process.env.SERVICE_SID_MADASHOP)
+            twilio.verify.services(dataTwillio.sidVerify)
                 .verifications
                 .create({
                     locale: 'fr',
-                    amount: '€39.99', //a dynamiser si on utilise la méthode...
-                    payee: 'MADAshop', // 
+                    amount:'test', //a dynamiser avec des infos provenant du paiement si on utilise la méthode...
+                    payee: 'test', // 
                     to: req.body.phoneNumber,
                     channel: 'sms'
                 })
@@ -926,15 +885,17 @@ const adminController = {
 
 
     smsCheckpsd2: async (req, res) => {
+        const dataTwillio = await Twillio.findFirst();
+        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
 
         try {
-            const statut = await twilio.verify.services(process.env.SERVICE_SID_MADASHOP)
+            const statut = await twilio.verify.services(dataTwillio.sidVerify)
                 .verificationChecks
                 .create({
                     to: req.session.phoneNumber,
-                    amount: req.body.amount,
-                    payee: req.body.payee,
-                    code: req.body.code,
+                    amount: req.body.amount,// les infos reçu pas SMS
+                    payee: req.body.payee,//
+                    code: req.body.code,//
                 })
             console.log(statut);
             if (statut.status === 'approved') {

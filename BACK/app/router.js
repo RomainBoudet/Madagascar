@@ -345,6 +345,24 @@ router.patch('/dev/updateTwillio/:id(\\d+)', dev, adminController.updateTwillio)
 router.delete('/dev/deleteTwillio/:id(\\d+)', dev, adminController.deleteTwillio);
 
 /**
+ * Pour vérifier un paiement avec Twillio et sa méthode PSD2 // ETAPE 1
+ * @route POST /dev/psd2Verify
+ * @group Developpeur - twillio
+ * @summary  Permet de certifier un paiement, mesure de sécurité redondante si 3D secure... codé pour le plaisir ;)
+ * @returns {JSON} 200 - Envoie un SMS averc un code, le montant d'un paiement et le site 
+ */
+router.post('/dev/psd2Verify', dev, adminController.smsVerifypsd2);
+
+/**
+ * Retour de la route psq2Verify Pour vérifier un paiement avec Twillio et sa méthode PSD2 // ETAPE 2
+ * @route POST /dev/psd2Check
+ * @group Developpeur - twillio
+ * @summary  Permet de certifier un paiement, mesure de sécurité redondante si 3D secure... codé pour le plaisir ;)
+ * @returns {JSON} 200 - Valide les données reçu pas sms avec un code, le montant d'un paiement et le site 
+ */
+router.post('/dev/psd2Check', dev, adminController.smsVerifypsd2);
+
+/**
  * Permet de donner le privilege Administrateur a un client.
  * Route sécurisée avec Joi et MW Developpeur
  * @route PATCH /v1/updatePrivilege
@@ -355,6 +373,178 @@ router.delete('/dev/deleteTwillio/:id(\\d+)', dev, adminController.deleteTwillio
  */
 router.patch('/dev/updateprivilege/:id(\\d+)', dev, clean, adminController.updatePrivilege);
 
+//! GESTION DES EMAILS VERIFIE !
+
+/**
+ * Permet de voir tous les emails vérifié ou non pour les admins
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route GET /v1/dev/emailVerif
+ * @group Developpeur - 
+ * @summary Affiche tous les emails des admins existants, vérifié ou non 
+ * @returns {JSON} 200 - les email des admins, vérifié ou non
+ */
+router.get('/dev/emailVerif', dev, adminController.getAllEmailVerif);
+
+/**
+ * Permet de voir tous un email vérifié ou non pour les admins
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route GET /v1/dev/emailVerif/:id
+ * @group Developpeur - 
+ * @summary Affiche un emails d'admin existant, vérifié ou non 
+ * @returns {JSON} 200 - un email d'admin, vérifié ou non
+ */
+router.get('/dev/emailVerif/:id(\\d+)', dev, adminController.getOneEmailVerif);
+
+/**
+ * Permet de voir tous un email vérifié ou non pour les admins, selon son id Client
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route GET /v1/dev/emailVerifByIdClient/:id
+ * @group Developpeur - 
+ * @summary Affiche un emails d'admin existant, vérifié ou non, selon son id Client
+ * @returns {JSON} 200 - un email d'admin, vérifié ou non
+ */
+ router.get('/dev/emailVerifByIdClient/:id(\\d+)', dev, adminController.getEmailVerifByIdClient);
+
+/**
+ * Permet de d'insérer un email pour un admin
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route POST /v1/dev/newEmailVerif
+ * @group Developpeur - 
+ * @summary Insére un email d'admins existant, non vérifié 
+ * @returns {JSON} 200 - un email d'admin, non vérifié
+ */
+router.post('/dev/newEmailVerif', dev, adminController.newVerifEmail);
+
+/**
+ * Permet de mettre a jour un email pour un admin
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route PATCH /v1/dev/updateEmailVerif
+ * @group Developpeur - 
+ * @summary Met a jour un email d'admins, non vérifié 
+ * @returns {JSON} 200 - un email d'admin, non vérifié
+ */
+router.patch('/dev/updateEmailVerif', dev, adminController.updateVerifEmail);
+
+/**
+ * Permet de supprimer un email pour un admin
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route DELETE /v1/dev/delEmailVerif
+ * @group Developpeur - 
+ * @summary Supprime un email d'admins 
+ * @returns {JSON} 200 - un email d'admin supprimé
+ */
+router.delete('/dev/delEmailVerif', dev, adminController.deleteVerifEmail);
+
+/**
+ * Permet de supprimer un email pour un admin selon son id Client
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route DELETE /v1/dev/delEmailVerifByIdClient
+ * @group Developpeur - 
+ * @summary Supprime un email d'admin selon son id Client 
+ * @returns {JSON} 200 - un email d'admin supprimé
+ */
+router.delete('/dev/delEmailVerifByIdClient', dev, adminController.deleteVerifEmailByIdClient);
+
+//! GESTION DES ADMINS PHONE !
+
+/**
+ * Permet de voir tous les numéros de téphone vérifié pour les admins
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route GET /v1/dev/adminPhone
+ * @group Developpeur - 
+ * @summary Affiche tous les adminPhone des admins 
+ * @returns {JSON} 200 - les adminPhone des admins
+ */
+ router.get('/dev/adminPhone', dev, adminController.getAllPhone);
+
+ /**
+  * Permet de voir un adminPhone pour un admin (forcemment vérifié si il est en BDD)
+  * Route sécurisée avec Joi et MW Developpeur
+  * @route GET /v1/dev/Phone/:id
+  * @group Developpeur - 
+  * @summary Affiche un adminPhone d'un admin 
+  * @returns {JSON} 200 - un adminPhone d'un admin
+  */
+ router.get('/dev/Phone/:id(\\d+)', dev, adminController.getOnePhone);
+ 
+ /**
+  * Permet de voir un adminPhone pour un admin selon son id Client
+  * Route sécurisée avec Joi et MW Developpeur
+  * @route GET /v1/dev/PhoneByIdClient/:id
+  * @group Developpeur - 
+  * @summary Affiche un adminPhone d'un admin selon son id Client
+  * @returns {JSON} 200 - un adminPhone d'un admin
+  */
+  router.get('/dev/PhoneByIdClient/:id(\\d+)', dev, adminController.getPhoneByIdClient);
+ 
+ 
+ /**
+  * Permet de supprimer un adminPhone pour un admin
+  * Route sécurisée avec Joi et MW Developpeur
+  * @route DELETE /v1/dev/delPhone
+  * @group Developpeur - 
+  * @summary Supprime un adminPhone d'un admin - Seule la méthode Verify permet d'en réinsérer un !
+  * @returns {JSON} 200 - un adminPhone d'admin supprimé
+  */
+ router.delete('/dev/delPhone', dev, adminController.deletePhone);
+ 
+ /**
+  * Permet de supprimer un adminPhone pour un admin selon son id Client
+  * Route sécurisée avec Joi et MW Developpeur
+  * @route DELETE /v1/dev/delPhoneByIdClient
+  * @group Developpeur - 
+  * @summary Supprime un adminPhone d'admins selon son id Client 
+  * @returns {JSON} 200 - un adminPhone d'admin supprimé
+  */
+ router.delete('/dev/delPhoneByIdClient', dev, adminController.deletePhoneByIdClient);
+
+ 
+
+ //! PRIVILEGE
+
+
+/**
+ * Permet de voir tous les priviléges
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route GET /v1/dev/privilege
+ * @group Developpeur - 
+ * @summary Affiche tous les privilege des admins 
+ * @returns {JSON} 200 - les privilege des admins
+ */
+ router.get('/dev/privilege', dev, adminController.getAllPrivilege);
+
+ /**
+  * Permet de voir un privilege 
+  * Route sécurisée avec Joi et MW Developpeur
+  * @route GET /v1/dev/privilege/:id
+  * @group Developpeur - 
+  * @summary Affiche un privilege 
+  * @returns {JSON} 200 - un privilege 
+  */
+ router.get('/dev/privilege/:id(\\d+)', dev, adminController.getOnePrivilege);
+ 
+/**
+ * Permet de d'insérer un privilege 
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route POST /v1/dev/newPrivilege
+ * @group Developpeur - 
+ * @summary Insére un privilege
+ * @returns {JSON} 200 - un privilege
+ */
+ router.post('/dev/newPrivilege', dev, adminController.newPrivilege);
+
+ 
+ /**
+  * Permet de supprimer un privilege pour un admin
+  * Route sécurisée avec Joi et MW Developpeur
+  * @route DELETE /v1/dev/delPhone
+  * @group Developpeur - 
+  * @summary Supprime un privilege 
+  * @returns {JSON} 200 - un privilege supprimé
+  */
+ router.delete('/dev/delPrivilege', dev, adminController.deletePrivilege);
+ 
+ 
 //! methodes pour la gestion du panier en session
 
 /**
@@ -780,45 +970,45 @@ router.delete('/admin/delFournisseur/:id(\\d+)', admin, produitController.delete
  * @param {produit.Model} req.params - les informations d'un fournie qu'on doit fournir
  * @returns {JSON} 200 - Les données d'un Fournie
  */
- router.get('/admin/fournie/:id(\\d+)', admin, produitController.getOneFournie);
+router.get('/admin/fournie/:id(\\d+)', admin, produitController.getOneFournie);
 
- /**
-  * Une route pour voir tous les Fournies
-  * @route GET /admin/allFournie
-  * @group Fournie - Table de liaison avec Fournisseur
-  * @summary Affiche tous les Fournies
-  * @returns {JSON} 200 - Les données de tous les Fournies
-  */
- router.get('/admin/allFournie', admin, produitController.getAllFournie);
- 
- /**
-  * Une route pour insérer un Fournie
-  * @route POST /admin/newFournie
-  * @group Fournie - Table de liaison avec Fournisseur
-  * @summary Insére un nouveau Fournie
-  * @returns {JSON} 200 - Les données d'un nouveau Fournie inséré
-  */
- router.post('/admin/newFournie', clean, admin, produitController.newFournie);
- 
- /**
-  * Une route pour mette a jour un Fournie
-  * @route PATCH /admin/updateFournie/:id
-  * @group Fournie - Table de liaison avec Fournisseur
-  * @summary Met à jour un nouveau Fournie
-  * @param {produit.Model} req.params - les informations d'un fournie qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'un nouveau Fournie mis a jour
-  */
- router.patch('/admin/updateFournie/:id(\\d+)', clean, admin, produitController.updateFournie);
- 
- /**
-  * Une route pour supprimmer un Fournie
-  * @route DELETE /admin/delFournie
-  * @group Fournie - Table de liaison avec Fournisseur
-  * @summary Supprimme un nouveau Fournie
-  * @param {produit.Model} req.params - les informations d'un fournie qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'un Fournie supprimmé
-  */
- router.delete('/admin/delFournie/:id(\\d+)', admin, produitController.deleteFournie);
+/**
+ * Une route pour voir tous les Fournies
+ * @route GET /admin/allFournie
+ * @group Fournie - Table de liaison avec Fournisseur
+ * @summary Affiche tous les Fournies
+ * @returns {JSON} 200 - Les données de tous les Fournies
+ */
+router.get('/admin/allFournie', admin, produitController.getAllFournie);
+
+/**
+ * Une route pour insérer un Fournie
+ * @route POST /admin/newFournie
+ * @group Fournie - Table de liaison avec Fournisseur
+ * @summary Insére un nouveau Fournie
+ * @returns {JSON} 200 - Les données d'un nouveau Fournie inséré
+ */
+router.post('/admin/newFournie', clean, admin, produitController.newFournie);
+
+/**
+ * Une route pour mette a jour un Fournie
+ * @route PATCH /admin/updateFournie/:id
+ * @group Fournie - Table de liaison avec Fournisseur
+ * @summary Met à jour un nouveau Fournie
+ * @param {produit.Model} req.params - les informations d'un fournie qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'un nouveau Fournie mis a jour
+ */
+router.patch('/admin/updateFournie/:id(\\d+)', clean, admin, produitController.updateFournie);
+
+/**
+ * Une route pour supprimmer un Fournie
+ * @route DELETE /admin/delFournie
+ * @group Fournie - Table de liaison avec Fournisseur
+ * @summary Supprimme un nouveau Fournie
+ * @param {produit.Model} req.params - les informations d'un fournie qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'un Fournie supprimmé
+ */
+router.delete('/admin/delFournie/:id(\\d+)', admin, produitController.deleteFournie);
 
 
 
@@ -833,45 +1023,45 @@ router.delete('/admin/delFournisseur/:id(\\d+)', admin, produitController.delete
  * @param {produit.Model} req.params - les informations d'une Reduction qu'on doit fournir
  * @returns {JSON} 200 - Les données d'un Reduction
  */
- router.get('/admin/reduction/:id(\\d+)', admin, produitController.getOneReduction);
+router.get('/admin/reduction/:id(\\d+)', admin, produitController.getOneReduction);
 
- /**
-  * Une route pour voir toutes les Reductions
-  * @route GET /admin/allReduction
-  * @group Reduction - Gestion des Reductions
-  * @summary Affiche toutes les Reductions
-  * @returns {JSON} 200 - Les données de toutes les Reductions
-  */
- router.get('/admin/allReduction', admin, produitController.getAllReduction);
- 
- /**
-  * Une route pour insérer une Reduction
-  * @route POST /admin/newReduction
-  * @group Reduction - Gestion des Reductions
-  * @summary Insére un nouvelle Reduction
-  * @returns {JSON} 200 - Les données d'un nouvelle Reduction inséré
-  */
- router.post('/admin/newReduction', clean, admin, produitController.newReduction);
- 
- /**
-  * Une route pour mette a jour une Reduction
-  * @route PATCH /admin/updateReduction/:id
-  * @group Reduction - Gestion des Reductions
-  * @summary Met à jour une nouvelle Reduction
-  * @param {produit.Model} req.params - les informations d'un Reduction qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une nouvelle Reduction mise a jour
-  */
- router.patch('/admin/updateReduction/:id(\\d+)', clean, admin, produitController.updateReduction);
- 
- /**
-  * Une route pour supprimmer une Reduction
-  * @route DELETE /admin/delReduction
-  * @group Reduction - Gestion des Reductions
-  * @summary Supprimme un nouvelle Reduction
-  * @param {produit.Model} req.params - les informations d'un Reduction qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une Reduction supprimmée
-  */
- router.delete('/admin/delReduction/:id(\\d+)', admin, produitController.deleteReduction);
+/**
+ * Une route pour voir toutes les Reductions
+ * @route GET /admin/allReduction
+ * @group Reduction - Gestion des Reductions
+ * @summary Affiche toutes les Reductions
+ * @returns {JSON} 200 - Les données de toutes les Reductions
+ */
+router.get('/admin/allReduction', admin, produitController.getAllReduction);
+
+/**
+ * Une route pour insérer une Reduction
+ * @route POST /admin/newReduction
+ * @group Reduction - Gestion des Reductions
+ * @summary Insére un nouvelle Reduction
+ * @returns {JSON} 200 - Les données d'un nouvelle Reduction inséré
+ */
+router.post('/admin/newReduction', clean, admin, produitController.newReduction);
+
+/**
+ * Une route pour mette a jour une Reduction
+ * @route PATCH /admin/updateReduction/:id
+ * @group Reduction - Gestion des Reductions
+ * @summary Met à jour une nouvelle Reduction
+ * @param {produit.Model} req.params - les informations d'un Reduction qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une nouvelle Reduction mise a jour
+ */
+router.patch('/admin/updateReduction/:id(\\d+)', clean, admin, produitController.updateReduction);
+
+/**
+ * Une route pour supprimmer une Reduction
+ * @route DELETE /admin/delReduction
+ * @group Reduction - Gestion des Reductions
+ * @summary Supprimme un nouvelle Reduction
+ * @param {produit.Model} req.params - les informations d'un Reduction qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une Reduction supprimmée
+ */
+router.delete('/admin/delReduction/:id(\\d+)', admin, produitController.deleteReduction);
 
 
 
@@ -887,45 +1077,45 @@ router.delete('/admin/delFournisseur/:id(\\d+)', admin, produitController.delete
  * @param {produit.Model} req.params - les informations d'une TVA qu'on doit fournir
  * @returns {JSON} 200 - Les données d'un TVA
  */
- router.get('/admin/Tva/:id(\\d+)', admin, produitController.getOneTva);
+router.get('/admin/Tva/:id(\\d+)', admin, produitController.getOneTva);
 
- /**
-  * Une route pour voir toutes les TVAs
-  * @route GET /admin/allTVA
-  * @group TVA - Gestion des TVAs
-  * @summary Affiche toutes les TVAs
-  * @returns {JSON} 200 - Les données de toutes les TVAs
-  */
- router.get('/admin/allTva', admin, produitController.getAllTva);
- 
- /**
-  * Une route pour insérer une TVA
-  * @route POST /admin/newTVA
-  * @group TVA - Gestion des TVAs
-  * @summary Insére un nouvelle TVA
-  * @returns {JSON} 200 - Les données d'un nouvelle TVA inséré
-  */
- router.post('/admin/newTva', clean, admin, produitController.newTva);
- 
- /**
-  * Une route pour mette a jour une TVA
-  * @route PATCH /admin/updateTVA/:id
-  * @group TVA - Gestion des TVAs
-  * @summary Met à jour une nouvelle TVA
-  * @param {produit.Model} req.params - les informations d'un TVA qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une nouvelle TVA mise a jour
-  */
- router.patch('/admin/updateTva/:id(\\d+)', clean, admin, produitController.updateTva);
- 
- /**
-  * Une route pour supprimmer une TVA
-  * @route DELETE /admin/delTVA
-  * @group TVA - Gestion des TVAs
-  * @summary Supprimme un nouvelle TVA
-  * @param {produit.Model} req.params - les informations d'un TVA qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une TVA supprimmée
-  */
- router.delete('/admin/delTva/:id(\\d+)', admin, produitController.deleteTva);
+/**
+ * Une route pour voir toutes les TVAs
+ * @route GET /admin/allTVA
+ * @group TVA - Gestion des TVAs
+ * @summary Affiche toutes les TVAs
+ * @returns {JSON} 200 - Les données de toutes les TVAs
+ */
+router.get('/admin/allTva', admin, produitController.getAllTva);
+
+/**
+ * Une route pour insérer une TVA
+ * @route POST /admin/newTVA
+ * @group TVA - Gestion des TVAs
+ * @summary Insére un nouvelle TVA
+ * @returns {JSON} 200 - Les données d'un nouvelle TVA inséré
+ */
+router.post('/admin/newTva', clean, admin, produitController.newTva);
+
+/**
+ * Une route pour mette a jour une TVA
+ * @route PATCH /admin/updateTVA/:id
+ * @group TVA - Gestion des TVAs
+ * @summary Met à jour une nouvelle TVA
+ * @param {produit.Model} req.params - les informations d'un TVA qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une nouvelle TVA mise a jour
+ */
+router.patch('/admin/updateTva/:id(\\d+)', clean, admin, produitController.updateTva);
+
+/**
+ * Une route pour supprimmer une TVA
+ * @route DELETE /admin/delTVA
+ * @group TVA - Gestion des TVAs
+ * @summary Supprimme un nouvelle TVA
+ * @param {produit.Model} req.params - les informations d'un TVA qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une TVA supprimmée
+ */
+router.delete('/admin/delTva/:id(\\d+)', admin, produitController.deleteTva);
 
 
 //! IMAGE-----------------------------------------------------------------
@@ -938,69 +1128,69 @@ router.delete('/admin/delFournisseur/:id(\\d+)', admin, produitController.delete
  * @param {produit.Model} req.params - les informations d'un image qu'on doit fournir
  * @returns {JSON} 200 - Les données d'une image
  */
- router.get('/admin/image/:id(\\d+)', admin, produitController.getOneImage);
+router.get('/admin/image/:id(\\d+)', admin, produitController.getOneImage);
 
- /**
-  * Une route pour voir tous les images
-  * @route GET /admin/allImage
-  * @group image - Gestion des images
-  * @summary Affiche toutes les images
-  * @returns {JSON} 200 - Les données de tous les images
-  */
- router.get('/admin/allImage', admin, produitController.getAllImage);
- 
- /**
-  * Une route pour voir une image selon son id produit 
-  * @route GET /admin/imageByIdProduit/:id
-  * @group stock - Gestion des images
-  * @summary Affiche une image selon son id produit
-  * @param {produit.Model} req.params - les informations d'une image qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une image selon son id produit
-  */
- router.get('/admin/imageByIdProduit/:id(\\d+)', admin, produitController.getImageByIdProduit);
- 
- /**
-  * Une route pour insérer une image
-  * @route POST /admin/newImage
-  * @group image - Gestion des images
-  * @summary Insére une nouveau image
-  * @returns {JSON} 200 - Les données d'une nouveau image inséré
-  */
- router.post('/admin/newimage', clean, admin, produitController.newImage);
- 
- /**
-  * Une route pour mette a jour une image
-  * @route PATCH /admin/updateImage/:id
-  * @group image - Gestion des images
-  * @summary Met à jour une nouveau image
-  * @param {produit.Model} req.params - les informations d'une image qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une nouveau image mis a jour
-  */
- router.patch('/admin/updateImage/:id(\\d+)', clean, admin, produitController.updateImage);
- 
- /**
-  * Une route pour supprimmer une image
-  * @route DELETE /admin/delImage/:id
-  * @group image - Gestion des images
-  * @summary Supprimme une nouveau image
-  * @param {produit.Model} req.params - les informations d'une image qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une image supprimmé
-  */
- router.delete('/admin/delImage/:id(\\d+)', admin, produitController.deleteImage);
- 
- /**
-  * Une route pour supprimmer une image selon son id produit
-  * @route DELETE /admin/delImageByIdProduit/:id
-  * @group image - Gestion des images
-  * @summary Supprimme une nouveau image selon son id produit
-  * @param {produit.Model} req.params - les informations d'une image qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une image supprimmé
-  */
- router.delete('/admin/delImageByIdProduit/:id(\\d+)', admin, produitController.deleteImageByIdProduit);
- 
- 
- 
- //! SOUS-CATEGORIE------------------------------------------
+/**
+ * Une route pour voir tous les images
+ * @route GET /admin/allImage
+ * @group image - Gestion des images
+ * @summary Affiche toutes les images
+ * @returns {JSON} 200 - Les données de tous les images
+ */
+router.get('/admin/allImage', admin, produitController.getAllImage);
+
+/**
+ * Une route pour voir une image selon son id produit 
+ * @route GET /admin/imageByIdProduit/:id
+ * @group stock - Gestion des images
+ * @summary Affiche une image selon son id produit
+ * @param {produit.Model} req.params - les informations d'une image qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une image selon son id produit
+ */
+router.get('/admin/imageByIdProduit/:id(\\d+)', admin, produitController.getImageByIdProduit);
+
+/**
+ * Une route pour insérer une image
+ * @route POST /admin/newImage
+ * @group image - Gestion des images
+ * @summary Insére une nouveau image
+ * @returns {JSON} 200 - Les données d'une nouveau image inséré
+ */
+router.post('/admin/newimage', clean, admin, produitController.newImage);
+
+/**
+ * Une route pour mette a jour une image
+ * @route PATCH /admin/updateImage/:id
+ * @group image - Gestion des images
+ * @summary Met à jour une nouveau image
+ * @param {produit.Model} req.params - les informations d'une image qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une nouveau image mis a jour
+ */
+router.patch('/admin/updateImage/:id(\\d+)', clean, admin, produitController.updateImage);
+
+/**
+ * Une route pour supprimmer une image
+ * @route DELETE /admin/delImage/:id
+ * @group image - Gestion des images
+ * @summary Supprimme une nouveau image
+ * @param {produit.Model} req.params - les informations d'une image qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une image supprimmé
+ */
+router.delete('/admin/delImage/:id(\\d+)', admin, produitController.deleteImage);
+
+/**
+ * Une route pour supprimmer une image selon son id produit
+ * @route DELETE /admin/delImageByIdProduit/:id
+ * @group image - Gestion des images
+ * @summary Supprimme une nouveau image selon son id produit
+ * @param {produit.Model} req.params - les informations d'une image qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une image supprimmé
+ */
+router.delete('/admin/delImageByIdProduit/:id(\\d+)', admin, produitController.deleteImageByIdProduit);
+
+
+
+//! SOUS-CATEGORIE------------------------------------------
 
 
 /**
@@ -1011,66 +1201,66 @@ router.delete('/admin/delFournisseur/:id(\\d+)', admin, produitController.delete
  * @param {produit.Model} req.params - les informations d'une SousCategorie qu'on doit fournir
  * @returns {JSON} 200 - Les données d'une SousCategorie
  */
- router.get('/admin/sousCategorie/:id(\\d+)', admin, produitController.getOneSousCategorie);
+router.get('/admin/sousCategorie/:id(\\d+)', admin, produitController.getOneSousCategorie);
 
- /**
-  * Une route pour voir tous les SousCategories
-  * @route GET /admin/allSousCategorie
-  * @group SousCategorie - Gestion des SousCategories
-  * @summary Affiche toutes les SousCategories
-  * @returns {JSON} 200 - Les données de toutes les SousCategories
-  */
- router.get('/admin/allSousCategorie', admin, produitController.getAllSousCategorie);
- 
- /**
-  * Une route pour voir une SousCategorie selon son id Categorie 
-  * @route GET /admin/sousCategorieByIdCategorie/:id
-  * @group SousCategorie - Gestion des SousCategories
-  * @summary Affiche une SousCategorie selon son id Categorie
-  * @param {produit.Model} req.params - les informations d'une SousCategorie qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une SousCategorie selon son id Categorie
-  */
- router.get('/admin/sousCategorieByIdCategorie/:id(\\d+)', admin, produitController.getSousCategorieByIdCategorie);
- 
- /**
-  * Une route pour insérer une SousCategorie
-  * @route POST /admin/newSousCategorie
-  * @group SousCategorie - Gestion des SousCategories
-  * @summary Insére une nouvelle SousCategorie
-  * @returns {JSON} 200 - Les données d'une nouvelle SousCategorie inséré
-  */
- router.post('/admin/newSousCategorie', clean, admin, produitController.newSousCategorie);
- 
- /**
-  * Une route pour mette a jour une SousCategorie
-  * @route PATCH /admin/updateSousCategorie/:id
-  * @group SousCategorie - Gestion des SousCategories
-  * @summary Met à jour une nouvelle SousCategorie
-  * @param {produit.Model} req.params - les informations d'une SousCategorie qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une nouvelle SousCategorie mis a jour
-  */
- router.patch('/admin/updateSousCategorie/:id(\\d+)', clean, admin, produitController.updateSousCategorie);
- 
- /**
-  * Une route pour supprimmer une SousCategorie
-  * @route DELETE /admin/delSousCategorie/:id
-  * @group SousCategorie - Gestion des SousCategories
-  * @summary Supprimme une nouvelle SousCategorie
-  * @param {produit.Model} req.params - les informations d'une SousCategorie qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une SousCategorie supprimmé
-  */
- router.delete('/admin/delSousCategorie/:id(\\d+)', admin, produitController.deleteSousCategorie);
- 
- /**
-  * Une route pour supprimmer une iSousCategorieselon son id produit
-  * @route DELETE /admin/delSousCategorieByIdCategorie/:id
-  * @group SousCategorie - Gestion des sSousCategorie
-  * @summary Supprimme une nouvelle SousCategorie selon son id Categorie
-  * @param {produit.Model} req.params - les informations d'une SousCategorie qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une SousCategorie supprimmé
-  */
- router.delete('/admin/delSousCategorieByIdCategorie/:id(\\d+)', admin, produitController.deleteSousCategorieByIdCategorie);
- 
+/**
+ * Une route pour voir tous les SousCategories
+ * @route GET /admin/allSousCategorie
+ * @group SousCategorie - Gestion des SousCategories
+ * @summary Affiche toutes les SousCategories
+ * @returns {JSON} 200 - Les données de toutes les SousCategories
+ */
+router.get('/admin/allSousCategorie', admin, produitController.getAllSousCategorie);
+
+/**
+ * Une route pour voir une SousCategorie selon son id Categorie 
+ * @route GET /admin/sousCategorieByIdCategorie/:id
+ * @group SousCategorie - Gestion des SousCategories
+ * @summary Affiche une SousCategorie selon son id Categorie
+ * @param {produit.Model} req.params - les informations d'une SousCategorie qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une SousCategorie selon son id Categorie
+ */
+router.get('/admin/sousCategorieByIdCategorie/:id(\\d+)', admin, produitController.getSousCategorieByIdCategorie);
+
+/**
+ * Une route pour insérer une SousCategorie
+ * @route POST /admin/newSousCategorie
+ * @group SousCategorie - Gestion des SousCategories
+ * @summary Insére une nouvelle SousCategorie
+ * @returns {JSON} 200 - Les données d'une nouvelle SousCategorie inséré
+ */
+router.post('/admin/newSousCategorie', clean, admin, produitController.newSousCategorie);
+
+/**
+ * Une route pour mette a jour une SousCategorie
+ * @route PATCH /admin/updateSousCategorie/:id
+ * @group SousCategorie - Gestion des SousCategories
+ * @summary Met à jour une nouvelle SousCategorie
+ * @param {produit.Model} req.params - les informations d'une SousCategorie qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une nouvelle SousCategorie mis a jour
+ */
+router.patch('/admin/updateSousCategorie/:id(\\d+)', clean, admin, produitController.updateSousCategorie);
+
+/**
+ * Une route pour supprimmer une SousCategorie
+ * @route DELETE /admin/delSousCategorie/:id
+ * @group SousCategorie - Gestion des SousCategories
+ * @summary Supprimme une nouvelle SousCategorie
+ * @param {produit.Model} req.params - les informations d'une SousCategorie qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une SousCategorie supprimmé
+ */
+router.delete('/admin/delSousCategorie/:id(\\d+)', admin, produitController.deleteSousCategorie);
+
+/**
+ * Une route pour supprimmer une iSousCategorieselon son id produit
+ * @route DELETE /admin/delSousCategorieByIdCategorie/:id
+ * @group SousCategorie - Gestion des sSousCategorie
+ * @summary Supprimme une nouvelle SousCategorie selon son id Categorie
+ * @param {produit.Model} req.params - les informations d'une SousCategorie qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une SousCategorie supprimmé
+ */
+router.delete('/admin/delSousCategorieByIdCategorie/:id(\\d+)', admin, produitController.deleteSousCategorieByIdCategorie);
+
 //! SOUS-CATEGORIE IMAGE 
 
 /**
@@ -1081,66 +1271,66 @@ router.delete('/admin/delFournisseur/:id(\\d+)', admin, produitController.delete
  * @param {produit.Model} req.params - les informations d'une SsCatImage qu'on doit fournir
  * @returns {JSON} 200 - Les données d'une SsCatImage
  */
- router.get('/admin/SsCatImage/:id(\\d+)', admin, produitController.getOneSsCatImage);
+router.get('/admin/SsCatImage/:id(\\d+)', admin, produitController.getOneSsCatImage);
 
- /**
-  * Une route pour voir toutes les SsCatImages
-  * @route GET /admin/allSsCatImage
-  * @group SsCatImage - Gestion des SsCatImages
-  * @summary Affiche toutes les SsCatImages
-  * @returns {JSON} 200 - Les données de toutes les SsCatImages
-  */
- router.get('/admin/allSsCatImage', admin, produitController.getAllSsCatImage);
- 
- /**
-  * Une route pour voir une SsCatImage selon son id Categorie 
-  * @route GET /admin/SsCatImageByIdSsCat/:id
-  * @group SsCatImage - Gestion des SsCatImages
-  * @summary Affiche une SsCatImage selon son id Categorie
-  * @param {produit.Model} req.params - les informations d'une SsCatImage qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une SsCatImage selon son id Categorie
-  */
- router.get('/admin/SsCatImageByIdSsCat/:id(\\d+)', admin, produitController.getSsCatImageByIdSsCat);
- 
- /**
-  * Une route pour insérer une SsCatImage
-  * @route POST /admin/newSsCatImage
-  * @group SsCatImage - Gestion des SsCatImages
-  * @summary Insére une nouvelle SsCatImage
-  * @returns {JSON} 200 - Les données d'une nouvelle SsCatImage inséré
-  */
- router.post('/admin/newSsCatImage', clean, admin, produitController.newSsCatImage);
- 
- /**
-  * Une route pour mette a jour une SsCatImage
-  * @route PATCH /admin/updateSsCatImage/:id
-  * @group SsCatImage - Gestion des SsCatImages
-  * @summary Met à jour une nouvelle SsCatImage
-  * @param {produit.Model} req.params - les informations d'une SsCatImage qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une nouvelle SsCatImage mis a jour
-  */
- router.patch('/admin/updateSsCatImage/:id(\\d+)', clean, admin, produitController.updateSsCatImage);
- 
- /**
-  * Une route pour supprimmer une SsCatImage
-  * @route DELETE /admin/delSsCatImage/:id
-  * @group SsCatImage - Gestion des SsCatImages
-  * @summary Supprimme une nouvelle SsCatImage
-  * @param {produit.Model} req.params - les informations d'une SsCatImage qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une SsCatImage supprimmé
-  */
- router.delete('/admin/delSsCatImage/:id(\\d+)', admin, produitController.deleteSsCatImage);
- 
- /**
-  * Une route pour supprimmer une iSsCatImage selon son id produit
-  * @route DELETE /admin/delSsCatImageByIdSsCat/:id
-  * @group SsCatImage - Gestion des sSsCatImage
-  * @summary Supprimme une nouvelle SsCatImage selon son id Categorie
-  * @param {produit.Model} req.params - les informations d'une SsCatImage qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une SsCatImage supprimmé
-  */
- router.delete('/admin/delSsCatImageByIdSsCat/:id(\\d+)', admin, produitController.deleteSsCatImageByIdSsCat);
- 
+/**
+ * Une route pour voir toutes les SsCatImages
+ * @route GET /admin/allSsCatImage
+ * @group SsCatImage - Gestion des SsCatImages
+ * @summary Affiche toutes les SsCatImages
+ * @returns {JSON} 200 - Les données de toutes les SsCatImages
+ */
+router.get('/admin/allSsCatImage', admin, produitController.getAllSsCatImage);
+
+/**
+ * Une route pour voir une SsCatImage selon son id Categorie 
+ * @route GET /admin/SsCatImageByIdSsCat/:id
+ * @group SsCatImage - Gestion des SsCatImages
+ * @summary Affiche une SsCatImage selon son id Categorie
+ * @param {produit.Model} req.params - les informations d'une SsCatImage qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une SsCatImage selon son id Categorie
+ */
+router.get('/admin/SsCatImageByIdSsCat/:id(\\d+)', admin, produitController.getSsCatImageByIdSsCat);
+
+/**
+ * Une route pour insérer une SsCatImage
+ * @route POST /admin/newSsCatImage
+ * @group SsCatImage - Gestion des SsCatImages
+ * @summary Insére une nouvelle SsCatImage
+ * @returns {JSON} 200 - Les données d'une nouvelle SsCatImage inséré
+ */
+router.post('/admin/newSsCatImage', clean, admin, produitController.newSsCatImage);
+
+/**
+ * Une route pour mette a jour une SsCatImage
+ * @route PATCH /admin/updateSsCatImage/:id
+ * @group SsCatImage - Gestion des SsCatImages
+ * @summary Met à jour une nouvelle SsCatImage
+ * @param {produit.Model} req.params - les informations d'une SsCatImage qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une nouvelle SsCatImage mis a jour
+ */
+router.patch('/admin/updateSsCatImage/:id(\\d+)', clean, admin, produitController.updateSsCatImage);
+
+/**
+ * Une route pour supprimmer une SsCatImage
+ * @route DELETE /admin/delSsCatImage/:id
+ * @group SsCatImage - Gestion des SsCatImages
+ * @summary Supprimme une nouvelle SsCatImage
+ * @param {produit.Model} req.params - les informations d'une SsCatImage qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une SsCatImage supprimmé
+ */
+router.delete('/admin/delSsCatImage/:id(\\d+)', admin, produitController.deleteSsCatImage);
+
+/**
+ * Une route pour supprimmer une iSsCatImage selon son id produit
+ * @route DELETE /admin/delSsCatImageByIdSsCat/:id
+ * @group SsCatImage - Gestion des sSsCatImage
+ * @summary Supprimme une nouvelle SsCatImage selon son id Categorie
+ * @param {produit.Model} req.params - les informations d'une SsCatImage qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une SsCatImage supprimmé
+ */
+router.delete('/admin/delSsCatImageByIdSsCat/:id(\\d+)', admin, produitController.deleteSsCatImageByIdSsCat);
+
 
 //! SOUS-CATEGORIE IMAGES
 
@@ -1152,66 +1342,66 @@ router.delete('/admin/delFournisseur/:id(\\d+)', admin, produitController.delete
  * @param {produit.Model} req.params - les informations d'une CategorieImage qu'on doit fournir
  * @returns {JSON} 200 - Les données d'une CategorieImage
  */
- router.get('/admin/categorieImage/:id(\\d+)', admin, produitController.getOneCategorieImage);
+router.get('/admin/categorieImage/:id(\\d+)', admin, produitController.getOneCategorieImage);
 
- /**
-  * Une route pour voir toutes les CategorieImages
-  * @route GET /admin/allCategorieImage
-  * @group CategorieImage - Gestion des CategorieImages
-  * @summary Affiche toutes les CategorieImages
-  * @returns {JSON} 200 - Les données de toutes les CategorieImages
-  */
- router.get('/admin/allCategorieImage', admin, produitController.getAllCategorieImage);
- 
- /**
-  * Une route pour voir une CategorieImage selon son id Categorie 
-  * @route GET /admin/CategorieImageByIdCategorie/:id
-  * @group CategorieImage - Gestion des CategorieImages
-  * @summary Affiche une CategorieImage selon son id Categorie
-  * @param {produit.Model} req.params - les informations d'une CategorieImage qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une CategorieImage selon son id Categorie
-  */
- router.get('/admin/CategorieImageByIdCategorie/:id(\\d+)', admin, produitController.getCategorieImageByIdCategorie);
- 
- /**
-  * Une route pour insérer une CategorieImage
-  * @route POST /admin/newCategorieImage
-  * @group CategorieImage - Gestion des CategorieImages
-  * @summary Insére une nouvelle CategorieImage
-  * @returns {JSON} 200 - Les données d'une nouvelle CategorieImage inséré
-  */
- router.post('/admin/newCategorieImage', clean, admin, produitController.newCategorieImage);
- 
- /**
-  * Une route pour mette a jour une CategorieImage
-  * @route PATCH /admin/updateCategorieImage/:id
-  * @group CategorieImage - Gestion des CategorieImages
-  * @summary Met à jour une nouvelle CategorieImage
-  * @param {produit.Model} req.params - les informations d'une CategorieImage qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une nouvelle CategorieImage mis a jour
-  */
- router.patch('/admin/updateCategorieImage/:id(\\d+)', clean, admin, produitController.updateCategorieImage);
- 
- /**
-  * Une route pour supprimmer une CategorieImage
-  * @route DELETE /admin/delCategorieImage/:id
-  * @group CategorieImage - Gestion des CategorieImages
-  * @summary Supprimme une nouvelle CategorieImage
-  * @param {produit.Model} req.params - les informations d'une CategorieImage qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une CategorieImage supprimmé
-  */
- router.delete('/admin/delCategorieImage/:id(\\d+)', admin, produitController.deleteCategorieImage);
- 
- /**
-  * Une route pour supprimmer une CategorieImage selon son id produit
-  * @route DELETE /admin/delCategorieImageByIdCategorie/:id
-  * @group CategorieImage - Gestion des sCategorieImage
-  * @summary Supprimme une nouvelle CategorieImage selon son id Categorie
-  * @param {produit.Model} req.params - les informations d'une CategorieImage qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'une CategorieImage supprimmé
-  */
- router.delete('/admin/delCategorieImageByIdCategorie/:id(\\d+)', admin, produitController.deleteCategorieImageByIdCategorie);
- 
+/**
+ * Une route pour voir toutes les CategorieImages
+ * @route GET /admin/allCategorieImage
+ * @group CategorieImage - Gestion des CategorieImages
+ * @summary Affiche toutes les CategorieImages
+ * @returns {JSON} 200 - Les données de toutes les CategorieImages
+ */
+router.get('/admin/allCategorieImage', admin, produitController.getAllCategorieImage);
+
+/**
+ * Une route pour voir une CategorieImage selon son id Categorie 
+ * @route GET /admin/CategorieImageByIdCategorie/:id
+ * @group CategorieImage - Gestion des CategorieImages
+ * @summary Affiche une CategorieImage selon son id Categorie
+ * @param {produit.Model} req.params - les informations d'une CategorieImage qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une CategorieImage selon son id Categorie
+ */
+router.get('/admin/CategorieImageByIdCategorie/:id(\\d+)', admin, produitController.getCategorieImageByIdCategorie);
+
+/**
+ * Une route pour insérer une CategorieImage
+ * @route POST /admin/newCategorieImage
+ * @group CategorieImage - Gestion des CategorieImages
+ * @summary Insére une nouvelle CategorieImage
+ * @returns {JSON} 200 - Les données d'une nouvelle CategorieImage inséré
+ */
+router.post('/admin/newCategorieImage', clean, admin, produitController.newCategorieImage);
+
+/**
+ * Une route pour mette a jour une CategorieImage
+ * @route PATCH /admin/updateCategorieImage/:id
+ * @group CategorieImage - Gestion des CategorieImages
+ * @summary Met à jour une nouvelle CategorieImage
+ * @param {produit.Model} req.params - les informations d'une CategorieImage qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une nouvelle CategorieImage mis a jour
+ */
+router.patch('/admin/updateCategorieImage/:id(\\d+)', clean, admin, produitController.updateCategorieImage);
+
+/**
+ * Une route pour supprimmer une CategorieImage
+ * @route DELETE /admin/delCategorieImage/:id
+ * @group CategorieImage - Gestion des CategorieImages
+ * @summary Supprimme une nouvelle CategorieImage
+ * @param {produit.Model} req.params - les informations d'une CategorieImage qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une CategorieImage supprimmé
+ */
+router.delete('/admin/delCategorieImage/:id(\\d+)', admin, produitController.deleteCategorieImage);
+
+/**
+ * Une route pour supprimmer une CategorieImage selon son id produit
+ * @route DELETE /admin/delCategorieImageByIdCategorie/:id
+ * @group CategorieImage - Gestion des sCategorieImage
+ * @summary Supprimme une nouvelle CategorieImage selon son id Categorie
+ * @param {produit.Model} req.params - les informations d'une CategorieImage qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'une CategorieImage supprimmé
+ */
+router.delete('/admin/delCategorieImageByIdCategorie/:id(\\d+)', admin, produitController.deleteCategorieImageByIdCategorie);
+
 
 
 //! INFOS DU SHOP !
@@ -1274,59 +1464,59 @@ router.delete('/admin/delShop/:id(\\d+)', admin, mainController.deleteShop);
  * @param {produit.Model} req.params - les informations d'un HistoConn qu'on doit fournir
  * @returns {JSON} 200 - Les données d'un HistoConn
  */
- router.get('/dev/HistoConn/:id(\\d+)', dev, clientHistoController.getOneHistoConn);
+router.get('/dev/HistoConn/:id(\\d+)', dev, clientHistoController.getOneHistoConn);
 
- /**
-  * Une route pour voir tous les HistoConns
-  * @route GET /dev/allHistoConn
-  * @group Developpeur Gestion des HistoConns
-  * @summary Affiche tous les HistoConns
-  * @returns {JSON} 200 - Les données de tous les HistoConns
-  */
- router.get('/dev/allHistoConn', dev, clientHistoController.getAllHistoConn);
- 
- /**
-  * Une route pour voir un HistoConn selon son id produit 
-  * @route GET /dev/HistoConnByIdClient/:id
-  * @group Developpeur Gestion des HistoConns
-  * @summary Affiche un HistoConn selon son id produit
-  * @param {produit.Model} req.params - les informations d'un HistoConn qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'un HistoConn selon son id produit
-  */
- router.get('/dev/HistoConnByIdClient/:id(\\d+)', dev, clientHistoController.getHistoConnByIdClient);
- 
- /**
-  * Une route pour insérer un HistoConn
-  * @route POST /dev/newHistoConn
-  * @group Developpeur Gestion des HistoConns
-  * @summary Insére un nouveau HistoConn
-  * @returns {JSON} 200 - Les données d'un nouveau HistoConn inséré
-  */
- router.post('/dev/newHistoConn', clean, dev, clientHistoController.newHistoConn);
- 
- 
- /**
-  * Une route pour supprimmer un HistoConn
-  * @route DELETE /dev/delHistoConn
-  * @group Developpeur Gestion des HistoConns
-  * @summary Supprimme un nouveau HistoConn
-  * @param {produit.Model} req.params - les informations d'un HistoConn qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'un HistoConn supprimmé
-  */
- router.delete('/dev/delHistoConn/:id(\\d+)', dev, clientHistoController.deleteHistoConn);
- 
- /**
-  * Une route pour supprimmer une HistoConn selon son id produit
-  * @route DELETE /dev/delHistoConnByIdClient
-  * @group Developpeur Gestion des HistoConns
-  * @summary Supprimme un nouveau HistoConn selon son id produit
-  * @param {produit.Model} req.params - les informations d'un HistoConn qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'un HistoConn supprimmé
-  */
- router.delete('/dev/delHistoConnByIdClient/:id(\\d+)', dev, clientHistoController.deleteHistoConnByIdClient);
- 
+/**
+ * Une route pour voir tous les HistoConns
+ * @route GET /dev/allHistoConn
+ * @group Developpeur Gestion des HistoConns
+ * @summary Affiche tous les HistoConns
+ * @returns {JSON} 200 - Les données de tous les HistoConns
+ */
+router.get('/dev/allHistoConn', dev, clientHistoController.getAllHistoConn);
 
- //! AVIS --------------------------------------------------
+/**
+ * Une route pour voir un HistoConn selon son id produit 
+ * @route GET /dev/HistoConnByIdClient/:id
+ * @group Developpeur Gestion des HistoConns
+ * @summary Affiche un HistoConn selon son id produit
+ * @param {produit.Model} req.params - les informations d'un HistoConn qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'un HistoConn selon son id produit
+ */
+router.get('/dev/HistoConnByIdClient/:id(\\d+)', dev, clientHistoController.getHistoConnByIdClient);
+
+/**
+ * Une route pour insérer un HistoConn
+ * @route POST /dev/newHistoConn
+ * @group Developpeur Gestion des HistoConns
+ * @summary Insére un nouveau HistoConn
+ * @returns {JSON} 200 - Les données d'un nouveau HistoConn inséré
+ */
+router.post('/dev/newHistoConn', clean, dev, clientHistoController.newHistoConn);
+
+
+/**
+ * Une route pour supprimmer un HistoConn
+ * @route DELETE /dev/delHistoConn
+ * @group Developpeur Gestion des HistoConns
+ * @summary Supprimme un nouveau HistoConn
+ * @param {produit.Model} req.params - les informations d'un HistoConn qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'un HistoConn supprimmé
+ */
+router.delete('/dev/delHistoConn/:id(\\d+)', dev, clientHistoController.deleteHistoConn);
+
+/**
+ * Une route pour supprimmer une HistoConn selon son id produit
+ * @route DELETE /dev/delHistoConnByIdClient
+ * @group Developpeur Gestion des HistoConns
+ * @summary Supprimme un nouveau HistoConn selon son id produit
+ * @param {produit.Model} req.params - les informations d'un HistoConn qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'un HistoConn supprimmé
+ */
+router.delete('/dev/delHistoConnByIdClient/:id(\\d+)', dev, clientHistoController.deleteHistoConnByIdClient);
+
+
+//! AVIS --------------------------------------------------
 
 /**
  * Une route pour voir un avis
@@ -1336,67 +1526,67 @@ router.delete('/admin/delShop/:id(\\d+)', admin, mainController.deleteShop);
  * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
  * @returns {JSON} 200 - Les données d'un avis
  */
- router.get('/admin/avis/:id(\\d+)', admin, avisController.getOne);
+router.get('/admin/avis/:id(\\d+)', admin, avisController.getOne);
 
- /**
-  * Une route pour voir tous les aviss
-  * @route GET /admin/allAvis
-  * @group avis - Gestion des aviss
-  * @summary Affiche tous les aviss
-  * @returns {JSON} 200 - Les données de tous les aviss
-  */
- router.get('/admin/allAvis', admin, avisController.getAll);
- 
- /**
-  * Une route pour voir un avis selon son id Client 
-  * @route GET /admin/avisByIdClient/:id
-  * @group avis - Gestion des aviss
-  * @summary Affiche un avis selon son id Client
-  * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'un avis selon son id produit
-  */
- router.get('/admin/avisByIdClient/:id(\\d+)', admin, avisController.getByIdClient);
- 
- /**
-  * Une route pour insérer un avis
-  * @route POST /admin/newavis
-  * @group avis - Gestion des aviss
-  * @summary Insére un nouveau avis
-  * @returns {JSON} 200 - Les données d'un nouveau avis inséré
-  */
- router.post('/admin/newavis', clean, admin, avisController.new);
- 
- /**
-  * Une route pour mette a jour un avis
-  * @route PATCH /admin/updateAvis/:id
-  * @group avis - Gestion des aviss
-  * @summary Met à jour un nouveau avis
-  * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'un nouveau avis mis a jour
-  */
- router.patch('/admin/updateAvis/:id(\\d+)', clean, admin, avisController.update);
- 
- /**
-  * Une route pour supprimmer un avis
-  * @route DELETE /admin/delAvis
-  * @group avis - Gestion des aviss
-  * @summary Supprimme un nouveau avis
-  * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'un avis supprimmé
-  */
- router.delete('/admin/delAvis/:id(\\d+)', admin, avisController.delete);
- 
- /**
-  * Une route pour supprimmer une avis selon son id Client
-  * @route DELETE /admin/delAvisByIdClient
-  * @group avis - Gestion des aviss
-  * @summary Supprimme un nouveau avis selon son id Client
-  * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
-  * @returns {JSON} 200 - Les données d'un avis supprimmé
-  */
- router.delete('/admin/delAvisByIdClient/:id(\\d+)', admin, avisController.deleteByIdClient);
- 
- 
+/**
+ * Une route pour voir tous les aviss
+ * @route GET /admin/allAvis
+ * @group avis - Gestion des aviss
+ * @summary Affiche tous les aviss
+ * @returns {JSON} 200 - Les données de tous les aviss
+ */
+router.get('/admin/allAvis', admin, avisController.getAll);
+
+/**
+ * Une route pour voir un avis selon son id Client 
+ * @route GET /admin/avisByIdClient/:id
+ * @group avis - Gestion des aviss
+ * @summary Affiche un avis selon son id Client
+ * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'un avis selon son id produit
+ */
+router.get('/admin/avisByIdClient/:id(\\d+)', admin, avisController.getByIdClient);
+
+/**
+ * Une route pour insérer un avis
+ * @route POST /admin/newavis
+ * @group avis - Gestion des aviss
+ * @summary Insére un nouveau avis
+ * @returns {JSON} 200 - Les données d'un nouveau avis inséré
+ */
+router.post('/admin/newavis', clean, admin, avisController.new);
+
+/**
+ * Une route pour mette a jour un avis
+ * @route PATCH /admin/updateAvis/:id
+ * @group avis - Gestion des aviss
+ * @summary Met à jour un nouveau avis
+ * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'un nouveau avis mis a jour
+ */
+router.patch('/admin/updateAvis/:id(\\d+)', clean, admin, avisController.update);
+
+/**
+ * Une route pour supprimmer un avis
+ * @route DELETE /admin/delAvis
+ * @group avis - Gestion des aviss
+ * @summary Supprimme un nouveau avis
+ * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'un avis supprimmé
+ */
+router.delete('/admin/delAvis/:id(\\d+)', admin, avisController.delete);
+
+/**
+ * Une route pour supprimmer une avis selon son id Client
+ * @route DELETE /admin/delAvisByIdClient
+ * @group avis - Gestion des aviss
+ * @summary Supprimme un nouveau avis selon son id Client
+ * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
+ * @returns {JSON} 200 - Les données d'un avis supprimmé
+ */
+router.delete('/admin/delAvisByIdClient/:id(\\d+)', admin, avisController.deleteByIdClient);
+
+
 
 
 //! route mis en place pour tester.. 

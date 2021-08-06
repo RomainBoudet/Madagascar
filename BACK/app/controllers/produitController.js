@@ -30,6 +30,12 @@ const produitController = {
         try {
             const produits = await Produit.findAll();
 
+            produits.map(produit => produit.prixHTAvecReduc = parseFloat((produit.prix * (1 - produit.reduction)).toFixed(2)));
+            produits.map(produit => produit.tva = parseFloat(produit.tva));
+            produits.map(produit => produit.reduction = parseFloat(produit.reduction));
+            produits.map(produit => produit.prix = parseFloat(produit.prix));
+            produits.map(produit => produit.prixTTC = parseFloat((produit.prixHTAvecReduc * (parseFloat(produit.tva) + 1)).toFixed(2)));
+
             res.status(200).json(produits);
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du produitController :',
@@ -55,7 +61,7 @@ const produitController = {
             produit.prixTTC = parseFloat((produit.prixHTAvecReduc * (parseFloat(produit.tva) + 1)).toFixed(2));
 
             console.log(`les données compléte du produit id ${produit.id} avec le nom ${produit.produit} ont bien été retourné au Front !`);
-            res.json(produit);
+            res.status(200).json(produit);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du produitController :',
@@ -65,6 +71,27 @@ const produitController = {
     },
 
 
+    
+
+    articleByCategorieId: async (req, res) => {
+        try {
+            const produits = await Produit.findByCategorieId(req.params.id);
+
+            produits.map(produit => produit.prixHTAvecReduc = parseFloat((produit.prix * (1 - produit.reduction)).toFixed(2)));
+            produits.map(produit => produit.tva = parseFloat(produit.tva));
+            produits.map(produit => produit.reduction = parseFloat(produit.reduction));
+            produits.map(produit => produit.prix = parseFloat(produit.prix));
+            produits.map(produit => produit.prixTTC = parseFloat((produit.prixHTAvecReduc * (parseFloat(produit.tva) + 1)).toFixed(2)));
+
+            res.status(200).json(produits);
+        } catch (error) {
+            console.trace('Erreur dans la méthode articleByCategorie du produitController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    
 
     getByIdCategorie: async (req, res) => {
         try {
@@ -78,6 +105,16 @@ const produitController = {
             res.status(500).json(error.message);
         }
     },
+
+
+
+
+
+
+
+
+
+
 
 
 

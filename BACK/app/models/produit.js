@@ -69,7 +69,7 @@ class Produit {
     static async findAll() {
         const {
             rows
-        } = await db.query('SELECT * FROM mada.produit ORDER BY produit.id ASC');
+        } = await db.query('SELECT * FROM mada.view_produit_plus');
 
         if (!rows[0]) {
             throw new Error("Aucunes produits dans la BDD");
@@ -137,6 +137,35 @@ class Produit {
         );
 
         return new Produit(rows[0]);
+    }
+
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à un produit via son id passée en paramétre
+     * @param - un id d'un produit
+     * @returns - les informations du produit demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findByCategorieId(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.view_categorie WHERE categorie_id = $1;',
+            [id]
+        );
+
+        if (!rows[0]) {
+            return null;
+        }
+        this.categorie = rows[0].categorie;
+        consol.model(
+            `les produits avec la catégorie id : ${id} et le nom ${this.categorie} ont été demandé en BDD !`
+        );
+
+        return rows.map((categorie) => new Produit(categorie));
     }
 
 

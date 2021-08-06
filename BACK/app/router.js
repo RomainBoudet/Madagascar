@@ -392,19 +392,52 @@ router.get('/user/addPanier/:id(\\d+)', panierController.addArticlePanier);
  router.delete('/user/delPanier/:id(\\d+)', panierController.delArticlePanier);
 
 
- //! ROUTES POUR LA VUE D'UN ARTICLE
+ //! ROUTES POUR LA VUE D'UN ARTICLE OU DE TOUS LES ARTICLES 
 
 
 /**
- * Une route pour voirun article en particuler
+ * Une route pour voir un article en particuler
  * route accessible a tous 
- * @route GET/user/panier
- * @group Panier - Gestion du panier
- * @summary Affiche les articles d'un panier selon la session
- * @returns {JSON} 200 - les articles présent dans ce panier et leurs caractéristiques
+ * @route GET/user/article/:id
+ * @group produit - Gestion des produits
+ * @summary Affiche un article en particulier
+ * @returns {JSON} 200 - Les données d'un produit selon son id
  */
 router.get('/user/article/:id(\\d+)', produitController.getOne);
 
+/**
+ * Une route pour voir tous les articles
+ * route accessible a tous 
+ * @route GET/user/articles
+ * @group Produit - Gestion des produits
+ * @summary Affiche tous les articles 
+ * @returns {JSON} 200 - Les données de tous les produits
+ */
+ router.get('/user/articles', produitController.getAll);
+
+/**
+ * Une route pour voir tous les articles d'une catégorie
+ * route accessible a tous 
+ * @route GET/user/articleByCategorie/:id
+ * @group produit - Gestion des produits
+ * @summary Affiche des articles lié a une catégorie précise
+ * @returns {JSON} 200 - Les données de tous les produit selon l'id de la catégorie choisie
+ */
+ router.get('/user/articleByCategorie/:id(\\d+)', produitController.articleByCategorieId);
+
+
+
+//!ROUTES POUR LA GESTION DE CATÉGORIE
+
+/**
+ * Une route pour voir toutes les catégorie
+ * route accessible a tous
+ * @route GET/user/categorie/:id
+ * @group produit - Gestion des categorie
+ * @summary Affiche toutes les catégorie
+ * @returns {JSON} 200 - Les données de plusieurs produits selon leur catégorie
+ */
+ //router.get('/user/categorie/:id(\\d+)', produitController.ByCategorieId);
 
 
 

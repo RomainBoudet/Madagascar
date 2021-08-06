@@ -616,7 +616,7 @@ JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
 JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
 ORDER BY client.prenom ASC;
 
-
+-- Une vue simplifié pour les produits sans leurs avis et photos aggrégés, utilisé notamment pour les paniers
 
 CREATE VIEW mada.view_produit AS 
 SELECT
@@ -635,11 +635,14 @@ JOIN mada.reduction ON produit.id_reduction = reduction.id
 JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
 JOIN mada.stock ON stock.id_produit = produit.id;
 
+-- Une vue compléte des produits avec avis et photos aggrégés ordonné par id des produits, utilisé pour afficher le détail d'un produit
+
 CREATE VIEW mada.view_produit_plus AS 
 SELECT
 produit.nom as produit,
 produit.description as description,
 produit.prix_HT as prix,
+produit.image_mini,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,
 stock.quantite as stock,
@@ -660,6 +663,36 @@ JOIN mada.avis ON avis.id_produit = produit.id
 GROUP BY produit, produit.description, prix, couleur, taille, stock, reduction, tva, categorie, produit.id
 ORDER BY produit.id;
 
+-- Une vue compléte des catégories et de leur produits, utilisé pour afficher tous les produits d'une catégorie, trié selon le nom des produits, tous ces produits appartenant a une même catégorie...
+
+CREATE VIEW mada.view_categorie AS 
+SELECT
+produit.nom as produit,
+produit.description as description_produit,
+produit.prix_HT as prix,
+produit.image_mini,
+caracteristique.couleur as couleur,
+caracteristique.taille as taille,
+stock.quantite as stock,
+reduction.pourcentage_reduction as reduction,
+tva.taux as tva,
+categorie.nom as categorie,
+categorie.id as categorie_id,
+categorie.description as description_categorie,
+json_agg(categorie_image.URL) as image_categorie,
+json_agg(image.URL) as image_produit,
+json_agg(avis.avis) as avis
+FROM mada.produit 
+JOIN mada.categorie ON produit.id_categorie = categorie.id
+JOIN mada.tva ON produit.id_tva = tva.id
+JOIN mada.reduction ON produit.id_reduction = reduction.id
+JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
+JOIN mada.stock ON stock.id_produit = produit.id
+JOIN mada.image ON image.id_produit = produit.id
+JOIN mada.avis ON avis.id_produit = produit.id
+JOIN mada.categorie_image ON categorie_image.id_categorie = categorie.id
+GROUP BY produit, categorie.id, produit.description, prix, couleur, taille, stock, reduction, tva, categorie, produit.id
+ORDER BY produit.nom ASC;
 
 COMMIT;
 

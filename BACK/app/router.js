@@ -252,7 +252,7 @@ router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminCont
  * Faire appel a la méthode smsSend envoi un sms avec le contenu voulu. Ici un exemple générique qui renvoie le nombre d'enregistrement dans la table clients, a chaque demande. A modifier selon les besoins d'envoie de SMS...
  * @route GET /admin/smsSend
  * @group administrateur
- * @summary Utilise l'API de Twillio. Permet d'envoyer un sms sur le numéro souhaité
+ * @summary Utilise l'API de Twillio. Permet d'envoyer un sms sur le numéro souhaité. Relié au numéro de l'admin du site.
  * @returns {JSON} 200 -Renvoie un sms au numéro souhaité.
  */
 router.get('/admin/smsSend', admin, adminController.smsSend);
@@ -273,7 +273,8 @@ router.get('/admin/user/all', admin, clientController.getAll);
  * @summary Renvoie tous les client en BDD
  * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
  */
-router.get('admin/user/getone/:id(\\d+)', clientController.getOne);
+router.get('admin/user/getone/:id(\\d+)', admin, clientController.getOne);
+
 
 
 
@@ -283,17 +284,26 @@ router.get('admin/user/getone/:id(\\d+)', clientController.getOne);
  * Faire appel a la méthode smsBalance envoi un sms avec la balance du compte Twilio. 
  * @route GET /dev/smsBalance
  * @group Developpeur - Twillio
- * @summary Utilise l'API de Twillio. Renvoie la balance du compte par sms au numéro souhaité.
+ * @summary Utilise l'API de Twillio. Renvoie la balance du compte par sms au numéro souhaité. Relier au numéro du developpeur.
  * @returns {JSON} 200 -Renvoie la balance du compte par sms au numéro souhaité.
  */
 router.get('/dev/smsBalance', dev, adminController.smsBalance);
 
 /**
+ * Faire appel a la méthode balanceTwillio renvoi la balance du compte Twilio. 
+ * @route GET /dev/balanceTwillio
+ * @group Developpeur - Twillio
+ * @summary Utilise l'API de Twillio. Renvoie la balance du compte.
+ * @returns {JSON} 200 -Renvoie la balance du compte Twillio.
+ */
+ router.get('/dev/balanceTwillio', dev, adminController.balanceTwillio);
+
+/**
  * Faire appel a la méthode smsResponse envoi un sms avec le contenu voulu selon le contenu d'un sms envoyé. A modifier selon les besoins d'envoie de SMS. Il pourrait être intéressant d'envoyer l'adresse a laquel envoyé le colis pour la derniére commande par example. 
  * Actuellement la méthode répond a 3 payload différents => "Balance ?"" // "Paiement ?"" // "Clients ?"" qui répond respectivement, la balance du compte Twillio, le dernier paiement effectué et le nombre de client en BDD, toujours par sms.
  * @route POST /admin/smsRespond
- * @group administrateur
- * @summary Utilise l'API de Twillio. Permet d'envoyer un sms selon le contenu d'un sms reçu.
+ * @group Developpeur
+ * @summary Utilise l'API de Twillio. Permet d'envoyer un sms selon le contenu d'un sms reçu. Relier au numéro du développeur
  * @param {administrateur.Model} administrateur.body.required
  * @returns {JSON} 200 -Renvoie un sms au numéro souhaité avec la réponse attendue.
  */

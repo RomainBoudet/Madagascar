@@ -399,9 +399,28 @@ const adminController = {
 
         } catch (error) {
             console.trace(
-                'Erreur dans la méthode smsSend du clientController :',
+                'Erreur dans la méthode smsBalance du adminController :',
                 error);
-            res.status(500).json('Erreur lors de la vérification de votre numéro de téléphone');
+            res.status(500).json('Erreur lors de l\'envoie de la balance du compte via votre numéro de téléphone');
+        }
+    },
+
+    balanceTwillio: async (req, res) => {
+        const dataTwillio = await Twillio.findFirst();
+        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+        
+        try {
+            
+               const balance = await twilio.balance.fetch()
+
+                return res.status(200).json(balance);
+            
+
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode balanceTwillio du adminController :',
+                error);
+            res.status(500).json('Erreur lors de la balance du compte');
         }
     },
 

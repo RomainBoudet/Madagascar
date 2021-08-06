@@ -79,7 +79,7 @@ class Twillio {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-     static async findFirst() {
+    static async findFirst() {
         const {
             rows
         } = await db.query('SELECT * FROM mada.twillio ORDER BY twillio.id ASC LIMIT 1');
@@ -91,7 +91,7 @@ class Twillio {
         consol.model(
             `la première info avec l'id ${this.id} a été demandées !`
         );
-        
+
         return new Twillio(rows[0]);
     }
 
@@ -156,7 +156,7 @@ class Twillio {
      * @param accountSid -
      * @param authToken -
      * @param sidVerify -
-     * @param id - l'identifiant du champs a supprimer
+     * @param id - l'identifiant du champs a mettre a jour
      * @returns - les informations du twillio mis à jour
      * @async - une méthode asynchrone
      */
@@ -176,6 +176,27 @@ class Twillio {
     }
 
 
+    /**
+     * Méthode chargé d'aller mettre à jour uniquement le numéro de téléphone du client pour un accés admin.
+     * @param clientNumber -
+     * @param id - l'identifiant du champs a mettre a jour
+     * @returns - les informations du twillio mis à jour
+     * @async - une méthode asynchrone
+     */
+    async updateClientNumber() {
+        const {
+            rows,
+        } = await db.query(
+            `UPDATE mada.twillio SET client_number = $1, updated_date = now() WHERE id = $2  RETURNING *;`,
+            [this.clientNumber, this.id]
+        );
+        this.updatedDate = rows[0].updated_date;
+        console.log(
+            `l'info twillio id ${this.id} a été mis a jour à la date du ${this.updatedDate} !`
+        );
+        return new Twillio(rows[0]);
+
+    }
 
 
     /**

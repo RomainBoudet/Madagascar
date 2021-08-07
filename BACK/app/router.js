@@ -32,6 +32,8 @@ const commandeController = require('./controllers/commandeController');
 const livraisonController = require('./controllers/livraisonController');
 const avisController = require('./controllers/avisController');
 const produitController = require('./controllers/produitController');
+const searchController = require('./controllers/searchController');
+
 
 // implémentation de joi, avec un validator  dans le dossier "services".
 const {
@@ -47,6 +49,7 @@ const resendEmailSchema = require('./schemas/resendEmailSchema');
 const resetPwdSchema = require('./schemas/resetPwdSchema');
 const phoneNumberSchema = require('./schemas/phoneNumber');
 const codeSchema = require('./schemas/codeSchema');
+const searchSchema = require('./schemas/searchSchema');
 
 
 //Redis pour le cache
@@ -207,7 +210,19 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
  */
 router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailSchema), clientController.reset_pwd);
 
-//! ROUTES ADMINISTRATEUR ----------------
+
+//! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * Receptionne une string et renvoie un tableau d'objet représentant les produits qui match. 
+ * @route POST /user/searchProduit
+ * @group administrateur
+ * @summary Permet la recherche d'un mot ou d'une phrase (une string) dans les produits. 
+ * @returns {JSON} 200 - Un tableau d'objeta 
+ */
+router.post('/user/searchProduit', clean, validateBody(searchSchema), searchController.search);
+
+//! ROUTES ADMINISTRATEUR -----------------------------------------------------------------------------------------------------------------------
 
 
 /**
@@ -296,7 +311,7 @@ router.get('/dev/smsBalance', dev, adminController.smsBalance);
  * @summary Utilise l'API de Twillio. Renvoie la balance du compte.
  * @returns {JSON} 200 -Renvoie la balance du compte Twillio.
  */
- router.get('/dev/balanceTwillio', dev, adminController.balanceTwillio);
+router.get('/dev/balanceTwillio', dev, adminController.balanceTwillio);
 
 /**
  * Faire appel a la méthode smsResponse envoi un sms avec le contenu voulu selon le contenu d'un sms envoyé. A modifier selon les besoins d'envoie de SMS. Il pourrait être intéressant d'envoyer l'adresse a laquel envoyé le colis pour la derniére commande par example. 
@@ -396,7 +411,7 @@ router.patch('/dev/updateprivilege/:id(\\d+)', dev, clean, adminController.updat
 router.get('/dev/emailVerif', dev, adminController.getAllEmailVerif);
 
 /**
- * Permet de voir tous un email vérifié ou non pour les admins
+ * Permet de voir un email vérifié ou non pour les admins
  * Route sécurisée avec Joi et MW Developpeur
  * @route GET /v1/dev/emailVerif/:id
  * @group Developpeur - 
@@ -413,7 +428,7 @@ router.get('/dev/emailVerif/:id(\\d+)', dev, adminController.getOneEmailVerif);
  * @summary Affiche un emails d'admin existant, vérifié ou non, selon son id Client
  * @returns {JSON} 200 - un email d'admin, vérifié ou non
  */
- router.get('/dev/emailVerifByIdClient/:id(\\d+)', dev, adminController.getEmailVerifByIdClient);
+router.get('/dev/emailVerifByIdClient/:id(\\d+)', dev, adminController.getEmailVerifByIdClient);
 
 /**
  * Permet de d'insérer un email pour un admin
@@ -465,52 +480,52 @@ router.delete('/dev/delEmailVerifByIdClient', dev, adminController.deleteVerifEm
  * @summary Affiche tous les adminPhone des admins 
  * @returns {JSON} 200 - les adminPhone des admins
  */
- router.get('/dev/adminPhone', dev, adminController.getAllPhone);
+router.get('/dev/adminPhone', dev, adminController.getAllPhone);
 
- /**
-  * Permet de voir un adminPhone pour un admin (forcemment vérifié si il est en BDD)
-  * Route sécurisée avec Joi et MW Developpeur
-  * @route GET /v1/dev/Phone/:id
-  * @group Developpeur - 
-  * @summary Affiche un adminPhone d'un admin 
-  * @returns {JSON} 200 - un adminPhone d'un admin
-  */
- router.get('/dev/Phone/:id(\\d+)', dev, adminController.getOnePhone);
- 
- /**
-  * Permet de voir un adminPhone pour un admin selon son id Client
-  * Route sécurisée avec Joi et MW Developpeur
-  * @route GET /v1/dev/PhoneByIdClient/:id
-  * @group Developpeur - 
-  * @summary Affiche un adminPhone d'un admin selon son id Client
-  * @returns {JSON} 200 - un adminPhone d'un admin
-  */
-  router.get('/dev/PhoneByIdClient/:id(\\d+)', dev, adminController.getPhoneByIdClient);
- 
- 
- /**
-  * Permet de supprimer un adminPhone pour un admin
-  * Route sécurisée avec Joi et MW Developpeur
-  * @route DELETE /v1/dev/delPhone
-  * @group Developpeur - 
-  * @summary Supprime un adminPhone d'un admin - Seule la méthode Verify permet d'en réinsérer un !
-  * @returns {JSON} 200 - un adminPhone d'admin supprimé
-  */
- router.delete('/dev/delPhone', dev, adminController.deletePhone);
- 
- /**
-  * Permet de supprimer un adminPhone pour un admin selon son id Client
-  * Route sécurisée avec Joi et MW Developpeur
-  * @route DELETE /v1/dev/delPhoneByIdClient
-  * @group Developpeur - 
-  * @summary Supprime un adminPhone d'admins selon son id Client 
-  * @returns {JSON} 200 - un adminPhone d'admin supprimé
-  */
- router.delete('/dev/delPhoneByIdClient', dev, adminController.deletePhoneByIdClient);
+/**
+ * Permet de voir un adminPhone pour un admin (forcemment vérifié si il est en BDD)
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route GET /v1/dev/Phone/:id
+ * @group Developpeur - 
+ * @summary Affiche un adminPhone d'un admin 
+ * @returns {JSON} 200 - un adminPhone d'un admin
+ */
+router.get('/dev/Phone/:id(\\d+)', dev, adminController.getOnePhone);
 
- 
+/**
+ * Permet de voir un adminPhone pour un admin selon son id Client
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route GET /v1/dev/PhoneByIdClient/:id
+ * @group Developpeur - 
+ * @summary Affiche un adminPhone d'un admin selon son id Client
+ * @returns {JSON} 200 - un adminPhone d'un admin
+ */
+router.get('/dev/PhoneByIdClient/:id(\\d+)', dev, adminController.getPhoneByIdClient);
 
- //! PRIVILEGE
+
+/**
+ * Permet de supprimer un adminPhone pour un admin
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route DELETE /v1/dev/delPhone
+ * @group Developpeur - 
+ * @summary Supprime un adminPhone d'un admin - Seule la méthode Verify permet d'en réinsérer un !
+ * @returns {JSON} 200 - un adminPhone d'admin supprimé
+ */
+router.delete('/dev/delPhone', dev, adminController.deletePhone);
+
+/**
+ * Permet de supprimer un adminPhone pour un admin selon son id Client
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route DELETE /v1/dev/delPhoneByIdClient
+ * @group Developpeur - 
+ * @summary Supprime un adminPhone d'admins selon son id Client 
+ * @returns {JSON} 200 - un adminPhone d'admin supprimé
+ */
+router.delete('/dev/delPhoneByIdClient', dev, adminController.deletePhoneByIdClient);
+
+
+
+//! PRIVILEGE
 
 
 /**
@@ -521,18 +536,18 @@ router.delete('/dev/delEmailVerifByIdClient', dev, adminController.deleteVerifEm
  * @summary Affiche tous les privilege des admins 
  * @returns {JSON} 200 - les privilege des admins
  */
- router.get('/dev/privilege', dev, adminController.getAllPrivilege);
+router.get('/dev/privilege', dev, adminController.getAllPrivilege);
 
- /**
-  * Permet de voir un privilege 
-  * Route sécurisée avec Joi et MW Developpeur
-  * @route GET /v1/dev/privilege/:id
-  * @group Developpeur - 
-  * @summary Affiche un privilege 
-  * @returns {JSON} 200 - un privilege 
-  */
- router.get('/dev/privilege/:id(\\d+)', dev, adminController.getOnePrivilege);
- 
+/**
+ * Permet de voir un privilege 
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route GET /v1/dev/privilege/:id
+ * @group Developpeur - 
+ * @summary Affiche un privilege 
+ * @returns {JSON} 200 - un privilege 
+ */
+router.get('/dev/privilege/:id(\\d+)', dev, adminController.getOnePrivilege);
+
 /**
  * Permet de d'insérer un privilege 
  * Route sécurisée avec Joi et MW Developpeur
@@ -541,20 +556,20 @@ router.delete('/dev/delEmailVerifByIdClient', dev, adminController.deleteVerifEm
  * @summary Insére un privilege
  * @returns {JSON} 200 - un privilege
  */
- router.post('/dev/newPrivilege', dev, adminController.newPrivilege);
+router.post('/dev/newPrivilege', dev, adminController.newPrivilege);
 
- 
- /**
-  * Permet de supprimer un privilege pour un admin
-  * Route sécurisée avec Joi et MW Developpeur
-  * @route DELETE /v1/dev/delPhone
-  * @group Developpeur - 
-  * @summary Supprime un privilege 
-  * @returns {JSON} 200 - un privilege supprimé
-  */
- router.delete('/dev/delPrivilege', dev, adminController.deletePrivilege);
- 
- 
+
+/**
+ * Permet de supprimer un privilege pour un admin
+ * Route sécurisée avec Joi et MW Developpeur
+ * @route DELETE /v1/dev/delPhone
+ * @group Developpeur - 
+ * @summary Supprime un privilege 
+ * @returns {JSON} 200 - un privilege supprimé
+ */
+router.delete('/dev/delPrivilege', dev, adminController.deletePrivilege);
+
+
 //! methodes pour la gestion du panier en session
 
 /**
@@ -1601,7 +1616,8 @@ router.delete('/admin/delAvisByIdClient/:id(\\d+)', admin, avisController.delete
 
 //! route mis en place pour tester.. 
 
-router.get('admin/user/getone/:id(\\d+)', clientController.getOne);
+
+
 
 router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getCategorieImageByIdCategorie);
 

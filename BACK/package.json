@@ -37,6 +37,7 @@
     "express-session": "^1.17.2",
     "express-swagger-generator": "^1.1.17",
     "faker": "^5.5.3",
+    "fuse.js": "^6.4.6",
     "geoip-lite": "^1.4.2",
     "helmet": "^4.6.0",
     "joi": "^17.4.1",

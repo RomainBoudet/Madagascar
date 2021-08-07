@@ -132,13 +132,13 @@ app.use(
 
 // Je require le middleware pour dire à express d'être plus permissif sur l'origine des requête
 
- app.use(cors({
+app.use(cors({
     optionsSuccessStatus: 200,
     credentials: true, // pour envoyer des cookies et des en-têtes d'autorisations faut rajouter une autorisation avec l'option credential
     origin: ['https://localhost:8080', 'http://127.0.0.1:4040 '], // true = req.header('Origin') //! a pas oublier pour la prod ! => remplacer par le bon nom de domaine
     methods: "GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS", // ok via un array aussi
     allowedHeaders: ['Content-Type', 'x-xsrf-token'],
-})); 
+}));
 
 //FIN DES MIDDLEWARES----------------------------------------------------------------------
 
@@ -152,9 +152,15 @@ app.use('/v1', router);
 
 // les options que l'on va passer pour la config du https.
 const options = {
-    key:fs.readFileSync(process.env.SSL_KEY_FILE),
-    cert:fs.readFileSync(process.env.SSL_CRT_FILE),
+    key: fs.readFileSync(process.env.SSL_KEY_FILE),
+    cert: fs.readFileSync(process.env.SSL_CRT_FILE),
 };
+
+
+
+
+
+
 
 /* Puis on créer notre serveur HTTPS avec les option qui sont le certificat et la clé */
 spdy.createServer(options, app).listen(port, () => {

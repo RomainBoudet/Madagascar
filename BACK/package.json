@@ -8,7 +8,7 @@
     "k": "sudo kill -9 $(sudo lsof -t -i:3000)",
     "seed": "cd conception/seeding && node fakeFabric_V2.js",
     "test": "mocha",
-    "clearRedis": "redis-cli --scan --pattern 'mjc:*' | xargs redis-cli DEL"
+    "clearRedis": "redis-cli --scan --pattern 'mada:*' | xargs redis-cli DEL"
   },
   "repository": {
     "type": "git",

@@ -60,10 +60,11 @@ const cacheGenerator = (options) => {
             if (await redis.exists(theKey)) {
                 // on la sort du registre et on la parse en json puis on la renvoie
                 const theValue = await redis.get(theKey).then(JSON.parse);
+                console.log("theKey==> ", theKey);
                 consol.redis(`la valeur ${theKey} est déja dans Redis, on la renvoie depuis Redis`);
         
                 // et on répond directement à l'utilisateur
-                response.json(theValue);
+                response.status(200).json(theValue);
 
 
             } else {

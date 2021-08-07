@@ -1,7 +1,21 @@
 const Fuse = require('fuse.js');
 const Produit = require('../models/produit');
 
+const {
+    createClient
+} = require('redis');
 
+const client = createClient();
+
+const {
+    promisify,
+    inspect
+} = require('util');
+
+const redis = {
+    get: promisify(client.get).bind(client), // pour obtenir un clé
+    exists: promisify(client.exists).bind(client) // pour vérifier si une clé existe
+};
 
 /**
  * Un objet qui contient des méthodes permettant de rechercher des mots dans la barre de recherche 
@@ -19,12 +33,24 @@ const searchController = {
     search: async (req, res) => {
         try {
             console.time("search");
-            //Des données qui proviennent de Postgres
-            const produits = await Produit.findAll();
+            //Je vais chercher une clé dans redis, si elle existe, je la prend, sinon je vais la chercher via postgres.
+            let produit;
+            const theKey = `mada:/v1/user/produits`;
+            const dataInRedis = await redis.exists(theKey)
+
+            if (dataInRedis) {
+                // on la prends dans REDIS si elle y est.
+                produits = await redis.get(theKey).then(JSON.parse);
+                console.log(`la valeur ${theKey} est déja dans Redis, on la renvoie depuis Redis`);
+
+            } else {
+                console.log(`la valeur ${theKey} n'est pas dans Redis, on la renvoie depuis Postgres !`);
+                produits = await Produit.findAll();
+            };
+            // Ici, n'ayant pas créeé la clé mada:/v1/user/produits, je ne fais que l'utiliser, elle a bien déja été mis dans l'index en JS qui recéle nos clé REDIS dans la méthode du cacheGenerator, lors de sa création (sur la route /v1/user/produits) et ainsi, elle sera bien supprimée en cas d'activation d'une route flush.  
 
             // les options de fuse => https://fusejs.io/api/options.html 
             //comprendre le scoring ==> https://fusejs.io/concepts/scoring-theory.html 
-
 
             const options = {
                 isCaseSensitive: false,
@@ -32,7 +58,7 @@ const searchController = {
                 shouldSort: true,
                 // includeMatches: false,
                 // findAllMatches: false,
-                minMatchCharLength: req.body.search.length-1, //le nombre de caractére min qui doit matcher avec le résultat : je les veux tous ! -1 car j'admet que l'utilisateur puisse faire UNE faute d'orthographe :)
+                minMatchCharLength: req.body.search.length - 1, //le nombre de caractére min qui doit matcher avec le résultat : je les veux tous ! -1 car j'admet que l'utilisateur puisse faire UNE faute d'orthographe :)
                 // location: 0,
                 threshold: 0.6,
                 // distance: 100,

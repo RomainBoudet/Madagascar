@@ -28,6 +28,7 @@ const produitController = {
 
     getAll: async (req, res) => {
         try {
+            
             const produits = await Produit.findAll();
 
             produits.map(produit => produit.prixHTAvecReduc = parseFloat((produit.prix * (1 - produit.reduction)).toFixed(2)));

@@ -60,7 +60,7 @@ const {
   cache,
   flush
 } = cacheGenerator({
-  ttl: 1296000, // 3600 *24 *15 
+  ttl: 1296000, // 3600 *24 *15 => 15 jours
   prefix: "mada",
 });
 
@@ -677,14 +677,14 @@ router.delete('/admin/delPanierByIdClient/:id(\\d+)', admin, panierController.de
 router.get('/user/produit/:id(\\d+)', produitController.getOne);
 
 /**
- * Une route pour voir tous les articles
+ * Une route pour voir tous les articles //! Attention l'adresse de la route est lié à la clé REDIS dans le searchController.
  * route accessible a tous 
  * @route GET /user/produits
  * @group Produit - Gestion des produits
  * @summary Affiche tous les articles 
  * @returns {JSON} 200 - Les données de tous les produits
  */
-router.get('/user/produits', produitController.getAll);
+router.get('/user/produits', cache, produitController.getAll);
 
 /**
  * Une route pour voir tous les articles d'une catégorie

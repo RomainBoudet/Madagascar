@@ -216,7 +216,7 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
 /**
  * Receptionne une string et renvoie un tableau d'objet représentant les produits qui match. 
  * @route POST /user/searchProduit
- * @group administrateur
+ * @group utilisateur
  * @summary Permet la recherche d'un mot ou d'une phrase (une string) dans les produits. 
  * @returns {JSON} 200 - Un tableau d'objeta 
  */

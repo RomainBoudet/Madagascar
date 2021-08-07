@@ -35,11 +35,11 @@ const searchController = {
             console.time("search");
             //Je vais chercher une clé dans redis, si elle existe, je la prend, sinon je vais la chercher via postgres.
             let produit;
-            const theKey = `mada:/v1/user/produits`;
-            const dataInRedis = await redis.exists(theKey)
+            const theKey = `mada:/v1/user/produits`; //! a vérifier que son nom n'ai pas changé avant déploiement...
+            const dataInRedis = await redis.exists(theKey);
 
             if (dataInRedis) {
-                // on la prends dans REDIS si elle y est.
+                // on la prends dans REDIS si elle y est déja.
                 produits = await redis.get(theKey).then(JSON.parse);
                 console.log(`la valeur ${theKey} est déja dans Redis, on la renvoie depuis Redis`);
 

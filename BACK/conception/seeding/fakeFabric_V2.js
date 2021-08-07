@@ -32,7 +32,7 @@ const fakeData = async () => {
         // (on aurait également pu lancer la commande dans le package.json en même temps que le démarrage 'npm run seed'... )
         consol.seed("Début dropdb - createdb");
 
-        await exec(" dropdb --if-exists madagascar && createdb madagascar && cd .. && cd data && psql madagascar -f SQL_MADA_V22.sql", (error, stdout, stderr) => {
+        await exec(" dropdb --if-exists madagascar && createdb madagascar && cd .. && cd data && psql madagascar -f script_postgres.sql", (error, stdout, stderr) => {
             if (error) {
                 consol.seed(`error: ${error.message}`);
                 return;

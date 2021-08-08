@@ -17,6 +17,7 @@ const redis = {
     exists: promisify(client.exists).bind(client) // pour vérifier si une clé existe
 };
 
+
 /**
  * Un objet qui contient des méthodes permettant de rechercher des mots dans la barre de recherche 
  * Retourne un json
@@ -26,8 +27,10 @@ const redis = {
  * @param {Express.Response} response - l'objet représentant la réponse
  * @return {JSON}  - une donnée en format json
  */
-const searchController = {
 
+//! pour plus de souplesse je pourrais metre en variable l'endroit ou l'utilisateur veut faire sa recherche (categorie, produit, description, etc..) et la valeur du slice qui séléctionne un nombre de résultats. Si c'est données passe en req.body. alors beaucoup plus de choix dans la recherche...
+
+const searchController = {
 
 
     search: async (req, res) => {
@@ -46,7 +49,9 @@ const searchController = {
             } else {
                 console.log(`la valeur ${theKey} n'est pas dans Redis, on la renvoie depuis Postgres !`);
                 produits = await Produit.findAll();
+
             };
+
             // Ici, n'ayant pas créeé la clé mada:/v1/user/produits, je ne fais que l'utiliser, elle a bien déja été mis dans l'index en JS qui recéle nos clé REDIS dans la méthode du cacheGenerator, lors de sa création (sur la route /v1/user/produits) et ainsi, elle sera bien supprimée en cas d'activation d'une route flush.  
 
             // les options de fuse => https://fusejs.io/api/options.html 
@@ -55,7 +60,7 @@ const searchController = {
             const options = {
                 isCaseSensitive: false,
                 includeScore: true,
-                shouldSort: true,
+                shouldSort: false,
                 // includeMatches: false,
                 // findAllMatches: false,
                 minMatchCharLength: req.body.search.length - 1, //le nombre de caractére min qui doit matcher avec le résultat : je les veux tous ! -1 car j'admet que l'utilisateur puisse faire UNE faute d'orthographe :)
@@ -84,15 +89,15 @@ const searchController = {
 
             const resultat = fuse.search(`${pattern}`);
 
-            if (resultat < 1) {
+            if (resultat.length < 1) {
                 console.log("Aucun résultat pour cette recherche.")
                 return res.status(200).json("Aucun résultat ne correspond a votre recherche.")
             }
 
             // je veux uniquement les score inférieurs a 0.4 et pas plus de 20 résultats !
-            const goodResult = (resultat.filter(item => item.score < 0.4)).slice(0, 20);
+            const goodResult = (resultat.filter(item => item.score < 0.3)).slice(0, 20);
 
-            if (goodResult < 1) {
+            if (goodResult.length < 1) {
                 console.log("Aucun résultat pour cette recherche.")
                 return res.status(200).json("Aucun résultat ne correspond a votre recherche.")
             }
@@ -152,7 +157,7 @@ const searchController = {
     prixTTC: 65.86,
     score: 0.01857804455091699
   }, */
-            console.log(`La recherche a rendu ${myCleanData.length} produits sur un total de ${goodResult.length} trouvé en lien avec demande ! Le rendu de la recherche est limité a 20 produits`);
+            console.log(`La recherche a rendu ${myCleanData.length} produits sur un total de ${goodResult.length} trouvé en lien avec la demande ! Le rendu de la recherche est limité a 20 produits`);
             res.status(200).json(myCleanData);
 
 

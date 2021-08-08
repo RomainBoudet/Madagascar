@@ -21,6 +21,7 @@ const redis = {
 //L'objet Set (Ensemble en français) permet de stocker des valeurs uniques, 
 //Une valeur donnée ne peut apparaître qu'une seule fois par Set
 const keysIndex = new Set();
+
 consol.redis("Redis On");
 consol.forget('Ne pas préter attention au message : "ERR wrong number of arguments for del command" 😉 ');
 //Le script de démmarage et de redémarrage automatique de nodemon efface les clés déja présente dans Redis, ce message survient quand il n\'y pas de clés
@@ -62,7 +63,7 @@ const cacheGenerator = (options) => {
                 const theValue = await redis.get(theKey).then(JSON.parse);
                 console.log("theKey==> ", theKey);
                 consol.redis(`la valeur ${theKey} est déja dans Redis, on la renvoie depuis Redis`);
-        
+
                 // et on répond directement à l'utilisateur
                 response.status(200).json(theValue);
 
@@ -115,7 +116,15 @@ const cacheGenerator = (options) => {
 
             next();
         }
+
+       
     }
 };
 
+
+
 module.exports = cacheGenerator;
+
+
+
+  

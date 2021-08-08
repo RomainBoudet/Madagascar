@@ -596,17 +596,17 @@ CHECK (created_date < updated_date)
 
 CREATE VIEW mada.view_custumer AS
 SELECT 
-	client.prenom,
-	client.nom_famille,
-	client.email,
-	client_adresse.ligne1,
-	client_adresse.ligne2,
-	client_adresse.ligne3,
-	client_adresse.telephone,
-	pays.nom as pays,
-	code_postal.code_postal,
-	ville.nom as ville,
-	privilege.nom as privilege
+client.prenom as prenom,
+client.nom_famille as nom_famille,
+client.email as email,
+array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne1), NULL)) as adresse1,
+array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne2), NULL)) as adresse2,
+array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne3), NULL)) as adresse3,
+array_to_json(array_remove(array_agg(DISTINCT client_adresse.telephone), NULL)) as telephone,
+array_to_json(array_remove(array_agg(DISTINCT pays.nom), NULL)) as pays,
+array_to_json(array_remove(array_agg(DISTINCT code_postal.code_postal), NULL)) as code_postal,
+array_to_json(array_remove(array_agg(DISTINCT ville.nom), NULL)) as ville,
+privilege.nom as privilege
 FROM mada.client
 JOIN mada.privilege ON client.id_privilege = privilege.id
 JOIN mada.client_adresse ON client_adresse.id_client  = client.id
@@ -614,6 +614,7 @@ JOIN mada.ville ON client_adresse.id_ville = ville.id
 JOIN mada.pays ON pays.id = ville.id_pays
 JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
 JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
+GROUP BY client.prenom, client.nom_famille, client.email, privilege.nom
 ORDER BY client.prenom ASC;
 
 -- Une vue simplifié pour les produits sans leurs avis et photos aggrégés, utilisé notamment pour les paniers
@@ -630,10 +631,10 @@ reduction.pourcentage_reduction as reduction,
 produit.id,
 tva.taux as tva
 FROM mada.produit 
-JOIN mada.tva ON produit.id_tva = tva.id
-JOIN mada.reduction ON produit.id_reduction = reduction.id
-JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
-JOIN mada.stock ON stock.id_produit = produit.id;
+LEFT JOIN mada.tva ON produit.id_tva = tva.id
+LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id
+LEFT JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
+LEFT JOIN mada.stock ON stock.id_produit = produit.id;
 
 -- Une vue compléte des produits avec avis et photos aggrégés ordonné par id des produits, utilisé pour afficher le détail d'un produit
 
@@ -649,17 +650,17 @@ stock.quantite as stock,
 reduction.pourcentage_reduction as reduction,
 tva.taux as tva,
 categorie.nom as categorie,
-json_agg(image.URL) image,
-json_agg(avis.avis) avis,
+array_to_json(array_remove(array_agg(DISTINCT image.URL), NULL)) image,
+array_to_json(array_remove(array_agg(DISTINCT avis.avis), NULL)) avis,
 produit.id
 FROM mada.produit 
-JOIN mada.categorie ON produit.id_categorie = categorie.id
-JOIN mada.tva ON produit.id_tva = tva.id
-JOIN mada.reduction ON produit.id_reduction = reduction.id
-JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
-JOIN mada.stock ON stock.id_produit = produit.id
-JOIN mada.image ON image.id_produit = produit.id
-JOIN mada.avis ON avis.id_produit = produit.id
+LEFT JOIN mada.categorie ON produit.id_categorie = categorie.id
+LEFT JOIN mada.tva ON produit.id_tva = tva.id
+LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id
+LEFT JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
+LEFT JOIN mada.stock ON stock.id_produit = produit.id
+LEFT JOIN mada.image ON image.id_produit = produit.id
+LEFT JOIN mada.avis ON avis.id_produit = produit.id
 GROUP BY produit, produit.description, prix, couleur, taille, stock, reduction, tva, categorie, produit.id
 ORDER BY produit.id;
 
@@ -679,20 +680,65 @@ tva.taux as tva,
 categorie.nom as categorie,
 categorie.id as categorie_id,
 categorie.description as description_categorie,
-json_agg(categorie_image.URL) as image_categorie,
-json_agg(image.URL) as image_produit,
-json_agg(avis.avis) as avis
+array_to_json(array_remove(array_agg(DISTINCT categorie_image.URL), NULL)) as image_categorie,
+array_to_json(array_remove(array_agg(DISTINCT image.URL), NULL)) as image_produit,
+array_to_json(array_remove(array_agg(DISTINCT avis.avis), NULL)) as avis
 FROM mada.produit 
-JOIN mada.categorie ON produit.id_categorie = categorie.id
-JOIN mada.tva ON produit.id_tva = tva.id
-JOIN mada.reduction ON produit.id_reduction = reduction.id
-JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
-JOIN mada.stock ON stock.id_produit = produit.id
-JOIN mada.image ON image.id_produit = produit.id
-JOIN mada.avis ON avis.id_produit = produit.id
-JOIN mada.categorie_image ON categorie_image.id_categorie = categorie.id
+LEFT JOIN mada.categorie ON produit.id_categorie = categorie.id
+LEFT JOIN mada.tva ON produit.id_tva = tva.id
+LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id
+LEFT JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
+LEFT JOIN mada.stock ON stock.id_produit = produit.id
+LEFT JOIN mada.image ON image.id_produit = produit.id
+LEFT JOIN mada.avis ON avis.id_produit = produit.id
+LEFT JOIN mada.categorie_image ON categorie_image.id_categorie = categorie.id
 GROUP BY produit, categorie.id, produit.description, prix, couleur, taille, stock, reduction, tva, categorie, produit.id
 ORDER BY produit.nom ASC;
+
+
+
+
+
+CREATE VIEW mada.view_client_full AS
+SELECT 
+client.prenom as prenom,
+client.id as id_client,
+client.nom_famille as nom_famille,
+client.email as email,
+array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne1), NULL)) as adresse1,
+array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne2), NULL)) as adresse2,
+array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne3), NULL)) as adresse3,
+array_to_json(array_remove(array_agg(DISTINCT client_adresse.telephone), NULL)) as telephone,
+array_to_json(array_remove(array_agg(DISTINCT pays.nom), NULL)) as pays,
+array_to_json(array_remove(array_agg(DISTINCT code_postal.code_postal), NULL)) as code_postal,
+array_to_json(array_remove(array_agg(DISTINCT ville.nom), NULL)) as ville,
+privilege.nom as privilege,
+array_to_json(array_remove(array_agg(DISTINCT client_historique_connexion.connexion_date), NULL)) as derniere_connexion,
+array_to_json(array_remove(array_agg(DISTINCT client_historique_connexion.connexion_succes), NULL)) as statut_connexion,
+array_to_json(array_remove(array_agg(DISTINCT commande.reference), NULL)) as commande_reference,
+array_to_json(array_remove(array_agg(DISTINCT commande.commentaire), NULL)) as commande_commentaire,
+array_to_json(array_remove(array_agg(DISTINCT paiement.reference), NULL)) as paiement_reference,
+array_to_json(array_remove(array_agg(DISTINCT to_char(paiement.date_paiement, 'Day DD Month YYYY à  HH24:MI:SS' )), NULL)) as paiement_date,
+array_to_json(array_remove(array_agg(DISTINCT paiement.methode), NULL)) as paiement_methode,
+array_to_json(array_remove(array_agg(DISTINCT paiement.montant), NULL)) as paiement_montant
+FROM mada.client
+LEFT JOIN mada.client_adresse ON client_adresse.id_client = client.id
+LEFT JOIN mada.ville ON ville.id = client_adresse.id_ville
+LEFT JOIN mada.pays ON pays.id = ville.id_pays
+LEFT JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
+LEFT JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
+LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
+LEFT JOIN mada.client_historique_connexion ON client_historique_connexion.id_client = client.id
+LEFT JOIN mada.commande ON commande.id_client = client.id
+LEFT JOIN mada.paiement ON paiement.id_commande = commande.id
+GROUP BY client.prenom, client.nom_famille, email, privilege, client.id
+ORDER BY client.id ASC;
+
+--! EXPLICATION array_to_json(array_remove(array_agg(DISTINCT ma_colonne), NULL)) as le_beau_nom_de_ma_colonne
+-- Un client peut avoir plusieurs adresses. Je veux pour chaque client, toutes les adresses en une ligne, comprises dans un tableau. Je veux un tableau et pas un objet comme rendu par array_agg. Donc => DISTINCT pour ne pas avoir de double dans ma colonne, array_agg pour que ça me rassemble les valeurs en un objet, remove_array pour enlever les NULL (ne fonctionne pas directement sus json_agg qui rend un objet, ce qui explique l'étape intémédiaire du array_agg au lieu du json_agg direct), puis je convertit mon objet sans NULL en véritable tableau avec array_to_json. 
+
+--LEFT JOIN car quioiqu'il y ai dans mes autres colonnes, je veux dans tous les cas tous les clients 
+
 
 COMMIT;
 

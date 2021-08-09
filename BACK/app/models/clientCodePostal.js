@@ -93,6 +93,7 @@ class ClientCodePostal {
         consol.model(
             `le code_postal id ${this.id} avec comme valeur ${this.codePostal} a été inséré avec succés !`
         );
+        return new ClientCodePostal(rows[0]);
     }
 
     /**

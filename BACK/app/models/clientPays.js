@@ -82,13 +82,16 @@ class ClientPays {
             rows,
         } = await db.query(
             `INSERT INTO mada.pays (nom) VALUES ($1) RETURNING *;`,
-            [this.nom]
+            [this.pays]
         );
 
         this.id = rows[0].id;
         consol.model(
-            `la pays id ${this.id} avec comme nom ${this.nom} a été inséré avec succés !`
+            `la pays id ${this.id} avec comme nom ${this.pays} a été inséré avec succés !`
         );
+
+        return new ClientPays(rows[0]);
+
     }
 
     /**

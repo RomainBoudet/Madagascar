@@ -134,29 +134,29 @@ CREATE TABLE TVA(
 ------------------------------------------------------------
 -- Table: code_postal
 ------------------------------------------------------------
-CREATE TABLE code_postal(
+ CREATE TABLE code_postal(
 	id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	code_postal     postale_code_fr NOT NULL 
-);
+); 
 
 
 ------------------------------------------------------------
 -- Table: pays
 ------------------------------------------------------------
-CREATE TABLE pays(
+ CREATE TABLE pays(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom      text_valid NOT NULL UNIQUE
+	nom      text_valid NOT NULL
 );
-
+ 
 
 ------------------------------------------------------------
 -- Table: ville
 ------------------------------------------------------------
-CREATE TABLE ville(
+ CREATE TABLE ville(
 	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom         text_valid NOT NULL UNIQUE,
+	nom         text_valid NOT NULL,
 	id_pays     INT NOT NULL REFERENCES pays(id) ON DELETE CASCADE
-);
+); 
 
 
 ------------------------------------------------------------
@@ -376,13 +376,13 @@ CREATE TABLE livraison(
 ------------------------------------------------------------
 -- Table: client_adresse
 ------------------------------------------------------------
-CREATE TABLE client_adresse(
+ CREATE TABLE client_adresse(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	prenom            text_valid NOT NULL,
 	nom_famille       text_valid NOT NULL,
 	ligne1            text_valid NOT NULL,
-	ligne2            text,
-	ligne3            text,
+	ligne2            text_valid,
+	ligne3            text_valid,
 	telephone         phonenumber  NOT NULL, 
 	titre             text_valid NOT NULL,
 	created_date       timestamptz NOT NULL DEFAULT now(),
@@ -392,7 +392,32 @@ CREATE TABLE client_adresse(
 	id_client         INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
 	id_ville          INT  NOT NULL REFERENCES ville(id) ON DELETE CASCADE
 	
+); 
+
+
+------------------------------------------------------------
+-- Table: adresse (test sans 3NF)
+------------------------------------------------------------
+/* CREATE TABLE adresse(
+	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	titre             text_valid NOT NULL,
+	prenom            text_valid NOT NULL,
+	nom_famille       text_valid NOT NULL,
+	adresse1            text_valid NOT NULL,
+	adresse2            text,
+	adresse3            text,
+	code_postal		  postale_code_fr NOT NULL,
+	ville			  text_valid NOT NULL,
+	pays			  text_valid NOT NULL,
+	telephone         phonenumber  NOT NULL, 
+	
+	created_date       timestamptz NOT NULL DEFAULT now(),
+	updated_date       timestamptz,
+	CHECK (created_date < updated_date),
+
+	id_client         INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
+ */
 
 
 
@@ -552,12 +577,12 @@ CREATE TABLE client_historique_connexion(
 ------------------------------------------------------------
 -- Table: ville_a_codePostale
 ------------------------------------------------------------
-CREATE TABLE ville_a_codePostal (
+ CREATE TABLE ville_a_codePostal (
 	id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	id_ville                          INT NOT NULL REFERENCES ville(id) ON DELETE CASCADE,
 	id_codePostal                    INT NOT NULL REFERENCES code_postal(id)
 );
-
+ 
 
 ------------------------------------------------------------
 -- Table: fournie
@@ -592,30 +617,60 @@ CHECK (created_date < updated_date)
 -- Création des principales vues 
 --------------------------------
 
--- Une vue pour les principales infos concernant les clients : 
+-- Une vue pour les principales infos concernant les clients et leur adresse : 
 
-CREATE VIEW mada.view_custumer AS
+CREATE VIEW mada.view_client_adresse AS
 SELECT 
-client.prenom as prenom,
-client.nom_famille as nom_famille,
+client.id as id_client,
+client_adresse.id as id_adresse,
+client.prenom,
+client.nom_famille,
 client.email as email,
-array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne1), NULL)) as adresse1,
-array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne2), NULL)) as adresse2,
-array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne3), NULL)) as adresse3,
-array_to_json(array_remove(array_agg(DISTINCT client_adresse.telephone), NULL)) as telephone,
-array_to_json(array_remove(array_agg(DISTINCT pays.nom), NULL)) as pays,
-array_to_json(array_remove(array_agg(DISTINCT code_postal.code_postal), NULL)) as code_postal,
-array_to_json(array_remove(array_agg(DISTINCT ville.nom), NULL)) as ville,
+client_adresse.ligne1 as adresse1,
+client_adresse.ligne2 as adresse2,
+client_adresse.ligne3 as adresse3,
+client_adresse.telephone as telephone,
+pays.nom as pays,
+code_postal.code_postal as code_postal,
+ville.nom as ville,
 privilege.nom as privilege
 FROM mada.client
-JOIN mada.privilege ON client.id_privilege = privilege.id
-JOIN mada.client_adresse ON client_adresse.id_client  = client.id
-JOIN mada.ville ON client_adresse.id_ville = ville.id
-JOIN mada.pays ON pays.id = ville.id_pays
-JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
-JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
-GROUP BY client.prenom, client.nom_famille, client.email, privilege.nom
-ORDER BY client.prenom ASC;
+LEFT JOIN mada.client_adresse ON client_adresse.id_client = client.id
+LEFT JOIN mada.ville ON ville.id = client_adresse.id_ville
+LEFT JOIN mada.pays ON pays.id = ville.id_pays
+LEFT JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
+LEFT JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
+LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
+ORDER BY client.id ASC;
+
+
+CREATE VIEW mada.view_adresse_update AS
+SELECT 
+client.id as id_client,
+client_adresse.id as id_adresse,
+pays.id as id_pays,
+ville.id as id_ville,
+code_postal.id as id_codePostal,
+client.prenom,
+client.nom_famille,
+client.email as email,
+client_adresse.ligne1 as adresse1,
+client_adresse.ligne2 as adresse2,
+client_adresse.ligne3 as adresse3,
+client_adresse.telephone as telephone,
+pays.nom as pays,
+code_postal.code_postal as code_postal,
+ville.nom as ville,
+privilege.nom as privilege
+FROM mada.client
+LEFT JOIN mada.client_adresse ON client_adresse.id_client = client.id
+LEFT JOIN mada.ville ON ville.id = client_adresse.id_ville
+LEFT JOIN mada.pays ON pays.id = ville.id_pays
+LEFT JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
+LEFT JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
+LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
+ORDER BY client.id ASC;
+
 
 -- Une vue simplifié pour les produits sans leurs avis et photos aggrégés, utilisé notamment pour les paniers
 
@@ -696,10 +751,23 @@ GROUP BY produit, categorie.id, produit.description, prix, couleur, taille, stoc
 ORDER BY produit.nom ASC;
 
 
+CREATE VIEW mada.view_paiement AS
+SELECT 
+client.id,
+client.prenom,
+client.nom_famille,
+client.email,
+paiement.reference as paiement_ref,
+paiement.methode as paiement_methode,
+paiement.montant as paiement_montant,
+to_char(paiement.date_paiement, 'Day DD Month YYYY à  HH24:MI:SS') as paiement_date
+FROM mada.paiement
+JOIN mada.commande ON commande.id = paiement.id_commande
+JOIN mada.client ON client.id = commande.id_client
+ORDER BY client.id ASC;
 
 
-
-CREATE VIEW mada.view_client_full AS
+/* CREATE VIEW mada.view_client_full AS
 SELECT 
 client.prenom as prenom,
 client.id as id_client,
@@ -732,12 +800,15 @@ LEFT JOIN mada.client_historique_connexion ON client_historique_connexion.id_cli
 LEFT JOIN mada.commande ON commande.id_client = client.id
 LEFT JOIN mada.paiement ON paiement.id_commande = commande.id
 GROUP BY client.prenom, client.nom_famille, email, privilege, client.id
-ORDER BY client.id ASC;
+ORDER BY client.id ASC; */
 
 --! EXPLICATION array_to_json(array_remove(array_agg(DISTINCT ma_colonne), NULL)) as le_beau_nom_de_ma_colonne
 -- Un client peut avoir plusieurs adresses. Je veux pour chaque client, toutes les adresses en une ligne, comprises dans un tableau. Je veux un tableau et pas un objet comme rendu par array_agg. Donc => DISTINCT pour ne pas avoir de double dans ma colonne, array_agg pour que ça me rassemble les valeurs en un objet, remove_array pour enlever les NULL (ne fonctionne pas directement sus json_agg qui rend un objet, ce qui explique l'étape intémédiaire du array_agg au lieu du json_agg direct), puis je convertit mon objet sans NULL en véritable tableau avec array_to_json. 
 
 --LEFT JOIN car quioiqu'il y ai dans mes autres colonnes, je veux dans tous les cas tous les clients 
+
+
+
 
 
 COMMIT;

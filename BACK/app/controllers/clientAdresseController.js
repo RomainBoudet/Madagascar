@@ -1,7 +1,7 @@
 const ClientAdresse = require('../models/clientAdresse');
 const ClientVille = require('../models/clientVille');
 const ClientPays = require('../models/clientPays');
-const LiaisonVilleCodePostal = require ('../models/liaisonVilleCodePostal');
+const LiaisonVilleCodePostal = require('../models/liaisonVilleCodePostal');
 const ClientCodePostal = require('../models/clientCodePostal');
 
 /**
@@ -15,158 +15,69 @@ const ClientCodePostal = require('../models/clientCodePostal');
  */
 const clientAdresseController = {
 
-
-    getAll: async (req, res) => {
+    /**
+     * Une méthode pour avoir les adresses complete de tous les utilisateurs, incluant les pays, villes et code postaux
+     */
+    getAllAdresse: async (req, res) => {
         try {
-            const clients = await ClientAdresse.findAll();
+            const adresses = await ClientAdresse.findAllPlus();
+            adresses.map(item => item.codePostal = parseInt(item.codePostal, 10));
 
-            res.status(200).json(clients);
+            res.status(200).json(adresses);
         } catch (error) {
-            console.trace('Erreur dans la méthode getAll du clientAdresseController :',
+            console.trace('Erreur dans la méthode getAllAdresse du clientAdresseController :',
                 error);
             res.status(500).json(error.message);
         }
     },
 
-    getAllVille: async (req, res) => {
+    /**
+     * Une méthode pour avoir une adresse complete d'un utilisateur, incluant les pays, villes et code postaux
+     */
+    getOneAdresse: async (req, res) => {
         try {
-            const clients = await ClientVille.findAll();
 
-            res.status(200).json(clients);
-        } catch (error) {
-            console.trace('Erreur dans la méthode getAllVille du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-    getAllPays: async (req, res) => {
-        try {
-            const clients = await ClientPays.findAll();
+            const client = await ClientAdresse.findOnePlus(req.params.id);
+            console.log(client);
+            client.codePostal = parseInt(client.codePostal, 10);
 
-            res.status(200).json(clients);
-        } catch (error) {
-            console.trace('Erreur dans la méthode getAllPays du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-    getAllLiaisonVilleCodePostal: async (req, res) => {
-        try {
-            const clients = await LiaisonVilleCodePostal.findAll();
+            res.status(200).json(client);
 
-            res.status(200).json(clients);
         } catch (error) {
-            console.trace('Erreur dans la méthode getAllLiaisonVilleCodePostal du clientAdresseController :',
+            console.trace('Erreur dans la méthode getOneAdresse du clientAdresseController :',
                 error);
             res.status(500).json(error.message);
         }
     },
 
-    getAllCodePostal: async (req, res) => {
-        try {
-            const clients = await ClientCodePostal.findAll();
-
-            res.status(200).json(clients);
-        } catch (error) {
-            console.trace('Erreur dans la méthode getAllCodePostal du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-
-
-
-
-    getOne: async (req, res) => {
+    /**
+     * Une méthode pour avoir les adresse complete d'un seul utilisateur, incluant les pays, villes et code postaux
+     */
+    getAdresseByIdClient: async (req, res) => {
         try {
 
-            const client = await ClientAdresse.findOne(req.params.id);
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getOne du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-    getOneVille: async (req, res) => {
-        try {
-
-            const client = await ClientVille.findOne(req.params.id);
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getOneVille du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-    getOnePays: async (req, res) => {
-        try {
-
-            const client = await ClientPays.findOne(req.params.id);
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getOnePays du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-    getOneLiaisonVilleCodePostal: async (req, res) => {
-        try {
-
-            const client = await LiaisonVilleCodePostal.findOne(req.params.id);
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getOneLiaisonVilleCodePostal du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-    getOneCodePostal: async (req, res) => {
-        try {
-
-            const client = await ClientCodePostal.findOne(req.params.id);
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getOneCodePostal du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-
-
-
-
-
-    getByIdClient: async (req, res) => {
-        try {
-            console.log(req.params);
             const client = await ClientAdresse.findByIdClient(req.params.id);
-            res.json(client);
+
+            client.map(item => item.codePostal = parseInt(item.codePostal, 10));
+
+            res.status(200).json(client);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode getByIdClient du clientAdresseController :',
+            console.trace('Erreur dans la méthode getAdresseByIdClient du clientAdresseController :',
                 error);
             res.status(500).json(error.message);
         }
     },
 
 
-
-
-
-    new: async (req, res) => {
+    newAdresse: async (req, res) => {
         try {
 
             const data = {};
+            const data2 = {};
+            const data3 = {};
+            const data4 = {};
+            const data5 = {};
 
             data.prenom = req.body.prenom;
             data.nomFamille = req.body.nomFamille;
@@ -175,83 +86,65 @@ const clientAdresseController = {
             data.ligne3 = req.body.ligne3;
             data.telephone = req.body.telephone;
             data.titre = req.body.titre;
-            data.idClient = req.body.idClient;
-            data.idVille = req.body.idVille;
+            data.idClient = req.session.user.idClient;
+            //data.idVille = req.body.idVille;
 
-            console.log("req.body ==> ", req.body);
+            //! ville
+            data4.ville = req.body.ville;
+            //data4.idPays = req.body.idPays;
 
-            const newClient = new ClientAdresse(data);
-            await newClient.save();
-            res.json(newClient);
+            //! pays
+            data2.pays = req.body.pays;
+
+            //! ville a codepostal
+            //data5.idVille = req.body.idVille;
+            //data5.idCodePostal = req.body.idCodePostal;
+
+            //! codePostal
+            data3.codePostal = req.body.codePostal;
+
+            //! ordre d'INSERT : pays, codePostal, ville, ville a codepostal, client_adresse
+
+            const newPays = new ClientPays(data2);
+            const resultatPays = await newPays.save();
+            data4.idPays = resultatPays.id;
+
+
+            const newCodePostal = new ClientCodePostal(data3);
+            const resultatCodePostal = await newCodePostal.save();
+            data5.idCodePostal = resultatCodePostal.id;
+
+
+            const newVille = new ClientVille(data4);
+            const resultatVille = await newVille.save();
+            data5.idVille = resultatVille.id;
+            data.idVille = resultatVille.id;
+
+
+            const newLiaisonVilleCodePostal = new LiaisonVilleCodePostal(data5);
+            await newLiaisonVilleCodePostal.save();
+
+
+            const newAdresse = new ClientAdresse(data);
+            const resultatAdresse = await newAdresse.save();
+
+
+             const resultatsToSend =  {
+                idClient: resultatAdresse. idClient,
+                idAdresse:resultatAdresse.id,
+                prenom: resultatAdresse.prenom,
+                nomFamille: resultatAdresse.nomFamille,
+                adresse1:resultatAdresse.ligne1,
+                adresse2:resultatAdresse.ligne2,
+                adresse3:resultatAdresse.ligne3,
+                codePostal:parseInt(resultatCodePostal.codePostal, 10),
+                ville: resultatVille.nom,
+                pays:resultatPays.nom,
+            } 
+
+            res.status(200).json(resultatsToSend);
         } catch (error) {
-            console.log(`Erreur dans la méthode new du clientAdresseController: ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
-
-    newVille: async (req, res) => {
-        try {
-
-            const data = {};
-
-            data.nom = req.body.nom;
-            data.idPays = req.body.idPays;
-
-
-            const newClient = new ClientVille(data);
-            await newClient.save();
-            res.json(newClient);
-        } catch (error) {
-            console.log(`Erreur dans la méthode newVille du clientAdresseController: ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
-
-    newPays: async (req, res) => {
-        try {
-
-            const data = {};
-
-            data.nom = req.body.nom;
-            
-            const newClient = new ClientPays(data);
-            await newClient.save();
-            res.json(newClient);
-        } catch (error) {
-            console.log(`Erreur dans la méthode newPays du clientAdresseController: ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
-
-    newLiaisonVilleCodePostal: async (req, res) => {
-        try {
-
-            const data = {};
-
-            data.idVille = req.body.idVille;
-            data.idCodePostal = req.body.idCodePostal;
-            
-            const newClient = new LiaisonVilleCodePostal(data);
-            await newClient.save();
-            res.json(newClient);
-        } catch (error) {
-            console.log(`Erreur dans la méthode newLiaisonVilleCodePostal du clientAdresseController: ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
-    newCodePostal: async (req, res) => {
-        try {
-
-            const data = {};
-
-            data.codePostal = req.body.codePostal;
-           
-            
-            const newClient = new ClientCodePostal(data);
-            await newClient.save();
-            res.json(newClient);
-        } catch (error) {
-            console.log(`Erreur dans la méthode newCodePostal du clientAdresseController: ${error.message}`);
+            console.log(`Erreur dans la méthode newAdresse du clientAdresseController: ${error}`);
             res.status(500).json(error.message);
         }
     },
@@ -259,17 +152,16 @@ const clientAdresseController = {
 
 
 
-
-    updateClientAdresse: async (req, res) => {
+    updateAdresse: async (req, res) => {
         try {
 
             const {
                 id
             } = req.params;
 
-            const updateClient = await ClientAdresse.findOne(id);
+            const updateClient = await ClientAdresse.findOneForUpdate(id);
             console.log("updateClient ==>>", updateClient);
-
+stop
             const prenom = req.body.prenom;
             const nomFamille = req.body.nomFamille;
             const ligne1 = req.body.ligne1;
@@ -368,7 +260,7 @@ const clientAdresseController = {
             const updateClient = await ClientVille.findOne(id);
 
             const nom = req.body.nom;
-            const idPays = req.body.idPays;            
+            const idPays = req.body.idPays;
 
             let userMessage = {};
 
@@ -405,7 +297,7 @@ const clientAdresseController = {
 
             const updateClient = await ClientPays.findOne(id);
 
-            const nom = req.body.nom;          
+            const nom = req.body.nom;
 
             let userMessage = {};
 
@@ -436,7 +328,7 @@ const clientAdresseController = {
             const updateClient = await LiaisonVilleCodePostal.findOne(id);
 
             const idVille = req.body.idVille;
-            const idCodePostal = req.body.idCodePostal;          
+            const idCodePostal = req.body.idCodePostal;
 
             let userMessage = {};
 
@@ -473,7 +365,7 @@ const clientAdresseController = {
             const updateClient = await ClientCodePostal.findOne(id);
 
             const codePostal = req.body.codePostal;
-                    
+
 
             let userMessage = {};
 
@@ -483,7 +375,7 @@ const clientAdresseController = {
             } else if (!codePostal) {
                 userMessage.codePostal = 'Votre codePostal n\'a pas changé';
             }
-            
+
 
             await updateClient.update();
 
@@ -593,7 +485,7 @@ const clientAdresseController = {
         try {
 
             const clientsInDb = await ClientAdresse.findByIdClient(req.params.id);
-        
+
 
             const arrayDeleted = [];
             for (const clientInDb of clientsInDb) {

@@ -13,10 +13,11 @@ class ClientAdresse {
     telephone;
     titre;
     createdDate;
-    UpdatedDate;
+    updatedDate;
     idClient;
     idVille;
-
+    
+    
 
 
     set nom_famille(val) {
@@ -39,8 +40,13 @@ class ClientAdresse {
         this.idVille = val;
     }
 
+    set id_adresse(val) {
+        this.idAdresse = val;
+    }
 
-
+    set code_postal(val) {
+        this.codePostal = val;
+    }
 
     /**
      * @constructor
@@ -51,16 +57,17 @@ class ClientAdresse {
         }
     }
 
+    
     /**
      * Méthode chargé d'aller chercher toutes les informations relatives à tous les adresses de clients
      * @returns - tous les ClientAdresses présent en BDD
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-    static async findAll() {
+    static async findAllPlus() {
         const {
             rows
-        } = await db.query('SELECT * FROM mada.client_adresse ORDER BY client_adresse.id ASC');
+        } = await db.query('SELECT * FROM mada.view_client_adresse');
 
         if (!rows[0]) {
             throw new Error("Aucun ClientAdresse dans la BDD");
@@ -72,7 +79,90 @@ class ClientAdresse {
         return rows.map((clientAdresse) => new ClientAdresse(clientAdresse));
     }
 
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à un ClientAdresse passé en paramétre
+     * @param id - un id d'un ClientAdresse
+     * @returns - les informations du ClientAdresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findOnePlus(id) {
 
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.view_client_adresse WHERE id_adresse = $1;',
+            [id]
+        );
+
+        if (!rows[0]) {
+            throw new Error("Aucun client_adresse avec cet id");
+        }
+
+        consol.model(
+            `le ClientAdresse id : ${id} a été demandé en BDD !`
+        );
+
+        return new ClientAdresse(rows[0]);
+    }
+    
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à un ClientAdresse passé en paramétre
+     * @param id - un id d'un ClientAdresse
+     * @returns - les informations du ClientAdresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findOneForUpdate(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.vmada.view_adresse_update WHERE id_adresse = $1;',
+            [id]
+        );
+
+        if (!rows[0]) {
+            throw new Error("Aucun client_adresse avec cet id");
+        }
+
+        consol.model(
+            `le ClientAdresse id : ${id} a été demandé en BDD !`
+        );
+
+        return new ClientAdresse(rows[0]);
+    }
+    
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à un ClientAdresse passé en paramétre
+     * @param id - un id d'un ClientAdresse
+     * @returns - les informations du ClientAdresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findByIdClient(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.view_client_adresse WHERE id_client = $1;',
+            [id]
+        );
+
+        if (!rows[0]) {
+            throw new Error("Aucun idClient avec cet id");
+        }
+
+        consol.model(
+            `le ClientAdresse id : ${id} a été demandé en BDD !`
+        );
+
+        return rows.map((adresse) => new ClientAdresse(adresse));
+    }
     /**
      * Méthode chargé d'aller chercher les informations relatives à un ClientAdresse passé en paramétre
      * @param id - un id d'un ClientAdresse
@@ -108,13 +198,13 @@ class ClientAdresse {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-    static async findByIdClient(idClient) {
+    static async findByIdClientCourte(idClient) {
 
 
         const {
             rows,
         } = await db.query(
-            'SELECT * FROM mada.client_adresse WHERE client_adresse.id_client = $1;',
+            'SELECT * FROM mada.view_client_adresse WHERE id_client = $1;',
             [idClient]
         );
 
@@ -127,9 +217,29 @@ class ClientAdresse {
         );
 
         return rows.map((deletedAdresse) => new ClientAdresse(deletedAdresse));
-
-
     }
+
+    /**
+     * Méthode chargé d'aller chercher toutes les informations relatives à tous les adresses de clients
+     * @returns - tous les ClientAdresses présent en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findAll() {
+        const {
+            rows
+        } = await db.query('SELECT * FROM mada.client_adresse ORDER BY client_adresse.id ASC');
+
+        if (!rows[0]) {
+            throw new Error("Aucun ClientAdresse dans la BDD");
+        }
+        consol.model(
+            `les informations des ${rows.length} ClientAdresses ont été demandé !`
+        );
+
+        return rows.map((clientAdresse) => new ClientAdresse(clientAdresse));
+    }
+
 
     /**
      * Méthode chargé d'aller insérer les informations relatives à une adresse de client 
@@ -159,6 +269,8 @@ class ClientAdresse {
         consol.model(
             `le ClientAdresse id ${this.id} avec comme adresse ${this.ligne1} ${this.ligne2} ${this.ligne3} a été inséré à la date du ${this.createdDate} !`
         );
+
+        return new ClientAdresse(rows[0]);
     }
 
 

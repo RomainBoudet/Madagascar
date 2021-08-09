@@ -264,7 +264,7 @@ const fakeData = async () => {
             custumersBis.push(user3);
 
         }
-
+        // EDIT : custumers.map(function (x) {return x.prenom})[index -1], me renvoit la valeur de ma clé souhaité sans avoir besoin de tous ça...
 
 
         console.timeEnd(`Génération de ${volume} clients`);
@@ -320,7 +320,7 @@ const fakeData = async () => {
                 color: colors[Math.floor(Math.random() * colors.length)], //faker.internet.color => hex
                 size: sizes[Math.floor(Math.random() * sizes.length)],
                 quantity: Math.floor(Math.random() * (10 - 1 + 1)) + 1, // un random entre 1 et 10\u{002A}\u{FE0F}\u{20E3}
-                image:faker.image.imageUrl(),
+                image: faker.image.imageUrl(),
                 index,
                 id_category: Math.floor(Math.random() * (100 - 1 + 1)) + 1,
                 id_taxRate: Math.floor(Math.random() * (2 - 1 + 1)) + 1, // un random entre 1 et 2
@@ -888,6 +888,94 @@ const fakeData = async () => {
 
 
 
+
+
+
+        //! ADRESSE
+
+
+        consol.seed(`Début de la génération de fake adresses`);
+        console.time(`Génération de ${volume} adresses`);
+        const adresses = [];
+        const adressesBis = [];
+        const adressesTis = [];
+
+        for (let index = 1; index <= volume; index++) {
+            const adresse = {
+                idClient: index,
+                titre: "Maison",
+                prenom: custumers.map(function (x) {
+                    return x.prenom
+                })[index - 1],
+                nomFamille: custumers.map(function (x) {
+                    return x.nom_famille
+                })[index - 1],
+                adresse1: custumers.map(function (x) {
+                    return x.ligne1
+                })[index - 1],
+                codePostal: zipCodes.map(function (x) {
+                    return x.city
+                })[index - 1],
+                ville: citiesUnique.map(function (x) {
+                    return x.name
+                })[index],
+                pays: countriesUnique[Math.floor(Math.random() * (130 - 0 + 1)) + 0],
+                telephone: custumers.map(function (x) {
+                    return x.telephone
+                })[index - 1],
+
+            };
+            adresses.push(adresse);
+
+
+            const adresseBis = {
+                idClient: index,
+                titre: "Bureau",
+                prenom: custumers.map(function (x) {
+                    return x.prenom
+                })[index - 1],
+                nomFamille: custumers.map(function (x) {
+                    return x.nom_famille
+                })[index - 1],
+                adresse1: `${(Math.floor(Math.random() * (100 - 1 + 1)) + 1)} ${faker.address.streetPrefix()} ${faker.address.streetName()} `,
+                codePostal: faker.address.zipCode(),
+                ville: villesUnique[Math.floor(Math.random() * (2000 - 0 + 1)) + 0],
+                pays: countriesUnique[Math.floor(Math.random() * (130 - 0 + 1)) + 0],
+                telephone: `+33${Math.floor(Math.random() * ((999999999 - 100000000) - 1 + 1)) + 100000000}`,
+
+            }
+
+            adressesBis.push(adresseBis);
+
+            const adresseTis = {
+                idClient: index,
+                titre: "Bureau",
+                prenom: custumers.map(function (x) {
+                    return x.prenom
+                })[index - 1],
+                nomFamille: custumers.map(function (x) {
+                    return x.nom_famille
+                })[index - 1],
+                adresse1: `${(Math.floor(Math.random() * (100 - 1 + 1)) + 1)} ${faker.address.streetPrefix()} ${faker.address.streetName()} `,
+                codePostal: faker.address.zipCode(),
+                ville: villesUnique[Math.floor(Math.random() * (2000 - 0 + 1)) + 0],
+                pays: countriesUnique[Math.floor(Math.random() * (130 - 0 + 1)) + 0],
+                telephone: `+33${Math.floor(Math.random() * ((999999999 - 100000000) - 1 + 1)) + 100000000}`,
+
+            }
+
+            adressesTis.push(adresseTis);
+
+        }
+
+        
+        console.timeEnd(`Génération de ${volume} adresses`);
+        console.table(adresses);
+        console.table(adressesBis);
+        console.table(adressesTis);
+
+        consol.seed(`Fin de la génération de fake adresses`);
+   
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!IMPORT DES DONNEES EN BDD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // on a générer des fausses des données, ne reste plus qu'a les importer dans la BDD (dans le bon ordre).
@@ -965,11 +1053,11 @@ const fakeData = async () => {
         }
 
         consol.seed(`Fin de l'import de ${volume} code_postales`);
-
+ 
 
         //! PAYS
 
-        consol.seed(`Début de l'import de ${countriesUnique.length} pays`);
+         consol.seed(`Début de l'import de ${countriesUnique.length} pays`);
 
         const countriesInsert = "INSERT INTO mada.pays (nom) VALUES ($1);";
 
@@ -979,11 +1067,11 @@ const fakeData = async () => {
         }
 
         consol.seed(`Fin de l'import de ${countriesUnique.length} pays`);
-
+ 
         //! VILLES
 
 
-        consol.seed(`Début de l'import de ${volume} cities`);
+         consol.seed(`Début de l'import de ${volume} cities`);
 
         const citiesInsert = "INSERT INTO mada.ville (nom, id_pays) VALUES ($1, $2);";
 
@@ -994,7 +1082,7 @@ const fakeData = async () => {
 
         consol.seed(`Fin de l'import  de ${volume} cities`);
 
-
+ 
 
         //! PRIVILEGES
 
@@ -1190,8 +1278,8 @@ const fakeData = async () => {
         //! CLIENT_ADRESSE
 
 
-        consol.seed(`Début de l'import de ${custumers.length} adresses client`);
-        console.time(`Import de ${custumers.length} adresses client`);
+        consol.seed(`Début de l'import de ${custumers.length*3} adresses client`);
+        console.time(`Import de ${custumers.length*3} adresses client`);
         const client_adressesInsert = "INSERT INTO mada.client_adresse (prenom, nom_famille, ligne1, telephone, titre, id_client, id_ville) VALUES ($1, $2, $3 ,$4, $5, $6, $7);";
 
         for (const addressCustumer of custumers) {
@@ -1204,9 +1292,41 @@ const fakeData = async () => {
             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.ligne1} avec l'id : ${addressCustumer.id_for_pk}`);
             await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nom_famille, addressCustumer.ligne1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.id_for_pk, addressCustumer.id_for_pk]);
         }
+        for (const addressCustumer of adresses) {
+            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+            await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.idClient, addressCustumer.idClient]);
+        }
 
-        consol.seed(`Fin de l'import de ${custumers.length} adresses`);
-        console.timeEnd(`Import de ${custumers.length} adresses client`);
+        consol.seed(`Fin de l'import de ${custumers.length*3} adresses`);
+        console.timeEnd(`Import de ${custumers.length*3} adresses client`);
+ 
+
+
+        //! ADRESSE
+
+
+       /*  consol.seed(`Début de l'import de ${adresses.length *3} adresses`);
+        console.time(`Import de ${adresses.length *3} adresses`);
+        const adressesInsert = "INSERT INTO mada.adresse (titre, prenom, nom_famille, adresse1, code_postal, ville, pays, telephone, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, now(), $9);";
+
+        for (const addressCustumer of adresses) {
+            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+        }
+        // Deux fake adresses pour un même client ! :)
+
+        
+        for (const addressCustumer of adressesBis) {
+            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+        }
+
+        for (const addressCustumer of adressesTis) {
+            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+        }
+        consol.seed(`Fin de l'import de ${adresses.length *3} adresses`);
+        console.timeEnd(`Import de ${adresses.length *3} adresses`); */
 
         //! FACTURE
 
@@ -1393,7 +1513,7 @@ const fakeData = async () => {
         }
         consol.seed(`Fin de l'import de ${ville_a_codePostales.length} ville_a_codePostales`);
         console.timeEnd(`Import de ${ville_a_codePostales.length} ville_a_codePostales`);
-
+ 
 
 
         //! FOURNIT
@@ -1420,6 +1540,7 @@ const fakeData = async () => {
         await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('false', ${process.env.ID});`);
         //await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
         await db.query(`UPDATE mada.client_adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`)
+        //await db.query(`UPDATE mada.adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`)
 
         consol.seed(`Admin mis en place en client id ${process.env.ID}`)
 

@@ -50,6 +50,7 @@ const resetPwdSchema = require('./schemas/resetPwdSchema');
 const phoneNumberSchema = require('./schemas/phoneNumber');
 const codeSchema = require('./schemas/codeSchema');
 const searchSchema = require('./schemas/searchSchema');
+const adresseSchema = require('./schemas/adresseSchema');
 
 
 //Redis pour le cache
@@ -83,9 +84,9 @@ const apiLimiter = rateLimit({
 
 //! Pour autoriser une route a tous les utilisateurs connéctés :
 //on ajoute "auth" aprés la route   ex = router.get('/produits', auth, produitController.allproduits);
-//! pour autoriser une route aux seuls administrateurs :
+//! pour autoriser une route aux seuls Administrateurs :
 //on ajoute "admin" aprés la route  ex = router.get('/produits', admin, produitController.allproduits);
-//! pour autoriser une route aux modérateurs ET au administrateurs :
+//! pour autoriser une route aux modérateurs ET au Administrateurs :
 //on ajoute "moderateur" apres la route  ex = router.get('/produits', moderateur, produitController.allproduits);
 
 /*//! RAPPEL de la nomanclature des MW possible :
@@ -158,11 +159,11 @@ router.post('/inscription', validateBody(userSigninSchema), clientController.sig
 
 
 /**
- * Permet l'inscription d'un administrateur au site.
+ * Permet l'inscription d'un Administrateur au site.
  * Route sécurisée avec Joi et MW Developpeur
  * @route POST /v1/signin
- * @group administrateur - Des méthodes a dispositions des administrateurs
- * @summary Inscrit un administrateur en base de donnée
+ * @group Administrateur - Des méthodes a dispositions des Administrateurs
+ * @summary Inscrit un Administrateur en base de donnée
  * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
  */
@@ -228,7 +229,7 @@ router.post('/user/searchProduit', clean, validateBody(searchSchema), searchCont
 /**
  * Envoie un email pour que l'admin qui le souhaite puisse vérifier son email.
  * @route POST /resendEmailLink
- * @group administrateur
+ * @group Administrateur
  * @summary Prend un mail en entrée et renvoie un email si celui çi est présent en BDD.  Cliquer sur le lien dans l'email envoyé enmenera sur la route /verifyemail  
  * @returns {JSON} 200 - Un email a été délivré
  */
@@ -238,7 +239,7 @@ router.post('/resendEmailLink', clean, admin, validateBody(resendEmailSchema), c
 /**
  * Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
  * @route POST /verifyEmail
- * @group administrateur
+ * @group Administrateur
  * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD.
  * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
  */
@@ -246,9 +247,9 @@ router.post('/verifyEmail', clean, admin, validateQuery(verifyEmailSchema), clie
 /**
  * Permet d'enregitrer en BDD et de vérifier un téléphone par l'envoie d'un sms sur le numéro.
  * @route POST /admin/smsVerify
- * @group administrateur
+ * @group Administrateur
  * @summary Utilise l'API de Twillio. Permet de vérifier un numéro de téléphone
- * @param {administrateur.Model} administrateur.body.required
+ * @param {Administrateur.Model} Administrateur.body.required
  * @returns {JSON} 200 - Un code par sms a été envoyé
  */
 router.post('/admin/smsVerify', admin, clean, validateBody(phoneNumberSchema), adminController.smsVerify);
@@ -256,9 +257,9 @@ router.post('/admin/smsVerify', admin, clean, validateBody(phoneNumberSchema), a
 /**
  * Reçoi un code pour vérifier un numéro de téléphone et si le code est correct, le téléphone est enregistré en BDD sous format E. 164.
  * @route POST /admin/smsCheck
- * @group administrateur
+ * @group Administrateur
  * @summary Utilise l'API de Twillio. C'est le retour de la route smsVerify. Insert un téléphone vérifié d'un admin en BDD
- * @param {administrateur.Model} administrateur.body.required
+ * @param {Administrateur.Model} Administrateur.body.required
  * @returns {JSON} 200 - Un un json informant que le téléphone a été authentifié
  */
 router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminController.smsCheck);
@@ -266,7 +267,7 @@ router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminCont
 /**
  * Faire appel a la méthode smsSend envoi un sms avec le contenu voulu. Ici un exemple générique qui renvoie le nombre d'enregistrement dans la table clients, a chaque demande. A modifier selon les besoins d'envoie de SMS...
  * @route GET /admin/smsSend
- * @group administrateur
+ * @group Administrateur
  * @summary Utilise l'API de Twillio. Permet d'envoyer un sms sur le numéro souhaité. Relié au numéro de l'admin du site.
  * @returns {JSON} 200 -Renvoie un sms au numéro souhaité.
  */
@@ -275,7 +276,7 @@ router.get('/admin/smsSend', admin, adminController.smsSend);
 /**
  * Renvoie tous les clients en bdd 
  * @route GET /admin/user/all
- * @group administrateur
+ * @group Administrateur
  * @summary Renvoie tous les client en BDD
  * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
  */
@@ -284,16 +285,64 @@ router.get('/admin/user/all', admin, clientController.getAll);
 /**
  * Renvoie un client selon son id
  * @route GET /admin/user/all
- * @group administrateur
+ * @group Administrateur
  * @summary Renvoie tous les client en BDD
  * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
  */
 router.get('admin/user/getone/:id(\\d+)', admin, clientController.getOne);
 
+//! ADRESSE DES CLIENT -----------------------------------
+
+/**
+ * Renvoie toutes les adresses des clients en bdd 
+ * @route GET /admin/user/adresse/all
+ * @group Administrateur
+ * @summary Renvoie toutes les adresses des clients en BDD
+ * @returns {JSON} 200 -Renvoie la liste des adresses en BDD.
+ */
+ router.get('/admin/user/adresses/', admin, clientAdresseController.getAllAdresse);
+
+/**
+ * Renvoie les adresses d'un client selon son idClient
+ * @route GET /client/adresses/:id
+ * @group utilisateur
+ * @summary Renvoie toutes les adresse d'un client en BDD
+ * @returns {JSON} 200 -Renvoie toutes les adresse d'un client en BDD
+ */
+ router.get('/client/adresses/:id(\\d+)', client, clientAdresseController.getAdresseByIdClient);
+
+/**
+ * Renvoie une seule adresse d'un client selon son client_adresse.id
+ * @route GET /client/adresse/:id
+ * @group utilisateur
+ * @summary Renvoie une seule adresse d'un client selon son client_adresse.id
+ * @returns {JSON} 200 - Renvoie une seule adresse d'un client selon son client_adresse.id
+ */
+ router.get('/client/adresse/:id(\\d+)', client, clientAdresseController.getOneAdresse);
 
 
+ /**
+ * Une route pour insérer une adresse
+ * route accessible a tous
+ * @route POST /client/adresse/new
+ * @group utilisateur
+ * @summary Insére une nouvelle adresse
+ * @returns {JSON} 200 - Les données de la nouvelle adresse insérée
+ */
+router.post('/client/adresse/new', client, clean, validateBody(adresseSchema), clientAdresseController.newAdresse);
 
-//! ROUTES DEVELOPPEUR ----------------
+ /**
+ * Une route pour mettre a jour une adresse
+ * route accessible a tous
+ * @route PATCH /client/adresse/update/:id
+ * @group utilisateur
+ * @summary Met a jour une nouvelle adresse
+ * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
+ */
+  router.patch('/client/adresse/update/:id(\\d+)', clean, client, clientAdresseController.updateAdresse);
+
+
+  //! ROUTES DEVELOPPEUR ----------------
 
 /**
  * Faire appel a la méthode smsBalance envoi un sms avec la balance du compte Twilio. 
@@ -319,7 +368,7 @@ router.get('/dev/balanceTwillio', dev, adminController.balanceTwillio);
  * @route POST /admin/smsRespond
  * @group Developpeur
  * @summary Utilise l'API de Twillio. Permet d'envoyer un sms selon le contenu d'un sms reçu. Relier au numéro du développeur
- * @param {administrateur.Model} administrateur.body.required
+ * @param {Administrateur.Model} Administrateur.body.required
  * @returns {JSON} 200 -Renvoie un sms au numéro souhaité avec la réponse attendue.
  */
 router.post('/admin/smsRespond', clean, adminController.smsRespond);
@@ -392,7 +441,7 @@ router.post('/dev/psd2Check', dev, adminController.smsVerifypsd2);
  * Route sécurisée avec Joi et MW Developpeur
  * @route PATCH /v1/updatePrivilege
  * @group Developpeur - 
- * @summary Transforme un client en administrateur dans la base de donnée
+ * @summary Transforme un client en Administrateur dans la base de donnée
  * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
  */

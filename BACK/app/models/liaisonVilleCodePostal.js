@@ -99,6 +99,8 @@ class LiaisonVilleCodePostal {
         consol.model(
             `la ville_a_codePostal id ${this.id} avec comme idVille ${this.idVille} a été inséré avec succés !`
         );
+        return new LiaisonVilleCodePostal(rows[0]);
+
     }
 
     /**

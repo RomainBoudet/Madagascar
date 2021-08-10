@@ -300,7 +300,7 @@ router.get('admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Renvoie toutes les adresses des clients en BDD
  * @returns {JSON} 200 -Renvoie la liste des adresses en BDD.
  */
- router.get('/admin/user/adresses/', admin, clientAdresseController.getAllAdresse);
+ router.get('/admin/user/adresses', admin, clientAdresseController.getAllAdresse);
 
 /**
  * Renvoie les adresses d'un client selon son idClient
@@ -339,7 +339,7 @@ router.post('/client/adresse/new', client, clean, validateBody(adresseSchema), c
  * @summary Met a jour une nouvelle adresse
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
-  router.patch('/client/adresse/update/:id(\\d+)', clean, client, clientAdresseController.updateAdresse);
+  router.patch('/client/adresse/update/:id(\\d+)', clean, client, validateBody(adresseSchema), clientAdresseController.updateAdresse);
 
 
   //! ROUTES DEVELOPPEUR ----------------

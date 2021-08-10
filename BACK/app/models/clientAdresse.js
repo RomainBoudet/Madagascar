@@ -48,6 +48,17 @@ class ClientAdresse {
         this.codePostal = val;
     }
 
+    set id_pays(val) {
+        this.idPays = val;
+    }
+    set id_codepostal (val) {
+        this.idCodePostal = val;
+    }
+
+    set id_liaisonvillecodepostal(val) {
+        this.idLiaisonVilleCodePostal = val;
+    }
+
     /**
      * @constructor
      */
@@ -121,7 +132,7 @@ class ClientAdresse {
         const {
             rows,
         } = await db.query(
-            'SELECT * FROM mada.vmada.view_adresse_update WHERE id_adresse = $1;',
+            'SELECT * FROM mada.view_adresse_update WHERE id_adresse = $1;',
             [id]
         );
 
@@ -191,33 +202,7 @@ class ClientAdresse {
         return new ClientAdresse(rows[0]);
     }
 
-    /**
-     * Méthode chargé d'aller chercher les informations relatives à un client_adresse passé en paramétre a partir de l'id du client
-     * @param idClient - un id d'un client
-     * @returns - les informations concernant l'adresse du client demandées
-     * @static - une méthode static
-     * @async - une méthode asynchrone
-     */
-    static async findByIdClientCourte(idClient) {
-
-
-        const {
-            rows,
-        } = await db.query(
-            'SELECT * FROM mada.view_client_adresse WHERE id_client = $1;',
-            [idClient]
-        );
-
-        if (!rows[0]) {
-            throw new Error("Aucun client_adresse avec cet idClient");
-        }
-
-        consol.model(
-            `l'adresse pour le idClient : ${idClient} a été demandé en BDD !`
-        );
-
-        return rows.map((deletedAdresse) => new ClientAdresse(deletedAdresse));
-    }
+    
 
     /**
      * Méthode chargé d'aller chercher toutes les informations relatives à tous les adresses de clients
@@ -260,10 +245,9 @@ class ClientAdresse {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.client_adresse (prenom, nom_famille, ligne1, ligne2, ligne3, telephone, titre, id_client, id_ville) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;`,
+            `INSERT INTO mada.client_adresse (prenom, nom_famille, ligne1, ligne2, ligne3, telephone, titre, created_date, id_client, id_ville) VALUES ($1, $2, $3, $4, $5, $6, $7, now(), $8, $9) RETURNING *;`,
             [this.prenom, this.nomFamille, this.ligne1, this.ligne2, this.ligne3, this.telephone, this.titre, this.idClient, this.idVille]
         );
-
         this.id = rows[0].id;
         this.createdDate = rows[0].created_date;
         consol.model(
@@ -295,12 +279,15 @@ class ClientAdresse {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.client_adresse SET prenom = $1, nom_famille = $2, ligne1 = $3, ligne2 = $4, ligne3 = $5, telephone = $6, titre = $7, id_client = $8, id_ville = $9 WHERE id = $10 RETURNING *;`,
+            `UPDATE mada.client_adresse SET prenom = $1, nom_famille = $2, ligne1 = $3, ligne2 = $4, ligne3 = $5, telephone = $6, titre = $7, updated_date = now(), id_client = $8, id_ville = $9 WHERE id = $10 RETURNING *;`,
             [this.prenom, this.nomFamille, this.ligne1, this.ligne2, this.ligne3, this.telephone, this.titre, this.idClient, this.idVille, this.id]
         );
+        console.log("this dans le model ==>", this);
+        console.log("rows[0] dans le model ==>", rows[0]);
 
+        this.updatedDate = rows[0].updated_date;
         console.log(
-            `le ClientAdresse id : ${this.id} du client id ${this.idClient} a été mise à jour  !`
+            `le ClientAdresse id : ${this.id} du client id ${this.idClient}, avec le nom ${this.prenom} ${this.nomFamille} a été mise à jour le ${this.updatedDate}  !`
         );
     }
 

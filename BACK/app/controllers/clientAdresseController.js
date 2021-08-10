@@ -124,23 +124,24 @@ const clientAdresseController = {
             const newLiaisonVilleCodePostal = new LiaisonVilleCodePostal(data5);
             await newLiaisonVilleCodePostal.save();
 
-
+            
             const newAdresse = new ClientAdresse(data);
             const resultatAdresse = await newAdresse.save();
 
 
-             const resultatsToSend =  {
-                idClient: resultatAdresse. idClient,
-                idAdresse:resultatAdresse.id,
+            const resultatsToSend = {
+                idClient: resultatAdresse.idClient,
+                idAdresse: resultatAdresse.id,
+                titre:resultatAdresse.titre,
                 prenom: resultatAdresse.prenom,
                 nomFamille: resultatAdresse.nomFamille,
-                adresse1:resultatAdresse.ligne1,
-                adresse2:resultatAdresse.ligne2,
-                adresse3:resultatAdresse.ligne3,
-                codePostal:parseInt(resultatCodePostal.codePostal, 10),
+                adresse1: resultatAdresse.ligne1,
+                adresse2: resultatAdresse.ligne2,
+                adresse3: resultatAdresse.ligne3,
+                codePostal: parseInt(resultatCodePostal.codePostal, 10),
                 ville: resultatVille.nom,
-                pays:resultatPays.nom,
-            } 
+                pays: resultatPays.nom,
+            }
 
             res.status(200).json(resultatsToSend);
         } catch (error) {
@@ -155,23 +156,55 @@ const clientAdresseController = {
     updateAdresse: async (req, res) => {
         try {
 
+            console.time('Timing de la méthode updateAdresse : ');
+
             const {
                 id
             } = req.params;
+            /* ClientAdresse {
+  id: undefined,
+  prenom: 'Xavier',
+  nomFamille: 'Benoit',
+  ligne1: undefined,
+  ligne2: undefined,
+  ligne3: undefined,
+  telephone: '+33203499058',
+  titre: undefined,
+  createdDate: undefined,
+  updatedDate: undefined,
+  idClient: 74,
+  idVille: 74,
+  idAdresse: 74,
+  idPays: 69,
+  idCodePostal: 74,
+  idLiaisonVilleCodePostal: 74,
+  email: '74Laura83@yahoo.fr',
+  adresse1: '48 Allée Pierre des Francs-Bourgeois ',
+  adresse2: null,
+  adresse3: null,
+  pays: 'Tadjikistan',
+  codePostal: '95433',
+  ville: 'New Sandrinefort',
+  privilege: 'Client'
+} */
 
             const updateClient = await ClientAdresse.findOneForUpdate(id);
-            console.log("updateClient ==>>", updateClient);
-stop
+            
+
+          
+
+            updateClient.id = updateClient.idAdresse;
             const prenom = req.body.prenom;
+            console.log("prenm =>," , prenom);
             const nomFamille = req.body.nomFamille;
             const ligne1 = req.body.ligne1;
             const ligne2 = req.body.ligne2;
             const ligne3 = req.body.ligne3;
             const telephone = req.body.telephone;
             const titre = req.body.titre;
-            const idClient = req.body.idClient;
-            const idVille = req.body.idVille;
-
+            const idVille = updateClient.idVille;
+            const idClient = updateClient.idClient;
+            
             let userMessage = {};
 
             if (prenom) {
@@ -183,30 +216,30 @@ stop
 
             if (nomFamille) {
                 updateClient.nomFamille = nomFamille;
-                userMessage.nomFamille = 'Votre nouveau nomFamille a bien été enregistré ';
+                userMessage.nomFamille = 'Votre nouveau nom de famille a bien été enregistré ';
             } else if (!nomFamille) {
-                userMessage.nomFamille = 'Votre nomFamille n\'a pas changé';
+                userMessage.nomFamille = 'Votre nom de famille n\'a pas changé';
             }
 
             if (ligne1) {
                 updateClient.ligne1 = ligne1;
-                userMessage.ligne1 = 'Votre nouveau ligne1 a bien été enregistré ';
+                userMessage.ligne1 = 'Votre nouvelle ligne 1 de votre adresse a bien été enregistré ';
             } else if (!ligne1) {
-                userMessage.ligne1 = 'Votre ligne1 n\'a pas changé';
+                userMessage.ligne1 = 'Votre ligne 1 de votre adresse n\'a pas changé';
             }
 
             if (ligne2) {
                 updateClient.ligne2 = ligne2;
-                userMessage.ligne2 = 'Votre nouveau ligne2 a bien été enregistré ';
+                userMessage.ligne2 = 'Votre nouvelle ligne 2 de votre adresse a bien été enregistré ';
             } else if (!ligne2) {
-                userMessage.ligne2 = 'Votre ligne2 n\'a pas changé';
+                userMessage.ligne2 = 'Votre ligne 2 de votre adresse n\'a pas changé';
             }
 
             if (ligne3) {
                 updateClient.ligne3 = ligne3;
-                userMessage.ligne3 = 'Votre nouveau ligne3 a bien été enregistré ';
+                userMessage.ligne3 = 'Votre nouvelle ligne 3 de votre adresse a bien été enregistré ';
             } else if (!ligne3) {
-                userMessage.ligne3 = 'Votre ligne3 n\'a pas changé';
+                userMessage.ligne3 = 'Votre ligne 3 de votre adresse n\'a pas changé';
             }
 
             if (telephone) {
@@ -223,26 +256,80 @@ stop
                 userMessage.titre = 'Votre titre n\'a pas changé';
             }
 
-
-
             if (idClient) {
                 updateClient.idClient = idClient;
-                userMessage.idClient = 'Votre nouveau idClient a bien été enregistré ';
-            } else if (!idClient) {
-                userMessage.idClient = 'Votre idClient n\'a pas changé';
             }
+
             if (idVille) {
                 updateClient.idVille = idVille;
-                userMessage.idVille = 'Votre nouveau idVille a bien été enregistré ';
-            } else if (!idVille) {
-                userMessage.idVille = 'Votre idVille n\'a pas changé';
             }
 
-
-
+            console.log("updateClient==> ",updateClient);
             await updateClient.update();
 
-            res.json(userMessage);
+
+
+
+            const pays = req.body.pays;
+            const updatePays = await ClientPays.findOne(updateClient.idPays);
+            if (pays) {
+                updatePays.nom = pays;
+                userMessage.pays = 'Votre nouveau nom de pays a bien été enregistré ';
+            } else if (!nom) {
+                userMessage.pays = 'Votre pays de pays n\'a pas changé';
+            }
+            console.log("updatePays==> ",updatePays);
+
+            await updatePays.update();
+
+
+            const ville = req.body.ville;
+            const idPays = updateClient.idPays;
+            const updateVille = await ClientVille.findOne(updateClient.idVille);
+            if (ville) {
+                updateVille.nom = ville;
+                userMessage.ville = 'Votre nouveau nom de ville a bien été enregistré ';
+            } else if (!nom) {
+                userMessage.ville = 'Votre nom de ville n\'a pas changé';
+            }
+            if (idPays) {
+                updateVille.idPays = idPays;
+            } 
+            console.log("updateVille==> ",updateVille);
+
+            await updateVille.update();
+
+
+
+            const codePostal = req.body.codePostal;
+            const updateCodePostal = await ClientCodePostal.findOne(updateClient.idCodePostal);
+           if (codePostal) {
+                updateCodePostal.codePostal = codePostal;
+                userMessage.codePostal = 'Votre nouveau code postal a bien été enregistré ';
+            } else if (!codePostal) {
+                userMessage.codePostal = 'Votre code postal n\'a pas changé';
+            }
+            console.log("updateCodePostal==> ",updateCodePostal);
+
+            await updateCodePostal.update();
+
+
+
+            const idCodePostal = updateClient.idCodePostal;
+            const updateLiaison = await LiaisonVilleCodePostal.findOne(updateClient.idLiaisonVilleCodePostal);
+            if (idVille) {
+                updateLiaison.idVille = idVille;
+            }
+            if (idCodePostal) {
+                updateLiaison.idCodePostal = idCodePostal;
+            } 
+            console.log("updateLiaison==> ",updateLiaison);
+
+            await updateLiaison.update();
+
+            console.timeEnd('Timing de la méthode updateAdresse : ');
+
+            res.status(200).json(userMessage);
 
         } catch (error) {
             console.log(`Erreur dans la méthode updateClientAdress du clientAdresseController : ${error.message}`);
@@ -250,142 +337,11 @@ stop
         }
     },
 
-    updateClientVille: async (req, res) => {
-        try {
+  
 
-            const {
-                id
-            } = req.params;
+   
 
-            const updateClient = await ClientVille.findOne(id);
-
-            const nom = req.body.nom;
-            const idPays = req.body.idPays;
-
-            let userMessage = {};
-
-            if (nom) {
-                updateClient.nom = nom;
-                userMessage.nom = 'Votre nouveau nom de ville a bien été enregistré ';
-            } else if (!nom) {
-                userMessage.nom = 'Votre nom de ville n\'a pas changé';
-            }
-
-            if (idPays) {
-                updateClient.idPays = idPays;
-                userMessage.idPays = 'Votre nouveau id de pays a bien été enregistré ';
-            } else if (!idPays) {
-                userMessage.idPays = 'Votre id de pays n\'a pas changé';
-            }
-
-            await updateClient.update();
-
-            res.json(userMessage);
-
-        } catch (error) {
-            console.log(`Erreur dans la méthode updateClientVille du clientAdresseController : ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
-
-    updateClientPays: async (req, res) => {
-        try {
-
-            const {
-                id
-            } = req.params;
-
-            const updateClient = await ClientPays.findOne(id);
-
-            const nom = req.body.nom;
-
-            let userMessage = {};
-
-            if (nom) {
-                updateClient.nom = nom;
-                userMessage.nom = 'Votre nouveau nom de pays a bien été enregistré ';
-            } else if (!nom) {
-                userMessage.nom = 'Votre nom de pays n\'a pas changé';
-            }
-
-            await updateClient.update();
-
-            res.json(userMessage);
-
-        } catch (error) {
-            console.log(`Erreur dans la méthode updateClientPays du clientAdresseController : ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
-
-    updateLiaisonVilleCodePostal: async (req, res) => {
-        try {
-
-            const {
-                id
-            } = req.params;
-
-            const updateClient = await LiaisonVilleCodePostal.findOne(id);
-
-            const idVille = req.body.idVille;
-            const idCodePostal = req.body.idCodePostal;
-
-            let userMessage = {};
-
-            if (idVille) {
-                updateClient.idVille = idVille;
-                userMessage.idVille = 'Votre nouveau idVille de LiaisonVilleCodePostal a bien été enregistré ';
-            } else if (!idVille) {
-                userMessage.idVille = 'Votre idVille de LiaisonVilleCodePostal n\'a pas changé';
-            }
-            if (idCodePostal) {
-                updateClient.idCodePostal = idCodePostal;
-                userMessage.idCodePostal = 'Votre nouveau idCodePostal de LiaisonVilleCodePostal a bien été enregistré ';
-            } else if (!idCodePostal) {
-                userMessage.idCodePostal = 'Votre idCodePostal de LiaisonVilleCodePostal n\'a pas changé';
-            }
-
-            await updateClient.update();
-
-            res.json(userMessage);
-
-        } catch (error) {
-            console.log(`Erreur dans la méthode updateLiaisonVilleCodePostal du clientAdresseController : ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
-
-    updateCodePostal: async (req, res) => {
-        try {
-
-            const {
-                id
-            } = req.params;
-
-            const updateClient = await ClientCodePostal.findOne(id);
-
-            const codePostal = req.body.codePostal;
-
-
-            let userMessage = {};
-
-            if (codePostal) {
-                updateClient.codePostal = codePostal;
-                userMessage.codePostal = 'Votre nouveau codePostal a bien été enregistré ';
-            } else if (!codePostal) {
-                userMessage.codePostal = 'Votre codePostal n\'a pas changé';
-            }
-
-
-            await updateClient.update();
-
-            res.json(userMessage);
-
-        } catch (error) {
-            console.log(`Erreur dans la méthode updateCodePostal du clientAdresseController : ${error.message}`);
-            res.status(500).json(error.message);
-        }
-    },
+   
 
 
 

@@ -626,6 +626,9 @@ client_adresse.id as id_adresse,
 client.prenom,
 client.nom_famille,
 client.email as email,
+client_adresse.titre as adresse_titre,
+client_adresse.prenom as adresse_prenom,
+client_adresse.nom_famille as adresse_nomFamille,
 client_adresse.ligne1 as adresse1,
 client_adresse.ligne2 as adresse2,
 client_adresse.ligne3 as adresse3,
@@ -635,12 +638,12 @@ code_postal.code_postal as code_postal,
 ville.nom as ville,
 privilege.nom as privilege
 FROM mada.client
-LEFT JOIN mada.client_adresse ON client_adresse.id_client = client.id
-LEFT JOIN mada.ville ON ville.id = client_adresse.id_ville
-LEFT JOIN mada.pays ON pays.id = ville.id_pays
-LEFT JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
-LEFT JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
-LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
+JOIN mada.client_adresse ON client_adresse.id_client = client.id
+JOIN mada.ville ON ville.id = client_adresse.id_ville
+JOIN mada.pays ON pays.id = ville.id_pays
+JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
+JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
+JOIN mada.privilege ON client.id_privilege = privilege.id
 ORDER BY client.id ASC;
 
 
@@ -651,12 +654,13 @@ client_adresse.id as id_adresse,
 pays.id as id_pays,
 ville.id as id_ville,
 code_postal.id as id_codePostal,
+ville_a_codePostal.id as id_liaisonVilleCodePostal,
 client.prenom,
 client.nom_famille,
 client.email as email,
-client_adresse.ligne1 as adresse1,
-client_adresse.ligne2 as adresse2,
-client_adresse.ligne3 as adresse3,
+client_adresse.ligne1,
+client_adresse.ligne2,
+client_adresse.ligne3,
 client_adresse.telephone as telephone,
 pays.nom as pays,
 code_postal.code_postal as code_postal,

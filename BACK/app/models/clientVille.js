@@ -61,7 +61,8 @@ class ClientVille {
             'SELECT * FROM mada.ville WHERE ville.id = $1;',
             [id]
         );
-
+        console.log("rows[0] =>", rows[0]);
+        
         if (!rows[0]) {
             throw new Error("Aucun ville avec cet id");
         }
@@ -73,7 +74,7 @@ class ClientVille {
         return new ClientVille(rows[0]);
     }
 
-    
+
 
     /**
      * Méthode chargé d'aller insérer les informations relatives à une adresse de client 
@@ -134,6 +135,7 @@ class ClientVille {
         } = await db.query('DELETE FROM mada.ville WHERE ville.id = $1 RETURNING *;', [
             this.id,
         ]);
+        console.log("this ==<", this);
         consol.model(`la Ville id ${this.id} a été supprimé !`);
 
         return new ClientVille(rows[0]);

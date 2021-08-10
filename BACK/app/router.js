@@ -339,8 +339,17 @@ router.post('/client/adresse/new', client, clean, validateBody(adresseSchema), c
  * @summary Met a jour une nouvelle adresse
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
-  router.patch('/client/adresse/update/:id(\\d+)', clean, client, validateBody(adresseSchema), clientAdresseController.updateAdresse);
+  router.patch('/client/adresse/:id(\\d+)', clean, client, validateBody(adresseSchema), clientAdresseController.updateAdresse);
 
+/**
+ * Une route pour supprimer une adresse
+ * route accessible a tous
+ * @route DELETE /client/adresse/update/:id
+ * @group utilisateur
+ * @summary Met a jour une nouvelle adresse
+ * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
+ */
+ router.delete('/client/adresse/:id(\\d+)', clean, client, clientAdresseController.delete);
 
   //! ROUTES DEVELOPPEUR ----------------
 

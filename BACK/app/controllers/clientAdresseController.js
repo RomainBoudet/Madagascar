@@ -114,7 +114,7 @@ const clientAdresseController = {
             const resultatCodePostal = await newCodePostal.save();
             data5.idCodePostal = resultatCodePostal.id;
 
-
+            console.log("data =>", data4);
             const newVille = new ClientVille(data4);
             const resultatVille = await newVille.save();
             data5.idVille = resultatVille.id;
@@ -124,7 +124,7 @@ const clientAdresseController = {
             const newLiaisonVilleCodePostal = new LiaisonVilleCodePostal(data5);
             await newLiaisonVilleCodePostal.save();
 
-            
+
             const newAdresse = new ClientAdresse(data);
             const resultatAdresse = await newAdresse.save();
 
@@ -132,7 +132,7 @@ const clientAdresseController = {
             const resultatsToSend = {
                 idClient: resultatAdresse.idClient,
                 idAdresse: resultatAdresse.id,
-                titre:resultatAdresse.titre,
+                titre: resultatAdresse.titre,
                 prenom: resultatAdresse.prenom,
                 nomFamille: resultatAdresse.nomFamille,
                 adresse1: resultatAdresse.ligne1,
@@ -161,41 +161,13 @@ const clientAdresseController = {
             const {
                 id
             } = req.params;
-            /* ClientAdresse {
-  id: undefined,
-  prenom: 'Xavier',
-  nomFamille: 'Benoit',
-  ligne1: undefined,
-  ligne2: undefined,
-  ligne3: undefined,
-  telephone: '+33203499058',
-  titre: undefined,
-  createdDate: undefined,
-  updatedDate: undefined,
-  idClient: 74,
-  idVille: 74,
-  idAdresse: 74,
-  idPays: 69,
-  idCodePostal: 74,
-  idLiaisonVilleCodePostal: 74,
-  email: '74Laura83@yahoo.fr',
-  adresse1: '48 Allée Pierre des Francs-Bourgeois ',
-  adresse2: null,
-  adresse3: null,
-  pays: 'Tadjikistan',
-  codePostal: '95433',
-  ville: 'New Sandrinefort',
-  privilege: 'Client'
-} */
+            //re.params.id doit valoir l'id d'une client_adresse !
 
             const updateClient = await ClientAdresse.findOneForUpdate(id);
-            
 
-          
 
             updateClient.id = updateClient.idAdresse;
             const prenom = req.body.prenom;
-            console.log("prenm =>," , prenom);
             const nomFamille = req.body.nomFamille;
             const ligne1 = req.body.ligne1;
             const ligne2 = req.body.ligne2;
@@ -204,7 +176,7 @@ const clientAdresseController = {
             const titre = req.body.titre;
             const idVille = updateClient.idVille;
             const idClient = updateClient.idClient;
-            
+
             let userMessage = {};
 
             if (prenom) {
@@ -264,7 +236,6 @@ const clientAdresseController = {
                 updateClient.idVille = idVille;
             }
 
-            console.log("updateClient==> ",updateClient);
             await updateClient.update();
 
 
@@ -278,7 +249,6 @@ const clientAdresseController = {
             } else if (!nom) {
                 userMessage.pays = 'Votre pays de pays n\'a pas changé';
             }
-            console.log("updatePays==> ",updatePays);
 
             await updatePays.update();
 
@@ -294,8 +264,7 @@ const clientAdresseController = {
             }
             if (idPays) {
                 updateVille.idPays = idPays;
-            } 
-            console.log("updateVille==> ",updateVille);
+            }
 
             await updateVille.update();
 
@@ -303,13 +272,12 @@ const clientAdresseController = {
 
             const codePostal = req.body.codePostal;
             const updateCodePostal = await ClientCodePostal.findOne(updateClient.idCodePostal);
-           if (codePostal) {
+            if (codePostal) {
                 updateCodePostal.codePostal = codePostal;
                 userMessage.codePostal = 'Votre nouveau code postal a bien été enregistré ';
             } else if (!codePostal) {
                 userMessage.codePostal = 'Votre code postal n\'a pas changé';
             }
-            console.log("updateCodePostal==> ",updateCodePostal);
 
             await updateCodePostal.update();
 
@@ -322,8 +290,7 @@ const clientAdresseController = {
             }
             if (idCodePostal) {
                 updateLiaison.idCodePostal = idCodePostal;
-            } 
-            console.log("updateLiaison==> ",updateLiaison);
+            }
 
             await updateLiaison.update();
 
@@ -337,26 +304,32 @@ const clientAdresseController = {
         }
     },
 
-  
-
-   
-
-   
-
-
-
 
 
 
     delete: async (req, res) => {
 
         try {
+            console.time("ça delete en ");
+            //re.params.id doit valoir l'id d'une client_adresse !
+            const fullAdresseInDbForId = await ClientAdresse.findOneForUpdate(req.params.id);
+            console.log("fullAdresseInDbForId ==>", fullAdresseInDbForId)
 
-            const clientInDb = await ClientAdresse.findOne(req.params.id);
+            const adresseInDb = await ClientAdresse.findOne(req.params.id);
+            const adresseDelete = await adresseInDb.delete();
+            console.log("adresseDelete => ", adresseDelete);
 
-            const client = await clientInDb.delete();
+            const paysInDb = await ClientPays.findOne(fullAdresseInDbForId.idPays);
+            await paysInDb.delete();
+            
+            const codePostalInDb = await ClientCodePostal.findOne(fullAdresseInDbForId.idCodePostal);
+            await codePostalInDb.delete();
 
-            res.json(client);
+            //pas besoin de DELETE via le model clientVille, et le LiaisonVilleCodePostal, le ON CASCADE DELETE s'en charge pour nous ! 
+
+
+            res.status(200).json(`l'adresse id ${req.params.id} a bien été supprimé`);
+            console.timeEnd("ça delete en ");
 
         } catch (error) {
             console.trace('Erreur dans la méthode delete du clientAdresseController :',
@@ -364,103 +337,6 @@ const clientAdresseController = {
             res.status(500).json(error.message);
         }
     },
-    deletePays: async (req, res) => {
-
-        try {
-
-            const clientInDb = await ClientPays.findOne(req.params.id);
-
-            const client = await clientInDb.delete();
-
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deletePays du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-    deleteVille: async (req, res) => {
-
-        try {
-
-            const clientInDb = await ClientVille.findOne(req.params.id);
-
-            const client = await clientInDb.delete();
-
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteVille du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-    deleteLiaisonVilleCodePostal: async (req, res) => {
-
-        try {
-
-            const clientInDb = await LiaisonVilleCodePostal.findOne(req.params.id);
-
-            const client = await clientInDb.delete();
-
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteLiaisonVilleCodePostal du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-    deleteCodePostal: async (req, res) => {
-
-        try {
-
-            const clientInDb = await ClientCodePostal.findOne(req.params.id);
-
-            const client = await clientInDb.delete();
-
-            res.json(client);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteCodePostal du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-
-
-
-
-
-    deleteByIdClient: async (req, res) => {
-
-        try {
-
-            const clientsInDb = await ClientAdresse.findByIdClient(req.params.id);
-
-
-            const arrayDeleted = [];
-            for (const clientInDb of clientsInDb) {
-
-                const clientAdresse = await clientInDb.deleteByIdClient();
-                arrayDeleted.push(clientAdresse);
-            }
-
-
-            res.json(arrayDeleted[0]);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteByIdClien du clientAdresseController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-
 
 
 }

@@ -580,7 +580,7 @@ CREATE TABLE client_historique_connexion(
  CREATE TABLE ville_a_codePostal (
 	id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	id_ville                          INT NOT NULL REFERENCES ville(id) ON DELETE CASCADE,
-	id_codePostal                    INT NOT NULL REFERENCES code_postal(id)
+	id_codePostal                    INT NOT NULL REFERENCES code_postal(id) ON DELETE CASCADE
 );
  
 

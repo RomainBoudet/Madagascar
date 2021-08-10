@@ -59,6 +59,18 @@ class ClientAdresse {
         this.idLiaisonVilleCodePostal = val;
     }
 
+    set adresse_titre (val) {
+        this.adresseTitre = val;
+    }
+
+    set adresse_prenom (val) {
+        this.adressePrenom = val;
+    }
+
+    set adresse_nomfamille (val) {
+        this.adresseNomFamille = val;
+    }
+
     /**
      * @constructor
      */

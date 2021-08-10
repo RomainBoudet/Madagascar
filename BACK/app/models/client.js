@@ -126,7 +126,7 @@ class Client {
     const {
       rows,
     } = await db.query(
-       'SELECT client.*, admin_verif_email.verif_email as statut FROM mada.client JOIN mada.admin_verif_email ON admin_verif_email.id_client=client.id WHERE client.id = $1;',
+       'SELECT client.*, admin_verif_email.verif_email as statut FROM mada.client LEFT JOIN mada.admin_verif_email ON admin_verif_email.id_client=client.id WHERE client.id = $1;',
       [id]
     );
 

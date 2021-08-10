@@ -102,7 +102,7 @@ class Client {
     );
 
     if (!rows[0]) {
-      throw new Error("Aucun client avec cet id");
+      console.log("Aucun client avec cet id");
     }
 
     consol.model(
@@ -153,7 +153,7 @@ class Client {
     const {
       rows,
     } = await db.query(
-      `SELECT client.*, admin_verif_email.verif_email as statut FROM mada.client JOIN mada.admin_verif_email 
+      `SELECT client.*, admin_verif_email.verif_email as statut FROM mada.client LEFT JOIN mada.admin_verif_email 
       ON admin_verif_email.id_client=client.id WHERE client.email = $1;`,
       [email]
     );
@@ -200,6 +200,36 @@ class Client {
     }
   }
 
+  /**
+   * Méthode chargé d'aller authentifier un client passé en paramétre 
+   * @param - un email d'un client
+   * @param - un password d'un client
+   * @returns - les informations du client si il a put s'authentifier
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+   static async authenticateWhitoutHisto(email, password) {
+
+    const {
+      rows,
+    } = await db.query(
+      `SELECT client.*, privilege.nom FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege WHERE client.email = $1;`,
+      [email]
+    );
+    if (!rows[0]) {
+      consol.model("Aucun client avec cet email en BDD");
+      return null
+    } else {
+      if (await bcrypt.compare(password, rows[0].password)) {
+        consol.model(`l'utilisateur avec l'email ${email} a été authentifié avec succés !`);
+        return new Client(rows[0])
+      } else {
+        consol.model(`Echec. L'utilisateur avec l'email ${email} n'a pas été authentifié !`);
+        return null;
+      }
+    }
+  }
+
 
 
 
@@ -225,7 +255,8 @@ class Client {
     consol.model(
       `le client id ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été inséré à la date du ${this.createdDate} !`
     );
-    
+    return new Client(rows[0]);
+
   }
 
 

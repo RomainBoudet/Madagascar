@@ -78,7 +78,7 @@ const clientAdresseController = {
             const {
                 password
             } = req.body;
-            const clientInDb = await Client.authenticate(req.session.user.email, password);
+            const clientInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
             if (!clientInDb) {
                 return res.status(401).json("Erreur d'authentification : vous nêtes pas autoriser a modifier votre adresse.");
             }
@@ -171,7 +171,7 @@ const clientAdresseController = {
             const {
                 password
             } = req.body;
-            const clientInDb = await Client.authenticate(req.session.user.email, password);
+            const clientInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
             if (!clientInDb) {
                 return res.status(401).json("Erreur d'authentification : vous nêtes pas autoriser a mettre a jour votre adresse.");
             }
@@ -332,10 +332,9 @@ const clientAdresseController = {
             const {
                 password
             } = req.body;
-            const clientInDb = await Client.authenticate(req.session.user.email, password);
+            const clientInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
             if (!clientInDb) {
-                console.log('coucou!');
-                return res.status(404).json("Erreur d'authentification : vous nêtes pas autoriser a supprimer votre adresse.");
+                return res.status(401).json("Erreur d'authentification : vous nêtes pas autoriser a supprimer votre adresse.");
             }
 
 

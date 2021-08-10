@@ -51,6 +51,7 @@ const phoneNumberSchema = require('./schemas/phoneNumber');
 const codeSchema = require('./schemas/codeSchema');
 const searchSchema = require('./schemas/searchSchema');
 const adresseSchema = require('./schemas/adresseSchema');
+const passwordSchema = require('./schemas/passwordOnlySchema');
 
 
 //Redis pour le cache
@@ -289,7 +290,27 @@ router.get('/admin/user/all', admin, clientController.getAll);
  * @summary Renvoie tous les client en BDD
  * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
  */
-router.get('admin/user/getone/:id(\\d+)', admin, clientController.getOne);
+router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
+
+
+/**
+ * Supprime un client selon son id
+ * @route DELETE /admin/user/:id
+ * @group Administrateur
+ * @summary Supprime un client en BDD selon son id    *** nécéssite un mot de passe
+ * @returns {JSON} 200 - Supprime un client en BDD
+ */
+ router.delete('/admin/user/:id(\\d+)', admin, validateBody(passwordSchema), clientController.deleteById);
+
+
+ /**
+ * Supprime un client selon son email
+ * @route DELETE /admin/user
+ * @group Administrateur
+ * @summary Supprime un client en BDD selon son email    *** nécéssite un mot de passe et l'email a supprimer
+ * @returns {JSON} 200 - Supprime un client en BDD
+ */
+  router.delete('/admin/user', admin, validateBody(userLoginSchema), clientController.deleteByEmail);
 
 //! ADRESSE DES CLIENT -----------------------------------
 
@@ -1677,19 +1698,19 @@ router.delete('/admin/delAvisByIdClient/:id(\\d+)', admin, avisController.delete
 
 
 
-router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getCategorieImageByIdCategorie);
+//router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getCategorieImageByIdCategorie);
 
-router.post('/new', produitController.new);
+//router.post('/new', produitController.new);
 
-router.post('/newProd', produitController.new);
+//router.post('/newProd', produitController.new);
 
-router.delete('/del/:id(\\d+)', clientController.delete);
+//router.delete('/del/:id(\\d+)', clientController.delete);
 
-router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteCategorieImageByIdCategorie);
+//router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteCategorieImageByIdCategorie);
 
-router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
+//router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
 
-router.patch('/update/:id(\\d+)', produitController.update);
+//router.patch('/update/:id(\\d+)', produitController.update);
 
 
 

@@ -153,9 +153,8 @@ class AdminVerifEmail {
 
      
         this.verifEmail = rows[0].verif_email;
-        this.createdDate = rows[0].date_verif_email;
         consol.model(
-            `le adminVerifEmail id ${id} avec comme statut ${this.verifEmail} a été inséré à la date du ${this.createdDate} !`
+            `le adminVerifEmail id ${id} avec comme statut ${this.verifEmail} a été inséré avec succés !`
         );
     }
 

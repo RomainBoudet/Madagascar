@@ -149,7 +149,6 @@ const clientController = {
                 nomFamille,
             };
 
-
             /**
              * On créer une nouvelle instance de client 
              * */
@@ -158,6 +157,7 @@ const clientController = {
             /**
              * On l'envoie en BDD pour être enregistré
              */
+
             const user = await userNowInDb.save();
             await AdminVerifEmail.false(user.id);
 
@@ -804,25 +804,63 @@ const clientController = {
 
     },
 
-    
 
 
-    delete: async (req, res) => {
+
+    deleteById: async (req, res) => {
 
         try {
 
-            const clientInDb = await Client.findUnique(req.params.id);
+            const {
+                password
+            } = req.body;
+            const clientAuthentifieInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
+            if (!clientAuthentifieInDb) {
+                return res.status(401).json("Erreur d'authentification : vous nêtes pas autoriser a supprimer un utilisateur.");
+            }
 
+            const clientInDb = await Client.findUnique(req.params.id);
+            if (!clientInDb.id === undefined) {
+               return res.status(404).json("Le client qui vous souhaitez supprimer n'existe pas en BDD");
+            }
             const client = await clientInDb.delete();
 
-            res.json(client);
+            res.status(200).json(client);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode delete du clientController :',
+            console.trace('Erreur dans la méthode deleteById du clientController :',
                 error);
             res.status(500).json(error.message);
         }
     },
+
+    deleteByEmail: async (req, res) => {
+
+        try {
+
+            const {
+                password
+            } = req.body;
+            const clientAuthentifieInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
+            if (!clientAuthentifieInDb) {
+                return res.status(401).json("Erreur d'authentification : vous nêtes pas autoriser a supprimer un utilisateur.");
+            }
+
+            const clientInDb = await Client.findByEmail(req.body.email);
+            if (clientInDb.email === undefined) {
+                return res.status(404).json("Le client qui vous souhaitez supprimer n'existe pas en BDD");
+            }
+            const client = await clientInDb.delete();
+
+            res.status(200).json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteByEmail du clientController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
 
 
 }

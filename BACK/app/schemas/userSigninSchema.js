@@ -55,6 +55,8 @@ const userSigninSchema = Joi.object().keys({
     .max(200)
     .trim()
     .messages({
+      'any.required':'le champs de votre mot de passe ne peut être vide ',
+      'string.empty': `Le champs de votre email ne peut être vide !`,
       'string.max': `Votre mot de passe doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.pattern.base': 'Le format de votre mot de passe est incorrect : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & * ',
     }),

@@ -16,39 +16,53 @@ const Joi = require('joi');
  * @return {json} messages - Un texte adapté en cas d'érreur, en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
 const adresseSchema = Joi.object().keys({
+    password: Joi.string()
+      //.pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/)) => je veux tomber sur l'érreur d'authentification..
+      .required()
+      .max(200)
+      .messages({
+        'string.max': `Votre mot de passe doit avoir une longeur maximum de {#limit} caractéres !`,
+        'string.empty': `Le champs de votre mot de passe ne peut être vide !`,
+        'any.required':'Le champs de votre mot de passe ne peut être vide !',
+      }),
     prenom: Joi.string().trim()
         .min(2)
         .max(200)
-        .required()
         .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
         .messages({
             'string.max': `Votre prenom doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le champs de votre prénom ne peut être vide !`,
             'string.min': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
+            'any.required':'Le champs de votre prenom ne peut être vide !',
             'string.pattern.base': 'Le format de votre nom est incorrect : Il ne doit pas être composé d\'un de ces caractéres spéciaux : [<>&#=+*/"|] !',
-        }),
+        })
+        .when('$requestType', { is: 'POST', then: Joi.required() }),
 
     nomFamille: Joi.string().trim()
         .min(2)
         .max(200)
-        .required()
         .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
         .messages({
+            'any.required':'Le champs de votre nom de famille ne peut être vide !',
             'string.max': `Votre nom de famille doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le champs de votre nom ne peut être vide !`,
             'string.min': `Votre nom doit avoir une longeur minimum de {#limit} caractéres !`,
             'string.pattern.base': 'Le format de votre nom est incorrect : Il ne doit pas être composé d\'un de ces caractéres : spéciaux [<>&#=+*/"|] !',
-        }),
+        })
+        .when('$requestType', { is: 'POST', then: Joi.required() }),
+
     ligne1: Joi.string()
-        .required()
         .max(200)
         .trim()
         .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
         .messages({
+            'any.required':'Le champs de votre premiére ligne d\'adresse ne peut être vide !',
             'string.max': `Votre adresse doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le champs de votre adresse ne peut être vide !`,
             'string.pattern.base': 'Le format de votre adresse est incorrect',
-        }),
+        })
+        .when('$requestType', { is: 'POST', then: Joi.required() }),
+
     ligne2: Joi.string()
         .max(200)
         .trim()
@@ -67,49 +81,59 @@ const adresseSchema = Joi.object().keys({
         }),
     telephone: Joi.string()
         .pattern(new RegExp(/^\+[1-9]\d{10}$/))
-        .required()
         .max(12)
         .messages({
+            'any.required':'Le champs de votre numéro de télephone ne peut être vide ! Il pourra être utilisé par le transporteur seulement.',
             'string.max': `Votre numéro de télphone doit avoir une longeur maximum de {#limit} caractéres ! n'oublier pas de supprimer le premier 0 de votre numéro.`,
             'string.empty': `Le champs de votre numéro de téléphone ne peut être vide !`,
             'string.pattern.base': 'Le format de votre numéro de téléphone est incorrect : Il doit être composé de 12 caractéres, commencer par +33, suivi de votre numéro de téléphone portable sans le permier 0 .',
-        }),
+        })
+        .when('$requestType', { is: 'POST', then: Joi.required() }),
+
     titre: Joi.string()
-        .required()
         .max(200)
         .trim()
         .messages({
+            'any.required':'Le champs de votre titre d\'adresse ne peut être vide !',
             'string.max': `Le titre de votre adresse doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le champs de votre titre d'adresse ne peut être vide !`,
-        }),
+        })
+        .when('$requestType', { is: 'POST', then: Joi.required() }),
+
         ville: Joi.string()
-        .required()
         .max(500)
         .trim()
         .messages({
+            'any.required':'Le champs de votre ville ne peut être vide !',
             'string.max': `La localité de votre adresse doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le champs de votre localité d'adresse ne peut être vide !`,
-        }),
+        })
+        .when('$requestType', { is: 'POST', then: Joi.required() }),
+
+
         pays: Joi.string()
-        .required()
         .max(500)
         .trim()
         .messages({
+            'any.required':'Le champs de votre pays ne peut être vide !',
             'string.max': `Le pays de votre adresse doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le pays de votre adresse ne peut être vide !`,
-        }),
+        })
+        .when('$requestType', { is: 'POST', then: Joi.required() }),
+
 
         codePostal: Joi.string()
         .pattern(new RegExp(/^[0-9]{5}$/))
-        .required()
         .max(5)
         .trim()
         .messages({
+            'any.required':'Le champs de votre code postal ne peut être vide !',
             'string.max': `Votre code postal doit avoir une longeur maximum de {#limit} caractéres ! n'oublier pas de supprimer le premier 0 de votre numéro.`,
             'string.max': `Le code postale de votre adresse doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le code postal de votre adresse ne peut être vide !`,
             'string.pattern.base': 'Le format de votre code postale est incorrect : Il doit être composé de 5 chiffres.',
-        }),
+        })
+        .when('$requestType', { is: 'POST', then: Joi.required() }),
 
 
 });

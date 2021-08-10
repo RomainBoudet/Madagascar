@@ -3,6 +3,8 @@ const ClientVille = require('../models/clientVille');
 const ClientPays = require('../models/clientPays');
 const LiaisonVilleCodePostal = require('../models/liaisonVilleCodePostal');
 const ClientCodePostal = require('../models/clientCodePostal');
+const Client = require('../models/client');
+
 
 /**
  * Une méthode qui va servir a intéragir avec le model ClientAdresse pour les intéractions des adresses des clients avec la BDD 
@@ -72,6 +74,14 @@ const clientAdresseController = {
 
     newAdresse: async (req, res) => {
         try {
+
+            const {
+                password
+            } = req.body;
+            const clientInDb = await Client.authenticate(req.session.user.email, password);
+            if (!clientInDb) {
+                return res.status(401).json("Erreur d'authentification : vous nêtes pas autoriser a modifier votre adresse.");
+            }
 
             const data = {};
             const data2 = {};
@@ -159,12 +169,19 @@ const clientAdresseController = {
             console.time('Timing de la méthode updateAdresse : ');
 
             const {
+                password
+            } = req.body;
+            const clientInDb = await Client.authenticate(req.session.user.email, password);
+            if (!clientInDb) {
+                return res.status(401).json("Erreur d'authentification : vous nêtes pas autoriser a mettre a jour votre adresse.");
+            }
+            const {
                 id
             } = req.params;
             //re.params.id doit valoir l'id d'une client_adresse !
 
             const updateClient = await ClientAdresse.findOneForUpdate(id);
-
+            console.log("updateClient sortant de la classe dans le controller ", updateClient);
 
             updateClient.id = updateClient.idAdresse;
             const prenom = req.body.prenom;
@@ -243,10 +260,11 @@ const clientAdresseController = {
 
             const pays = req.body.pays;
             const updatePays = await ClientPays.findOne(updateClient.idPays);
+
             if (pays) {
                 updatePays.nom = pays;
                 userMessage.pays = 'Votre nouveau nom de pays a bien été enregistré ';
-            } else if (!nom) {
+            } else if (!pays) {
                 userMessage.pays = 'Votre pays de pays n\'a pas changé';
             }
 
@@ -259,7 +277,7 @@ const clientAdresseController = {
             if (ville) {
                 updateVille.nom = ville;
                 userMessage.ville = 'Votre nouveau nom de ville a bien été enregistré ';
-            } else if (!nom) {
+            } else if (!ville) {
                 userMessage.ville = 'Votre nom de ville n\'a pas changé';
             }
             if (idPays) {
@@ -311,6 +329,16 @@ const clientAdresseController = {
 
         try {
             console.time("ça delete en ");
+            const {
+                password
+            } = req.body;
+            const clientInDb = await Client.authenticate(req.session.user.email, password);
+            if (!clientInDb) {
+                console.log('coucou!');
+                return res.status(404).json("Erreur d'authentification : vous nêtes pas autoriser a supprimer votre adresse.");
+            }
+
+
             //re.params.id doit valoir l'id d'une client_adresse !
             const fullAdresseInDbForId = await ClientAdresse.findOneForUpdate(req.params.id);
             console.log("fullAdresseInDbForId ==>", fullAdresseInDbForId)
@@ -321,7 +349,7 @@ const clientAdresseController = {
 
             const paysInDb = await ClientPays.findOne(fullAdresseInDbForId.idPays);
             await paysInDb.delete();
-            
+
             const codePostalInDb = await ClientCodePostal.findOne(fullAdresseInDbForId.idCodePostal);
             await codePostalInDb.delete();
 

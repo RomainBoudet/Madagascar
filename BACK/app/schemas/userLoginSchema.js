@@ -16,6 +16,7 @@ const userLoginSchema = Joi.object({
     .max(200)
      .pattern(new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
       .messages({
+        'any.required': `Le champs de votre email ne peut être vide !`,
         'string.max': `Votre email doit avoir une longeur maximum de {#limit} caractéres !`,
         'string.empty': `Le champs de votre email ne peut être vide !`,
         'string.pattern.base':'Le format de votre email est incorrect',
@@ -25,6 +26,7 @@ const userLoginSchema = Joi.object({
       .required()
       .max(200)
       .messages({
+        'any.required': `Le champs de votre mot de passe ne peut être vide !`,
         'string.max': `Votre mot de passe doit avoir une longeur maximum de {#limit} caractéres !`,
         'string.empty': `Le champs de votre mot de passe ne peut être vide !`,
         'string.pattern.base':'Le format de votre mot de passe est incorrect : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & *',

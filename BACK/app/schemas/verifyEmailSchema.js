@@ -9,7 +9,7 @@ const verifyEmailSchema = Joi.object({
             'string.empty': `L'URL doit contenir un userId pour être valide!`,
         }),
     token: Joi.string()
-        .pattern(new RegExp(/^[A-Za-z0-9._-]{20,}$/))
+        //.pattern(new RegExp(/^[A-Za-z0-9._-.]{20,}$/))
         .required()
         .messages({
             'string.empty': `L'URL doit contenir un token pour être valide!`,

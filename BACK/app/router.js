@@ -263,7 +263,7 @@ router.post('/resendEmailLink', clean, admin, validateBody(resendEmailSchema), c
  * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD.
  * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
  */
-router.post('/verifyEmail', clean, admin, validateQuery(verifyEmailSchema), clientController.verifyEmail);
+router.get('/verifyEmail', clean, admin, validateQuery(verifyEmailSchema), clientController.verifyEmail);
 /**
  * Permet d'enregitrer en BDD et de vérifier un téléphone par l'envoie d'un sms sur le numéro.
  * @route POST /admin/smsVerify

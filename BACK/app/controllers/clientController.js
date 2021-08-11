@@ -528,7 +528,6 @@ const clientController = {
                 token
             } = req.query;
 
-
             const userInDb = await Client.findOne(userId);
 
 
@@ -538,7 +537,7 @@ const clientController = {
             }, function (err, decoded) {
 
                 if (err) {
-                    res.json("la validation de votre email a échoué", err)
+                    return res.json("la validation de votre email a échoué")
                 }
 
                 return decoded

@@ -25,9 +25,9 @@ const paiementController = {
             } else(
                 req.session.user.cgv = 'true')
 
-                return res.status(200).json("Les Conditions Générales de Ventes ont été accéptés.")
+            return res.status(200).json("Les Conditions Générales de Ventes ont été accéptés.")
 
-           
+
         } catch (error) {
             console.trace(
                 'Erreur dans la méthode CGV du paiementController :',
@@ -42,7 +42,10 @@ const paiementController = {
         try {
 
 
-
+            if (!req.session.user.cgv === 'true') {
+                console.log("Les Conditions Générales de Ventes n'ont pas été accéptés.")
+                return res.status(200).json("Les Conditions Générales de Ventes n'ont pas été accéptés. Merci de les accéptés afin de finaliser votre paiement.")
+            }
 
 
 

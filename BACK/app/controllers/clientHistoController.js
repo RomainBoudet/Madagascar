@@ -81,8 +81,24 @@ const clientHistoController = {
     
     getHistoConnByIdClient: async (req, res) => {
         try {
-            console.log(req.params);
             const client = await ClientHistoConn.findByIdClient(req.params.id);
+            
+            res.json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getHistoConnByIdClient du clientHistoController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getLastHistoConn: async (req, res) => {
+        try {
+            
+            const client = await ClientHistoConn.findLastTrueConnexionByIdClient(req.params.id);
+           
+            client.derniereConnexion = client.to_char;
+            delete client.to_char;
             res.json(client);
 
         } catch (error) {

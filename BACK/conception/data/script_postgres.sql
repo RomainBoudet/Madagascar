@@ -765,7 +765,7 @@ client.email,
 paiement.reference as paiement_ref,
 paiement.methode as paiement_methode,
 paiement.montant as paiement_montant,
-to_char(paiement.date_paiement, 'Day DD Month YYYY à  HH24:MI:SS') as paiement_date
+to_char(paiement.date_paiement, 'TMDay DD TMMonth YYYY à  HH24:MI:SS') as paiement_date
 FROM mada.paiement
 JOIN mada.commande ON commande.id = paiement.id_commande
 JOIN mada.client ON client.id = commande.id_client

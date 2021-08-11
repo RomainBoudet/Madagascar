@@ -113,6 +113,34 @@ class ClientHistoConn {
         return rows.map((clientHistoConn) => new ClientHistoConn(clientHistoConn));
     }
 
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à la derniére connexion réussie d'un client
+     * @param idClient - un idClient d'un client_historique_connexion
+     * @returns - les informations du client_historique_connexion demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findLastTrueConnexionByIdClient(idClient) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            `SELECT to_char(client_historique_connexion.connexion_date, 'TMDay DD TMMonth YYYY à HH24:MI:SS') FROM mada.client_historique_connexion WHERE client_historique_connexion.id_client = $1 AND client_historique_connexion.connexion_succes='true' ORDER BY client_historique_connexion.id DESC LIMIT 1; `,
+            [idClient]
+        );
+
+        if (!rows[0]) {
+            throw new Error("Aucun client_historique_connexion avec cet idClient");
+        }
+
+        consol.model(
+            `Le dernier historique de connexion pour le idClient : ${idClient} a été demandé en BDD !`
+        );
+
+        return new ClientHistoConn(rows[0]);
+    }
+
 
     /**
      * Méthode chargé d'aller passer a true la valeur de la connexion d'un utilisateur passé en paramétre

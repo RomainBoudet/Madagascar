@@ -674,7 +674,7 @@ router.delete('/dev/delPrivilege', dev, adminController.deletePrivilege);
  * Une route pour voir ce qu'on a dans le panier
  * route accessible a tous 
  * @route GET /user/panier
- * @group Panier session - Gestion du panier en session 
+ * @group utilisateur
  * @summary Affiche les articles d'un panier selon la session
  * @returns {JSON} 200 - les articles présent dans ce panier et leurs caractéristiques
  */
@@ -685,7 +685,7 @@ router.get('/user/panier', panierController.getPanier);
  * Une route pour ajouter un article dans le panier
  * route accessible a tous 
  * @route GET /user/addPanier
- * @group Panier session - Gestion du panier en session
+ * @group utilisateur
  * @summary Ajoute un article dans le panier
  * @returns {JSON} 200 - les articles ajouté dans ce panier et leurs caractéristiques
  */
@@ -695,7 +695,7 @@ router.get('/user/addPanier/:id(\\d+)', panierController.addArticlePanier);
  * Une route pour supprimer un article dans le panier
  * route accessible a tous 
  * @route DELETE /user/delPanier
- * @group Panier session - Gestion du panier en session
+ * @group utilisateur
  * @summary Supprime un article dans le panier
  * @returns {JSON} 200 - les articles restant dans le panier et leurs caractéristiques
  */
@@ -1599,14 +1599,25 @@ router.get('/dev/HistoConn/:id(\\d+)', dev, clientHistoController.getOneHistoCon
 router.get('/dev/allHistoConn', dev, clientHistoController.getAllHistoConn);
 
 /**
- * Une route pour voir un HistoConn selon son id produit 
+ * Une route pour voir un HistoConn selon son id Client 
  * @route GET /dev/HistoConnByIdClient/:id
  * @group Developpeur Gestion des HistoConns
- * @summary Affiche un HistoConn selon son id produit
+ * @summary Affiche un HistoConn selon son id Client
  * @param {produit.Model} req.params - les informations d'un HistoConn qu'on doit fournir
  * @returns {JSON} 200 - Les données d'un HistoConn selon son id produit
  */
 router.get('/dev/HistoConnByIdClient/:id(\\d+)', dev, clientHistoController.getHistoConnByIdClient);
+
+/**
+ * Une route pour voir la derniere connexion valide d'un utilisateur 
+ * @route GET /user/lastconn/:id
+ * @group utilisateur
+ * @summary Affiche la derniere connexion valide d'un utilisateur 
+ * @param {produit.Model} req.params - L'id du client
+ * @returns {JSON} 200 - Affiche la derniere connexion valide d'un utilisateur 
+ */
+ router.get('/user/lastconn/:id(\\d+)', client, clientHistoController.getLastHistoConn);
+
 
 /**
  * Une route pour insérer un HistoConn

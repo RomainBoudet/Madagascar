@@ -1693,7 +1693,7 @@ router.delete('/admin/delAvisByIdClient/:id(\\d+)', admin, avisController.delete
 
 
 
-//! route mis en place pour tester.. 
+//! route mise en place pour tester.. 
 
 
 

@@ -24,18 +24,14 @@ const consol = require('../services/colorConsole');
       /* On vérifie que le xsrToken est présent dans les cookies de la session */
       if (!cookieXsrfToken) {
         console.log('Il n\'y a pas de token dans le cookie de session')
-        return res.status(401).json({
-          message: 'Il n\'y a pas de token dans le cookie de session'
-        });
+        return res.status(401).json('Vous n\'êtes pas connecté. merci de vous connecter.');
       }
   
   
       /* On vérifie que le token CSRF est présent dans les en-têtes de la requête */
       if (!headers || !headers['x-xsrf-token']) {
         console.log('Il n\'y a pas de token CRSF dans le header')
-        return res.status(401).json({
-          message: 'Il n\'y a pas de token CRSF dans le header'
-        });
+        return res.status(401).json('Vous n\'êtes pas connecté. merci de vous connecter.');
       }
   
       const headerXsrfToken = headers['x-xsrf-token'];
@@ -46,16 +42,12 @@ const consol = require('../services/colorConsole');
       /* On vérifie que le token CSRF correspond à celui présent dans le JWT  */
       if (headerXsrfToken !== cookieXsrfToken) {
         console.log('Probléme de token csrf dans le admin MW')
-        return res.status(401).json({
-          message: 'Probléme de token csrf'
-        });
+        return res.status(401).json('Vous n\'êtes pas connecté. merci de vous connecter.');
       }
   console.log("req.session.user ==>>",req.session.user);
       //est-ce que l'utilisateur est connecté
       if (!req.session.user) {
-        return res.status(403).json({
-          message: 'Vous n\'avez pas les droit nécéssaires pour accéder a la ressource.'
-        });
+        return res.status(403).json('Vous n\'êtes pas connecté. merci de vous connecter.');
       }
       
       //est-ce que l'utilisateur a le role Administrateur ou Developper ?

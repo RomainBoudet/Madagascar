@@ -74,7 +74,7 @@ const authController = {
                 request.session.cookie.expires = new Date(Date.now() + 7 * 24 * 3600000); //je rajoute 7 jours de validité.
             }
 
-            
+
             // un petit rappel de passage ...
 
             if (clientInDb.nom === 'Administrateur' || clientInDb.nom === 'Developpeur') {
@@ -96,7 +96,8 @@ const authController = {
 
                     return;
 
-            }};
+                }
+            };
 
             // On envoie une reponse JSON concernant les infos du user avec le token a comparé avec celui dans le cookie.
             response.status(200).json({
@@ -124,11 +125,35 @@ const authController = {
     deconnexion: async (req, res) => {
         try {
 
+            const {
+                headers
+            } = req;
 
-            req.session.destroy();
-            //on redirige sur la page d'accueil
+            const cookieXsrfToken = req.signedCookies.xsrfToken;
+          
+            if (!cookieXsrfToken && req.session === 'undefined') {
+                return res.status(200).json('Vous avez déja été déconnecté avec succés !')
+            }
+           
+            //je change a false la valeur du headers
+            res.append('x-xsrf-token', 'false');
+            //je détruis la session
+            req.session.destroy(); // je supprime ma session
+            //je supprime le cookie qui contient une patie de l'information pour s'authentifier (le token contre les XSS)
+            res.clearCookie('xsrfToken', { //La doc stipule que le cookie sera supprimé par le client seulement si les options données sont équivalent a ceux données lors de sa création. Je redonne donc les options de cookie (excluding expires and maxAge.).
+                path: '/',
+                httpOnly: true, //doc => https://expressjs.com/en/api.html#res.sendStatus
+                secure: true,
+                sameSite: 'strict',
+                signed: true,
+            })
+
             console.log("client déconnecté ! valeur de req.session maintenant ==> ", req.session)
-            return res.status(200).json("L'utilisateur a été déconnecté");
+            console.log('cookieXsrfToken => ', cookieXsrfToken);
+            console.log("headers['x-xsrf-token'] => ", headers['x-xsrf-token']);
+
+
+            return res.status(200).json("L'utilisateur a été déconnecté avec succés");
 
         } catch (error) {
             console.trace(
@@ -138,6 +163,32 @@ const authController = {
         }
 
     },
+
+    cookie: async (req, res) => {
+        try {
+            //Si cette route est contactée, le user a accecepté les cookies, je stocke sur son navigateur un cokie qui contient cette information
+            //on récupére l'info d'une chekbox, bouton radio, 
+            if (req.body.cookieAccepted) {
+                res.status(200).cookie('cookieAccepted', true, {
+                    httpOnly: true, // Garantit que le cookie n’est envoyé que sur HTTP(S), pas au JavaScript du client, ce qui renforce la protection contre les attaques de type cross-site scripting.
+                    secure: true, // si true, la navigateur n'envoit que des cookie sur du HTTPS
+                    //sameSite: 'strict', //le mode Strict empêche l’envoi d’un cookie de session dans le cas d’un accès au site via un lien externe//https://blog.dareboost.com/fr/2017/06/securisation-cookies-attribut-samesite/
+                    signed: true, // on devra utiliser req.signedCookies au retour ! 
+                    expires: new Date(Date.now() + 24 * 3600000 * 180), // par défault une expiration aprés 180 jours
+                }).json("Vous avez accepté notre politique d'utilisation des cookies sur ce site et nous vous en remerçiont !");
+            }
+
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode deconnexion du authController :',
+                error);
+            res.status(500).json(error.message);
+        }
+
+    },
+
+
+
 
 }
 

@@ -12,6 +12,32 @@ const Paiement = require('../models/paiement');
 const paiementController = {
 
 
+
+    CGV: async (req, res) => {
+        try {
+
+
+            //le user a accecepté les cookies,  
+            // je vérifie si req.session.uer.cookie existe déja et si sa valeur est déja 'true'
+          
+
+
+            req.session.user.cgv = 'true';
+            console.log('req.session.user ==> ',req.session.user);
+
+            console.log("client déconnecté ! valeur de req.session maintenant ==> ", req.session)
+            return res.status(200).json("L'utilisateur a été déconnecté");
+
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode deconnexion du authController :',
+                error);
+            res.status(500).json(error.message);
+        }
+
+    },
+
+
     getAll: async (req, res) => {
         try {
             const paiements = await Paiement.findAll();

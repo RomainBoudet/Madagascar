@@ -213,6 +213,25 @@ router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientContr
 router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailSchema), clientController.reset_pwd);
 
 
+/**
+ * Prend en charge l'acceptation de la politique de cookie sur le site
+ *  @route POST /setcookie
+ * @group utilisateur
+ * @summary  Renvoie un cookie avec le nom 'cookieAccepted' et la valeur 'true'
+ * @param {utilisateur.Model} utilisateur.body.required
+ * @returns {JSON} 200 - Renvoie un cookie avec le nom 'cookieAccepted' et la valeur 'true'
+ */
+ router.post('/setcookie', clean, authController.cookie);
+
+/**
+ * Prend en charge l'acceptation des Conditions Générale de Ventes
+ *  @route POST /cgv
+ * @group utilisateur
+ * @summary  L'acceptation des Conditions Générale de Ventes est stocké en session
+ * @returns {JSON} 200 - L'acceptation des Conditions Générale de Ventes est stocké en session
+ */
+ router.get('/cgv', client, paiementController.cgv);
+
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 
 /**

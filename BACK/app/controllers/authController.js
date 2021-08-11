@@ -130,13 +130,13 @@ const authController = {
             } = req;
 
             const cookieXsrfToken = req.signedCookies.xsrfToken;
-          
-            if (!cookieXsrfToken && req.session === 'undefined') {
+
+            if (req.session.user === undefined) {
                 return res.status(200).json('Vous avez déja été déconnecté avec succés !')
             }
            
             //je change a false la valeur du headers
-            res.append('x-xsrf-token', 'false');
+            //res.append('x-xsrf-token', 'false');
             //je détruis la session
             req.session.destroy(); // je supprime ma session
             //je supprime le cookie qui contient une patie de l'information pour s'authentifier (le token contre les XSS)
@@ -149,10 +149,7 @@ const authController = {
             })
 
             console.log("client déconnecté ! valeur de req.session maintenant ==> ", req.session)
-            console.log('cookieXsrfToken => ', cookieXsrfToken);
-            console.log("headers['x-xsrf-token'] => ", headers['x-xsrf-token']);
-
-
+       
             return res.status(200).json("L'utilisateur a été déconnecté avec succés");
 
         } catch (error) {
@@ -166,9 +163,13 @@ const authController = {
 
     cookie: async (req, res) => {
         try {
-            //Si cette route est contactée, le user a accecepté les cookies, je stocke sur son navigateur un cokie qui contient cette information
+            //Si cette route est contactée, le user a accepté les cookies, je stocke sur son navigateur un cokie qui contient cette information
             //on récupére l'info d'une chekbox, bouton radio, 
-            if (req.body.cookieAccepted) {
+            if(req.signedCookies.cookieAccepted){
+                return res.json("Vous avez accepté notre politique d'utilisation des cookies sur ce site et nous vous en remerçiont !");
+            }
+
+            if (req.body.cookieAccepted === 'true') {
                 res.status(200).cookie('cookieAccepted', true, {
                     httpOnly: true, // Garantit que le cookie n’est envoyé que sur HTTP(S), pas au JavaScript du client, ce qui renforce la protection contre les attaques de type cross-site scripting.
                     secure: true, // si true, la navigateur n'envoit que des cookie sur du HTTPS
@@ -177,10 +178,13 @@ const authController = {
                     expires: new Date(Date.now() + 24 * 3600000 * 180), // par défault une expiration aprés 180 jours
                 }).json("Vous avez accepté notre politique d'utilisation des cookies sur ce site et nous vous en remerçiont !");
             }
+            console.log()
+            return res.json("Merci d\'accépter la politique de cookie pour continuer d\'utiliser ce site");
+
 
         } catch (error) {
             console.trace(
-                'Erreur dans la méthode deconnexion du authController :',
+                'Erreur dans la méthode cookie du authController :',
                 error);
             res.status(500).json(error.message);
         }

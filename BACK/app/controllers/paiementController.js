@@ -13,28 +13,55 @@ const paiementController = {
 
 
 
-    CGV: async (req, res) => {
+    cgv: async (req, res) => {
         try {
 
+            //le user a accecepté les CGV
+            // je vérifie si req.session.user.cookie existe déja et si sa valeur est déja 'true'
+            console.log('req.session.user ==> ', req.session.user.cgv);
+            if (req.session.user.cgv === 'true') {
+                console.log("Les Conditions Générales de Ventes ont déja été accéptés.")
+                return res.status(200).json("Les Conditions Générales de Ventes ont déja été accéptés.")
+            } else(
+                req.session.user.cgv = 'true')
 
-            //le user a accecepté les cookies,  
-            // je vérifie si req.session.uer.cookie existe déja et si sa valeur est déja 'true'
-          
+                return res.status(200).json("Les Conditions Générales de Ventes ont été accéptés.")
 
-
-            req.session.user.cgv = 'true';
-            console.log('req.session.user ==> ',req.session.user);
-
-            console.log("client déconnecté ! valeur de req.session maintenant ==> ", req.session)
-            return res.status(200).json("L'utilisateur a été déconnecté");
-
+           
         } catch (error) {
             console.trace(
-                'Erreur dans la méthode deconnexion du authController :',
+                'Erreur dans la méthode CGV du paiementController :',
                 error);
             res.status(500).json(error.message);
         }
 
+    },
+
+
+    paiement: async (req, res) => {
+        try {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            res.status(200).json(paiements);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAll du paiementController :',
+                error);
+            res.status(500).json(error.message);
+        }
     },
 
 
@@ -67,7 +94,7 @@ const paiementController = {
 
     getByIdCommande: async (req, res) => {
         try {
-            
+
             const paiement = await Paiement.findByIdCommande(req.params.id);
             res.json(paiement);
 
@@ -86,12 +113,12 @@ const paiementController = {
         try {
 
             const data = {};
-        
+
             data.reference = req.body.reference;
             data.methode = req.body.methode;
             data.montant = req.body.montant;
             data.idCommande = req.body.idCommande;
-         
+
 
             const newPaiement = new Paiement(data);
             await newPaiement.save();
@@ -108,7 +135,7 @@ const paiementController = {
             const {
                 id
             } = req.params;
-            
+
             const updatePaiement = await Paiement.findOne(id);
 
 
@@ -116,7 +143,7 @@ const paiementController = {
             const methode = req.body.methode;
             const montant = req.body.montant;
             const idCommande = req.body.idCommande;
-        
+
 
             let message = {};
 
@@ -151,8 +178,8 @@ const paiementController = {
                 message.idCommande = 'Votre idCommande n\'a pas changé';
             }
 
-             await updatePaiement.update();
-            
+            await updatePaiement.update();
+
             res.json(message);
 
         } catch (error) {

@@ -1,7 +1,5 @@
 const Paiement = require('../models/paiement');
-const {
-    v4: uuid
-} = require('uuid');
+
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 
 
@@ -66,20 +64,32 @@ const paiementController = {
 
             const idempontencyKey = uuid();
 
-            if (!req.session.user.cgv === 'true') {
+            //Pour payer, l'utilisateur doit avoir :
+
+            // été authentifié
+            if (!req.session.user) {
+                console.log("Le client ne s'est pas authentifié !")
+                return res.status(200).json("Merci de vous connecter  afin de finaliser votre paiement.")
+            }
+            // avoir accepté les CGV
+            if (req.session.user.cgv !== 'true') {
                 console.log("Les Conditions Générales de Ventes n'ont pas été accéptés.")
                 return res.status(200).json("Les Conditions Générales de Ventes n'ont pas été accéptés. Merci de les accéptés afin de finaliser votre paiement.")
+            }
+            // avoir un montant de panier supérieur a 0.
+            if(req.session.totalTTC === 0) {
+                return res.status(200).json("Pour effectuer un montant vous devez avoir des articles dans votre panier.")
             }
 
             req.session.idempontencyKey = idempontencyKey;
 
             //Je vérifit si le client est déja venu finaliser sa commande
             if (req.session.idPayementIntent) {
-
                 //Si oui, je met a jour le montant dans l'objet payementIntent qui existe déja, 
                 req.session.payementIntent.amount = (req.session.totalTTC + req.session.coutTransporteurDefault) * 100
-                
+
             } else {
+                // Si il n'existe pas le créer
 
                 //!https://stripe.com/docs/payments/payment-intents
 
@@ -88,16 +98,16 @@ const paiementController = {
                     currency: 'eur',
                     payment_method_types: ['card'],
                 });
-
+                payementIntentreceipt_email = req.session.user.payementIntentreceipt_email;
                 // on insére le payement intent en session pour pouvoir ré-utiliser le même paiement intent si le client revient en arriére et ne finalise pas le processus. Si il revient, on pourra lui attribuer le même paiementIntent.
                 req.session.payementIntent = paymentIntent;
 
-                console.log("req.session  =>", req.session);
 
             }
 
 
 
+            console.log("req.session  =>", req.session);
 
 
 
@@ -154,15 +164,17 @@ const paiementController = {
                 };
 
  */
-            res.status(200).json();
+            res.status(200).json('Roule ma poule');
 
 
         } catch (error) {
             const errorMessage = process.env.NODE_ENV === 'production' ?
                 'Erreur serveur.' :
-                `Erreur dans la méthode getAll du paiementController : ${error.message})`
+                `Erreur dans la méthode paiement du paiementController : ${error.message})`
 
+            
             res.status(500).json(errorMessage);
+            console.trace(error);
         }
 
     },

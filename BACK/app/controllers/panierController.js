@@ -119,7 +119,6 @@ const panierController = {
 
                 req.session.cart.push(monArticle);
                 console.log("req.session.cart aprés le 1er ajout =>", req.session.cart);
-                res.status(200).json(`L'article avec l'id ${articleId} a bien été placé dans votre paner !`)
 
             } else {
                 // Si on a trouvé l'article alors on va incrementer la qté

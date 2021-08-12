@@ -2,6 +2,9 @@ const Client = require('../models/client');
 const crypto = require('crypto');
 const consol = require('../services/colorConsole');
 const AdminVerifEmail = require('../models/adminVerifEmail');
+const {
+    v4: uuid
+} = require('uuid');
 
 
 /**
@@ -42,7 +45,10 @@ const authController = {
                 nomFamille: clientInDb.nomFamille,
                 email: clientInDb.email,
                 privilege: clientInDb.nom,
+                uuid:uuid(), //un identifiant de session unique facilement retrouvable pour le paiement
             };
+
+            console.log("req.session ==>",request.session);
 
 
             //LocalStorage => sensible aux attaques XSS // faille Cross site Scripting ! injection du contenu dans une page web
@@ -138,7 +144,7 @@ const authController = {
             //je change a false la valeur du headers
             //res.append('x-xsrf-token', 'false');
             //je détruis la session
-            req.session.destroy(); // je supprime ma session
+            req.session.destroy(); // je supprime ma session => aprés vérif ça supprime bien la clé dans REDIS !
             //je supprime le cookie qui contient une patie de l'information pour s'authentifier (le token contre les XSS)
             res.clearCookie('xsrfToken', { //La doc stipule que le cookie sera supprimé par le client seulement si les options données sont équivalent a ceux données lors de sa création. Je redonne donc les options de cookie (excluding expires and maxAge.).
                 path: '/',

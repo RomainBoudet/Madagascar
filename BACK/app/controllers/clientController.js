@@ -9,7 +9,6 @@ const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const jsonwebtoken = require('jsonwebtoken');
 
-const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 
 
 
@@ -171,7 +170,7 @@ const clientController = {
                 name: `${userNowInDb.nom} ${userNowInDb.nomFamille}`,
                 currency: "eur",
                 balance: 0,
-                
+
               });
 
 

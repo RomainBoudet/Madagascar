@@ -28,6 +28,7 @@
     "connect-redis": "^6.0.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
+    "countrynames": "^0.1.1",
     "dayjs": "^1.10.6",
     "dotenv": "^10.0.0",
     "ejs": "^3.1.6",

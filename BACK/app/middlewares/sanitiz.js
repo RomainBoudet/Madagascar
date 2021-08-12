@@ -2,6 +2,10 @@ const express = require('express');
 const cleanPass = express();
 const validator = require('validator');
 
+const capitalize = (string) => string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+
+
+//module installé comme MW dans l'index !
 
 cleanPass.use((req, res, next) => {
 
@@ -22,6 +26,34 @@ cleanPass.use((req, res, next) => {
         req.body[prop] = validator.blacklist(req.body[prop], ['_']);
 
     }
+    //Je formate quelque entrées pour que ca soit propre en BDD...
+
+    if (req.body.pays) {
+        req.body.pays = req.body.pays.toUpperCase();
+    }
+    if (req.body.prenom) {
+        req.body.prenom = capitalize(req.body.prenom);
+    }
+    if (req.body.nomFamille) {
+        req.body.nomFamille = capitalize(req.body.nomFamille);
+    }
+    if (req.body.ligne1) {
+        req.body.ligne1 = capitalize(req.body.ligne1);
+    }
+    if (req.body.ligne2) {
+        req.body.ligne2 = capitalize(req.body.ligne2);
+    }
+    if (req.body.ligne3) {
+        req.body.ligne3 = capitalize(req.body.ligne3);
+    }
+    if (req.body.titre) {
+        req.body.ligne1 = capitalize(req.body.titre);
+    }
+    if (req.body.ville) {
+        req.body.ligne1 = capitalize(req.body.ville);
+    }
+
+
     next();
 
     /* le password doit contenir => @#$%^&* */

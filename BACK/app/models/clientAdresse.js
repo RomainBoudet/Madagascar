@@ -16,8 +16,8 @@ class ClientAdresse {
     updatedDate;
     idClient;
     idVille;
-    
-    
+
+
 
 
     set nom_famille(val) {
@@ -51,7 +51,7 @@ class ClientAdresse {
     set id_pays(val) {
         this.idPays = val;
     }
-    set id_codepostal (val) {
+    set id_codepostal(val) {
         this.idCodePostal = val;
     }
 
@@ -59,15 +59,15 @@ class ClientAdresse {
         this.idLiaisonVilleCodePostal = val;
     }
 
-    set adresse_titre (val) {
+    set adresse_titre(val) {
         this.adresseTitre = val;
     }
 
-    set adresse_prenom (val) {
+    set adresse_prenom(val) {
         this.adressePrenom = val;
     }
 
-    set adresse_nomfamille (val) {
+    set adresse_nomfamille(val) {
         this.adresseNomFamille = val;
     }
 
@@ -80,7 +80,7 @@ class ClientAdresse {
         }
     }
 
-    
+
     /**
      * Méthode chargé d'aller chercher toutes les informations relatives à tous les adresses de clients
      * @returns - tous les ClientAdresses présent en BDD
@@ -109,7 +109,7 @@ class ClientAdresse {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-     static async findOnePlus(id) {
+    static async findOnePlus(id) {
 
 
         const {
@@ -129,7 +129,7 @@ class ClientAdresse {
 
         return new ClientAdresse(rows[0]);
     }
-    
+
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à un ClientAdresse passé en paramétre
@@ -138,7 +138,7 @@ class ClientAdresse {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-     static async findOneForUpdate(id) {
+    static async findOneForUpdate(id) {
 
 
         const {
@@ -158,7 +158,7 @@ class ClientAdresse {
 
         return new ClientAdresse(rows[0]);
     }
-    
+
     /**
      * Méthode chargé d'aller chercher les informations relatives à un ClientAdresse passé en paramétre
      * @param id - un id d'un ClientAdresse
@@ -166,7 +166,7 @@ class ClientAdresse {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-     static async findByIdClient(id) {
+    static async findByIdClient(id) {
 
 
         const {
@@ -186,6 +186,40 @@ class ClientAdresse {
 
         return rows.map((adresse) => new ClientAdresse(adresse));
     }
+
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à un titre d'adresse passé en paramétre
+     * @param titre - un titre d'une adresse d'un ClientAdresse
+     * @returns - les informations du ClientAdresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    static async findByTitre(titre) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.client_adresse WHERE client_adresse.titre  = $1;',
+            [titre]
+        );
+
+        if (!rows[0]) {
+            console.log("Aiucune adresse avec ce titre n'éxiste déja.")
+           return null;
+        }
+
+        consol.model(
+            `l'adresse avec pour titre : ${titre} a été demandée en BDD !`
+        );
+
+        return new ClientAdresse(rows[0]);
+    }
+
+
+
+
     /**
      * Méthode chargé d'aller chercher les informations relatives à un ClientAdresse passé en paramétre
      * @param id - un id d'un ClientAdresse
@@ -214,7 +248,7 @@ class ClientAdresse {
         return new ClientAdresse(rows[0]);
     }
 
-    
+
 
     /**
      * Méthode chargé d'aller chercher toutes les informations relatives à tous les adresses de clients
@@ -222,7 +256,7 @@ class ClientAdresse {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-     static async findAll() {
+    static async findAll() {
         const {
             rows
         } = await db.query('SELECT * FROM mada.client_adresse ORDER BY client_adresse.id ASC');

@@ -5,6 +5,9 @@ const LiaisonVilleCodePostal = require('../models/liaisonVilleCodePostal');
 const ClientCodePostal = require('../models/clientCodePostal');
 const Client = require('../models/client');
 
+const countrynames = require('countrynames');
+
+const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 
 
 
@@ -82,7 +85,7 @@ const clientAdresseController = {
             } = req.body;
             const clientInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
             if (!clientInDb) {
-                return res.status(401).json("Erreur d'authentification : vous nêtes pas autoriser a modifier votre adresse.");
+                return res.status(401).json("Erreur d'authentification : vous n'êtes pas autoriser a modifier votre adresse.");
             }
 
             const data = {};
@@ -100,6 +103,19 @@ const clientAdresseController = {
             data.titre = req.body.titre;
             data.idClient = req.session.user.idClient;
             //data.idVille = req.body.idVille;
+
+            // On n'accepte que les adresses en France pour cette premiére version de l'API
+            // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
+            if (req.body.pays !== 'FRANCE') {
+                return res.status(404).json("Bonjour, merci de renseigner une adresse en France pour cette version de l'API")
+            };
+
+            if (await ClientAdresse.findByTitre(req.body.titre)) {
+                console.log('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
+                return res.status(404).json('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
+
+            }
+
 
             //! ville
             data4.ville = req.body.ville;
@@ -152,38 +168,43 @@ const clientAdresseController = {
                 codePostal: parseInt(resultatCodePostal.codePostal, 10),
                 ville: resultatVille.nom,
                 pays: resultatPays.nom,
-                telephone:resultatAdresse.telephone,
+                telephone: resultatAdresse.telephone,
             }
 
             console.log("resultatAdresse => ", resultatAdresse);
 
-            if (resultatAdresse.ligne2) {
+            let ligneAdresse;
 
-                const ligneAdresse = `${resultatAdresse.prenom} ${resultatAdresse.nomFamille} ${resultatAdresse.ligne1} ${resultatAdresse.ligne2} ${resultatAdresse.ligne1} ${parseInt(resultatCodePostal.codePostal, 10)} ${resultatVille.nom} ${resultatVille.nom} ${resultatPays.nom} ${resultatAdresse.telephone}`
+            if (resultatAdresse.ligne3) {
 
-            
-            } else if (resultatAdresse.ligne3) {
+                ligneAdresse = ` ${resultatAdresse.ligne2} ${resultatAdresse.ligne3}`
 
-                const ligneAdresse = `${resultatAdresse.prenom} ${resultatAdresse.nomFamille} ${resultatAdresse.ligne1} ${resultatAdresse.ligne2} ${resultatAdresse.ligne3} ${resultatAdresse.ligne1} ${parseInt(resultatCodePostal.codePostal, 10)} ${resultatVille.nom} ${resultatVille.nom} ${resultatPays.nom} ${resultatAdresse.telephone}`
+            } else if (resultatAdresse.ligne2) {
 
-            } else {
-
-                const ligneAdresse = `${resultatAdresse.prenom} ${resultatAdresse.nomFamille} ${resultatAdresse.ligne1} ${resultatAdresse.ligne1} ${parseInt(resultatCodePostal.codePostal, 10)} ${resultatVille.nom} ${resultatVille.nom} ${resultatPays.nom} ${resultatAdresse.telephone}`
-
+                ligneAdresse = `${resultatAdresse.ligne2}`
             }
 
-                // je donne quelques infos a STRIPE maintenant que mon utilisateur a également créer une adresse en plus d'un compte.
-            const custumer = await stripe.customers.create({
-                    description: 'Un client MadaSHOP',
-                    email: req.session.user.email,
-                    name: `${userNowInDb.nom} ${userNowInDb.nomFamille}`,
-                    address: `${ligneAdresse}`,
-                    phone: resultatAdresse.telephone,
-                    currency: 'eur',
-                    balance: 0,
-                });
+            console.log("ligneAdresse  => ", ligneAdresse);
 
-                console.log('custumer ==> ', custumer);
+            // je donne quelques infos a STRIPE maintenant que mon utilisateur a également créer une adresse en plus d'un compte.
+            const custumer = await stripe.customers.create({
+                description: 'Un client MadaSHOP',
+                email: req.session.user.email,
+                name: `${resultatAdresse.prenom} ${resultatAdresse.nomFamille}`,
+                address: {
+                    city: resultatVille.nom,
+                    country: countrynames.getCode(`${resultatPays.nom}`),
+                    line1: resultatAdresse.ligne1,
+                    line2: ligneAdresse,
+                    postal_code: resultatCodePostal.codePostal,
+                    state: resultatPays.nom,
+                },
+                phone: resultatAdresse.telephone,
+                balance: 0,
+            });
+
+            console.log(countrynames.getAllNames());
+            console.log('custumer ==> ', custumer);
 
 
 
@@ -191,6 +212,7 @@ const clientAdresseController = {
 
             res.status(200).json(resultatsToSend);
         } catch (error) {
+            console.trace(error);
             console.log(`Erreur dans la méthode newAdresse du clientAdresseController: ${error}`);
             res.status(500).json(error.message);
         }
@@ -217,7 +239,6 @@ const clientAdresseController = {
             //re.params.id doit valoir l'id d'une client_adresse !
 
             const updateClient = await ClientAdresse.findOneForUpdate(id);
-            console.log("updateClient sortant de la classe dans le controller ", updateClient);
 
             updateClient.id = updateClient.idAdresse;
             const prenom = req.body.prenom;
@@ -229,6 +250,19 @@ const clientAdresseController = {
             const titre = req.body.titre;
             const idVille = updateClient.idVille;
             const idClient = updateClient.idClient;
+
+            if (await ClientAdresse.findByTitre(req.body.titre)) {
+                console.log('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
+                return res.status(404).json('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
+
+            }
+
+            // On n'accepte que les adresses en France pour cette premiére version de l'API
+            // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
+            if (req.body.pays !== 'FRANCE') {
+                return res.status(404).json("Bonjour, merci de renseigner une adresse en France pour cette version de l'API")
+            };
+
 
             let userMessage = {};
 

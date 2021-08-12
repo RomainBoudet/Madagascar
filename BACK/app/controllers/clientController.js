@@ -2,6 +2,7 @@ const Client = require('../models/client');
 const Shop = require('../models/shop');
 const AdminVerifEmail = require('../models/adminVerifEmail');
 const ClientHistoPass = require('../models/clientHistoPass');
+const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 
 const crypto = require('crypto');
 const validator = require('validator');
@@ -163,16 +164,15 @@ const clientController = {
 
             console.log(`L'utilisateur ${newUser.prenom} ${newUser.nomFamille} est désormais enregistré dans la BDD`);
 
-            // je donne quelques infos a STRIPE...
-            const customer = await stripe.customers.create({
+            // je donne quelques infos a STRIPE maintenant que mon utilisateur a également créer une adresse en plus d'un compte.
+            const custumer = await stripe.customers.create({
                 description: 'Un client MadaSHOP',
-                email: userNowInDb.email,
-                name: `${userNowInDb.nom} ${userNowInDb.nomFamille}`,
-                currency: "eur",
+                email: user.email,
+                name: `${user.prenom} ${user.nomFamille}`,
                 balance: 0,
+            });
 
-              });
-
+            req.session.idClientStripe = custumer.id;
 
 
             //! on envoie un message de bienvenue par email
@@ -302,6 +302,12 @@ const clientController = {
                 message.email = 'Votre email n\'a pas changé';
             } else {
 
+                if (await Client.findByEmail(email)) {
+
+                    return res.status(404).json('Cet email n\'est pas disponible');
+                    
+                }
+
                 if (email !== userIdinDb.email && (validator.isEmail(email) === true)) {
                     userIdinDb.email = email;
                     console.log("Votre mail est modifié.");
@@ -343,6 +349,17 @@ const clientController = {
 
             await newUser.update();
 
+
+            // Petit update des duclint STRIPE dans la foulée..
+            const custumer = await stripe.customers.update(
+                req.session.idClientStripe, {
+                    email: newUser.email,
+                    name: `${newUser.prenom} ${newUser.nomFamille}`,
+                }
+            );
+
+            console.log(custumer);
+
             //! on envois deux mails (sur le nouveau et l'ancien) par sécurité en cas de changement d'adresse email dans le profil ! 
             //! ici envoie d'un mail sur l'ancienne adresse pour confirmer le changemet d'information au user ! 
 
@@ -377,6 +394,8 @@ const clientController = {
 
             }
             main().catch("Erreur lors de l'envois du nouveau mail dans la méthode updateClient", console.error);
+
+            console.log("email ==> ", email);
 
             if (email !== oldEmail && email !== undefined) {
 
@@ -832,7 +851,7 @@ const clientController = {
 
             const clientInDb = await Client.findUnique(req.params.id);
             if (!clientInDb.id === undefined) {
-               return res.status(404).json("Le client qui vous souhaitez supprimer n'existe pas en BDD");
+                return res.status(404).json("Le client qui vous souhaitez supprimer n'existe pas en BDD");
             }
             const client = await clientInDb.delete();
 

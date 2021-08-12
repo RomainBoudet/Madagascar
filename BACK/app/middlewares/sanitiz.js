@@ -3,6 +3,8 @@ const cleanPass = express();
 const validator = require('validator');
 
 const capitalize = (string) => string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+const capitalizeNotForceLowerCase = (string) => string.charAt(0).toUpperCase() + string.slice(1); //Que pour la ligne d'adresse, si celle çi contient des noms propres, l'utilisateur peut les mettre en majuscule...
+
 
 
 //module installé comme MW dans l'index !
@@ -38,8 +40,8 @@ cleanPass.use((req, res, next) => {
         req.body.nomFamille = capitalize(req.body.nomFamille);
     }
     if (req.body.ligne1) {
-        req.body.ligne1 = capitalize(req.body.ligne1);
-    }
+        req.body.ligne1 = capitalizeNotForceLowerCase(req.body.ligne1);
+    } 
     if (req.body.ligne2) {
         req.body.ligne2 = capitalize(req.body.ligne2);
     }
@@ -47,12 +49,11 @@ cleanPass.use((req, res, next) => {
         req.body.ligne3 = capitalize(req.body.ligne3);
     }
     if (req.body.titre) {
-        req.body.ligne1 = capitalize(req.body.titre);
+        req.body.titre = capitalize(req.body.titre);
     }
     if (req.body.ville) {
-        req.body.ligne1 = capitalize(req.body.ville);
+        req.body.ville = capitalize(req.body.ville);
     }
-
 
     next();
 

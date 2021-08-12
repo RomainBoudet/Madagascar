@@ -112,6 +112,8 @@ class ClientPays {
         console.log(
             `la pays id : ${this.id} avec le nom ${this.nom} a été mise à jour  !`
         );
+        return new ClientPays(rows[0]);
+
     }
 
 

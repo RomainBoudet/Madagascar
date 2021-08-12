@@ -335,6 +335,9 @@ class ClientAdresse {
         console.log(
             `le ClientAdresse id : ${this.id} du client id ${this.idClient}, avec le nom ${this.prenom} ${this.nomFamille} a été mise à jour le ${this.updatedDate}  !`
         );
+        return new ClientAdresse(rows[0]);
+
+
     }
 
 

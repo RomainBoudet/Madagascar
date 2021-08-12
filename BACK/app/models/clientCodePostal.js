@@ -114,6 +114,8 @@ class ClientCodePostal {
         console.log(
             `le code_postal id : ${this.id} avec le nom ${this.codePostal} a été mise à jour  !`
         );
+        return new ClientCodePostal(rows[0]);
+
     }
 
 

@@ -22,6 +22,7 @@ const userSigninSchema = Joi.object().keys({
     .required()
     .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
     .messages({
+      'any.required':'le champs de votre prénom ne peut être vide ',
       'string.max': `Votre prenom doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Le champs de votre prénom ne peut être vide !`,
       'string.min': `Votre prenom doit avoir une longeur minimum de {#limit} caractéres !`,
@@ -34,6 +35,7 @@ const userSigninSchema = Joi.object().keys({
     .required()
     .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
     .messages({
+      'any.required':'le champs de votre nom de famille ne peut être vide ',
       'string.max': `Votre nom de famille doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Le champs de votre nom ne peut être vide !`,
       'string.min': `Votre nom doit avoir une longeur minimum de {#limit} caractéres !`,
@@ -45,6 +47,7 @@ const userSigninSchema = Joi.object().keys({
     .trim()
     .pattern(new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
     .messages({
+      'any.required':'le champs de votre email ne peut être vide ',
       'string.max': `Votre email doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Le champs de votre email ne peut être vide !`,
       'string.pattern.base': 'Le format de votre email est incorrect',

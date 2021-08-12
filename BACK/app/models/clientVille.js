@@ -120,6 +120,8 @@ class ClientVille {
         console.log(
             `la Ville id : ${this.id} avec le nom ${this.nom} a été mise à jour  !`
         );
+        return new ClientVille(rows[0]);
+
     }
 
 

@@ -160,6 +160,8 @@ class Client {
 
     if (!rows[0]) {
       consol.model("Aucun client avec cet email");
+      return null
+
     } else {
       consol.model(
         `le client avec l'email : ${email} a été demandé !`

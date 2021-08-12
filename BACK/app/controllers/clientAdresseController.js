@@ -171,7 +171,6 @@ const clientAdresseController = {
                 telephone: resultatAdresse.telephone,
             }
 
-            console.log("resultatAdresse => ", resultatAdresse);
 
             let ligneAdresse;
 
@@ -183,32 +182,25 @@ const clientAdresseController = {
 
                 ligneAdresse = `${resultatAdresse.ligne2}`
             }
+            console.log("resultatAdress ==> ", resultatAdresse);
+            console.log("newAdresse ==>", newAdresse);
+            console.log("data.ligne1 ==> ", data.ligne1);
 
-            console.log("ligneAdresse  => ", ligneAdresse);
-
-            // je donne quelques infos a STRIPE maintenant que mon utilisateur a également créer une adresse en plus d'un compte.
-            const custumer = await stripe.customers.create({
-                description: 'Un client MadaSHOP',
-                email: req.session.user.email,
-                name: `${resultatAdresse.prenom} ${resultatAdresse.nomFamille}`,
-                address: {
-                    city: resultatVille.nom,
-                    country: countrynames.getCode(`${resultatPays.nom}`),
-                    line1: resultatAdresse.ligne1,
-                    line2: ligneAdresse,
-                    postal_code: resultatCodePostal.codePostal,
-                    state: resultatPays.nom,
-                },
-                phone: resultatAdresse.telephone,
-                balance: 0,
-            });
-
-            console.log(countrynames.getAllNames());
-            console.log('custumer ==> ', custumer);
-
-
-
-
+            // j'update les info de mon client dans STRIPE au passage...
+            const custumer = await stripe.customers.update(
+                req.session.idClientStripe, {
+                    address: {
+                        city: resultatVille.nom,
+                        country: countrynames.getCode(`${resultatPays.nom}`),
+                        line1: resultatAdresse.ligne1,
+                        line2: ligneAdresse,
+                        postal_code: resultatCodePostal.codePostal,
+                        state: resultatPays.nom,
+                    },
+                    phone: resultatAdresse.telephone,
+                }
+            );
+            console.log('custumer dans new adresse ==> ', custumer);
 
             res.status(200).json(resultatsToSend);
         } catch (error) {
@@ -257,9 +249,10 @@ const clientAdresseController = {
 
             }
 
+
             // On n'accepte que les adresses en France pour cette premiére version de l'API
             // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
-            if (req.body.pays !== 'FRANCE') {
+            if (req.body.pays !== 'FRANCE' && req.body.pays !== undefined) {
                 return res.status(404).json("Bonjour, merci de renseigner une adresse en France pour cette version de l'API")
             };
 
@@ -323,9 +316,7 @@ const clientAdresseController = {
                 updateClient.idVille = idVille;
             }
 
-            await updateClient.update();
-
-
+            const resultatUpdateClientAdress = await updateClient.update();
 
 
             const pays = req.body.pays;
@@ -338,7 +329,7 @@ const clientAdresseController = {
                 userMessage.pays = 'Votre pays de pays n\'a pas changé';
             }
 
-            await updatePays.update();
+            const resultatUpdatePays = await updatePays.update();
 
 
             const ville = req.body.ville;
@@ -354,8 +345,7 @@ const clientAdresseController = {
                 updateVille.idPays = idPays;
             }
 
-            await updateVille.update();
-
+            const resultatUpdateVille = await updateVille.update();
 
 
             const codePostal = req.body.codePostal;
@@ -367,7 +357,7 @@ const clientAdresseController = {
                 userMessage.codePostal = 'Votre code postal n\'a pas changé';
             }
 
-            await updateCodePostal.update();
+            const resultatUpdatecodePostal = await updateCodePostal.update();
 
 
 
@@ -382,6 +372,37 @@ const clientAdresseController = {
 
             await updateLiaison.update();
 
+            let ligneAdresse;
+
+            if (resultatUpdateClientAdress.ligne3) {
+
+                ligneAdresse = ` ${resultatUpdateClientAdress.ligne2} ${resultatUpdateClientAdress.ligne3}`
+
+            } else if (resultatUpdateClientAdress.ligne2) {
+
+                ligneAdresse = `${resultatUpdateClientAdress.ligne2}`
+            }
+
+
+
+            // j'update les info de mon client dans STRIPE au passage...
+            const customer = await stripe.customers.update(
+                req.session.idClientStripe, {
+                    address: {
+                        city: resultatUpdateVille.nom,
+                        country: countrynames.getCode(`${resultatUpdatePays.nom}`),
+                        line1: resultatUpdateClientAdress.ligne1,
+                        line2: ligneAdresse,
+                        postal_code: resultatUpdatecodePostal.codePostal,
+                        state: resultatUpdatePays.nom,
+                    },
+                    phone: resultatUpdateClientAdress.telephone,
+                }
+            );
+
+
+            console.log(customer);
+            
             console.timeEnd('Timing de la méthode updateAdresse : ');
 
             res.status(200).json(userMessage);

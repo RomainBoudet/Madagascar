@@ -183,6 +183,9 @@ const authController = {
                     signed: true, // on devra utiliser req.signedCookies au retour ! 
                     expires: new Date(Date.now() + 24 * 3600000 * 180), // par défault une expiration aprés 180 jours
                 }).json("Vous avez accepté notre politique d'utilisation des cookies sur ce site et nous vous en remerçiont !");
+
+
+                req.session.cookie = 'accepted';
             }
             console.log()
             return res.json("Merci d\'accépter la politique de cookie pour continuer d\'utiliser ce site");

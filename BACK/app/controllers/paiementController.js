@@ -62,8 +62,6 @@ const paiementController = {
     paiement: async (req, res) => {
         try {
 
-            const idempontencyKey = uuid();
-
             //Pour payer, l'utilisateur doit avoir :
 
             // été authentifié
@@ -77,24 +75,25 @@ const paiementController = {
                 return res.status(200).json("Les Conditions Générales de Ventes n'ont pas été accéptés. Merci de les accéptés afin de finaliser votre paiement.")
             }
             // avoir un montant de panier supérieur a 0.
-            if(req.session.totalTTC === 0) {
+            if (req.session.totalTTC == 0 || req.session.totalTTC === undefined) {
                 return res.status(200).json("Pour effectuer un montant vous devez avoir des articles dans votre panier.")
             }
 
-            req.session.idempontencyKey = idempontencyKey;
 
             //Je vérifit si le client est déja venu finaliser sa commande
             if (req.session.idPayementIntent) {
                 //Si oui, je met a jour le montant dans l'objet payementIntent qui existe déja, 
                 req.session.payementIntent.amount = (req.session.totalTTC + req.session.coutTransporteurDefault) * 100
-
             } else {
                 // Si il n'existe pas le créer
+                console.log(`${req.session.totalTTC} + ${req.session.coutTransporteurDefault}`);
+                console.log("req.session.payementIntent.amount => ", (req.session.totalTTC + req.session.coutTransporteurDefault) * 100);
+
 
                 //!https://stripe.com/docs/payments/payment-intents
 
                 const paymentIntent = await stripe.paymentIntents.create({
-                    amount: (req.session.totalTTC + req.session.coutTransporteurDefault) * 100, // total en centimes
+                    amount: req.session.totalStripe, // total en centimes et en Integer
                     currency: 'eur',
                     payment_method_types: ['card'],
                 });
@@ -102,8 +101,9 @@ const paiementController = {
                 // on insére le payement intent en session pour pouvoir ré-utiliser le même paiement intent si le client revient en arriére et ne finalise pas le processus. Si il revient, on pourra lui attribuer le même paiementIntent.
                 req.session.payementIntent = paymentIntent;
 
-
             }
+
+            //ici désormais, l'objet paiementIntent contient la clé secrete "secret_client" qu'il va falloir passer au front !
 
 
 
@@ -172,13 +172,44 @@ const paiementController = {
                 'Erreur serveur.' :
                 `Erreur dans la méthode paiement du paiementController : ${error.message})`
 
-            
+
             res.status(500).json(errorMessage);
             console.trace(error);
         }
 
     },
 
+
+    key: async (req, res) => {
+        try {
+            console.log(req.session);
+            console.log(req.session.payementIntent);
+         
+            //simple rappel si j'oubli le MW d'autorisation client... a enlever en prod peut être..
+            if (!req.session) {
+                return res.status(401).json("Merci de vous authentifier avant d'accéder a cette ressource.");
+            }
+
+            if (req.session.payementIntent === undefined) {
+                return res.status(404).json("Merci de réaliser une tentative de paiement avant d'accéder a cette ressource.");
+               
+            } else  {
+
+               return res.status(200).json({
+                    client_secret: req.session.payementIntent.client_secret
+                });
+            }
+            
+
+        } catch (error) {
+            const errorMessage = process.env.NODE_ENV === 'production' ?
+                'Erreur serveur.' :
+                `Erreur dans la méthode key du paiementController : ${error.message})`;
+
+            res.status(500).json(errorMessage);
+            console.trace(error);
+        }
+    },
 
     getAll: async (req, res) => {
         try {

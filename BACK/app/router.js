@@ -51,6 +51,8 @@ const phoneNumberSchema = require('./schemas/phoneNumber');
 const codeSchema = require('./schemas/codeSchema');
 const searchSchema = require('./schemas/searchSchema');
 const adresseSchema = require('./schemas/adresseSchema');
+const adressePostSchema = require('./schemas/adressePostSchema');
+
 const passwordSchema = require('./schemas/passwordOnlySchema');
 
 
@@ -389,7 +391,7 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Insére une nouvelle adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse insérée
  */
-router.post('/client/adresse/new', client, validateBody(adresseSchema), clientAdresseController.newAdresse);
+router.post('/client/adresse/new', client, validateBody(adressePostSchema), clientAdresseController.newAdresse);
 
  /**
  * Une route pour mettre a jour une adresse

@@ -126,7 +126,6 @@ const clientAdresseController = {
             const resultatCodePostal = await newCodePostal.save();
             data5.idCodePostal = resultatCodePostal.id;
 
-            console.log("data =>", data4);
             const newVille = new ClientVille(data4);
             const resultatVille = await newVille.save();
             data5.idVille = resultatVille.id;
@@ -153,7 +152,42 @@ const clientAdresseController = {
                 codePostal: parseInt(resultatCodePostal.codePostal, 10),
                 ville: resultatVille.nom,
                 pays: resultatPays.nom,
+                telephone:resultatAdresse.telephone,
             }
+
+            console.log("resultatAdresse => ", resultatAdresse);
+
+            if (resultatAdresse.ligne2) {
+
+                const ligneAdresse = `${resultatAdresse.prenom} ${resultatAdresse.nomFamille} ${resultatAdresse.ligne1} ${resultatAdresse.ligne2} ${resultatAdresse.ligne1} ${parseInt(resultatCodePostal.codePostal, 10)} ${resultatVille.nom} ${resultatVille.nom} ${resultatPays.nom} ${resultatAdresse.telephone}`
+
+            
+            } else if (resultatAdresse.ligne3) {
+
+                const ligneAdresse = `${resultatAdresse.prenom} ${resultatAdresse.nomFamille} ${resultatAdresse.ligne1} ${resultatAdresse.ligne2} ${resultatAdresse.ligne3} ${resultatAdresse.ligne1} ${parseInt(resultatCodePostal.codePostal, 10)} ${resultatVille.nom} ${resultatVille.nom} ${resultatPays.nom} ${resultatAdresse.telephone}`
+
+            } else {
+
+                const ligneAdresse = `${resultatAdresse.prenom} ${resultatAdresse.nomFamille} ${resultatAdresse.ligne1} ${resultatAdresse.ligne1} ${parseInt(resultatCodePostal.codePostal, 10)} ${resultatVille.nom} ${resultatVille.nom} ${resultatPays.nom} ${resultatAdresse.telephone}`
+
+            }
+
+                // je donne quelques infos a STRIPE maintenant que mon utilisateur a également créer une adresse en plus d'un compte.
+            const custumer = await stripe.customers.create({
+                    description: 'Un client MadaSHOP',
+                    email: req.session.user.email,
+                    name: `${userNowInDb.nom} ${userNowInDb.nomFamille}`,
+                    address: `${ligneAdresse}`,
+                    phone: resultatAdresse.telephone,
+                    currency: 'eur',
+                    balance: 0,
+                });
+
+                console.log('custumer ==> ', custumer);
+
+
+
+
 
             res.status(200).json(resultatsToSend);
         } catch (error) {

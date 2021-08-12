@@ -6,7 +6,7 @@ const Joi = require('joi');
 
 /**
  * Valide les informations reçu dans le body et envoyé par les utilisateurs
- * @name adresseSchema 
+ * @name adressePostSchema 
  * @group Joi - Vérifie les informations du body
  * @property {string} password - le mot de passe d'un utilisateur, doit avoir 8 caractéres au minimum, une lettre minuscule, une lettre majuscule, un nombre et un caractéres spécial parmis : (@#$%^&*)
  * @property {string} passwordConfirm - doit être identique au password
@@ -15,20 +15,22 @@ const Joi = require('joi');
  * @property {string} email - l'adresse email d'un utilisateur doit correspondre a un format valide.
  * @return {json} messages - Un texte adapté en cas d'érreur, en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
-const adresseSchema = Joi.object().keys({
+const adressePostSchema = Joi.object().keys({
     password: Joi.string()
       //.pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/)) => je veux tomber sur l'érreur d'authentification..
       .required()
       .max(200)
+      .required()
       .messages({
         'string.max': `Votre mot de passe doit avoir une longeur maximum de {#limit} caractéres !`,
         'string.empty': `Le champs de votre mot de passe ne peut être vide !`,
         'any.required':'Le champs de votre mot de passe ne peut être vide !',
       }),
-
+      
     prenom: Joi.string().trim()
         .min(2)
         .max(200)
+        .required()
         .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
         .messages({
             'string.max': `Votre prenom doit avoir une longeur maximum de {#limit} caractéres !`,
@@ -40,6 +42,7 @@ const adresseSchema = Joi.object().keys({
 
     nomFamille: Joi.string().trim()
         .min(2)
+        .required()
         .max(200)
         .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
         .messages({
@@ -53,6 +56,7 @@ const adresseSchema = Joi.object().keys({
     ligne1: Joi.string()
         .max(200)
         .trim()
+        .required()
         .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
         .messages({
             'any.required':'Le champs de votre premiére ligne d\'adresse ne peut être vide !',
@@ -81,6 +85,7 @@ const adresseSchema = Joi.object().keys({
     telephone: Joi.string()
         .pattern(new RegExp(/^\+[1-9]\d{10}$/))
         .max(12)
+        .required()
         .messages({
             'any.required':'Le champs de votre numéro de télephone ne peut être vide ! Il pourra être utilisé par le transporteur seulement.',
             'string.max': `Votre numéro de télphone doit avoir une longeur maximum de {#limit} caractéres ! n'oublier pas de supprimer le premier 0 de votre numéro.`,
@@ -91,6 +96,7 @@ const adresseSchema = Joi.object().keys({
 
     titre: Joi.string()
         .max(200)
+        .required()
         .trim()
         .messages({
             'any.required':'Le champs de votre titre d\'adresse ne peut être vide !',
@@ -100,6 +106,7 @@ const adresseSchema = Joi.object().keys({
 
         ville: Joi.string()
         .max(500)
+        .required()
         .trim()
         .messages({
             'any.required':'Le champs de votre ville ne peut être vide !',
@@ -110,6 +117,7 @@ const adresseSchema = Joi.object().keys({
 
         pays: Joi.string()
         .max(500)
+        .required()
         .trim()
         .messages({
             'any.required':'Le champs de votre pays ne peut être vide !',
@@ -121,6 +129,7 @@ const adresseSchema = Joi.object().keys({
         codePostal: Joi.string()
         .pattern(new RegExp(/^[0-9]{5}$/))
         .max(5)
+        .required()
         .trim()
         .messages({
             'any.required':'Le champs de votre code postal ne peut être vide !',
@@ -133,7 +142,7 @@ const adresseSchema = Joi.object().keys({
 
 });
 
-module.exports = adresseSchema;
+module.exports = adressePostSchema;
 
 // source REGEX email : https://emailregex.com/
 //Cette syntaxe fonctionne aussi :

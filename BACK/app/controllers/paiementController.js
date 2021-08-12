@@ -1,4 +1,8 @@
 const Paiement = require('../models/paiement');
+const {
+    v4: uuid
+} = require('uuid');
+const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 
 
 /**
@@ -36,15 +40,60 @@ const paiementController = {
         }
 
     },
+    /* [
+  {
+    id: 1,
+    produit: 'Sleek Concrete Computer',
+    prix: 18,
+    image: 'http://placeimg.com/640/480',
+    couleur: 'rouge',
+    taille: 'XS',
+    stock: 2,
+    reduction: 0.28,
+    tva: 0.2,
+    quantite: 1,
+    prixHTAvecReduc: 12.96
+  },
+  {},
+  {},
+]
+  
+  */
 
 
     paiement: async (req, res) => {
         try {
 
+            const idempontencyKey = uuid();
 
             if (!req.session.user.cgv === 'true') {
                 console.log("Les Conditions Générales de Ventes n'ont pas été accéptés.")
                 return res.status(200).json("Les Conditions Générales de Ventes n'ont pas été accéptés. Merci de les accéptés afin de finaliser votre paiement.")
+            }
+
+            req.session.idempontencyKey = idempontencyKey;
+
+            //Je vérifit si le client est déja venu finaliser sa commande
+            if (req.session.idPayementIntent) {
+
+                //Si oui, je met a jour le montant dans l'objet payementIntent qui existe déja, 
+                req.session.payementIntent.amount = (req.session.totalTTC + req.session.coutTransporteurDefault) * 100
+                
+            } else {
+
+                //!https://stripe.com/docs/payments/payment-intents
+
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: (req.session.totalTTC + req.session.coutTransporteurDefault) * 100, // total en centimes
+                    currency: 'eur',
+                    payment_method_types: ['card'],
+                });
+
+                // on insére le payement intent en session pour pouvoir ré-utiliser le même paiement intent si le client revient en arriére et ne finalise pas le processus. Si il revient, on pourra lui attribuer le même paiementIntent.
+                req.session.payementIntent = paymentIntent;
+
+                console.log("req.session  =>", req.session);
+
             }
 
 
@@ -59,12 +108,63 @@ const paiementController = {
 
 
 
-            res.status(200).json(paiements);
+            //!https://stripe.com/docs/payments/accept-a-payment-synchronously 
+            /*  let intent;
+                if (req.body.payment_method_id) {
+                    // Create the PaymentIntent
+                    intent = await stripe.paymentIntents.create({
+                        payment_method: req.body.payment_method_id,
+                        amount: 1099,
+                        currency: 'usd',
+                        confirmation_method: 'manual',
+                        confirm: true
+                    });
+                } else if (req.body.payment_intent_id) {
+                    intent = await stripe.paymentIntents.confirm(
+                        req.body.payment_intent_id
+                    );
+                }
+                // Send the response to the client
+                res.send(generateResponse(intent));
+
+                const generateResponse = (intent) => {
+                    // Note that if your API version is before 2019-02-11, 'requires_action'
+                    // appears as 'requires_source_action'.
+                    if (
+                        intent.status === 'requires_action' &&
+                        intent.next_action.type === 'use_stripe_sdk'
+                    ) {
+                        // Tell the client to handle the action
+                        return {
+                            requires_action: true,
+                            payment_intent_client_secret: intent.client_secret
+                        };
+                    } else if (intent.status === 'succeeded') {
+                        // The payment didn’t need any additional actions and completed!
+                        // Handle post-payment fulfillment
+                        return {
+                            success: true
+                        };
+                    } else {
+                        // Invalid status
+                        return {
+                            error: 'Invalid PaymentIntent status'
+                        }
+                    }
+                };
+
+ */
+            res.status(200).json();
+
+
         } catch (error) {
-            console.trace('Erreur dans la méthode getAll du paiementController :',
-                error);
-            res.status(500).json(error.message);
+            const errorMessage = process.env.NODE_ENV === 'production' ?
+                'Erreur serveur.' :
+                `Erreur dans la méthode getAll du paiementController : ${error.message})`
+
+            res.status(500).json(errorMessage);
         }
+
     },
 
 

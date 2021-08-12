@@ -232,6 +232,17 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  */
  router.get('/cgv', client, paiementController.cgv);
 
+
+/**
+ * Prend en charge le paiement via STRIPE
+ *  @route POST /user/paiement
+ * @group utilisateur
+ * @summary  Prend en charge le paiement via STRIPE
+ * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
+ */
+ router.post('/user/paiement', client, paiementController.paiement);
+
+
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 
 /**

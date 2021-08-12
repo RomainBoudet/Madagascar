@@ -42,7 +42,7 @@ const paiementController = {
         }
 
     },
-    
+
 
 
     paiement: async (req, res) => {
@@ -66,24 +66,28 @@ const paiementController = {
             }
 
             const articles = [];
-                req.session.cart.map(article => (`${articles.push(article.produit+' / '+'Qte: '+article.quantite)}`));
-                articlesBought = articles.join(', ');
+            req.session.cart.map(article => (`${articles.push(article.produit+' / '+'Qte: '+article.quantite)}`));
+            articlesBought = articles.join(', ');
 
             //Je vérifie si le client est déja venu tenter de payer sa commande
-            if (req.session.payementIntent) {
-                //Si oui, je met a jour le montant dans l'objet payementIntent qui existe déja, 
-                req.session.payementIntent.amount = req.session.totalStripe;
-                req.session.payementIntent.metadata.articles = articlesBought;
+            if (req.session.IdPaymentIntentStripe) {
+                //Si oui, je met a jour le montant dans l'objet payementIntent qui existe déja, via la méthode proposé par STRIPE
+                //https://stripe.com/docs/api/payment_intents/update?lang=node
+                
+
+                 await stripe.paymentIntents.update(
+                    req.session.IdPaymentIntentStripe, {
+                        metadata: {
+                            articles: articlesBought
+                        },
+                        amount: req.session.totalStripe,
+                    }
+                );
 
             } else {
-                // Si il n'existe pas le créer
 
-                // faudrait boucler sur req.session.cart pour sortir un nouveau tableau avec tous les articles a mettre en metadata !
-
-
-
-
-                //!https://stripe.com/docs/payments/payment-intents
+                // Si il n'existe pas, je dois avant tout, le créer
+                //https://stripe.com/docs/payments/payment-intents
 
                 const paymentIntent = await stripe.paymentIntents.create({
                     amount: req.session.totalStripe, // total en centimes et en Integer
@@ -95,13 +99,14 @@ const paiementController = {
                     metadata: {
                         date: `${formatLong(new Date())}`,
                         articles: articlesBought,
-                        client:`${req.session.user.prenom} ${req.session.user.nomFamille}`,
-                        ip:req.ip,
+                        client: `${req.session.user.prenom} ${req.session.user.nomFamille}`,
+                        ip: req.ip,
                     },
 
                 });
                 // on insére le payement intent en session pour pouvoir ré-utiliser le même paiement intent si le client revient en arriére et ne finalise pas le processus. Si il revient, on pourra lui attribuer le même paiementIntent.
-                req.session.paymentIntent = paymentIntent;
+                req.session.IdPaymentIntentStripe = paymentIntent.id;
+                req.session.clientSecret = paymentIntent.client_secret;
 
             }
             //ici désormais, l'objet paiementIntent contient la clé secrete "secret_client" qui est passé au front via la route /user/paiementkey
@@ -195,13 +200,13 @@ const paiementController = {
                 return res.status(401).json("Merci de vous authentifier avant d'accéder a cette ressource.");
             }
 
-            if (req.session.paymentIntent === undefined) {
+            if (req.session.IdPaymentIntentStripe === undefined || req.session.clientSecret === undefined ) {
                 return res.status(404).json("Merci de réaliser une tentative de paiement avant d'accéder a cette ressource.");
 
             } else {
 
                 return res.status(200).json({
-                    client_secret: req.session.paymentIntent.client_secret
+                    client_secret: req.session.clientSecret
                 });
             }
 

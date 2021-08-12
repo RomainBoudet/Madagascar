@@ -1,4 +1,8 @@
 const Paiement = require('../models/paiement');
+const Shop = require('../models/shop');
+const {
+    formatLong
+} = require('../services/date');
 
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 
@@ -38,25 +42,7 @@ const paiementController = {
         }
 
     },
-    /* [
-  {
-    id: 1,
-    produit: 'Sleek Concrete Computer',
-    prix: 18,
-    image: 'http://placeimg.com/640/480',
-    couleur: 'rouge',
-    taille: 'XS',
-    stock: 2,
-    reduction: 0.28,
-    tva: 0.2,
-    quantite: 1,
-    prixHTAvecReduc: 12.96
-  },
-  {},
-  {},
-]
-  
-  */
+    
 
 
     paiement: async (req, res) => {
@@ -79,15 +65,22 @@ const paiementController = {
                 return res.status(200).json("Pour effectuer un montant vous devez avoir des articles dans votre panier.")
             }
 
+            const articles = [];
+                req.session.cart.map(article => (`${articles.push(article.produit+' / '+'Qte: '+article.quantite)}`));
+                articlesBought = articles.join(', ');
 
-            //Je vérifit si le client est déja venu finaliser sa commande
-            if (req.session.idPayementIntent) {
+            //Je vérifie si le client est déja venu tenter de payer sa commande
+            if (req.session.payementIntent) {
                 //Si oui, je met a jour le montant dans l'objet payementIntent qui existe déja, 
-                req.session.payementIntent.amount = (req.session.totalTTC + req.session.coutTransporteurDefault) * 100
+                req.session.payementIntent.amount = req.session.totalStripe;
+                req.session.payementIntent.metadata.articles = articlesBought;
+
             } else {
                 // Si il n'existe pas le créer
-                console.log(`${req.session.totalTTC} + ${req.session.coutTransporteurDefault}`);
-                console.log("req.session.payementIntent.amount => ", (req.session.totalTTC + req.session.coutTransporteurDefault) * 100);
+
+                // faudrait boucler sur req.session.cart pour sortir un nouveau tableau avec tous les articles a mettre en metadata !
+
+
 
 
                 //!https://stripe.com/docs/payments/payment-intents
@@ -96,16 +89,30 @@ const paiementController = {
                     amount: req.session.totalStripe, // total en centimes et en Integer
                     currency: 'eur',
                     payment_method_types: ['card'],
+                    setup_future_usage: 'on_session',
+                    receipt_email: req.session.user.email,
+                    statement_descriptor: 'Madagascar Shop', //22 caractéres . si mis en dynamique, concaténer au prefix du libellé dans le dashboard 
+                    metadata: {
+                        date: `${formatLong(new Date())}`,
+                        articles: articlesBought,
+                        client:`${req.session.user.prenom} ${req.session.user.nomFamille}`,
+                        ip:req.ip,
+                    },
+
                 });
-                payementIntentreceipt_email = req.session.user.payementIntentreceipt_email;
                 // on insére le payement intent en session pour pouvoir ré-utiliser le même paiement intent si le client revient en arriére et ne finalise pas le processus. Si il revient, on pourra lui attribuer le même paiementIntent.
-                req.session.payementIntent = paymentIntent;
+                req.session.paymentIntent = paymentIntent;
 
             }
+            //ici désormais, l'objet paiementIntent contient la clé secrete "secret_client" qui est passé au front via la route /user/paiementkey
+            // Pour la récupérer en Front :
 
-            //ici désormais, l'objet paiementIntent contient la clé secrete "secret_client" qu'il va falloir passer au front !
-
-
+            /* const response = fetch('/v1/user/paiementkey').then(function(response) {
+              return response.json();
+            }).then(function(responseJson) {
+             const clientSecret = responseJson.client_secret;
+              // Call stripe.confirmCardPayment() with the client secret.
+            }); */
 
             console.log("req.session  =>", req.session);
 
@@ -182,24 +189,22 @@ const paiementController = {
 
     key: async (req, res) => {
         try {
-            console.log(req.session);
-            console.log(req.session.payementIntent);
-         
+
             //simple rappel si j'oubli le MW d'autorisation client... a enlever en prod peut être..
             if (!req.session) {
                 return res.status(401).json("Merci de vous authentifier avant d'accéder a cette ressource.");
             }
 
-            if (req.session.payementIntent === undefined) {
+            if (req.session.paymentIntent === undefined) {
                 return res.status(404).json("Merci de réaliser une tentative de paiement avant d'accéder a cette ressource.");
-               
-            } else  {
 
-               return res.status(200).json({
-                    client_secret: req.session.payementIntent.client_secret
+            } else {
+
+                return res.status(200).json({
+                    client_secret: req.session.paymentIntent.client_secret
                 });
             }
-            
+
 
         } catch (error) {
             const errorMessage = process.env.NODE_ENV === 'production' ?

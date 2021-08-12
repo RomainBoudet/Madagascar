@@ -235,19 +235,19 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
 
 /**
  * Prend en charge le paiement via STRIPE
- *  @route POST /user/paiement
+ *  @route GET /user/paiement
  * @group utilisateur
  * @summary  Prend en charge le paiement via STRIPE
  * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
  */
- router.post('/user/paiement', client, paiementController.paiement);
+ router.get('/user/paiement', client, paiementController.paiement);
 
  /**
- * Prend en charge le paiement via STRIPE
- *  @route POST /user/paiement
+ * Permet de récupérer la clé client secret nécéssaire a STRIPE
+ *  @route GET /user/paiementkey
  * @group utilisateur
- * @summary  Prend en charge le paiement via STRIPE
- * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
+ * @summary  Permet de récupérer la clé client secret nécéssaire a STRIPE *** nécéssite d'être authentifié et d'avoir tenté d'effectuer un paiement.
+ * @returns {JSON} 200 -  Renvoie la valeur de payementIntent.client_secret
  */
   router.get('/user/paiementkey', client, paiementController.key);
 

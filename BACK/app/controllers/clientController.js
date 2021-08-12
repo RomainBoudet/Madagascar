@@ -9,6 +9,7 @@ const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const jsonwebtoken = require('jsonwebtoken');
 
+const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 
 
 
@@ -162,6 +163,18 @@ const clientController = {
             await AdminVerifEmail.false(user.id);
 
             console.log(`L'utilisateur ${newUser.prenom} ${newUser.nomFamille} est désormais enregistré dans la BDD`);
+
+            // je donne quelques infos a STRIPE...
+            const customer = await stripe.customers.create({
+                description: 'Un client MadaSHOP',
+                email: userNowInDb.email,
+                name: `${userNowInDb.nom} ${userNowInDb.nomFamille}`,
+                currency: "eur",
+                balance: 0,
+                
+              });
+
+
 
             //! on envoie un message de bienvenue par email
 

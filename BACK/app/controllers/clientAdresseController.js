@@ -6,6 +6,8 @@ const ClientCodePostal = require('../models/clientCodePostal');
 const Client = require('../models/client');
 
 
+
+
 /**
  * Une méthode qui va servir a intéragir avec le model ClientAdresse pour les intéractions des adresses des clients avec la BDD 
  * Retourne un json

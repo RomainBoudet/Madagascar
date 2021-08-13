@@ -378,13 +378,14 @@ CREATE TABLE livraison(
 ------------------------------------------------------------
  CREATE TABLE client_adresse(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	titre             text_valid NOT NULL,
 	prenom            text_valid NOT NULL,
 	nom_famille       text_valid NOT NULL,
 	ligne1            text_valid NOT NULL,
 	ligne2            text_valid,
 	ligne3            text_valid,
 	telephone         phonenumber  NOT NULL, 
-	titre             text_valid NOT NULL,
+	envoie			  BOOLEAN,
 	created_date       timestamptz NOT NULL DEFAULT now(),
 	updated_date       timestamptz,
 	CHECK (created_date < updated_date),
@@ -394,6 +395,9 @@ CREATE TABLE livraison(
 	
 ); 
 
+CREATE UNIQUE INDEX only_one_row_with_column_true 
+    ON client_adresse (envoie) WHERE (true);
+--la colonne envoie pourra contenir des 'null' ou un seul 'true' (ou un seul 'false').
 
 ------------------------------------------------------------
 -- Table: adresse (test sans 3NF)
@@ -633,6 +637,7 @@ client_adresse.ligne1 as adresse1,
 client_adresse.ligne2 as adresse2,
 client_adresse.ligne3 as adresse3,
 client_adresse.telephone as telephone,
+client_adresse.envoie as envoie,
 pays.nom as pays,
 code_postal.code_postal as code_postal,
 ville.nom as ville,
@@ -663,6 +668,7 @@ client_adresse.ligne1,
 client_adresse.ligne2,
 client_adresse.ligne3,
 client_adresse.telephone as telephone,
+client_adresse.envoie as envoie,
 pays.nom as pays,
 code_postal.code_postal as code_postal,
 ville.nom as ville,

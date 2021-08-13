@@ -138,6 +138,13 @@ const adressePostSchema = Joi.object().keys({
             'string.empty': `Le code postal de votre adresse ne peut être vide !`,
             'string.pattern.base': 'Le format de votre code postale est incorrect : Il doit être composé de 5 chiffres.',
         }),
+        envoie: Joi.string()
+        .pattern(new RegExp(/^[Tt][Rr][Uu][Ee]$/))
+        //.boolean().invalid(false) // impossible de trouver la syntaxe pour personnaliser le message d'érreur dans la doc...
+        .messages({
+            'string.empty': `La valeure de ce bouton radio ne peut être vide !`,
+            'string.pattern.base': 'La valeur de ce champs ne peut que être true si le champs existe',
+        }),
 
 
 });
@@ -147,3 +154,4 @@ module.exports = adressePostSchema;
 // source REGEX email : https://emailregex.com/
 //Cette syntaxe fonctionne aussi :
 //.pattern(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/).required()
+//.boolean().invalid(false) ou  .pattern(new RegExp(/^(?i)(true)$/))

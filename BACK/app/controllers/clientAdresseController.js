@@ -5,6 +5,8 @@ const LiaisonVilleCodePostal = require('../models/liaisonVilleCodePostal');
 const ClientCodePostal = require('../models/clientCodePostal');
 const Client = require('../models/client');
 
+const redis = require('../services/redis');
+
 const countrynames = require('countrynames');
 
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
@@ -100,6 +102,7 @@ const clientAdresseController = {
             data.ligne2 = req.body.ligne2;
             data.ligne3 = req.body.ligne3;
             data.telephone = req.body.telephone;
+            data.envoie = req.body.envoie;
             data.titre = req.body.titre;
             data.idClient = req.session.user.idClient;
             //data.idVille = req.body.idVille;
@@ -153,25 +156,10 @@ const clientAdresseController = {
 
 
             const newAdresse = new ClientAdresse(data);
-            const resultatAdresse = await newAdresse.save();
 
-
-            const resultatsToSend = {
-                idClient: resultatAdresse.idClient,
-                idAdresse: resultatAdresse.id,
-                titre: resultatAdresse.titre,
-                prenom: resultatAdresse.prenom,
-                nomFamille: resultatAdresse.nomFamille,
-                adresse1: resultatAdresse.ligne1,
-                adresse2: resultatAdresse.ligne2,
-                adresse3: resultatAdresse.ligne3,
-                codePostal: parseInt(resultatCodePostal.codePostal, 10),
-                ville: resultatVille.nom,
-                pays: resultatPays.nom,
-                telephone: resultatAdresse.telephone,
-            }
-
-
+            const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
+            
+            let resultatAdresse;
             let ligneAdresse;
 
             if (resultatAdresse.ligne3) {
@@ -182,24 +170,97 @@ const clientAdresseController = {
 
                 ligneAdresse = `${resultatAdresse.ligne2}`
             }
-            console.log("resultatAdress ==> ", resultatAdresse);
-            console.log("newAdresse ==>", newAdresse);
-            console.log("data.ligne1 ==> ", data.ligne1);
 
-            // j'update les info de mon client dans STRIPE au passage...
-            const custumer = await stripe.customers.update(
-                req.session.idClientStripe, {
-                    address: {
-                        city: resultatVille.nom,
-                        country: countrynames.getCode(`${resultatPays.nom}`),
-                        line1: resultatAdresse.ligne1,
-                        line2: ligneAdresse,
-                        postal_code: resultatCodePostal.codePostal,
-                        state: resultatPays.nom,
-                    },
-                    phone: resultatAdresse.telephone,
-                }
-            );
+            let custumer;
+
+            if (req.body.envoie && req.body.envoie === 'true') {
+
+                console.log("ici req.body.shippingAsBilliing est présent !")
+                resultatAdresse = await newAdresse.saveWithEnvoie();
+
+                const custumer = await stripe.customers.update(
+                    idClientStripe, {
+                        address: {
+                            city: resultatVille.nom,
+                            country: countrynames.getCode(`${resultatPays.nom}`),
+                            line1: resultatAdresse.ligne1,
+                            line2: ligneAdresse,
+                            postal_code: resultatCodePostal.codePostal,
+                            state: resultatPays.nom,
+                        },
+                        phone: resultatAdresse.telephone,
+                        shipping: {
+                            address: {
+                                city: resultatVille.nom,
+                                country: countrynames.getCode(`${resultatPays.nom}`),
+                                lione1: resultatAdresse.ligne1,
+                                line2: ligneAdresse,
+                                postal_code: resultatCodePostal.codePostal,
+                                state: resultatPays.nom,
+                            },
+                            name: `${resultatAdresse.prenom} ${resultatAdresse.nomFamille}`,
+                            phone: resultatAdresse.telephone,
+                        },
+                    }
+                );
+
+
+            } else {
+
+                console.log("ici absent !")
+                resultatAdresse = await newAdresse.save();
+
+                //je récupére dans REDIS mon idClientStripe avant update du client dans STRIPE
+                const custumer = await stripe.customers.update(
+                    idClientStripe, {
+                        address: {
+                            city: resultatVille.nom,
+                            country: countrynames.getCode(`${resultatPays.nom}`),
+                            line1: resultatAdresse.ligne1,
+                            line2: ligneAdresse,
+                            postal_code: resultatCodePostal.codePostal,
+                            state: resultatPays.nom,
+                        },
+                        phone: resultatAdresse.telephone,
+                    }
+                );
+            }
+
+            console.log("custumer ==>> ", custumer);
+
+            console.log("resultatAdresse ==> ", resultatAdresse);
+
+            const resultatsToSend = {
+                idClient: resultatAdresse.idClient,
+                idAdresse: resultatAdresse.id,
+                titre: resultatAdresse.titre,
+                prenom: resultatAdresse.prenom,
+                nomFamille: resultatAdresse.nomFamille,
+                adresse1: resultatAdresse.ligne1,
+                adresse2: resultatAdresse.ligne2,
+                adresse3: resultatAdresse.ligne3,
+                envoie: resultatAdresse.envoie,
+                codePostal: parseInt(resultatCodePostal.codePostal, 10),
+                ville: resultatVille.nom,
+                pays: resultatPays.nom,
+                telephone: resultatAdresse.telephone,
+            }
+
+
+
+
+
+
+
+            //TODO 
+            // Souhaitez vous faire de cette adresse de facturation votre adresse de livraison :
+            //si oui, on recoit un req.body.shippingAsBilling avec pour valeur TRUE.
+            /* 
+            Dans ce cas on met jour le stripe custumer pour lui donner l'adresse de shipping et on met a jour notre table shipping adresse !
+             */
+
+
+
             console.log('custumer dans new adresse ==> ', custumer);
 
             res.status(200).json(resultatsToSend);
@@ -386,8 +447,9 @@ const clientAdresseController = {
 
 
             // j'update les info de mon client dans STRIPE au passage...
+            const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
             const customer = await stripe.customers.update(
-                req.session.idClientStripe, {
+                idClientStripe, {
                     address: {
                         city: resultatUpdateVille.nom,
                         country: countrynames.getCode(`${resultatUpdatePays.nom}`),
@@ -400,9 +462,12 @@ const clientAdresseController = {
                 }
             );
 
+            //TODO
+            // Ne pas oublier de finir la méthod pour la mise a jour des info de shipping si envoie est dans le body...
+
 
             console.log(customer);
-            
+
             console.timeEnd('Timing de la méthode updateAdresse : ');
 
             res.status(200).json(userMessage);

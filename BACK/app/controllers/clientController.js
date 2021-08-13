@@ -3,6 +3,8 @@ const Shop = require('../models/shop');
 const AdminVerifEmail = require('../models/adminVerifEmail');
 const ClientHistoPass = require('../models/clientHistoPass');
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
+const redis = require('../services/redis');
+
 
 const crypto = require('crypto');
 const validator = require('validator');
@@ -96,7 +98,6 @@ const clientController = {
 
     signIn: async (req, response) => {
         try {
-
             const {
                 prenom,
                 nomFamille,
@@ -116,7 +117,6 @@ const clientController = {
                 //(surplus de sécurité, en plus de la vérif de Joi...)Cette méthode, par défault, matche exactement avec la regex de Joi.
                 return response.json('Le format du mot de passe est incorrect : : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & *');
             }
-
             //on checke si le password et la vérif sont bien identiques
             //encore une fois, vérif de sécu en plus de Joi..
             if (password !== passwordConfirm) {
@@ -124,9 +124,10 @@ const clientController = {
                     'La confirmation du mot de passe est incorrecte'
                 );
             }
+
             //on check si un utilisateur existe déjà avec cet email
             const userInDb = await Client.findByEmail(email);
-            if (userInDb.email) {
+            if (userInDb !== null) {
                 //il y a déjà un utilisateur avec cet email, on envoie une erreur
                 return response.json('Cet email n\'est pas disponible');
             }
@@ -139,6 +140,7 @@ const clientController = {
              */
             const hashedPwd = await bcrypt.hash(password, 10)
 
+
             /**
              * Un fichier json qui contient les informations de l'utilisateur préparé pour être inséré en BDD
              * @type {object} 
@@ -150,21 +152,20 @@ const clientController = {
                 nomFamille,
             };
 
-            /**
-             * On créer une nouvelle instance de client 
-             * */
+           
             const userNowInDb = new Client(newUser);
-
-            /**
-             * On l'envoie en BDD pour être enregistré
-             */
-
             const user = await userNowInDb.save();
+
             await AdminVerifEmail.false(user.id);
+
+
 
             console.log(`L'utilisateur ${newUser.prenom} ${newUser.nomFamille} est désormais enregistré dans la BDD`);
 
             // je donne quelques infos a STRIPE maintenant que mon utilisateur a également créer une adresse en plus d'un compte.
+
+            // FIXME
+            //STRIPE me destroy le timing avec plus de 600ms.. à voir si je ne peux rien faire pour améliorer ça...
             const custumer = await stripe.customers.create({
                 description: 'Un client MadaSHOP',
                 email: user.email,
@@ -172,11 +173,13 @@ const clientController = {
                 balance: 0,
             });
 
-            req.session.idClientStripe = custumer.id;
+            //et je stock le custumer id dans redis pour y avoir accés quand je veux en fournissant la clé (l'email de l'utilisateur) adéquat.
+            await redis.set(`mada/clientStripe:${user.email}`, custumer.id);
 
+            //NOTE
+            //via le script start, a chaque redémarrage de nodemon les clés commençant par "mada:" sont éffacé dns REDIS. Ici le nommage commence par 'mada/...' pour éviter cet effacage récurent.
 
             //! on envoie un message de bienvenue par email
-
 
             async function main() {
 
@@ -242,8 +245,11 @@ const clientController = {
 
 
         try {
+
             //on vérifie si le user existe en BDD via à son ID
             const userIdinDb = await Client.findOne(req.params.id);
+
+
             // on extrait les infos du body //
             const {
                 password,
@@ -285,6 +291,7 @@ const clientController = {
 
             if (prenom) {
                 userIdinDb.prenom = prenom;
+                req.session.user.prenom = prenom; // au passage on update les valeurs de la seession.
                 message.prenom = 'Votre nouveau prénom a bien été enregistré';
             } else if (!prenom) {
                 message.prenom = 'Votre prénom n\'a pas changé';
@@ -292,20 +299,21 @@ const clientController = {
 
             if (nomFamille) {
                 userIdinDb.nomFamille = nomFamille;
+                req.session.user.nomFamille = nomFamille;
                 message.nomFamille = 'Votre nouveau nom de famille a bien été enregistré';
             } else if (!nomFamille) {
                 message.nomFamille = 'Votre nom de famille n\'a pas changé';
             }
 
             if (!email || email === undefined) {
-                userIdinDb.email = userIdinDb.email;
+
                 message.email = 'Votre email n\'a pas changé';
             } else {
 
                 if (await Client.findByEmail(email)) {
 
                     return res.status(404).json('Cet email n\'est pas disponible');
-                    
+
                 }
 
                 if (email !== userIdinDb.email && (validator.isEmail(email) === true)) {
@@ -325,7 +333,7 @@ const clientController = {
                 }
 
             }
-
+            
             if (newPassword && newPassword === newPasswordConfirm) {
 
                 console.log("le changement du mot de passe est demandé. Un nouveau mot de passe valide a été proposé")
@@ -346,19 +354,30 @@ const clientController = {
             }
 
             const newUser = new Client(userIdinDb);
-
             await newUser.update();
 
 
-            // Petit update des duclint STRIPE dans la foulée..
+            // Petit update du client STRIPE dans la foulée..
+            const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
+            console.log("idClientStripe  =>> ", idClientStripe);
+            console.log('req.seesion.user => ', req.session.user);
             const custumer = await stripe.customers.update(
-                req.session.idClientStripe, {
+                idClientStripe, {
                     email: newUser.email,
                     name: `${newUser.prenom} ${newUser.nomFamille}`,
                 }
             );
 
-            console.log(custumer);
+            console.log('custumer ==> ', custumer);
+           
+            // et j'update la clé 'mada/clientStripe:email' dans REDIS et en session si changement de l'email vérifié
+            if (email && email !== oldEmail && (validator.isEmail(email) === true)) {
+                console.log("on passe dans le update REDIS !");
+                await redis.set(`mada/clientStripe:${newUser.email}`, idClientStripe);
+                await redis.del(`mada/clientStripe:${req.session.user.email}`);
+                req.session.user.email = newUser.email;
+            }
+
 
             //! on envois deux mails (sur le nouveau et l'ancien) par sécurité en cas de changement d'adresse email dans le profil ! 
             //! ici envoie d'un mail sur l'ancienne adresse pour confirmer le changemet d'information au user ! 
@@ -446,6 +465,7 @@ const clientController = {
             });
             console.log("Erreur dans la méthode updateClient du clientController : ", error);
         }
+
     },
 
 

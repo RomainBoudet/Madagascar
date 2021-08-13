@@ -1,25 +1,11 @@
 const chalk = require('chalk');
 const consol = require ('../services/colorConsole');
-const {
-    createClient
-} = require('redis');
+const redis = require('./redis');
 
-const client = createClient();
 
-const {
-    promisify,
-    inspect
-} = require('util');
-
-const redis = {
-    del: promisify(client.del).bind(client), // pour éffacer une clé
-    get: promisify(client.get).bind(client), // pour obtenir un clé
-    set: promisify(client.set).bind(client), // pour insérer une nouvelle clé avec une nouvelle valeur
-    setex: promisify(client.setex).bind(client), // je définis une clé avec un temps d'éxpiration (en sec)
-    exists: promisify(client.exists).bind(client) // pour vérifier si une clé existe
-};
 //L'objet Set (Ensemble en français) permet de stocker des valeurs uniques, 
 //Une valeur donnée ne peut apparaître qu'une seule fois par Set
+
 const keysIndex = new Set();
 
 consol.redis("Redis On");

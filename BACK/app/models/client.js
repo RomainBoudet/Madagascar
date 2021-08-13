@@ -139,6 +139,7 @@ class Client {
     );
 
     return new Client(rows[0]);
+    
   }
 
   /**

@@ -631,17 +631,19 @@ adresse.id as id_adresse,
 client.prenom,
 client.nom_famille,
 client.email as email,
-adresse.titre as adresse_titre,
+adresse.titre as titre,
 adresse.prenom as adresse_prenom,
 adresse.nom_famille as adresse_nomFamille,
-adresse.ligne1 as adresse1,
-adresse.ligne2 as adresse2,
-adresse.ligne3 as adresse3,
+adresse.ligne1 as ligne1,
+adresse.ligne2 as ligne2,
+adresse.ligne3 as ligne3,
 adresse.telephone as telephone,
 adresse.envoie as envoie,
 adresse.pays as pays,
 adresse.code_postal as code_postal,
 adresse.ville as ville,
+adresse.created_date,
+adresse.updated_date,
 privilege.nom as privilege
 FROM mada.client
 JOIN mada.adresse ON adresse.id_client = client.id
@@ -710,7 +712,7 @@ LEFT JOIN mada.client_adresse ON client_adresse.id_client = client.id
 LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
 ORDER BY client.id ASC; */
 
-CREATE VIEW mada.view_adresse_update AS
+/* CREATE VIEW mada.view_adresse_update AS
 SELECT 
 client.id as id_client,
 adresse.id as id_adresse,
@@ -730,7 +732,7 @@ privilege.nom as privilege
 FROM mada.client
 LEFT JOIN mada.adresse ON adresse.id_client = client.id
 LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
-ORDER BY client.id ASC;
+ORDER BY client.id ASC; */
 
 -- Une vue simplifié pour les produits sans leurs avis et photos aggrégés, utilisé notamment pour les paniers
 

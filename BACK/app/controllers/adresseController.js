@@ -63,7 +63,7 @@ const adresseController = {
             res.status(200).json(client);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode getOneAdresse du clientAdresseController :',
+            console.trace('Erreur dans la méthode getOneAdresse du adresseController :',
                 error);
             res.status(500).json(error.message);
         }
@@ -79,7 +79,7 @@ const adresseController = {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
-            }; 
+            };
 
 
             const client = await Adresse.findByIdClient(req.params.id);
@@ -89,7 +89,7 @@ const adresseController = {
             res.status(200).json(client);
 
         } catch (error) {
-            console.trace('Erreur dans la méthode getAdresseByIdClient du clientAdresseController :',
+            console.trace('Erreur dans la méthode getAdresseByIdClient du adresseController :',
                 error);
             res.status(500).json(error.message);
         }
@@ -104,7 +104,9 @@ const adresseController = {
             } = req.body;
             const clientInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
             if (!clientInDb) {
-                return res.status(401).json({message: "Erreur d'authentification : vous n'êtes pas autoriser a modifier cette adresse."});
+                return res.status(401).json({
+                    message: "Erreur d'authentification : vous n'êtes pas autoriser a modifier cette adresse."
+                });
             }
 
             const data = {};
@@ -119,7 +121,7 @@ const adresseController = {
             data.ligne1 = req.body.ligne1;
             data.ligne2 = req.body.ligne2;
             data.ligne3 = req.body.ligne3;
-            data.codePostal =req.body.codePostal;
+            data.codePostal = req.body.codePostal;
             data.ville = req.body.ville;
             data.pays = req.body.pays;
             data.telephone = req.body.telephone;
@@ -129,19 +131,23 @@ const adresseController = {
             // On n'accepte que les adresses en France pour cette premiére version de l'API
             // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
             if (req.body.pays !== 'FRANCE') {
-                return res.status(404).json({message:"Bonjour, merci de renseigner une adresse en France pour cette version de l'API"})
+                return res.status(404).json({
+                    message: "Bonjour, merci de renseigner une adresse en France pour cette version de l'API"
+                })
             };
 
             if (await Adresse.findByTitre(req.body.titre, req.session.user.idClient)) {
                 console.log('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
-                return res.status(404).json({message:'Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.'});
+                return res.status(404).json({
+                    message: 'Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.'
+                });
 
             }
 
 
             const newAdresse = new Adresse(data);
 
-            const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
+            const idClientStripe = await redis.get(`mada:clientStripe:${req.session.user.email}`);
 
             let resultatAdresse;
             let ligneAdresse;
@@ -149,23 +155,13 @@ const adresseController = {
 
             if (req.body.envoie && req.body.envoie === 'true') {
 
-                //TODO
-                //vérifier si TRUE est la colonne envoie est déja passé a TRUE. si oui, on le supprime pour qu'une nouvelle insertion soit posible
-                //const isEnvoieTrue = await Adresse. 
-                //TODO
-                //Contruire dans le model, une méthode pour rechercher si une valeur de la colonne 'envoie', pour un client donné, est égal a TRUE.
+                //NOTE 
+                // Si la valeur TRUE signifiant qu'une adresse de livraison existe déja en BDD, on supprime l'ancienne valeur true pour pouvoir en insérer une nouvelle.
+                const envoiIsTrue = await Adresse.findByEnvoie(req.session.user.idClient)
+                if (envoiIsTrue) {
+                    await envoiIsTrue.envoieNull();
+                }
 
-                //BUG
-                // ATTENTION, ici je ne peut pas avoir plusieur valeur a TRUE dans la colonne envoi avec le DDL, alors que j'en veux un par id_client !
-
-                const envoiIsTrue = await Adresse.findByEnvoie()
-
-               /*  if() {
-
-                } */
-
-
-                console.log("ici req.body.envoie est présent !")
                 resultatAdresse = await newAdresse.saveWithEnvoie();
 
                 if (resultatAdresse.ligne3) {
@@ -202,7 +198,6 @@ const adresseController = {
 
             } else {
 
-                console.log("ici absent !")
                 resultatAdresse = await newAdresse.save();
 
                 if (resultatAdresse.ligne3) {
@@ -245,19 +240,13 @@ const adresseController = {
                 telephone: resultatAdresse.telephone,
             }
 
-
-
-            console.log('custumer dans new adresse ==> ', custumer);
-
             res.status(200).json(resultatsToSend);
         } catch (error) {
             console.trace(error);
-            console.log(`Erreur dans la méthode newAdresse du clientAdresseController: ${error}`);
+            console.log(`Erreur dans la méthode newAdresse du adresseController: ${error}`);
             res.status(500).json(error.message);
         }
     },
-
-
 
 
     updateAdresse: async (req, res) => {
@@ -280,6 +269,8 @@ const adresseController = {
 
             const updateClient = await Adresse.findOneForUpdate(id);
 
+            console.log("updateClient ==>> ", updateClient);
+
             if (updateClient === null) {
                 return res.status(404).json({
                     message: "Cette adresse n'existe pas."
@@ -291,31 +282,34 @@ const adresseController = {
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
             };
-
-            updateClient.id = updateClient.idAdresse;
+            const titre = req.body.titre;
             const prenom = req.body.prenom;
             const nomFamille = req.body.nomFamille;
             const ligne1 = req.body.ligne1;
             const ligne2 = req.body.ligne2;
             const ligne3 = req.body.ligne3;
+            const codePostal = req.body.codePostal;
+            const ville = req.body.ville;
+            const pays = req.body.pays;
             const telephone = req.body.telephone;
-            const titre = req.body.titre;
-            const idVille = updateClient.idVille;
-            const idClient = updateClient.idClient;
+            const envoie = req.body.envoie;
 
-            if (await Adresse.findByTitre(req.body.titre)) {
+
+            if (await Adresse.findByTitre(titre, req.session.user.idClient)) {
                 console.log('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
-                return res.status(404).json('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
+                return res.status(404).json({
+                    message: 'Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.'
+                });
 
             }
-
 
             // On n'accepte que les adresses en France pour cette premiére version de l'API
             // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
             if (req.body.pays !== 'FRANCE' && req.body.pays !== undefined) {
-                return res.status(404).json("Bonjour, merci de renseigner une adresse en France pour cette version de l'API")
+                return res.status(404).json({
+                    message: "Bonjour, merci de renseigner une adresse en France pour cette version de l'API"
+                })
             };
-
 
             let userMessage = {};
 
@@ -368,104 +362,113 @@ const adresseController = {
                 userMessage.titre = 'Votre titre n\'a pas changé';
             }
 
-            if (idClient) {
-                updateClient.idClient = idClient;
+            if (ville) {
+                updateClient.ville = ville;
+                userMessage.ville = 'Votre nouvelle ville a bien été enregistré ';
+            } else if (!ville) {
+                userMessage.ville = 'Votre ville n\'a pas changé';
             }
-
-            if (idVille) {
-                updateClient.idVille = idVille;
-            }
-
-            const resultatUpdateClientAdress = await updateClient.update();
-
-
-            const pays = req.body.pays;
-            const updatePays = await ClientPays.findOne(updateClient.idPays);
 
             if (pays) {
-                updatePays.nom = pays;
-                userMessage.pays = 'Votre nouveau nom de pays a bien été enregistré ';
+                updateClient.pays = pays;
+                userMessage.pays = 'Votre nouveau pays a bien été enregistré ';
             } else if (!pays) {
-                userMessage.pays = 'Votre pays de pays n\'a pas changé';
+                userMessage.pays = 'Votre pays n\'a pas changé';
             }
 
-            const resultatUpdatePays = await updatePays.update();
-
-
-            const ville = req.body.ville;
-            const idPays = updateClient.idPays;
-            const updateVille = await ClientVille.findOne(updateClient.idVille);
-            if (ville) {
-                updateVille.nom = ville;
-                userMessage.ville = 'Votre nouveau nom de ville a bien été enregistré ';
-            } else if (!ville) {
-                userMessage.ville = 'Votre nom de ville n\'a pas changé';
-            }
-            if (idPays) {
-                updateVille.idPays = idPays;
+            if (envoie) {
+                updateClient.envoie = envoie;
+                userMessage.envoie = 'Votre nouveau envoie a bien été enregistré ';
+            } else if (!envoie) {
+                userMessage.envoie = 'Votre envoie n\'a pas changé';
             }
 
-            const resultatUpdateVille = await updateVille.update();
-
-
-            const codePostal = req.body.codePostal;
-            const updateCodePostal = await ClientCodePostal.findOne(updateClient.idCodePostal);
             if (codePostal) {
-                updateCodePostal.codePostal = codePostal;
-                userMessage.codePostal = 'Votre nouveau code postal a bien été enregistré ';
+                updateClient.codePostal = codePostal;
+                userMessage.codePostal = 'Votre nouveau codePostal a bien été enregistré ';
             } else if (!codePostal) {
-                userMessage.codePostal = 'Votre code postal n\'a pas changé';
+                userMessage.codePostal = 'Votre codePostal n\'a pas changé';
             }
 
-            const resultatUpdatecodePostal = await updateCodePostal.update();
+            //LOG 
+            console.log("updateClient a la fin avant insertion ==>> ", updateClient);
 
+            const myUpdate = new Adresse(updateClient);
+            console.log("myUpdate  ==>> ", myUpdate);
+            const resultatAdresse = await myUpdate.update();
 
+            //LOG     
+            console.log(" resultatAdresse  ==>> ", resultatAdresse);
 
-            const idCodePostal = updateClient.idCodePostal;
-            const updateLiaison = await LiaisonVilleCodePostal.findOne(updateClient.idLiaisonVilleCodePostal);
-            if (idVille) {
-                updateLiaison.idVille = idVille;
-            }
-            if (idCodePostal) {
-                updateLiaison.idCodePostal = idCodePostal;
-            }
-
-            await updateLiaison.update();
 
             let ligneAdresse;
+            if (resultatAdresse.ligne3) {
+                ligneAdresse = ` ${resultatAdresse.ligne2} ${resultatAdresse.ligne3}`
+            } else if (resultatAdresse.ligne2) {
+                ligneAdresse = `${resultatAdresse.ligne2}`
+            }
 
-            if (resultatUpdateClientAdress.ligne3) {
+            // j'update les info de mon client dans STRIPE au passage...
+            const idClientStripe = await redis.get(`mada:clientStripe:${req.session.user.email}`);
+            let custumer;
+            if (envoie && envoie === 'true') {
 
-                ligneAdresse = ` ${resultatUpdateClientAdress.ligne2} ${resultatUpdateClientAdress.ligne3}`
+                //NOTE 
+                // Si la valeur TRUE signifiant qu'une adresse de livraison existe déja en BDD, on supprime l'ancienne valeur true pour pouvoir en insérer une nouvelle.
 
-            } else if (resultatUpdateClientAdress.ligne2) {
+                const envoiIsTrue = await Adresse.findByEnvoie(req.session.user.idClient)
+                if (envoiIsTrue) {
+                    console.log("on passe !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    await envoiIsTrue.envoieNull();
+                }
 
-                ligneAdresse = `${resultatUpdateClientAdress.ligne2}`
+
+                custumer = await stripe.customers.update(
+                    idClientStripe, {
+                        address: {
+                            city: resultatAdresse.ville,
+                            country: countrynames.getCode(`${resultatAdresse.pays}`),
+                            line1: resultatAdresse.ligne1,
+                            line2: ligneAdresse,
+                            postal_code: resultatAdresse.codePostal,
+                            state: resultatAdresse.pays,
+                        },
+                        phone: resultatAdresse.telephone,
+                        shipping: {
+                            address: {
+                                city: resultatAdresse.ville,
+                                country: countrynames.getCode(`${resultatAdresse.pays}`),
+                                line1: resultatAdresse.ligne1,
+                                line2: ligneAdresse,
+                                postal_code: resultatAdresse.codePostal,
+                                state: resultatAdresse.pays,
+                            },
+                            name: `${resultatAdresse.prenom} ${resultatAdresse.nomFamille}`,
+                            phone: resultatAdresse.telephone,
+                        },
+                    }
+                );
+
+
+            } else {
+
+                custumer = await stripe.customers.update(
+                    idClientStripe, {
+                        address: {
+                            city: resultatAdresse.ville,
+                            country: countrynames.getCode(`${resultatAdresse.nom}`),
+                            line1: resultatAdresse.ligne1,
+                            line2: ligneAdresse,
+                            postal_code: resultatAdresse.codePostal,
+                            state: resultatAdresse.pays,
+                        },
+                        phone: resultatAdresse.telephone,
+                    }
+                );
             }
 
 
-
-            // j'update les info de mon client dans STRIPE au passage...
-            const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
-            const customer = await stripe.customers.update(
-                idClientStripe, {
-                    address: {
-                        city: resultatUpdateVille.nom,
-                        country: countrynames.getCode(`${resultatUpdatePays.nom}`),
-                        line1: resultatUpdateClientAdress.ligne1,
-                        line2: ligneAdresse,
-                        postal_code: resultatUpdatecodePostal.codePostal,
-                        state: resultatUpdatePays.nom,
-                    },
-                    phone: resultatUpdateClientAdress.telephone,
-                }
-            );
-
-            //TODO
-            // Ne pas oublier de finir la méthod pour la mise a jour des info de shipping si envoie est dans le body...
-
-
-            console.log(customer);
+            console.log("customer  STRIPE  ==>> ", customer);
 
 
             res.status(200).json(userMessage);

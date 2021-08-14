@@ -134,29 +134,29 @@ CREATE TABLE TVA(
 ------------------------------------------------------------
 -- Table: code_postal
 ------------------------------------------------------------
- CREATE TABLE code_postal(
+ /* CREATE TABLE code_postal(
 	id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	code_postal     postale_code_fr NOT NULL 
-); 
+);  */
 
 
 ------------------------------------------------------------
 -- Table: pays
 ------------------------------------------------------------
- CREATE TABLE pays(
+ /* CREATE TABLE pays(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom      text_valid NOT NULL
 );
- 
+  */
 
 ------------------------------------------------------------
 -- Table: ville
 ------------------------------------------------------------
- CREATE TABLE ville(
+ /* CREATE TABLE ville(
 	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom         text_valid NOT NULL,
-	id_pays     INT NOT NULL REFERENCES pays(id) ON DELETE CASCADE
-); 
+	id_pays     INT NOT NULL REFERENCES pays(id) ON DELETE RESTRICT
+);  */
 
 
 ------------------------------------------------------------
@@ -376,7 +376,7 @@ CREATE TABLE livraison(
 ------------------------------------------------------------
 -- Table: client_adresse
 ------------------------------------------------------------
- CREATE TABLE client_adresse(
+/*  CREATE TABLE client_adresse(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	titre             text_valid NOT NULL,
 	prenom            text_valid NOT NULL,
@@ -390,30 +390,31 @@ CREATE TABLE livraison(
 	updated_date       timestamptz,
 	CHECK (created_date < updated_date),
 
-	id_client         INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
-	id_ville          INT  NOT NULL REFERENCES ville(id) ON DELETE CASCADE
+	id_client         INT  NOT NULL REFERENCES client(id),
+	id_ville          INT  NOT NULL REFERENCES ville(id) 
 	
 ); 
 
 CREATE UNIQUE INDEX only_one_row_with_column_true 
-    ON client_adresse (envoie) WHERE (true);
+    ON client_adresse (envoie) WHERE (true); */
 --la colonne envoie pourra contenir des 'null' ou un seul 'true' (ou un seul 'false').
 
 ------------------------------------------------------------
 -- Table: adresse (test sans 3NF)
 ------------------------------------------------------------
-/* CREATE TABLE adresse(
+ CREATE TABLE adresse(
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	titre             text_valid NOT NULL,
 	prenom            text_valid NOT NULL,
 	nom_famille       text_valid NOT NULL,
-	adresse1            text_valid NOT NULL,
-	adresse2            text,
-	adresse3            text,
+	ligne1            text_valid NOT NULL,
+	ligne2            text_valid,
+	ligne3            text_valid,
 	code_postal		  postale_code_fr NOT NULL,
 	ville			  text_valid NOT NULL,
 	pays			  text_valid NOT NULL,
 	telephone         phonenumber  NOT NULL, 
+	envoie		      BOOLEAN,
 	
 	created_date       timestamptz NOT NULL DEFAULT now(),
 	updated_date       timestamptz,
@@ -421,7 +422,7 @@ CREATE UNIQUE INDEX only_one_row_with_column_true
 
 	id_client         INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
- */
+ 
 
 
 
@@ -581,11 +582,11 @@ CREATE TABLE client_historique_connexion(
 ------------------------------------------------------------
 -- Table: ville_a_codePostale
 ------------------------------------------------------------
- CREATE TABLE ville_a_codePostal (
+ /* CREATE TABLE ville_a_codePostal (
 	id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	id_ville                          INT NOT NULL REFERENCES ville(id) ON DELETE CASCADE,
-	id_codePostal                    INT NOT NULL REFERENCES code_postal(id) ON DELETE CASCADE
-);
+	id_codePostal                    INT NOT NULL REFERENCES code_postal(id)
+); */
  
 
 ------------------------------------------------------------
@@ -623,7 +624,36 @@ CHECK (created_date < updated_date)
 
 -- Une vue pour les principales infos concernant les clients et leur adresse : 
 
-CREATE VIEW mada.view_client_adresse AS
+CREATE VIEW mada.view_adresse AS
+SELECT 
+client.id as id_client,
+adresse.id as id_adresse,
+client.prenom,
+client.nom_famille,
+client.email as email,
+adresse.titre as adresse_titre,
+adresse.prenom as adresse_prenom,
+adresse.nom_famille as adresse_nomFamille,
+adresse.ligne1 as adresse1,
+adresse.ligne2 as adresse2,
+adresse.ligne3 as adresse3,
+adresse.telephone as telephone,
+adresse.envoie as envoie,
+adresse.pays as pays,
+adresse.code_postal as code_postal,
+adresse.ville as ville,
+privilege.nom as privilege
+FROM mada.client
+JOIN mada.adresse ON adresse.id_client = client.id
+JOIN mada.privilege ON client.id_privilege = privilege.id
+ORDER BY client.id ASC;
+
+
+
+
+
+
+/* CREATE VIEW mada.view_client_adresse AS
 SELECT 
 client.id as id_client,
 client_adresse.id as id_adresse,
@@ -650,9 +680,11 @@ JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
 JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
 JOIN mada.privilege ON client.id_privilege = privilege.id
 ORDER BY client.id ASC;
+ */
 
 
-CREATE VIEW mada.view_adresse_update AS
+
+/* CREATE VIEW mada.view_adresse_update AS
 SELECT 
 client.id as id_client,
 client_adresse.id as id_adresse,
@@ -675,13 +707,30 @@ ville.nom as ville,
 privilege.nom as privilege
 FROM mada.client
 LEFT JOIN mada.client_adresse ON client_adresse.id_client = client.id
-LEFT JOIN mada.ville ON ville.id = client_adresse.id_ville
-LEFT JOIN mada.pays ON pays.id = ville.id_pays
-LEFT JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
-LEFT JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
+LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
+ORDER BY client.id ASC; */
+
+CREATE VIEW mada.view_adresse_update AS
+SELECT 
+client.id as id_client,
+adresse.id as id_adresse,
+client.prenom,
+client.nom_famille,
+client.email as email,
+adresse.titre as titre,
+adresse.ligne1,
+adresse.ligne2,
+adresse.ligne3,
+adresse.telephone as telephone,
+adresse.envoie as envoie,
+adresse.pays as pays,
+adresse.code_postal as code_postal,
+adresse.ville as ville,
+privilege.nom as privilege
+FROM mada.client
+LEFT JOIN mada.adresse ON adresse.id_client = client.id
 LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
 ORDER BY client.id ASC;
-
 
 -- Une vue simplifié pour les produits sans leurs avis et photos aggrégés, utilisé notamment pour les paniers
 

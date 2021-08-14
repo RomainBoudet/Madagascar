@@ -137,7 +137,7 @@ class ClientVille {
         } = await db.query('DELETE FROM mada.ville WHERE ville.id = $1 RETURNING *;', [
             this.id,
         ]);
-        console.log("this ==<", this);
+        console.log("this ==>", this);
         consol.model(`la Ville id ${this.id} a été supprimé !`);
 
         return new ClientVille(rows[0]);

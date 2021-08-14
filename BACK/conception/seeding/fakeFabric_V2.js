@@ -8,6 +8,8 @@ const {
     exec
 } = require("child_process");
 
+
+
 // 
 // Aprés la construction d'une BDD vierge => Génération d'un faux jeu de donnée pour mes tables via Faker qui sera donné à un script d'import
 //
@@ -968,14 +970,14 @@ const fakeData = async () => {
 
         }
 
-        
+
         console.timeEnd(`Génération de ${volume} adresses`);
         console.table(adresses);
         console.table(adressesBis);
         console.table(adressesTis);
 
         consol.seed(`Fin de la génération de fake adresses`);
-   
+
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!IMPORT DES DONNEES EN BDD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // on a générer des fausses des données, ne reste plus qu'a les importer dans la BDD (dans le bon ordre).
@@ -1043,7 +1045,7 @@ const fakeData = async () => {
 
         //! CODE POSTALES
 
-        consol.seed(`Début de l'import de ${volume} code_postales`);
+       /*  consol.seed(`Début de l'import de ${volume} code_postales`);
 
         const zipCodesInsert = "INSERT INTO mada.code_postal (code_postal) VALUES ($1);";
 
@@ -1053,11 +1055,11 @@ const fakeData = async () => {
         }
 
         consol.seed(`Fin de l'import de ${volume} code_postales`);
- 
+ */
 
         //! PAYS
 
-         consol.seed(`Début de l'import de ${countriesUnique.length} pays`);
+        /* consol.seed(`Début de l'import de ${countriesUnique.length} pays`);
 
         const countriesInsert = "INSERT INTO mada.pays (nom) VALUES ($1);";
 
@@ -1067,11 +1069,11 @@ const fakeData = async () => {
         }
 
         consol.seed(`Fin de l'import de ${countriesUnique.length} pays`);
- 
+ */
         //! VILLES
 
 
-         consol.seed(`Début de l'import de ${volume} cities`);
+      /*   consol.seed(`Début de l'import de ${volume} cities`);
 
         const citiesInsert = "INSERT INTO mada.ville (nom, id_pays) VALUES ($1, $2);";
 
@@ -1081,8 +1083,8 @@ const fakeData = async () => {
         }
 
         consol.seed(`Fin de l'import  de ${volume} cities`);
+ */
 
- 
 
         //! PRIVILEGES
 
@@ -1278,7 +1280,7 @@ const fakeData = async () => {
         //! CLIENT_ADRESSE
 
 
-        consol.seed(`Début de l'import de ${custumers.length*3} adresses client`);
+       /*  consol.seed(`Début de l'import de ${custumers.length*3} adresses client`);
         console.time(`Import de ${custumers.length*3} adresses client`);
         const client_adressesInsert = "INSERT INTO mada.client_adresse (prenom, nom_famille, ligne1, telephone, titre, id_client, id_ville) VALUES ($1, $2, $3 ,$4, $5, $6, $7);";
 
@@ -1298,35 +1300,35 @@ const fakeData = async () => {
         }
 
         consol.seed(`Fin de l'import de ${custumers.length*3} adresses`);
-        console.timeEnd(`Import de ${custumers.length*3} adresses client`);
- 
+        console.timeEnd(`Import de ${custumers.length*3} adresses client`); */
+
 
 
         //! ADRESSE
 
 
-       /*  consol.seed(`Début de l'import de ${adresses.length *3} adresses`);
-        console.time(`Import de ${adresses.length *3} adresses`);
-        const adressesInsert = "INSERT INTO mada.adresse (titre, prenom, nom_famille, adresse1, code_postal, ville, pays, telephone, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, now(), $9);";
+        consol.seed(`Début de l'import de ${adresses.length *3} adresses`);
+         console.time(`Import de ${adresses.length *3} adresses`);
+         const adressesInsert = "INSERT INTO mada.adresse (titre, prenom, nom_famille, ligne1, code_postal, ville, pays, telephone, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, now(), $9);";
 
-        for (const addressCustumer of adresses) {
-            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
-            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
-        }
-        // Deux fake adresses pour un même client ! :)
+         for (const addressCustumer of adresses) {
+             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+             await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+         }
+         // Deux fake adresses pour un même client ! :)
 
-        
-        for (const addressCustumer of adressesBis) {
-            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
-            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
-        }
+         
+         for (const addressCustumer of adressesBis) {
+             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+             await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+         }
 
-        for (const addressCustumer of adressesTis) {
-            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
-            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
-        }
-        consol.seed(`Fin de l'import de ${adresses.length *3} adresses`);
-        console.timeEnd(`Import de ${adresses.length *3} adresses`); */
+         for (const addressCustumer of adressesTis) {
+             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+             await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+         }
+         consol.seed(`Fin de l'import de ${adresses.length *3} adresses`);
+         console.timeEnd(`Import de ${adresses.length *3} adresses`); 
 
         //! FACTURE
 
@@ -1503,7 +1505,7 @@ const fakeData = async () => {
         //! VILLE_a_CODEPOSTAL
 
 
-        consol.seed(`Début de l'import de ${ville_a_codePostales.length} ville_a_codePostales`);
+        /* consol.seed(`Début de l'import de ${ville_a_codePostales.length} ville_a_codePostales`);
         console.time(`Import de ${ville_a_codePostales.length} ville_a_codePostales`);
         const ville_a_codePostalesInsert = "INSERT INTO mada.ville_a_codePostal (id_ville, id_codePostal) VALUES ($1, $2);";
 
@@ -1512,8 +1514,8 @@ const fakeData = async () => {
             await db.query(ville_a_codePostalesInsert, [ville_a_codePostale.id_ville, ville_a_codePostale.id_codePostale]);
         }
         consol.seed(`Fin de l'import de ${ville_a_codePostales.length} ville_a_codePostales`);
-        console.timeEnd(`Import de ${ville_a_codePostales.length} ville_a_codePostales`);
- 
+        console.timeEnd(`Import de ${ville_a_codePostales.length} ville_a_codePostales`); */
+
 
 
         //! FOURNIT
@@ -1536,11 +1538,14 @@ const fakeData = async () => {
         //! Mise en place d'un client avec des droits admin.
 
         consol.seed("Mise en place d'un admin dans la BDD");
+        //npm startawait db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE2}', email='${process.env.EMAILTEST2}', prenom='${process.env.MYFIRST2}', nom_famille='${process.env.MYLAST2}' WHERE id = ${process.env.ID2}; `);
+
         await db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE}', email='${process.env.EMAILTEST}', prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}' WHERE id = ${process.env.ID}; `);
         await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('false', ${process.env.ID});`);
         //await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
-        await db.query(`UPDATE mada.client_adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`)
-        //await db.query(`UPDATE mada.adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`)
+        //await db.query(`UPDATE mada.client_adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`)
+        await db.query(`UPDATE mada.adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`);
+        //await db.query(`UPDATE mada.adresse SET prenom='${process.env.MYFIRST2}', nom_famille='${process.env.MYLAST2}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID2}';`);
 
         consol.seed(`Admin mis en place en client id ${process.env.ID}`)
 

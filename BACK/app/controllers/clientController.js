@@ -152,7 +152,7 @@ const clientController = {
                 nomFamille,
             };
 
-           
+
             const userNowInDb = new Client(newUser);
             const user = await userNowInDb.save();
 
@@ -172,6 +172,8 @@ const clientController = {
                 name: `${user.prenom} ${user.nomFamille}`,
                 balance: 0,
             });
+
+            console.log("custumer dans le clientController, creation du client STRIPE ==>> ", custumer);
 
             //et je stock le custumer id dans redis pour y avoir accés quand je veux en fournissant la clé (l'email de l'utilisateur) adéquat.
             await redis.set(`mada/clientStripe:${user.email}`, custumer.id);
@@ -246,9 +248,15 @@ const clientController = {
 
         try {
 
-            //on vérifie si le user existe en BDD via à son ID
-            const userIdinDb = await Client.findOne(req.params.id);
 
+            if(req.session.user.idClient !== parseInt(req.params.id, 10)) {
+
+                return res.status(403).json({message: "Vous n'avez pas les droits pour accéder a cette ressource"})
+
+            }
+
+            //on vérifie si le user existe en BDD via à son ID
+            const userIdinDb = await Client.findOne(req.params.id);                                                                                         
 
             // on extrait les infos du body //
             const {
@@ -333,7 +341,7 @@ const clientController = {
                 }
 
             }
-            
+
             if (newPassword && newPassword === newPasswordConfirm) {
 
                 console.log("le changement du mot de passe est demandé. Un nouveau mot de passe valide a été proposé")
@@ -369,7 +377,7 @@ const clientController = {
             );
 
             console.log('custumer ==> ', custumer);
-           
+
             // et j'update la clé 'mada/clientStripe:email' dans REDIS et en session si changement de l'email vérifié
             if (email && email !== oldEmail && (validator.isEmail(email) === true)) {
                 console.log("on passe dans le update REDIS !");

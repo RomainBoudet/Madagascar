@@ -26,7 +26,7 @@ const clientController = require('./controllers/clientController');
 const panierController = require('./controllers/panierController');
 const clientHistoController = require('./controllers/clientHistoController');
 const factureController = require('./controllers/factureController');
-const clientAdresseController = require('./controllers/clientAdresseController');
+const adresseController = require('./controllers/adresseController');
 const paiementController = require('./controllers/paiementController');
 const commandeController = require('./controllers/commandeController');
 const livraisonController = require('./controllers/livraisonController');
@@ -354,15 +354,18 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
   router.delete('/admin/user', admin, validateBody(userLoginSchema), clientController.deleteByEmail);
 
 //! ADRESSE DES CLIENT -----------------------------------
+//NOTE                                                                                                                                             
+//NOTE                                                                                                                                             
+
 
 /**
  * Renvoie toutes les adresses des clients en bdd 
- * @route GET /admin/user/adresse/all
+ * @route GET /admin/user/adresse
  * @group Administrateur
  * @summary Renvoie toutes les adresses des clients en BDD
  * @returns {JSON} 200 -Renvoie la liste des adresses en BDD.
  */
- router.get('/admin/user/adresses', admin, clientAdresseController.getAllAdresse);
+ router.get('/admin/user/adresses', admin, adresseController.getAllAdresse);
 
 /**
  * Renvoie les adresses d'un client selon son idClient
@@ -371,7 +374,7 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Renvoie toutes les adresse d'un client en BDD
  * @returns {JSON} 200 -Renvoie toutes les adresse d'un client en BDD
  */
- router.get('/client/adresses/:id(\\d+)', client, clientAdresseController.getAdresseByIdClient);
+ router.get('/client/adresses/:id(\\d+)', client, adresseController.getAdresseByIdClient);
 
 /**
  * Renvoie une seule adresse d'un client selon son client_adresse.id
@@ -380,7 +383,7 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Renvoie une seule adresse d'un client selon son client_adresse.id
  * @returns {JSON} 200 - Renvoie une seule adresse d'un client selon son client_adresse.id
  */
- router.get('/client/adresse/:id(\\d+)', client, clientAdresseController.getOneAdresse);
+ router.get('/client/adresse/:id(\\d+)', client, adresseController.getOneAdresse);
 
 
  /**
@@ -391,27 +394,30 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Insére une nouvelle adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse insérée
  */
-router.post('/client/adresse/new', client, validateBody(adressePostSchema), clientAdresseController.newAdresse);
+router.post('/client/adresse/new', client, validateBody(adressePostSchema), adresseController.newAdresse);
 
  /**
  * Une route pour mettre a jour une adresse
  * route accessible a tous
- * @route PATCH /client/adresse/update/:id
+ * @route PATCH /client/adresse/:id
  * @group utilisateur
  * @summary Met a jour une adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
-  router.patch('/client/adresse/:id(\\d+)', client, validateBody(adresseSchema), clientAdresseController.updateAdresse);
+  router.patch('/client/adresse/:id(\\d+)', client, validateBody(adresseSchema), adresseController.updateAdresse);
 
 /**
  * Une route pour supprimer une adresse
  * route accessible a tous
- * @route DELETE /client/adresse/update/:id
+ * @route DELETE /client/adresse/:id
  * @group utilisateur
  * @summary Supprime une adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
- router.delete('/client/adresse/:id(\\d+)', client, validateBody(adresseSchema), clientAdresseController.delete);
+ router.delete('/client/adresse/:id(\\d+)', client, validateBody(adresseSchema), adresseController.delete);
+
+
+ //NOTE                                                                                                                                     
 
   //! ROUTES DEVELOPPEUR ----------------
 

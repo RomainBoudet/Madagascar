@@ -25,7 +25,6 @@ cleanPass.use((req, res, next) => {
         req.body[prop] = validator.blacklist(req.body[prop], ['[']);
         req.body[prop] = validator.blacklist(req.body[prop], [']']);
         req.body[prop] = validator.blacklist(req.body[prop], ['=']);
-        req.body[prop] = validator.blacklist(req.body[prop], ['_']);
 
     }
     //Je formate quelque entrées pour que ca soit propre en BDD...
@@ -54,6 +53,7 @@ cleanPass.use((req, res, next) => {
     if (req.body.ville) {
         req.body.ville = capitalize(req.body.ville);
     }
+
 
     next();
 

@@ -49,6 +49,7 @@ const userUpdateSchema = Joi.object({
     .pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
     .required()
     .messages({
+      'any.required': `Le champs de votre mot de passe ne peut être vide !`,
       'string.max': `Votre mot de passe doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Votre mot de passe est nécéssaire pour une mise a jour de votre profil`,
       'string.pattern.base': 'Le format de votre mot de passe est incorrect : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & * ',

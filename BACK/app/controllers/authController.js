@@ -30,9 +30,10 @@ const authController = {
                 email,
                 password
             } = request.body;
-
+            console.log('req.body ==> ', request.body);
             // On authentifie le user via son email et le password proposé
             const clientInDb = await Client.authenticate(email, password);
+            console.log(clientInDb);
             if (!clientInDb) {
                 return response.status(404).json("Erreur d'authentification : l'email ou le mot de passe est incorrect ");
             }
@@ -45,10 +46,10 @@ const authController = {
                 nomFamille: clientInDb.nomFamille,
                 email: clientInDb.email,
                 privilege: clientInDb.nom,
-                uuid:uuid(), //un identifiant de session unique facilement retrouvable pour le paiement
+                uuid: uuid(), //un identifiant de session unique facilement retrouvable pour le paiement
             };
 
-            console.log("req.session ==>",request.session);
+            console.log("req.session ==>", request.session);
 
 
             //LocalStorage => sensible aux attaques XSS // faille Cross site Scripting ! injection du contenu dans une page web
@@ -140,7 +141,7 @@ const authController = {
             if (req.session.user === undefined) {
                 return res.status(200).json('Vous avez déja été déconnecté avec succés !')
             }
-           
+
             //je change a false la valeur du headers
             //res.append('x-xsrf-token', 'false');
             //je détruis la session
@@ -155,7 +156,7 @@ const authController = {
             })
 
             console.log("client déconnecté ! valeur de req.session maintenant ==> ", req.session)
-       
+
             return res.status(200).json("L'utilisateur a été déconnecté avec succés");
 
         } catch (error) {
@@ -171,7 +172,7 @@ const authController = {
         try {
             //Si cette route est contactée, le user a accepté les cookies, je stocke sur son navigateur un cokie qui contient cette information
             //on récupére l'info d'une chekbox, bouton radio, 
-            if(req.signedCookies.cookieAccepted){
+            if (req.signedCookies.cookieAccepted) {
                 return res.json("Vous avez accepté notre politique d'utilisation des cookies sur ce site et nous vous en remerçiont !");
             }
 

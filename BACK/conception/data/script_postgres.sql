@@ -395,9 +395,7 @@ CREATE TABLE livraison(
 	
 ); 
 
-CREATE UNIQUE INDEX only_one_row_with_column_true 
-    ON client_adresse (envoie) WHERE (true); */
---la colonne envoie pourra contenir des 'null' ou un seul 'true' (ou un seul 'false').
+*/
 
 ------------------------------------------------------------
 -- Table: adresse (test sans 3NF)
@@ -425,7 +423,7 @@ CREATE TABLE adresse (
  
 CREATE UNIQUE INDEX only_one_row_with_column_true 
     ON adresse (id_client) WHERE envoie; 
---la colonne envoie pourra contenir des 'null' ou un seul 'true' (ou un seul 'false').
+--la colonne envoie pourra contenir un seul null par id_client !
 
 
 ------------------------------------------------------------

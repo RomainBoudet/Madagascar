@@ -31,6 +31,15 @@ CREATE DOMAIN posreal AS DECIMAL(6,2) CHECK (VALUE >= 00.00); -- un domaine perm
 CREATE DOMAIN posrealpourc AS DECIMAL(3,2) CHECK (VALUE > 0.00) CHECK (VALUE < 1.00); -- un domaine permettant de créer un type de donnée nombre réel, 2 chiffre aprés la virgule (précision de 6 et une échelle de 2 selon la nomanclature postgres), positif ou égal a zéro
 
 CREATE DOMAIN posrealsup AS DECIMAL(6,2) CHECK (VALUE > 00.00);
+
+/* 
+~	Matches regular expression, case sensitive
+~*	Matches regular expression, case insensitive	
+!~	Does not match regular expression, case sensitive	
+!~*	Does not match regular expression, case insensitive
+!~*	Does not match regular expression, case insensitive
+ */
+ 
 CREATE DOMAIN email AS text -- un domaine (type de donnée) permettant de vérifier la validité d'une adresse email via une regex
 	CHECK (
 
@@ -75,6 +84,14 @@ CREATE DOMAIN text_valid AS text -- un domaine pour les textes valides = mini 2 
     );
 
 
+--//BUG = invalid repetition count(s)
+CREATE DOMAIN urlhttp as text  -- un domaine (type de donnée) permettant de vérifier la validité d'un mot de passe en hash via une regex (fonctionne uniquement avec bcrypt qui commence ces hash de la même maniére)
+CHECK (
+
+		VALUE ~* '^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$'
+				--'^[A-Za-z0-9._%\-+!#$&/=?^|~]+@[A-Za-z0-9.-]+[.][A-Za-z]+$'
+	);
+-- https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)
 
 ------------------------------------------------------------
 -- Table: shop
@@ -318,7 +335,7 @@ CREATE TABLE statut_commande(
 ------------------------------------------------------------
 CREATE TABLE commande(
 	id                 INT  GENERATED ALWAYS AS IDENTITY UNIQUE,
-	reference          text_valid NOT NULL,
+	reference          text_valid UNIQUE NOT NULL,
 	date_achat         timestamptz NOT NULL DEFAULT now(),
 	commentaire        text_valid NOT NULL,
 	updated_date        timestamptz,
@@ -337,7 +354,7 @@ CREATE TABLE commande(
 ------------------------------------------------------------
 CREATE TABLE paiement(
 	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	reference             text_valid NOT NULL,
+	reference             text_valid UNIQUE NOT NULL,
 	methode               text_valid NOT NULL,
 	date_paiement         timestamptz NOT NULL DEFAULT now(),
 	montant               posrealsup  NOT NULL,
@@ -348,23 +365,41 @@ CREATE TABLE paiement(
 
 
 ------------------------------------------------------------
+-- Table: transporteur
+------------------------------------------------------------
+
+CREATE TABLE transporteur(
+	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	nom				    text_valid NOT NULL,
+	description			text_valid NOT NULL,
+	frais_expedition    posreal  NOT NULL,
+	estime_arrive       text_valid,
+	logo				text_valid NOT NULL,
+	created_date        timestamptz NOT NULL DEFAULT now(),
+	updated_date        timestamptz,
+	
+	CHECK (created_date < updated_date)
+
+
+);
+
+------------------------------------------------------------
 -- Table: livraison
 ------------------------------------------------------------
 CREATE TABLE livraison(
 	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	frais_expedition   posreal  NOT NULL,
-	nom_transporteur   text_valid NOT NULL,
-	description		   text_valid NOT NULL,
+	reference			text_valid UNIQUE NOT NULL,
 	numero_suivi       text_valid,
 	URL_suivi          text_valid,
-	poid               posrealsup  NOT NULL,
+	poid               posrealsup  NOT NULL DEFAULT 2, -- en KG
 	created_date        timestamptz NOT NULL DEFAULT now(),
 	updated_date        timestamptz,
-	estime_arrive      text_valid,
+	
 	CHECK (created_date < updated_date),
 
 	id_client            INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
-	id_commande          INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
+	id_commande          INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE,
+	id_transporteur		 INT NOT NULL REFERENCES transporteur(id)
 	
 
 	
@@ -431,7 +466,7 @@ CREATE UNIQUE INDEX only_one_row_with_column_true
 ------------------------------------------------------------
 CREATE TABLE facture(
 	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	reference          text_valid NOT NULL,
+	reference          text_valid UNIQUE NOT NULL,
 	date_facturation   timestamptz NOT NULL DEFAULT now(),
 	montant_HT         posrealsup  NOT NULL,
 	montant_TTC        posrealsup  NOT NULL,

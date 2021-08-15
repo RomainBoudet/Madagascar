@@ -8,6 +8,10 @@ const {
     exec
 } = require("child_process");
 
+const {
+    v4: uuid
+} = require('uuid');
+
 
 
 // 
@@ -474,7 +478,7 @@ const fakeData = async () => {
         for (let index = 1; index <= volume * 5; index++) {
             const commande = {
                 idClient: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
-                ref: `COMMANDE/${9000+index} `, // une ref UNIQUE
+                ref: `COMMANDE/${uuid()} `, // une ref UNIQUE
                 commentaire: faker.lorem.words(),
                 id_commandeStatut: statutCommandePossible[Math.floor(Math.random() * statutCommandePossible.length)],
 
@@ -496,7 +500,7 @@ const fakeData = async () => {
         for (let index = 1; index <= volume * 5; index++) {
             const paiement = {
 
-                ref: `PAIEMENT/${9000+index} `,
+                ref: `PAIEMENT/${uuid()} `,
                 methode: faker.finance.transactionDescription(),
                 montant: faker.finance.amount(),
                 id_client: index,
@@ -515,7 +519,7 @@ const fakeData = async () => {
         consol.seed(`Début de la génération de fake livraisons`);
         console.time(`Génération de ${volume*5} livraisons`);
         const livraisons = [];
-
+        const nbTranporteur = [1, 2, 3, 4];
         const transporteurs = [{
 
                 frais_expedition: 7.20,
@@ -526,12 +530,13 @@ const fakeData = async () => {
                 poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
+
             }, {
                 frais_expedition: 14.00,
                 logo: faker.image.business(),
                 nom_transporteur: "TNT",
                 estime_arrive: "Livraison le lendemain pour toute commande avant 12h00",
-                description: "EXPRESS À DOMICILE POUR UNE LIVRAISON À DOMICILE EN FRANCE MÉTROPOLITAINE. LIVRAISON EN MAINS PROPRES ET CONTRE SIGNATURE DÈS LE LENDEMAIN DE L'EXPÉDITION DE VOTRE COMMANDE (1).(1) AVANT 13 HEURES OU EN DÉBUT D'APRÈS-MIDI EN ZONE RURALE.",
+                description: "Express à domicile pour une livraison à domicile en france métropolitaine. livraison en mains propres et contre signature dès le lendemain de l'expédition de votre commande (1).(1) avant 13 heures ou en début d'après-midi en zone rurale.",
                 poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
@@ -565,6 +570,8 @@ const fakeData = async () => {
                 randomTransport: transporteurs[Math.floor(Math.random() * transporteurs.length)],
                 indexClientCommande: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 idCommande: index,
+                ref: `LIVRAISON/${uuid()}`,
+                idTransporteur: nbTranporteur[Math.floor(Math.random() * nbTranporteur.length)],
 
 
             };
@@ -572,7 +579,7 @@ const fakeData = async () => {
         }
 
         console.timeEnd(`Génération de ${volume*5} livraisons`);
-        console.table(livraisons.randomTransport); // structure => [{randomTransport:{}}]  
+        console.table(livraisons[0].randomTransport); // structure => [{randomTransport:{}}]  
         consol.seed(`Fin de la génération de fake livraisons`);
 
 
@@ -617,7 +624,7 @@ const fakeData = async () => {
         for (let index = 1; index <= volume * 5; index++) {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
-                ref: `FACTURE/${9000+(Math.floor(Math.random() * (5000 - 1 + 1)) + 1)} `,
+                ref: `FACTURE/ ${uuid()}`,
                 montant_HT: randomMontants1[index],
                 montant_TTC: (parseInt(randomMontants1[index]) + (parseInt(randomMontants1[index]) * 0.2)).toFixed(2),
                 montant_TVA: 0.2,
@@ -630,7 +637,7 @@ const fakeData = async () => {
         for (let index = 1; index <= volume * 5; index++) {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
-                ref: `FACTURE/${9000+((Math.floor(Math.random() * (10000 - 5001 + 1)) + 5001))} `,
+                ref: `FACTURE/${uuid()} `,
                 montant_HT: randomMontants2[index],
                 montant_TTC: (parseInt(randomMontants2[index]) + (parseInt(randomMontants2[index]) * 0.2)).toFixed(2),
                 montant_TVA: 0.2,
@@ -643,7 +650,7 @@ const fakeData = async () => {
         for (let index = 1; index <= volume * 5; index++) {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
-                ref: `FACTURE/${9000+((Math.floor(Math.random() * (15000 - 10001 + 1)) + 10001))} `,
+                ref: `FACTURE/${uuid()} `,
                 montant_HT: randomMontants3[index],
                 montant_TTC: (parseInt(randomMontants3[index]) + (parseInt(randomMontants3[index]) * 0.2)).toFixed(2),
                 montant_TVA: 0.2,
@@ -656,7 +663,7 @@ const fakeData = async () => {
         for (let index = 1; index <= volume * 5; index++) {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
-                ref: `FACTURE/${9000+((Math.floor(Math.random() * (20000 - 15001 + 1)) + 15001))} `,
+                ref: `FACTURE/${uuid()} `,
                 montant_HT: randomMontants4[index],
                 montant_TTC: (parseInt(randomMontants4[index]) + (parseInt(randomMontants4[index]) * 0.2)).toFixed(2),
                 montant_TVA: 0.2,
@@ -1292,17 +1299,34 @@ const fakeData = async () => {
         consol.seed(`Fin de l'import de ${paiements.length} paiements`);
         console.timeEnd(`Import de ${paiements.length} paiements`);
 
+        //! TRANPORTEUR 
+
+       
+
+        consol.seed(`Début de l'import de ${transporteurs.length} transporteurs`);
+        console.time(`Import de ${transporteurs.length} transporteurs`);
+        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, logo) VALUES ($1, $2, $3, $4, $5);";
+
+        for (const transporteur of transporteurs) {
+        
+            consol.seed(`Import du livraison pour le client id ${transporteur.nom_transporteur}`);
+            await db.query(transporteursInsert, [transporteur.nom_transporteur, transporteur.description, transporteur.frais_expedition, transporteur.estime_arrive, transporteur.logo]);
+        }
+
+        consol.seed(`Fin de l'import de ${transporteurs.length} transporteurs`);
+        console.timeEnd(`Import de ${transporteurs.length} transporteurs`);
+
 
         //! LIVRAISON
 
 
         consol.seed(`Début de l'import de ${livraisons.length} livraisons`);
         console.time(`Import de ${livraisons.length} livraisons`);
-        const livraisonsInsert = "INSERT INTO mada.livraison (frais_expedition, nom_transporteur, description, numero_suivi, URL_suivi, poid, estime_arrive, id_client, id_commande) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);";
+        const livraisonsInsert = "INSERT INTO mada.livraison (reference, numero_suivi, URL_suivi, poid, id_client, id_commande, id_transporteur) VALUES ($1, $2, $3, $4, $5, $6, $7);";
 
         for (const livraison of livraisons) {
-            consol.seed(`Import du livraison pour le client id ${livraison.indexClientCommande} et l'id commande ${livraison.indexClientCommande}`);
-            await db.query(livraisonsInsert, [livraison.randomTransport.frais_expedition, livraison.randomTransport.nom_transporteur, livraison.randomTransport.description, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.randomTransport.estime_arrive, livraison.indexClientCommande, livraison.idCommande]);
+            consol.seed(`Import du livraison pour le client id ${livraison.indexClientCommande} et l'id commande ${livraison.indexClientCommande} via le transporteur ${livraison.idTransporteur}`);
+            await db.query(livraisonsInsert, [livraison.ref, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.indexClientCommande, livraison.idCommande, livraison.idTransporteur]);
         }
 
 

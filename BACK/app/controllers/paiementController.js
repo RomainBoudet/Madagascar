@@ -68,7 +68,6 @@ const paiementController = {
 
             // et avoir une adresse de livraison définit (et non seulement une adresse de facturation).
             const isEnvoieOk = await Adresse.findByEnvoie(req.session.user.idClient);
-            console.log("(isEnvoieOk ==>> ", isEnvoieOk);
             if(!isEnvoieOk){
                 return res.status(200).json({message: "Pour effectuer un paiement, vous devez avoir enregistré une adresse de livraison en plus de votre adresse de facturation."})
             }

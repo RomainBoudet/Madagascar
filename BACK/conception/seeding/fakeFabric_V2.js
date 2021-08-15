@@ -460,7 +460,7 @@ const fakeData = async () => {
 
         consol.seed(`Début de la génération de fake commandes`);
         console.time(`Génération de ${volume*5} commandes`);
-
+        const statutCommandePossible = [1, 2, 3, 4, 5, 6];
         const arrayNumberVolumeDivideBy2 = Array.from({
             length: volume / 2
         }, (_, i) => i + 1);
@@ -476,7 +476,7 @@ const fakeData = async () => {
                 idClient: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `COMMANDE/${9000+index} `, // une ref UNIQUE
                 commentaire: faker.lorem.words(),
-                id_commandeStatut: index,
+                id_commandeStatut: statutCommandePossible[Math.floor(Math.random() * statutCommandePossible.length)],
 
             };
             commandes.push(commande);
@@ -978,6 +978,10 @@ const fakeData = async () => {
 
         consol.seed(`Fin de la génération de fake adresses`);
 
+        //FLAG                                                                                                                                        
+
+
+
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!IMPORT DES DONNEES EN BDD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // on a générer des fausses des données, ne reste plus qu'a les importer dans la BDD (dans le bon ordre).
@@ -986,13 +990,14 @@ const fakeData = async () => {
 
 
 
+        //FLAG                                                                                                                                        
 
 
 
 
 
 
-
+        //FLAG                                                                                                                                        
 
 
 
@@ -1045,7 +1050,7 @@ const fakeData = async () => {
 
         //! CODE POSTALES
 
-       /*  consol.seed(`Début de l'import de ${volume} code_postales`);
+        /*  consol.seed(`Début de l'import de ${volume} code_postales`);
 
         const zipCodesInsert = "INSERT INTO mada.code_postal (code_postal) VALUES ($1);";
 
@@ -1073,7 +1078,7 @@ const fakeData = async () => {
         //! VILLES
 
 
-      /*   consol.seed(`Début de l'import de ${volume} cities`);
+        /*   consol.seed(`Début de l'import de ${volume} cities`);
 
         const citiesInsert = "INSERT INTO mada.ville (nom, id_pays) VALUES ($1, $2);";
 
@@ -1213,19 +1218,47 @@ const fakeData = async () => {
         console.timeEnd(`Import de ${sous_categories.length} sous_categories`);
 
 
+
+        //FLAG
+
+        /* const statutCommandes = [{
+            nom: 'en attente',
+            description: 'Vous avez choisi le paiement par virement ? Ce statut est normal et n’évoluera qu’à partir du moment où le virement sera réalisé et les fonds reçus sur notre compte.'
+
+        }, {
+            nom: 'annulée',
+            description: "Vous avez choisi d'annuler votre commande ou avez demandé à notre service client de l'annuler ? Vous serez remboursé du montant que vous avez réglé sur le moyen de paiement utilisé.Vous n'avez pas choisi d'annuler votre commande ? Ce statut indique que le paiement en ligne n’a pas abouti (paiement rejeté, coordonnées bancaires non renseignées dans le délai imparti …) Cette commande ne sera pas préparée, vous pouvez faire une nouvelle tentative."
+
+        }, {
+            nom: 'en cours de traitement',
+            description: 'La commande est validée et va être prise en charge par notre équipe de préparation.'
+
+        }, {
+            nom: 'en cours de préparation',
+            description: 'La commande est en cours de préparation par notre équipe logistique.'
+
+        }, {
+            nom: 'prêt pour expédition',
+            description: 'La préparation de votre commande est terminée. Elle sera remise au transporteur dans la journée.'
+
+        }, {
+            nom: 'expédiée',
+            description: "La commande a remis au transporteur. Vous avez dû recevoir un email contenant le numéro de tracking vous permettant de suivre l'acheminement de votre colis. Ce numéro de tracking est également accessible dans votre compte client dans la rubrique Mes commandes / Onglet Expéditions"
+        }] */
+
         //! STATUT_COMMANDE
 
-        consol.seed(`Début de l'import de ${statut_commandes.length} statut_commandes`);
-        console.time(`Import de ${statut_commandes.length} statut_commandes`);
-        const statut_commandesInsert = "INSERT INTO mada.statut_commande (statut, description) VALUES ($1, $2);";
+        consol.seed(`Début de l'import de ${statutCommandes.length} statutCommandes`);
+        console.time(`Import de ${statutCommandes.length} statutCommandes`);
+        const statutCommandesInsert = "INSERT INTO mada.statut_commande (statut, description) VALUES ($1, $2);";
 
-        for (const statut_commande of statut_commandes) {
-            consol.seed(`Import du statut_commande nommé : ${statut_commande.randomStatut.nom}`);
-            await db.query(statut_commandesInsert, [statut_commande.randomStatut.nom, statut_commande.randomStatut.description]);
+        for (const statut_commande of statutCommandes) {
+            consol.seed(`Import du statut_commande nommé : ${statut_commande.nom}`);
+            await db.query(statutCommandesInsert, [statut_commande.nom, statut_commande.description]);
         }
 
-        consol.seed(`Fin de l'import de ${statut_commandes.length} statut_commandes`);
-        console.timeEnd(`Import de ${statut_commandes.length} statut_commandes`);
+        consol.seed(`Fin de l'import de ${statutCommandes.length} statutCommandes`);
+        console.timeEnd(`Import de ${statutCommandes.length} statutCommandes`);
 
 
         //! COMMANDE
@@ -1280,27 +1313,27 @@ const fakeData = async () => {
         //! CLIENT_ADRESSE
 
 
-       /*  consol.seed(`Début de l'import de ${custumers.length*3} adresses client`);
-        console.time(`Import de ${custumers.length*3} adresses client`);
-        const client_adressesInsert = "INSERT INTO mada.client_adresse (prenom, nom_famille, ligne1, telephone, titre, id_client, id_ville) VALUES ($1, $2, $3 ,$4, $5, $6, $7);";
+        /*  consol.seed(`Début de l'import de ${custumers.length*3} adresses client`);
+         console.time(`Import de ${custumers.length*3} adresses client`);
+         const client_adressesInsert = "INSERT INTO mada.client_adresse (prenom, nom_famille, ligne1, telephone, titre, id_client, id_ville) VALUES ($1, $2, $3 ,$4, $5, $6, $7);";
 
-        for (const addressCustumer of custumers) {
-            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.ligne1} avec l'id : ${addressCustumer.id_for_pk}`);
-            await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nom_famille, addressCustumer.ligne1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.id_for_pk, addressCustumer.id_for_pk]);
-        }
-        // Deux fake adresses pour un même client ! :)
+         for (const addressCustumer of custumers) {
+             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.ligne1} avec l'id : ${addressCustumer.id_for_pk}`);
+             await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nom_famille, addressCustumer.ligne1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.id_for_pk, addressCustumer.id_for_pk]);
+         }
+         // Deux fake adresses pour un même client ! :)
 
-        for (const addressCustumer of custumersBis) {
-            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.ligne1} avec l'id : ${addressCustumer.id_for_pk}`);
-            await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nom_famille, addressCustumer.ligne1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.id_for_pk, addressCustumer.id_for_pk]);
-        }
-        for (const addressCustumer of adresses) {
-            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
-            await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.idClient, addressCustumer.idClient]);
-        }
+         for (const addressCustumer of custumersBis) {
+             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.ligne1} avec l'id : ${addressCustumer.id_for_pk}`);
+             await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nom_famille, addressCustumer.ligne1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.id_for_pk, addressCustumer.id_for_pk]);
+         }
+         for (const addressCustumer of adresses) {
+             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+             await db.query(client_adressesInsert, [addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.telephone, addressCustumer.titre, addressCustumer.idClient, addressCustumer.idClient]);
+         }
 
-        consol.seed(`Fin de l'import de ${custumers.length*3} adresses`);
-        console.timeEnd(`Import de ${custumers.length*3} adresses client`); */
+         consol.seed(`Fin de l'import de ${custumers.length*3} adresses`);
+         console.timeEnd(`Import de ${custumers.length*3} adresses client`); */
 
 
 
@@ -1308,27 +1341,27 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de l'import de ${adresses.length *3} adresses`);
-         console.time(`Import de ${adresses.length *3} adresses`);
-         const adressesInsert = "INSERT INTO mada.adresse (titre, prenom, nom_famille, ligne1, code_postal, ville, pays, telephone, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, now(), $9);";
+        console.time(`Import de ${adresses.length *3} adresses`);
+        const adressesInsert = "INSERT INTO mada.adresse (titre, prenom, nom_famille, ligne1, code_postal, ville, pays, telephone, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, now(), $9);";
 
-         for (const addressCustumer of adresses) {
-             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
-             await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
-         }
-         // Deux fake adresses pour un même client ! :)
+        for (const addressCustumer of adresses) {
+            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+        }
+        // Deux fake adresses pour un même client ! :)
 
-         
-         for (const addressCustumer of adressesBis) {
-             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
-             await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
-         }
 
-         for (const addressCustumer of adressesTis) {
-             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
-             await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
-         }
-         consol.seed(`Fin de l'import de ${adresses.length *3} adresses`);
-         console.timeEnd(`Import de ${adresses.length *3} adresses`); 
+        for (const addressCustumer of adressesBis) {
+            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+        }
+
+        for (const addressCustumer of adressesTis) {
+            consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+        }
+        consol.seed(`Fin de l'import de ${adresses.length *3} adresses`);
+        console.timeEnd(`Import de ${adresses.length *3} adresses`);
 
         //! FACTURE
 

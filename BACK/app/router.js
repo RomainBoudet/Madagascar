@@ -421,6 +421,13 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  */
  router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema), adresseController.deleteByIdClient);
 
+ 
+//FLAG
+//! ROUTE LIVRAISONS ---------------------
+
+
+
+
 
   //! ROUTES DEVELOPPEUR ----------------
 

@@ -25,13 +25,12 @@ const authController = {
     login: async (request, response) => {
 
         try {
-          
 
-             if(request.session.user.idClient !== undefined && request.signedCookies.xsrfToken === request.headers['x-xsrf-token'] ){
+              if(request.session.user === undefined && request.signedCookies.xsrfToken === request.headers['x-xsrf-token'] ){
                 
               return response.status(200).json({message: "Vous vous êtes déja authentifié et vos informations de connection sont toujours valide."});
 
-            } 
+            }  
 
             const {
                 email,
@@ -45,7 +44,6 @@ const authController = {
             if (!clientInDb) {
                 return response.status(404).json("Erreur d'authentification : l'email ou le mot de passe est incorrect ");
             }
-
 
             //le user existe et s'est correctement identifié, on stocke les infos qui vont bien dans la session
             request.session.user = {

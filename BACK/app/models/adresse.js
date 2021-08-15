@@ -175,6 +175,35 @@ class Adresse {
     }
 
 
+     /**
+     * Méthode chargé d'aller chercher les informations relatives à un Adresse passé en paramétre
+     * @param id - un id d'un Adresse
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+      static async findByIdClientsansJointure(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.adresse WHERE id_client = $1;',
+            [id]
+        );
+
+        if (!rows[0]) {
+            return null
+        }
+
+        consol.model(
+            `les adresses pour le client id : ${id} ont été demandé en BDD !`
+        );
+
+        return rows.map((adresse) => new Adresse(adresse));
+    }
+
+
     /**
      * Méthode chargé d'aller chercher les informations relatives à un titre d'adresse passé en paramétre
      * @param titre - un titre d'une adresse d'un Adresse

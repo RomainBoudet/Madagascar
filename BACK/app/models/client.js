@@ -181,11 +181,9 @@ class Client {
    */
   static async authenticate(email, password) {
 
-    console.log("email ==> ",email);
     const {
       rows,
     } = await db.query(`SELECT client.*, privilege.nom FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege WHERE client.email = $1;`,[email]);
-    console.log('rows ===>>> ',rows);
     if (!rows[0]) {
       consol.model("Aucun client avec cet email en BDD");
       return null

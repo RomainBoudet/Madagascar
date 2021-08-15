@@ -385,7 +385,6 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
 
  /**
  * Une route pour insérer une adresse
- * route accessible a tous
  * @route POST /client/adresse/new
  * @group utilisateur
  * @summary Insére une nouvelle adresse ***néccésite un mot de passe
@@ -395,7 +394,6 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
 
  /**
  * Une route pour mettre a jour une adresse
- * route accessible a tous
  * @route PATCH /client/adresse/:id
  * @group utilisateur
  * @summary Met a jour une adresse ***néccésite un mot de passe
@@ -405,13 +403,23 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
 
 /**
  * Une route pour supprimer une adresse
- * route accessible a tous
  * @route DELETE /client/adresse/:id
  * @group utilisateur
  * @summary Supprime une adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
- router.delete('/client/adresse/:id(\\d+)', client, validateBody(adresseSchema), adresseController.delete);
+ router.delete('/client/adresse/:id(\\d+)', client, validateBody(passwordSchema), adresseController.delete);
+
+
+/**
+ * Une route pour supprimer toutes les adresses d'un client
+ * route accessible a tous
+ * @route DELETE /client/adresses/:id
+ * @group utilisateur
+ * @summary Supprime des adresses d'un même client ***néccésite un mot de passe
+ * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
+ */
+ router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema), adresseController.deleteByIdClient);
 
 
   //! ROUTES DEVELOPPEUR ----------------

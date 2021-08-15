@@ -423,7 +423,9 @@ CREATE TABLE adresse (
 	id_client         INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
  
-
+CREATE UNIQUE INDEX only_one_row_with_column_true 
+    ON adresse (id_client) WHERE envoie; 
+--la colonne envoie pourra contenir des 'null' ou un seul 'true' (ou un seul 'false').
 
 
 ------------------------------------------------------------

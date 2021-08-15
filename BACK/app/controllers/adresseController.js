@@ -124,6 +124,13 @@ const adresseController = {
             data.envoie = req.body.envoie;
             data.idClient = req.session.user.idClient;
 
+            if (data.ligne2 === '') {
+                data.ligne2 = null;
+            }
+
+            if (data.ligne3 == '') {
+                data.ligne3 = null;
+            }
 
             // On n'accepte que les adresses en France pour cette premiére version de l'API
             // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
@@ -144,7 +151,7 @@ const adresseController = {
             const newAdresse = new Adresse(data);
 
             const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
-
+            console.log("newAddrresse ==> ", newAdresse);
             let resultatAdresse;
             let ligneAdresse;
             let custumer;
@@ -439,7 +446,7 @@ const adresseController = {
 
             } else {
 
-                 await stripe.customers.update(
+                await stripe.customers.update(
                     idClientStripe, {
                         address: {
                             city: resultatAdresse.ville,
@@ -502,10 +509,55 @@ const adresseController = {
             console.log("adresseDelete => ", adresseDelete);
 
 
-            res.status(200).json({message:`l'adresse id ${req.params.id} a bien été supprimé`});
+            res.status(200).json({
+                message: `l'adresse id ${req.params.id} a bien été supprimé`
+            });
 
         } catch (error) {
             console.trace('Erreur dans la méthode delete du AdresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    deleteByIdClient: async (req, res) => {
+
+        try {
+            const {
+                password
+            } = req.body;
+            const clientInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
+
+            if (!clientInDb) {
+                return res.status(401).json({
+                    message: "Erreur d'authentification : vous n'êtes pas autoriser a supprimer votre adresse."
+                });
+            };
+
+
+            //re.params.id doit valoir l'id d'un client !
+            const adressesToDelete = await Adresse.findByIdClientsansJointure(req.params.id);
+
+
+            if (adressesToDelete === null) {
+                return res.status(404).json({
+                    message: "Cette adresse n'existe pas."
+                })
+            };
+
+            if (adressesToDelete[0].idClient !== req.session.user.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
+            await adressesToDelete[0].deleteByIdClient();
+
+            //On renvoit au front le tableau des adresse supprimé, peut êytre pas trés utile... avoir..
+            res.status(200).json(adressesToDelete);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteByidClient du AdresseController :',
                 error);
             res.status(500).json(error.message);
         }

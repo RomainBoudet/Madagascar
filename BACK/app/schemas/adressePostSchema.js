@@ -69,6 +69,7 @@ const adressePostSchema = Joi.object({
     ligne2: Joi.string()
         .max(200)
         .trim()
+        .allow(null, '')
         .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
         .messages({
             'string.max': `Votre adresse doit avoir une longeur maximum de {#limit} caractéres !`,
@@ -78,6 +79,7 @@ const adressePostSchema = Joi.object({
     ligne3: Joi.string()
         .max(200)
         .trim()
+        .allow(null, '')
         .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
         .messages({
             'string.max': `Votre adresse doit avoir une longeur maximum de {#limit} caractéres !`,

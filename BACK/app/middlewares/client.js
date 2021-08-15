@@ -20,7 +20,6 @@ const consol = require('../services/colorConsole');
   
       const cookieXsrfToken = req.signedCookies.xsrfToken;
   
-  
       /* On vérifie que le xsrToken est présent dans les cookies de la session */
       if (!cookieXsrfToken) {
         console.log('Il n\'y a pas de token dans le cookie de session')

@@ -1719,7 +1719,7 @@ router.get('/admin/avisByIdClient/:id(\\d+)', admin, avisController.getByIdClien
  * @summary Insére un nouveau avis
  * @returns {JSON} 200 - Les données d'un nouveau avis inséré
  */
-router.post('/admin/newavis', clean, admin, avisController.new);
+router.post('/admin/newavis', clean, client, avisController.new);
 
 /**
  * Une route pour mette a jour un avis
@@ -1729,7 +1729,7 @@ router.post('/admin/newavis', clean, admin, avisController.new);
  * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
  * @returns {JSON} 200 - Les données d'un nouveau avis mis a jour
  */
-router.patch('/admin/updateAvis/:id(\\d+)', clean, admin, avisController.update);
+router.patch('/admin/updateAvis/:id(\\d+)', clean, client, avisController.update);
 
 /**
  * Une route pour supprimmer un avis
@@ -1739,7 +1739,7 @@ router.patch('/admin/updateAvis/:id(\\d+)', clean, admin, avisController.update)
  * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
  * @returns {JSON} 200 - Les données d'un avis supprimmé
  */
-router.delete('/admin/delAvis/:id(\\d+)', admin, avisController.delete);
+router.delete('/admin/delAvis/:id(\\d+)', client, avisController.delete);
 
 /**
  * Une route pour supprimmer une avis selon son id Client
@@ -1749,7 +1749,7 @@ router.delete('/admin/delAvis/:id(\\d+)', admin, avisController.delete);
  * @param {produit.Model} req.params - les informations d'un avis qu'on doit fournir
  * @returns {JSON} 200 - Les données d'un avis supprimmé
  */
-router.delete('/admin/delAvisByIdClient/:id(\\d+)', admin, avisController.deleteByIdClient);
+router.delete('/admin/delAvisByIdClient/:id(\\d+)', client, avisController.deleteByIdClient);
 
 
 

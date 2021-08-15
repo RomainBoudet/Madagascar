@@ -44,6 +44,12 @@ const avisController = {
         try {
             
             const avis = await Avis.findByIdClient(req.params.id);
+
+            if (req.session.user.privilege === 'Client' && req.session.user.idClient !== avis.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
             res.json(avis);
 
         } catch (error) {
@@ -85,6 +91,12 @@ const avisController = {
             } = req.params;
             
             const updateAvis = await Avis.findOne(id);
+
+            if (req.session.user.privilege === 'Client' && req.session.user.idClient !== updateAvis.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
 
 
             const notation = req.body.notation;
@@ -151,6 +163,12 @@ const avisController = {
 
             const avisInDb = await Avis.findOne(req.params.id);
 
+            if (req.session.user.privilege === 'Client' && req.session.user.idClient !== avisInDb.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
             const avis = await avisInDb.delete();
 
             res.json(avis);
@@ -168,15 +186,17 @@ const avisController = {
         try {
 
             const avissInDb = await Avis.findByIdClient(req.params.id);
-            const arrayDeleted = [];
-            for (const avisInDb of avissInDb) {
 
-                const avisHistoConn = await avisInDb.deleteByIdClient();
-                arrayDeleted.push(avisHistoConn);
-            }
+            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== avissInDb.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+           
+                 await avissInDb[0].deleteByIdClient();
+             
 
-
-            res.json(arrayDeleted[0]);
+            res.json(avissInDb);
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteUByIdAvis du avisController :',

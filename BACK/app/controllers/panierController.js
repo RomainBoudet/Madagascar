@@ -304,8 +304,16 @@ const panierController = {
 
     getOne: async (req, res) => {
         try {
+           
 
             const client = await Panier.findOne(req.params.id);
+
+            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== client.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
             res.status(200).json(client);
 
         } catch (error) {
@@ -357,6 +365,12 @@ const panierController = {
 
             const updateClient = await Panier.findOne(id);
 
+            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== updateClient.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
 
             const total = req.body.total;
             const idClient = req.body.idClient;
@@ -397,6 +411,12 @@ const panierController = {
 
             const clientInDb = await Panier.findOne(req.params.id);
 
+            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== clientInDb.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
             const client = await clientInDb.delete();
 
             res.status(200).json(client);
@@ -414,13 +434,20 @@ const panierController = {
         try {
 
             const clientsInDb = await Panier.findByIdClient(req.params.id);
-            const arrayDeleted = [];
-            for (const clientInDb of clientsInDb) {
 
-                const clientHistoConn = await clientInDb.deleteByIdClient();
-                arrayDeleted.push(clientHistoConn);
-            }
-            res.status(200).json(arrayDeleted[0]);
+
+            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== clientsInDb[0].idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+            
+            
+            await clientsInDb[0].deleteByIdClient();
+            
+            //NOTE
+            //a on vraiment de rendre au front ce qui a été supprimé...?
+            res.status(200).json(clientsInDb);
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteByIdClien du panierController :',

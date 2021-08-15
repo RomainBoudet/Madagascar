@@ -43,7 +43,7 @@ const consol = require('../services/colorConsole');
   
       /* On vérifie que le token CSRF correspond à celui présent dans le JWT  */
       if (headerXsrfToken !== cookieXsrfToken) {
-        console.log('Probléme de token csrf dans le auth MW')
+        console.log(`Probléme de token csrf dans le auth MW, les deux tokens son différent, headerXsrfToken ${headerXsrfToken} et cookieXsrfToken ${cookieXsrfToken}`);
         return res.status(401).json(
           'Vous n\'êtes pas connecté. merci de vous connecter.'
         );

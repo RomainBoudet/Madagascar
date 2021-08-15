@@ -25,12 +25,20 @@ const authController = {
     login: async (request, response) => {
 
         try {
+          
+
+             if(request.session.user.idClient !== undefined && request.signedCookies.xsrfToken === request.headers['x-xsrf-token'] ){
+                
+              return response.status(200).json({message: "Vous vous êtes déja authentifié et vos informations de connection sont toujours valide."});
+
+            } 
 
             const {
                 email,
                 password
             } = request.body;
-            console.log('req.body ==> ', request.body);
+
+
             // On authentifie le user via son email et le password proposé
             const clientInDb = await Client.authenticate(email, password);
             console.log(clientInDb);

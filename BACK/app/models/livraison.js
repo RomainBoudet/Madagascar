@@ -4,17 +4,15 @@ const consol = require('../services/colorConsole');
 class Livraison {
 
     id;
-    fraisExpedition;
-    nomTransporteur;
-    description;
+    reference;
     numeroSuivi;
     URLSuivi;
     poid;
-    createdDate;
-    updatedDate;
-    estimeArrive;
     idClient;
     idCommande;
+    idTransporteur;
+    createdDate;
+    updatedDate;
 
     set frais_expedition(val) {
         this.fraisExpedition = val;
@@ -45,6 +43,9 @@ class Livraison {
     }
     set id_commande(val) {
         this.idCommande = val;
+    }
+    set id_transporteur(val) {
+        this.idTransporteur = val;
     }
 
 
@@ -137,6 +138,35 @@ class Livraison {
         return rows.map((id) => new Livraison(id));
     }
 
+
+     /**
+     * Méthode chargé d'aller chercher les informations relatives à un idLivraison passé en paramétre
+     * @param idClient - un idLivraison d'une livraison
+     * @returns - les informations d'une livraison demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+      static async findByIdTransporteur(idTransporteur) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.livraison WHERE livraison.id_transporteur = $1;',
+            [idTransporteur]
+        );
+
+        if (!rows[0]) {
+            throw new Error("Aucune livraison avec cet idTransporteur");
+        }
+
+        consol.model(
+            `la ou les livraisons avec l'idTransporteur : ${idTransporteur} ont été demandé en BDD !`
+        );
+
+        return rows.map((id) => new Livraison(id));
+    }
+
     /**
      * Méthode chargé d'aller chercher les informations relatives à un idLivraison passé en paramétre
      * @param idCommande - un identifiant d'une commande lié a une livraison
@@ -167,16 +197,13 @@ class Livraison {
 
     /**
      * Méthode chargé d'aller insérer les informations relatives à une livraison passé en paramétre
-     * @param fraisExpedition - les frais d'expédition d'une livraison
-     * @param nomTransporteur - le nom du transporteur de la livraison
-     * @param description
      * @param numeroSuivi
      * @param URLSuivi
      * @param poid
      * @param createdDate
-     * @param estimeArrive
      * @param idClient
      * @param idCommande
+     * @param idTransporteur
      * @returns - les informations d'une livraison qui viennent d'être inséreés
      * @async - une méthode asynchrone
      */
@@ -185,29 +212,26 @@ class Livraison {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.livraison (frais_expedition, nom_transporteur, description, numero_suivi, URL_suivi, poid, estime_arrive, id_client, id_commande) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;`,
-            [this.fraisExpedition, this.nomTransporteur, this.description, this.numeroSuivi, this.URLSuivi, this.poid, this.estimeArrive, this.idClient, this.idCommande]
+            `INSERT INTO mada.livraison (reference, numero_suivi, URL_suivi, poid, created_date, id_client, id_commande, id_transporteur) VALUES ($1, $2, $3, $4, now(), $5, $6, $7) RETURNING *;`,
+            [ this.reference, this.numeroSuivi, this.URLSuivi, this.poid, this.idClient, this.idCommande, this.idTransporteur]
         );
 
         this.id = rows[0].id;
         this.createdDate = rows[0].created_date;
         consol.model(
-            `la livraison id ${this.id} a été inséré à la date du ${this.createdDate} avec comme nom de transporteur ${this.nomTransporteur} !`
+            `la livraison id ${this.id} a été inséré à la date du ${this.createdDate} avec comme reference ${this.reference} !`
         );
     }
 
     /**
      * Méthode chargé d'aller mettre à jour les informations relatives à une livraison passé en paramétre
-     * @param fraisExpedition - les frais d'expédition d'une livraison
-     * @param nomTransporteur - le nom du transporteur de la livraison
-     * @param description
      * @param numeroSuivi
      * @param URLSuivi
      * @param poid
      * @param createdDate
-     * @param estimeArrive
      * @param idClient
      * @param idCommande
+     * @param idTransporteur
      * @param id - l'identifiant du champs a mettre a jour
      * @returns - les informations du livraison mis à jour
      * @async - une méthode asynchrone
@@ -216,12 +240,12 @@ class Livraison {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.livraison SET frais_expedition = $1, nom_transporteur = $2, description = $3, numero_suivi = $4, URL_suivi = $5, poid = $6, updated_date = now(), estime_arrive = $7, id_client = $8, id_commande = $9  WHERE id = $10 RETURNING *;`,
-            [this.fraisExpedition, this.nomTransporteur, this.description, this.numeroSuivi, this.URLSuivi, this.poid, this.estimeArrive, this.idClient, this.idCommande, this.id]
+            `UPDATE mada.livraison SET reference = $1, numero_suivi = $2, URL_suivi = $3, poid = $4, updated_date = now(), id_client = $5, id_commande = $6, id_transporteur = $7  WHERE id = $8 RETURNING *;`,
+            [this.reference, this.numeroSuivi, this.URLSuivi, this.poid, this.idClient, this.idCommande, this.idTransporteur, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(
-            `la livraison id ${this.id} avec le nom du transporteur ${this.nomTransporteur} pour le client id ${this.idClient} et la commande ${this.idCommande} a été mise à jour le ${this.updatedDate} !`
+            `la livraison id ${this.id} avec comme reference${this.reference} pour le client id ${this.idClient} et la commande ${this.idCommande} via le transporteur ${this.idTransporteur} a été mise à jour le ${this.updatedDate} !`
         );
     }
 
@@ -229,7 +253,7 @@ class Livraison {
 
 
     /**
-     * Méthode chargé d'aller supprimer une livraison passé en paramétre
+     * Méthode chargé d'aller supprimer un transporteur passé en paramétre
      * @param id - l'id d'une livraison
      * @async - une méthode asynchrone
      */

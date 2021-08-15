@@ -1,4 +1,5 @@
 const Paiement = require('../models/paiement');
+const Adresse = require('../models/adresse');
 const Shop = require('../models/shop');
 const {
     formatLong
@@ -53,16 +54,23 @@ const paiementController = {
             // été authentifié
             if (!req.session.user) {
                 console.log("Le client ne s'est pas authentifié !")
-                return res.status(200).json("Merci de vous connecter  afin de finaliser votre paiement.")
+                return res.status(200).json({message: "Merci de vous connecter afin de finaliser votre paiement."})
             }
             // avoir accepté les CGV
             if (req.session.user.cgv !== 'true') {
                 console.log("Les Conditions Générales de Ventes n'ont pas été accéptés.")
-                return res.status(200).json("Les Conditions Générales de Ventes n'ont pas été accéptés. Merci de les accéptés afin de finaliser votre paiement.")
+                return res.status(200).json({message: "Les Conditions Générales de Ventes n'ont pas été accéptés. Merci de les accéptés afin de finaliser votre paiement."})
             }
             // avoir un montant de panier supérieur a 0.
             if (req.session.totalTTC == 0 || req.session.totalTTC === undefined) {
-                return res.status(200).json("Pour effectuer un montant vous devez avoir des articles dans votre panier.")
+                return res.status(200).json({message: "Pour effectuer un paiement vous devez avoir des articles dans votre panier."})
+            }
+
+            // et avoir une adresse de livraison définit (et non seulement une adresse de facturation).
+            const isEnvoieOk = await Adresse.findByEnvoie(req.session.user.idClient);
+            console.log("(isEnvoieOk ==>> ", isEnvoieOk);
+            if(!isEnvoieOk){
+                return res.status(200).json({message: "Pour effectuer un paiement, vous devez avoir enregistré une adresse de livraison en plus de votre adresse de facturation."})
             }
 
             const articles = [];
@@ -121,10 +129,10 @@ const paiementController = {
               // Call stripe.confirmCardPayment() with the client secret.
             }); */
 
-           // console.log("req.session  =>", req.session);
+            // console.log("req.session  =>", req.session);
 
 
-        
+
 
 
 

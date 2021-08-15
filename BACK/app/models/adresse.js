@@ -442,8 +442,8 @@ class Adresse {
     }
 
     /**
-     * Méthode chargé d'aller chercher les informations relatives à un titre d'adresse passé en paramétre
-     * @param titre - un titre d'une adresse d'un Adresse
+     * Méthode chargé d'aller chercher les informations relatives à un id client passé en paramétre
+     * @param id - un id d'un client
      * @returns - les informations du Adresse demandées
      * @static - une méthode static
      * @async - une méthode asynchrone

@@ -402,7 +402,7 @@ CREATE UNIQUE INDEX only_one_row_with_column_true
 ------------------------------------------------------------
 -- Table: adresse (test sans 3NF)
 ------------------------------------------------------------
- CREATE TABLE adresse(
+CREATE TABLE adresse (
 	id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	titre             text_valid NOT NULL,
 	prenom            text_valid NOT NULL,

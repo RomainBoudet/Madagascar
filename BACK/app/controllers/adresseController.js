@@ -110,10 +110,6 @@ const adresseController = {
             }
 
             const data = {};
-            const data2 = {};
-            const data3 = {};
-            const data4 = {};
-            const data5 = {};
 
             data.titre = req.body.titre;
             data.prenom = req.body.prenom;
@@ -127,6 +123,7 @@ const adresseController = {
             data.telephone = req.body.telephone;
             data.envoie = req.body.envoie;
             data.idClient = req.session.user.idClient;
+
 
             // On n'accepte que les adresses en France pour cette premiére version de l'API
             // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
@@ -144,20 +141,22 @@ const adresseController = {
 
             }
 
-
             const newAdresse = new Adresse(data);
 
-            const idClientStripe = await redis.get(`mada:clientStripe:${req.session.user.email}`);
+            const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
 
             let resultatAdresse;
             let ligneAdresse;
             let custumer;
+
 
             if (req.body.envoie && req.body.envoie === 'true') {
 
                 //NOTE 
                 // Si la valeur TRUE signifiant qu'une adresse de livraison existe déja en BDD, on supprime l'ancienne valeur true pour pouvoir en insérer une nouvelle.
                 const envoiIsTrue = await Adresse.findByEnvoie(req.session.user.idClient)
+
+
                 if (envoiIsTrue) {
                     await envoiIsTrue.envoieNull();
                 }
@@ -221,9 +220,6 @@ const adresseController = {
                 );
             }
 
-
-            console.log("resultatAdresse ==> ", resultatAdresse);
-
             const resultatsToSend = {
                 idClient: resultatAdresse.idClient,
                 idAdresse: resultatAdresse.id,
@@ -269,7 +265,6 @@ const adresseController = {
 
             const updateClient = await Adresse.findOneForUpdate(id);
 
-            console.log("updateClient ==>> ", updateClient);
 
             if (updateClient === null) {
                 return res.status(404).json({
@@ -390,15 +385,8 @@ const adresseController = {
                 userMessage.codePostal = 'Votre codePostal n\'a pas changé';
             }
 
-            //LOG 
-            console.log("updateClient a la fin avant insertion ==>> ", updateClient);
-
             const myUpdate = new Adresse(updateClient);
-            console.log("myUpdate  ==>> ", myUpdate);
             const resultatAdresse = await myUpdate.update();
-
-            //LOG     
-            console.log(" resultatAdresse  ==>> ", resultatAdresse);
 
 
             let ligneAdresse;
@@ -409,8 +397,7 @@ const adresseController = {
             }
 
             // j'update les info de mon client dans STRIPE au passage...
-            const idClientStripe = await redis.get(`mada:clientStripe:${req.session.user.email}`);
-            let custumer;
+            const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
             if (envoie && envoie === 'true') {
 
                 //NOTE 
@@ -421,9 +408,9 @@ const adresseController = {
                     console.log("on passe !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     await envoiIsTrue.envoieNull();
                 }
+                console.log("idClientStripe ==> ", idClientStripe);
 
-
-                custumer = await stripe.customers.update(
+                await stripe.customers.update(
                     idClientStripe, {
                         address: {
                             city: resultatAdresse.ville,
@@ -452,7 +439,7 @@ const adresseController = {
 
             } else {
 
-                custumer = await stripe.customers.update(
+                 await stripe.customers.update(
                     idClientStripe, {
                         address: {
                             city: resultatAdresse.ville,
@@ -467,14 +454,11 @@ const adresseController = {
                 );
             }
 
-
-            console.log("customer  STRIPE  ==>> ", customer);
-
-
             res.status(200).json(userMessage);
 
         } catch (error) {
-            console.log(`Erreur dans la méthode updateClientAdress du clientAdresseController : ${error.message}`);
+            console.trace(error);
+            console.log(`Erreur dans la méthode updateAdress du adresseController : ${error.message}`);
             res.status(500).json(error.message);
         }
     },
@@ -511,14 +495,6 @@ const adresseController = {
                 })
             };
 
-
-
-            //BUG
-            ///ici une suppression en cascade avec toutes les adresses d'un client qui sont supprimé d'un coup ! 
-
-
-
-            // ordre a tester => inverse que l'update ! Liaison => CP => Ville => Pays => adresse
             console.log("fullAdresseInDbForId => ", fullAdresseInDbForId);
 
             const adresseInDb = await Adresse.findOne(req.params.id);
@@ -526,31 +502,10 @@ const adresseController = {
             console.log("adresseDelete => ", adresseDelete);
 
 
-            const liaisonInDb = await LiaisonVilleCodePostal.findOne(fullAdresseInDbForId.idLiaisonVilleCodePostal);
-            await liaisonInDb.delete();
-            console.log("liaisonInDb =>", liaisonInDb);
-
-            const codePostalInDb = await ClientCodePostal.findOne(fullAdresseInDbForId.idCodePostal);
-            await codePostalInDb.delete();
-            console.log("codePostalInDb => ", codePostalInDb);
-
-
-            /*  const paysInDb = await ClientPays.findOne(fullAdresseInDbForId.idPays);
-            await paysInDb.delete();
-            console.log("paysInDb => ", paysInDb);
-            
-          
-
-            const villeInDb = await ClientVille.findOne(fullAdresseInDbForId.idVille);
-            await villeInDb.delete();
-            console.log("villeInDb => ", villeInDb); */
-
-
-
-            res.status(200).json(`l'adresse id ${req.params.id} a bien été supprimé`);
+            res.status(200).json({message:`l'adresse id ${req.params.id} a bien été supprimé`});
 
         } catch (error) {
-            console.trace('Erreur dans la méthode delete du clientAdresseController :',
+            console.trace('Erreur dans la méthode delete du AdresseController :',
                 error);
             res.status(500).json(error.message);
         }

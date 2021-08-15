@@ -176,10 +176,10 @@ const clientController = {
             console.log("custumer dans le clientController, creation du client STRIPE ==>> ", custumer);
 
             //et je stock le custumer id dans redis pour y avoir accés quand je veux en fournissant la clé (l'email de l'utilisateur) adéquat.
-            await redis.set(`mada:clientStripe:${user.email}`, custumer.id);
+            await redis.set(`mada/clientStripe:${user.email}`, custumer.id);
 
             //NOTE
-            //via le script seed, a chaque redémarrage de nodemon les clés commençant par "mada:" sont éffacé dns REDIS.
+            //via le script start ET a chaque redémarrage de nodemon, les clés REDIS commençant par "mada:", composante du 'cache' et du 'fluch' sont éffacé dans REDIS (pour coller a l'index). Celle pour les id client STRIPE ne sont pas soumis a cette effacage avec la clé mada/.
 
             //! on envoie un message de bienvenue par email
 
@@ -366,7 +366,7 @@ const clientController = {
 
 
             // Petit update du client STRIPE dans la foulée..
-            const idClientStripe = await redis.get(`mada:clientStripe:${req.session.user.email}`);
+            const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
             console.log("idClientStripe  =>> ", idClientStripe);
             console.log('req.seesion.user => ', req.session.user);
             const custumer = await stripe.customers.update(
@@ -381,8 +381,8 @@ const clientController = {
             // et j'update la clé 'mada/clientStripe:email' dans REDIS et en session si changement de l'email vérifié
             if (email && email !== oldEmail && (validator.isEmail(email) === true)) {
                 console.log("on passe dans le update REDIS !");
-                await redis.set(`mada:clientStripe:${newUser.email}`, idClientStripe);
-                await redis.del(`mada:clientStripe:${req.session.user.email}`);
+                await redis.set(`mada/clientStripe:${newUser.email}`, idClientStripe);
+                await redis.del(`mada/clientStripe:${req.session.user.email}`);
                 req.session.user.email = newUser.email;
             }
 

@@ -354,9 +354,6 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
   router.delete('/admin/user', admin, validateBody(userLoginSchema), clientController.deleteByEmail);
 
 //! ADRESSE DES CLIENT -----------------------------------
-//NOTE                                                                                                                                             
-//NOTE                                                                                                                                             
-
 
 /**
  * Renvoie toutes les adresses des clients en bdd 
@@ -416,8 +413,6 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  */
  router.delete('/client/adresse/:id(\\d+)', client, validateBody(adresseSchema), adresseController.delete);
 
-
- //NOTE                                                                                                                                     
 
   //! ROUTES DEVELOPPEUR ----------------
 

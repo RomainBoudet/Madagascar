@@ -5,7 +5,7 @@ class Adresse {
 
 
     id;
-    titre
+    titre;
     prenom;
     nomFamille;
     ligne1;
@@ -19,6 +19,7 @@ class Adresse {
     createdDate;
     updatedDate;
     idClient;
+    
 
 
 
@@ -41,7 +42,7 @@ class Adresse {
         this.idClient = val;
     }
 
-    set adresse_titre(val) {
+   /*  set adresse_titre(val) {
         this.adresseTitre = val;
     }
 
@@ -55,7 +56,7 @@ class Adresse {
 
     set id_adresse(val) {
         this.idAdresse = val;
-    }
+    } */
 
     /**
      * @constructor
@@ -130,7 +131,7 @@ class Adresse {
         const {
             rows,
         } = await db.query(
-            'SELECT * FROM mada.view_adresse WHERE id_adresse = $1;',
+            'SELECT * FROM mada.adresse WHERE id = $1;',
             [id]
         );
 
@@ -338,16 +339,16 @@ class Adresse {
      * @param ligne3 - ligne de l'adresse
      * @param telephone - le téléphone d'un client pour le transporteur
      * @param titre - le titre d'une adresse d'un client
+     * @param ville -
+     * @param pays -
+     * @param codePostal -
      * @param idClient - l'identifiant d'un client
-     * @param idVille - l'identifiant d'une ville 
      * @param id - l'identifiant d'une adresse a modifié
      * @returns - les informations du Adresse mis à jour
      * @async - une méthode asynchrone
      */
-    async update() {
-        //BUG 
-        //aucun update rendu !!
-        console.log("this =====>>>>>> ",this);
+      async update() {
+       
         const {
             rows,
         } = await db.query(
@@ -356,35 +357,14 @@ class Adresse {
         );
         console.log("rows dans le model ==>> ", rows);
 
-        //this.updatedDate = rows[0].updated_date;
+        this.updatedDate = rows[0].updated_date;
          console.log(
             `l'adresse id : ${this.id} du client id ${this.idClient}, avec le nom ${this.prenom} ${this.nomFamille} a été mise à jour le ${this.updatedDate}  !`
         );
         return new Adresse(rows[0]);
 
 
-    }
-   /*  async test() {
-        //BUG 
-        //aucun update rendu !!
-        console.log("this =====>>>>>> ",this);
-        const {
-            rows,
-        } = await db.query(
-            `UPDATE mada.adresse SET titre = $1 WHERE id = $2 RETURNING *;`,
-            [this.titre, this.id]
-        );
-        console.log("rows dans le model ==>> ", rows);
-
-        //this.updatedDate = rows[0].updated_date;
-         console.log(
-            `l'adresse id : ${this.id}  !`
-        );
-        return new Adresse(rows[0]);
-
-
-    } */
-
+    }    
 
 
     /**
@@ -420,8 +400,9 @@ class Adresse {
             rows,
         } = await db.query(
             `UPDATE mada.adresse SET envoie = NULL WHERE id = $1 RETURNING *;`,
-            [this.idAdresse]
+            [this.id]
         );
+        console.log('rows ==>> ', rows);
         this.envoie = rows[0].envoie;
         console.log(
             `La valeur envoie du le Adresse id : ${this.id} a été passé a ${this.envoie} avec succés !`
@@ -444,7 +425,7 @@ class Adresse {
         const {
             rows,
         } = await db.query(
-            'SELECT * FROM mada.view_adresse WHERE id_client = $1  AND envoie = TRUE ;',
+            'SELECT * FROM mada.adresse WHERE id_client = $1  AND envoie = TRUE ;',
             [id]
         );
 

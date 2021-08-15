@@ -15,7 +15,7 @@ const Joi = require('joi');
  * @property {string} email - l'adresse email d'un utilisateur doit correspondre a un format valide.
  * @return {json} messages - Un texte adapté en cas d'érreur, en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
-const adressePostSchema = Joi.object().keys({
+const adressePostSchema = Joi.object({
     password: Joi.string()
         //.pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/)) => je veux tomber sur l'érreur d'authentification..
         .required()
@@ -74,6 +74,7 @@ const adressePostSchema = Joi.object().keys({
             'string.max': `Votre adresse doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.pattern.base': 'Le format de votre adresse est incorrect',
         }),
+
     ligne3: Joi.string()
         .max(200)
         .trim()

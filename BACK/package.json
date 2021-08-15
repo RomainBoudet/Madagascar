@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js ",
+    "start": "npm run clearRedis && nodemon index.js ",
     "k": "sudo kill -9 $(sudo lsof -t -i:3000)",
-    "seed": "npm run clearRedis && cd conception/seeding && node fakeFabric_V2.js",
+    "seed": "cd conception/seeding && node fakeFabric_V2.js",
     "test": "mocha",
     "clearRedis": "redis-cli --scan --pattern 'mada:*' | xargs redis-cli DEL"
   },

@@ -267,6 +267,11 @@ const clientController = {
                 nomFamille,
                 email,
             } = req.body;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const oldEmail = userIdinDb.email; // on l'utilisera ultérieurement pour un envoi d'email...
             let message = {};
 

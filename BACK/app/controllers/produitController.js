@@ -133,6 +133,10 @@ const produitController = {
                 id
             } = req.params;
 
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const updateProduit = await Produit.findOne(id);
 
 
@@ -293,6 +297,10 @@ const produitController = {
                 id
             } = req.params;
 
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const updateProduit = await Caracteristique.findOne(id);
 
 
@@ -448,6 +456,10 @@ const produitController = {
                 id
             } = req.params;
 
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const updateProduit = await Stock.findOne(id);
 
 
@@ -574,6 +586,10 @@ const produitController = {
                 id
             } = req.params;
 
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const updateProduit = await Fournisseur.findOne(id);
 
 
@@ -681,6 +697,10 @@ const produitController = {
                 id
             } = req.params;
 
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const updateClient = await Fournie.findOne(id);
 
             const idFournisseur = req.body.idFournisseur;
@@ -784,6 +804,10 @@ const produitController = {
                 id
             } = req.params;
 
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
             const updateProduit = await Reduction.findOne(id);
 
 
@@ -906,6 +930,10 @@ const produitController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
 
             const updateProduit = await Tva.findOne(id);
 
@@ -1042,6 +1070,10 @@ const produitController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
 
             const updateProduit = await Image.findOne(id);
 
@@ -1188,6 +1220,10 @@ const produitController = {
                 id
             } = req.params;
 
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const updateProduit = await Categorie.findOne(id);
 
 
@@ -1307,6 +1343,10 @@ const produitController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
 
             const updateSousCategorie = await SousCategorie.findOne(id);
 
@@ -1443,6 +1483,10 @@ const produitController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
 
             const updateProduit = await SsCatImage.findOne(id);
 
@@ -1592,6 +1636,10 @@ const produitController = {
             const {
                 id
             } = req.params;
+            
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
 
             const updateProduit = await CategorieImage.findOne(id);
 

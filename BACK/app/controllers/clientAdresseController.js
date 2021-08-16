@@ -301,6 +301,11 @@ const clientAdresseController = {
             const {
                 password
             } = req.body;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+            
             const clientInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
 
             if (!clientInDb) {

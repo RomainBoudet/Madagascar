@@ -373,6 +373,10 @@ const panierController = {
                 id
             } = req.params;
 
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const updateClient = await Panier.findOne(id);
 
             if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== updateClient.idClient) {

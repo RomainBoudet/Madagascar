@@ -79,6 +79,10 @@ const mainController = {
         id
       } = req.params;
 
+      if (Object.keys(req.body).length === 0) {
+        return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+    }
+
       const updateClient = await Shop.findOne(id);
 
       const nom = req.body.nom;

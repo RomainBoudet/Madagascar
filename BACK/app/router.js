@@ -54,6 +54,7 @@ const adresseSchema = require('./schemas/adresseSchema');
 const adressePostSchema = require('./schemas/adressePostSchema');
 const passwordSchema = require('./schemas/passwordOnlySchema');
 const transporteurSchema = require('./schemas/transporteurShema');
+const transporteurPostSchema = require('./schemas/transporteurPostSchema');
 
 
 //Redis pour le cache
@@ -441,9 +442,16 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  * @summary Insére un nouveau transporteur 
  * @returns {JSON} 200 - Les données du nouveau transporteur inséré
  */
- router.post('/admin/transporteur/new', admin, validateBody(transporteurSchema), livraisonController.newTransporteur);
+ router.post('/admin/transporteur/new', admin, validateBody(transporteurPostSchema), livraisonController.newTransporteur);
 
-
+/**
+ * Une route pour mettre a jour un transporteur
+ * @route POST /admin/transporteur/new
+ * @group Administrateur
+ * @summary Met a jour un nouveau transporteur 
+ * @returns {JSON} 200 - Les données du nouveau transporteur mis a jour
+ */
+ router.patch('/admin/transporteurs/:id(\\d+)', admin, validateBody(transporteurSchema), livraisonController.updateTransporteur);
 
 //FLAG
 //! ROUTE LIVRAISONS ----------------------------

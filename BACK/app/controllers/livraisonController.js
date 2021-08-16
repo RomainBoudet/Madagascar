@@ -20,7 +20,7 @@ const livraisonController = {
         try {
             const livraisons = await Livraison.findAll();
 
-            livraisons.map( livraison => livraison.poid = Number(livraison.poid));
+            livraisons.map(livraison => livraison.poid = Number(livraison.poid));
 
             res.status(200).json(livraisons);
         } catch (error) {
@@ -210,6 +210,10 @@ const livraisonController = {
                 id
             } = req.params;
 
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const updateLivraison = await Livraison.findOne(id);
 
             const reference = req.body.reference;
@@ -292,7 +296,12 @@ const livraisonController = {
                 id
             } = req.params;
 
-            const updateTransporteur = await Transporteur.findOne(id);
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
+                const updateTransporteur = await Transporteur.findOne(id);
+
 
             const nom = req.body.nom;
             const description = req.body.description;
@@ -353,6 +362,10 @@ const livraisonController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
 
             const updateLivraison = await LigneLivraison.findOne(id);
 

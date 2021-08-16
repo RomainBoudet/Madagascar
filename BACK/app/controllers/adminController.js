@@ -475,6 +475,10 @@ const adminController = {
                 id
             } = req.params;
 
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
+
             const updateClient = await Twillio.findOne(id);
 
             const twillioNumber = req.body.twillioNumber;
@@ -841,6 +845,10 @@ const adminController = {
             const {
                 id
             } = req.params;
+            
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
 
             const updateClient = await AdminVerifEmail.findByIdClient(id);
             console.log(updateClient);

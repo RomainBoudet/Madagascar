@@ -186,6 +186,10 @@ const commandeController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
             
             const updateCommande = await Commande.findOne(id);
 
@@ -244,6 +248,10 @@ const commandeController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
             
             const updateCommande = await LigneCommande.findOne(id);
 
@@ -296,6 +304,10 @@ const commandeController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
             
             const updateCommande = await StatutCommande.findOne(id);
 
@@ -480,6 +492,10 @@ const commandeController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
             
             const updateCommande = await ProduitRetour.findOne(id);
 

@@ -84,6 +84,10 @@ const factureController = {
             const {
                 id
             } = req.params;
+
+            if (Object.keys(req.body).length === 0) {
+                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+            }
             
             const updateFacture = await Facture.findOne(id);
 

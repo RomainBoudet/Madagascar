@@ -49,7 +49,7 @@ class Transporteur {
     } = await db.query('SELECT * FROM mada.transporteur ORDER BY transporteur.id ASC');
 
     if (!rows[0]) {
-      throw new Error("Aucun transporteur dans la BDD");
+      return null;
     }
     consol.model(
       `les informations des ${rows.length} transporteurs ont été demandé !`

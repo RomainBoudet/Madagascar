@@ -1,8 +1,9 @@
 const Panier = require('../models/panier');
 const LignePanier = require('../models/lignePanier');
 const Produit = require('../models/produit');
-
-
+const {
+    arrondi
+} = require('../services/arrondi');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Panier pour les intéractions avec la BDD 
@@ -18,18 +19,19 @@ const panierController = {
     getPanier: async (req, res) => {
 
         try {
+            //NOTE
             //req.session.panierViewCount = (req.session.panierViewCount || 0) + 1;
 
             const cart = req.session.cart;
 
-            let totalHT = 0;
-            let totalTTC = 0;
+           // let totalHT = 0;
+           // let totalTTC = 0;
             let coutTransporteurDefault = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
 
             if (cart) {
 
                 //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier. Si la réduction est de 0, cette valeur sera identique au prix...
-                cart.map(article => article.prixHTAvecReduc = parseFloat((article.prix * (1 - article.reduction)).toFixed(2)));
+                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi(article.prix * (1 - article.reduction))));
 
                 totalHT1 = cart.reduce(
                     (accumulator, item) => {
@@ -50,18 +52,24 @@ const panierController = {
                     }, 0
                 );
                 // pour que mes valeur dans le json soit bien des chiffre ne dépassant pas deux chiffres aprés la virgule.
-                const totalHT = parseFloat(totalHT1.toFixed(2));
-                const totalTTC = parseFloat(totalTTC1.toFixed(2));
-                const totalTVA = parseFloat(totalTVA1.toFixed(2));
+                const totalHT = Number(arrondi(totalHT1));
+                const totalTTC = Number(arrondi(totalTTC1));
+                const totalTVA = Number(arrondi(totalTVA1));
+
+                //NOTE
+                //UPDATE
+                // A sa création .toFixed() semblait troncquer et non arrondir  ATENTION
+                // la bonne maniére de reduire a 2 chiffre apres la virgule ==> (Math.round(number * 100)/100).toFixed(2);
 
                 //Je les stock en session au cas ou j'en ai besoin plus tard.
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
                 req.session.coutTransporteurDefault = coutTransporteurDefault;
+
+
                 //! ATTENTION avec le .toFixed()  ==>> 0.1 + 0.2 === 0.3 returning false car Les nombres à virgule flottante ne peuvent pas représenter toutes les décimales avec précision en binaire
                 req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteurDefault * 100); // je convertit en centimes et Entier pour STRIPE
-                
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,
@@ -146,7 +154,7 @@ const panierController = {
             if (cart) {
 
                 //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier. Si la réduction est de 0, cette valeur sera identique au prix...
-                cart.map(article => article.prixHTAvecReduc = parseFloat((article.prix * (1 - article.reduction)).toFixed(2)));
+                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi(article.prix * (1 - article.reduction))));
 
                 totalHT1 = cart.reduce(
                     (accumulator, item) => {
@@ -166,19 +174,20 @@ const panierController = {
                         return (accumulator || 0) + ((item.prixHTAvecReduc * parseFloat(item.tva)) * item.quantite)
                     }, 0
                 );
-                // pour que mes valeur dans le json soit bien des chiffre ne dépassant pas deux chiffres aprés la virgule.
-                const totalHT = parseFloat(totalHT1.toFixed(2));
-                const totalTTC = parseFloat(totalTTC1.toFixed(2));
-                const totalTVA = parseFloat(totalTVA1.toFixed(2));
+                // pour que mes valeur dans le json soit bien des chiffres ne dépassant pas deux chiffres aprés la virgule.
+                const totalHT = Number(arrondi(totalHT1));
+                const totalTTC = Number(arrondi(totalTTC1));
+                const totalTVA = Number(arrondi(totalTVA1));
 
                 //Je les stock en session au cas ou j'en ai besoin plus tard.
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
                 req.session.coutTransporteurDefault = coutTransporteurDefault;
+
+
                 //! ATTENTION avec le .toFixed()  ==>> 0.1 + 0.2 === 0.3 returning false car Les nombres à virgule flottante ne peuvent pas représenter toutes les décimales avec précision en binaire
                 req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteurDefault * 100); // je convertit en centimes et Entier pour STRIPE
-
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,
@@ -234,7 +243,7 @@ const panierController = {
             if (cart) {
 
                 //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier. Si la réduction est de 0, cette valeur sera identique au prix...
-                cart.map(article => article.prixHTAvecReduc = parseFloat((article.prix * (1 - article.reduction)).toFixed(2)));
+                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi(article.prix * (1 - article.reduction))));
 
                 totalHT1 = cart.reduce(
                     (accumulator, item) => {
@@ -254,19 +263,20 @@ const panierController = {
                         return (accumulator || 0) + ((item.prixHTAvecReduc * parseFloat(item.tva)) * item.quantite)
                     }, 0
                 );
-                // pour que mes valeur dans le json soit bien des chiffre ne dépassant pas deux chiffres aprés la virgule.
-                const totalHT = parseFloat(totalHT1.toFixed(2));
-                const totalTTC = parseFloat(totalTTC1.toFixed(2));
-                const totalTVA = parseFloat(totalTVA1.toFixed(2));
+                // pour que mes valeur dans le json soit bien des chiffres ne dépassant pas deux chiffres aprés la virgule.
+                const totalHT = Number(arrondi(totalHT1));
+                const totalTTC = Number(arrondi(totalTTC1));
+                const totalTVA = Number(arrondi(totalTVA1));
 
                 //Je les stock en session au cas ou j'en ai besoin plus tard.
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
                 req.session.coutTransporteurDefault = coutTransporteurDefault;
+
+
                 //! ATTENTION avec le .toFixed()  ==>> 0.1 + 0.2 === 0.3 returning false car Les nombres à virgule flottante ne peuvent pas représenter toutes les décimales avec précision en binaire
                 req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteurDefault * 100); // je convertit en centimes et Entier pour STRIPE
-
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,
@@ -304,7 +314,7 @@ const panierController = {
 
     getOne: async (req, res) => {
         try {
-           
+
 
             const client = await Panier.findOne(req.params.id);
 
@@ -441,10 +451,10 @@ const panierController = {
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
             };
-            
-            
+
+
             await clientsInDb[0].deleteByIdClient();
-            
+
             //NOTE
             //a on vraiment de rendre au front ce qui a été supprimé...?
             res.status(200).json(clientsInDb);

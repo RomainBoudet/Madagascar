@@ -52,8 +52,8 @@ const codeSchema = require('./schemas/codeSchema');
 const searchSchema = require('./schemas/searchSchema');
 const adresseSchema = require('./schemas/adresseSchema');
 const adressePostSchema = require('./schemas/adressePostSchema');
-
 const passwordSchema = require('./schemas/passwordOnlySchema');
+const transporteurSchema = require('./schemas/transporteurShema');
 
 
 //Redis pour le cache
@@ -423,13 +423,44 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
 
  
 //FLAG
-//! ROUTE LIVRAISONS ---------------------
+//! ROUTE TRANSPORTEUR ---------------------
+
+/**
+ * Renvoie tous les transporteurs en BDD
+ * @route GET /user/transporteurs
+ * @group utilisateur
+ * @summary  Renvoie tous les transporteurs en BDD
+ * @returns {JSON} 200 - Renvoie tous les transporteurs en BDD
+ */
+ router.get('/user/transporteurs', client, livraisonController.getAllTransporteur);
+
+/**
+ * Une route pour insérer un transporteur
+ * @route POST /admin/transporteur/new
+ * @group Administrateur
+ * @summary Insére un nouveau transporteur 
+ * @returns {JSON} 200 - Les données du nouveau transporteur inséré
+ */
+ router.post('/admin/transporteur/new', admin, validateBody(transporteurSchema), livraisonController.newTransporteur);
 
 
+
+//FLAG
+//! ROUTE LIVRAISONS ----------------------------
+
+/**
+ * Renvoie toutes les livraisons en BDD
+ * @route GET /user/livraisons
+ * @group utilisateur
+ * @summary  Renvoie tous les livraisons en BDD
+ * @returns {JSON} 200 - Renvoie tous les livraisons en BDD
+ */
+ router.get('/user/livraisons', admin, livraisonController.getAll);
 
 
 
   //! ROUTES DEVELOPPEUR ----------------
+
 
 /**
  * Faire appel a la méthode smsBalance envoi un sms avec la balance du compte Twilio. 

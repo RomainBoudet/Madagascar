@@ -32,13 +32,13 @@ CREATE DOMAIN posrealpourc AS DECIMAL(3,2) CHECK (VALUE > 0.00) CHECK (VALUE < 1
 
 CREATE DOMAIN posrealsup AS DECIMAL(6,2) CHECK (VALUE > 00.00);
 
-/* 
-~	Matches regular expression, case sensitive
-~*	Matches regular expression, case insensitive	
-!~	Does not match regular expression, case sensitive	
-!~*	Does not match regular expression, case insensitive
-!~*	Does not match regular expression, case insensitive
- */
+
+-- ~	Matches regular expression, case sensitive
+-- ~*	Matches regular expression, case insensitive	
+-- !~	Does not match regular expression, case sensitive	
+-- !~*	Does not match regular expression, case insensitive
+-- !~*	Does not match regular expression, case insensitive
+
  
 CREATE DOMAIN email AS text -- un domaine (type de donnée) permettant de vérifier la validité d'une adresse email via une regex
 	CHECK (

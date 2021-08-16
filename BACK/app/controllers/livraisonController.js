@@ -1,8 +1,9 @@
 const Livraison = require('../models/livraison');
 const Transporteur = require('../models/transporteur');
 const LigneLivraison = require('../models/ligneLivraison');
-
-
+const {
+    arrondi
+} = require('../services/arrondi');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Livraison pour les intéractions avec la BDD
@@ -19,6 +20,8 @@ const livraisonController = {
         try {
             const livraisons = await Livraison.findAll();
 
+            livraisons.map( livraison => livraison.poid = Number(livraison.poid));
+
             res.status(200).json(livraisons);
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du livraisonController :',
@@ -26,6 +29,24 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
+
+    getAllTransporteur: async (req, res) => {
+        try {
+            const transporteurs = await Transporteur.findAll();
+
+            transporteurs.map(transporteur => delete transporteur.createdDate);
+            transporteurs.map(transporteur => delete transporteur.updatedDate);
+            transporteurs.map(transporteur => transporteur.fraisExpedition = arrondi(transporteur.fraisExpedition));
+
+            res.status(200).json(transporteurs);
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAllTransporteur du livraisonController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
     getAllLigneLivraison: async (req, res) => {
         try {
             const livraisons = await LigneLivraison.findAll();
@@ -37,7 +58,7 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-    
+
     getOne: async (req, res) => {
         try {
 
@@ -63,10 +84,10 @@ const livraisonController = {
         }
     },
 
-    
+
     getByIdCommande: async (req, res) => {
         try {
-            
+
             const livraison = await Livraison.findByIdCommande(req.params.id);
             res.json(livraison);
 
@@ -79,7 +100,7 @@ const livraisonController = {
 
     getByIdClient: async (req, res) => {
         try {
-            
+
             const livraison = await Livraison.findByIdClient(req.params.id);
             res.json(livraison);
 
@@ -89,11 +110,11 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-    
-    
+
+
     getLigneLivraisonByIdLivraison: async (req, res) => {
         try {
-            
+
             const livraison = await LigneLivraison.findByIdLivraison(req.params.id);
             res.json(livraison);
 
@@ -103,7 +124,7 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-    
+
 
 
 
@@ -114,21 +135,19 @@ const livraisonController = {
         try {
 
             const data = {};
-        
-            data.fraisExpedition = req.body.fraisExpedition;
-            data.nomTransporteur = req.body.nomTransporteur;
-            data.description = req.body.description;
+
+            data.reference = req.body.reference;
             data.numeroSuivi = req.body.numeroSuivi;
             data.URLSuivi = req.body.URLSuivi;
             data.poid = req.body.poid;
-            data.estimeArrive = req.body.estimeArrive;
             data.idClient = req.body.idClient;
             data.idCommande = req.body.idCommande;
+            data.idTransporteur = req.body.idTransporteur;
 
             const newLivraison = new Livraison(data);
             console.log(req.body);
             console.log('newLivraison ==>> ', newLivraison);
-            
+
             await newLivraison.save();
             res.json(newLivraison);
         } catch (error) {
@@ -140,15 +159,15 @@ const livraisonController = {
         try {
 
             const data = {};
-        
+
             data.quantiteLivraison = req.body.quantiteLivraison;
             data.idLivraison = req.body.idLivraison;
             data.idCommandeLigne = req.body.idCommandeLigne;
-           
+
 
             const newLivraison = new LigneLivraison(data);
-         
-            
+
+
             await newLivraison.save();
             res.json(newLivraison);
         } catch (error) {
@@ -156,51 +175,58 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-    
+
+    newTransporteur: async (req, res) => {
+        try {
+
+            const data = {};
+            data.nom = req.body.nom;
+            data.description = req.body.description;
+            data.fraisExpedition = req.body.fraisExpedition;
+            data.estimeArrive = req.body.estimeArrive;
+            data.logo = req.body.logo;
+            data.idClient = req.body.idClient;
+            data.idCommande = req.body.idCommande;
+            data.idTransporteur = req.body.idTransporteur;
+
+            data.fraisExpedition = arrondi(data.fraisExpedition);
+            data.estimeArrive = arrondi(data.estimeArrive);
+
+
+            const newTransporteur = new Transporteur(data);
+            await newTransporteur.save();
+
+            res.json(newTransporteur);
+        } catch (error) {
+            console.log(`Erreur dans la méthode newTransporteur du livraisonController : ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
     update: async (req, res) => {
         try {
 
             const {
                 id
             } = req.params;
-            
+
             const updateLivraison = await Livraison.findOne(id);
 
-
-            const fraisExpedition = req.body.fraisExpedition;
-            const nomTransporteur = req.body.nomTransporteur;
-            const description = req.body.description;
+            const reference = req.body.reference;
             const numeroSuivi = req.body.numeroSuivi;
             const URLsuivi = req.body.URLsuivi;
             const poid = req.body.poid;
-            const estimeArrive = req.body.estimeArrive;
             const idClient = req.body.idClient;
             const idCommande = req.body.idCommande;
-        
+            const idTransporteur = req.body.idTransporteur;
 
             let message = {};
 
-            if (fraisExpedition) {
-                updateLivraison.fraisExpedition = fraisExpedition;
-                message.fraisExpedition = 'Votre nouveau fraisExpedition a bien été enregistré ';
-            } else if (!fraisExpedition) {
-                message.fraisExpedition = 'Votre fraisExpedition n\'a pas changé';
-            }
-
-
-            if (nomTransporteur) {
-                updateLivraison.nomTransporteur = nomTransporteur;
-                message.nomTransporteur = 'Votre nouveau nomTransporteur a bien été enregistré ';
-            } else if (!nomTransporteur) {
-                message.nomTransporteur = 'Votre nom de nomTransporteur n\'a pas changé';
-            }
-
-
-            if (description) {
-                updateLivraison.description = description;
-                message.description = 'Votre nouveau description a bien été enregistré ';
-            } else if (!description) {
-                message.description = 'Votre description n\'a pas changé';
+            if (reference) {
+                updateLivraison.reference = reference;
+                message.reference = 'Votre nouveau reference a bien été enregistré ';
+            } else if (!reference) {
+                message.reference = 'Votre reference n\'a pas changé';
             }
 
             if (numeroSuivi) {
@@ -209,7 +235,6 @@ const livraisonController = {
             } else if (!numeroSuivi) {
                 message.numeroSuivi = 'Votre numeroSuivi n\'a pas changé';
             }
-
 
             if (URLsuivi) {
                 updateLivraison.URLsuivi = URLsuivi;
@@ -224,13 +249,6 @@ const livraisonController = {
                 message.poid = 'Votre nouveau poid a bien été enregistré ';
             } else if (!poid) {
                 message.poid = 'Votre poid n\'a pas changé';
-            }
-
-            if (estimeArrive) {
-                updateLivraison.estimeArrive = estimeArrive;
-                message.estimeArrive = 'Votre nouveau estimeArrive a bien été enregistré ';
-            } else if (!estimeArrive) {
-                message.estimeArrive = 'Votre estimeArrive n\'a pas changé';
             }
 
             if (idCommande) {
@@ -248,8 +266,17 @@ const livraisonController = {
                 message.idClient = 'Votre idClient n\'a pas changé';
             }
 
-             await updateLivraison.update();
-            
+
+            if (idTransporteur) {
+                updateLivraison.idTransporteur = idTransporteur;
+                message.idTransporteur = 'Votre nouveau idTransporteur a bien été enregistré ';
+            } else if (!idTransporteur) {
+                message.idTransporteur = 'Votre nom de idransporteur n\'a pas changé';
+            }
+
+
+            await updateLivraison.update();
+
             res.json(message);
 
         } catch (error) {
@@ -257,20 +284,83 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
+
+    updateTransporteur: async (req, res) => {
+        try {
+
+            const {
+                id
+            } = req.params;
+
+            const updateTransporteur = await Transporteur.findOne(id);
+
+            const nom = req.body.nom;
+            const description = req.body.description;
+            const fraisExpedition = req.body.fraisExpedition;
+            const estimeArrive = req.body.estimeArrive;
+            const logo = req.body.logo;
+
+            let message = {};
+
+            if (nom) {
+                updateTransporteur.nom = nom;
+                message.nom = 'Votre nouveau nomTransporteur a bien été enregistré ';
+            } else if (!nom) {
+                message.nom = 'Votre nom de nomTransporteur n\'a pas changé';
+            }
+            if (description) {
+                updateTransporteur.description = description;
+                message.description = 'Votre nouveau description a bien été enregistré ';
+            } else if (!description) {
+                message.description = 'Votre description n\'a pas changé';
+            }
+            if (fraisExpedition) {
+                updateTransporteur.fraisExpedition = fraisExpedition;
+                message.fraisExpedition = 'Votre nouveau fraisExpedition a bien été enregistré ';
+            } else if (!fraisExpedition) {
+                message.fraisExpedition = 'Votre fraisExpedition n\'a pas changé';
+            }
+
+            if (estimeArrive) {
+                updateTransporteur.estimeArrive = estimeArrive;
+                message.estimeArrive = 'Votre nouveau estimeArrive a bien été enregistré ';
+            } else if (!estimeArrive) {
+                message.estimeArrive = 'Votre estimeArrive n\'a pas changé';
+            }
+
+            if (logo) {
+                updateTransporteur.logo = logo;
+                message.logo = 'Votre nouveau logo a bien été enregistré ';
+            } else if (!logo) {
+                message.logo = 'Votre logo n\'a pas changé';
+            }
+
+
+            await updateTransporteur.update();
+
+            res.json(message);
+
+        } catch (error) {
+            console.log(`Erreur dans la méthode updateTransporteur du livraisonController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
     updateLigneLivraison: async (req, res) => {
         try {
 
             const {
                 id
             } = req.params;
-            
+
             const updateLivraison = await LigneLivraison.findOne(id);
 
 
             const quantiteLivraison = req.body.quantiteLivraison;
             const idLivraison = req.body.idLivraison;
             const idCommandeLigne = req.body.idCommandeLigne;
-        
+
 
             let message = {};
 
@@ -297,10 +387,10 @@ const livraisonController = {
                 message.idCommandeLigne = 'Votre idCommandeLigne n\'a pas changé';
             }
 
-           console.log("updateLivraison dans le controller ==>>", updateLivraison);
+            console.log("updateLivraison dans le controller ==>>", updateLivraison);
 
-             await updateLivraison.update();
-            
+            await updateLivraison.update();
+
             res.json(message);
 
         } catch (error) {
@@ -308,7 +398,7 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-   
+
 
     delete: async (req, res) => {
 
@@ -326,6 +416,25 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
+
+    deleteTransporteur: async (req, res) => {
+
+        try {
+
+            const transporteurInDb = await Transporteur.findOne(req.params.id);
+
+            const transporteur = await transporteurInDb.delete();
+
+            res.json(transporteur);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode deleteTransporteur du livraisonController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
     deleteLigneLivraison: async (req, res) => {
 
         try {
@@ -407,8 +516,8 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-    
-    
+
+
 
 
 }

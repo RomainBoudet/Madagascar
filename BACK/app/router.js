@@ -453,6 +453,16 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  */
  router.patch('/admin/transporteurs/:id(\\d+)', admin, validateBody(transporteurSchema), livraisonController.updateTransporteur);
 
+
+ /**
+ * Une route pour supprimer toutes un transporteur
+ * @route DELETE /admin/transporteur/:id
+ * @group Administrateur
+ * @summary Supprime un transporteur
+ * @returns {JSON} 200 - Les données du transporteur supprimé
+ */
+  router.delete('/admin/transporteur/:id(\\d+)', admin, livraisonController.deleteTransporteur);
+
 //FLAG
 //! ROUTE LIVRAISONS ----------------------------
 

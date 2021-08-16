@@ -84,7 +84,7 @@ CREATE DOMAIN text_valid AS text -- un domaine pour les textes valides = mini 2 
     );
 
 
---//BUG = invalid repetition count(s)
+-- a retravailler pour que la regex fonctionne sous postgres
 CREATE DOMAIN urlhttp as text  -- un domaine (type de donnée) permettant de vérifier la validité d'un mot de passe en hash via une regex (fonctionne uniquement avec bcrypt qui commence ces hash de la même maniére)
 CHECK (
 
@@ -399,7 +399,7 @@ CREATE TABLE livraison(
 
 	id_client            INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
 	id_commande          INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE,
-	id_transporteur		 INT NOT NULL REFERENCES transporteur(id)
+	id_transporteur		 INT NOT NULL REFERENCES transporteur(id) ON DELETE CASCADE
 	
 
 	

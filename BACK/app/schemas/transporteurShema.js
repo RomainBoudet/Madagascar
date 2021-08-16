@@ -36,6 +36,8 @@ const transporteurSchema = Joi.object({
         }),
 
     fraisExpedition: Joi.number()
+        .greater(1)
+        .precision(2)
         .positive()
         .max(100)
         .messages({
@@ -57,8 +59,9 @@ const transporteurSchema = Joi.object({
         }),
 
     logo: Joi.string()
+        .uri()
         .max(200)
-        // .pattern(new RegExp(/^\https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)\$/))
+        .regex(/^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/)
         .messages({
             'string.empty': `Le champs de votre logo ne peut être vide !`,
             'string.max': `Votre logo doit avoir une longeur maximum de {#limit} caractéres !`,

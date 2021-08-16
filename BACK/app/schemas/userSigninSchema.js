@@ -65,6 +65,7 @@ const userSigninSchema = Joi.object().keys({
       'string.pattern.base': 'Le format de votre mot de passe est incorrect : Il doit contenir au minimum 8 caractéres avec minimum, un chiffre, une lettre majuscule, une lettre minuscule et un carctére spécial parmis : ! @ # $% ^ & * ',
     }),
      passwordConfirm: Joi.string()
+     //.valid(Joi.ref('password')).required().strict() ok,  mais comment on reprend l'érreur par défault ?
     .pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
     .required()
     .max(200)

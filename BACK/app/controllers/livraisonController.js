@@ -127,10 +127,6 @@ const livraisonController = {
 
 
 
-
-
-
-
     new: async (req, res) => {
         try {
 
@@ -307,6 +303,7 @@ const livraisonController = {
             const description = req.body.description;
             const fraisExpedition = req.body.fraisExpedition;
             const estimeArrive = req.body.estimeArrive;
+
             const logo = req.body.logo;
 
             let message = {};

@@ -312,8 +312,8 @@ const fakeData = async () => {
         const products = [];
         const colors = ["rouge", "vert", "jaune", "bleu", "orange", "violet", "blanc", "noir"];
         const sizes = ["XL", "L", "M", "S", "XS"];
-        const arrayNumberVolumeDivideBy4 = Array.from({
-            length: volume / 4
+        const arrayNumber4 = Array.from({
+            length: 4
         }, (_, i) => i + 1);
 
 
@@ -330,7 +330,7 @@ const fakeData = async () => {
                 index,
                 id_category: Math.floor(Math.random() * (100 - 1 + 1)) + 1,
                 id_taxRate: Math.floor(Math.random() * (2 - 1 + 1)) + 1, // un random entre 1 et 2
-                id_reduction: arrayNumberVolumeDivideBy4[Math.floor(Math.random() * arrayNumberVolumeDivideBy4.length)],
+                id_reduction: arrayNumber4[Math.floor(Math.random() * arrayNumber4.length)],
 
             };
             products.push(product);
@@ -689,14 +689,13 @@ const fakeData = async () => {
 
 
         consol.seed(`Début de la génération de fake reductions`);
-        console.time(`Génération de ${volume/4} reductions`);
+        console.time(`Génération de 4 reductions`);
         const reductions = [];
         const soldes = ['soldes d\'hiver', 'soldes d\'été', 'soldes de printemps', 'soldes automne'];
         const actifOuNon = ['true', 'false'];
-        for (let index = 1; index <= volume / 4; index++) {
+        for (let index = 0; index < 4; index++) {
             const reduction = {
-                idClient: index,
-                nom: soldes[Math.floor(Math.random() * soldes.length)],
+                nom: soldes[index],
                 pourcentage_reduction: (Math.random() * (0.5 - 0.01) + 0.01).toFixed(2), // random entre 0.5 et 0.1 pour des %
                 actif: actifOuNon[Math.floor(Math.random() * actifOuNon.length)],
                 periode_reduction: `[${(faker.date.past()).toISOString().slice(0, 10)}, ${(faker.date.soon()).toISOString().slice(0, 10)}]`, // on récupére que la partie qui convient de la date pour satifaire le format DATERANGE de postgres
@@ -705,11 +704,9 @@ const fakeData = async () => {
             };
             reductions.push(reduction);
         }
-        console.timeEnd(`Génération de ${volume/4} reductions`);
+        console.timeEnd(`Génération de 4 reductions`);
         console.table(reductions);
         consol.seed(`Fin de la génération de fake reductions`);
-
-
 
         //! CARACTERISTIQUE
 
@@ -932,6 +929,7 @@ const fakeData = async () => {
                 telephone: custumers.map(function (x) {
                     return x.telephone
                 })[index - 1],
+                envoi:'true',
 
             };
             adresses.push(adresse);
@@ -1366,11 +1364,13 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${adresses.length *3} adresses`);
         console.time(`Import de ${adresses.length *3} adresses`);
+        const adressesInsertEnvoieTrue = "INSERT INTO mada.adresse (titre, prenom, nom_famille, ligne1, code_postal, ville, pays, telephone, envoie, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, TRUE, now(), $9);";
+
         const adressesInsert = "INSERT INTO mada.adresse (titre, prenom, nom_famille, ligne1, code_postal, ville, pays, telephone, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, now(), $9);";
 
         for (const addressCustumer of adresses) {
             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
-            await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+            await db.query(adressesInsertEnvoieTrue, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
         }
         // Deux fake adresses pour un même client ! :)
 

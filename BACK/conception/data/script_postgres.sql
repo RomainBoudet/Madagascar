@@ -251,7 +251,7 @@ CREATE INDEX idx_panier_id ON panier(id);
 ------------------------------------------------------------
 CREATE TABLE reduction(
 	id                     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom                     text_valid NOT NULL,
+	nom                     text_valid UNIQUE NOT NULL,
 	pourcentage_reduction   posrealpourc  NOT NULL,
 	actif                   BOOLEAN  NOT NULL,
 	created_date            timestamptz NOT NULL DEFAULT now(),
@@ -370,7 +370,7 @@ CREATE TABLE paiement(
 
 CREATE TABLE transporteur(
 	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom				    text_valid NOT NULL,
+	nom				    text_valid UNIQUE NOT NULL,
 	description			text_valid NOT NULL,
 	frais_expedition    posreal  NOT NULL,
 	estime_arrive       text_valid,
@@ -883,7 +883,7 @@ array_to_json(array_remove(array_agg(DISTINCT client_historique_connexion.connex
 array_to_json(array_remove(array_agg(DISTINCT commande.reference), NULL)) as commande_reference,
 array_to_json(array_remove(array_agg(DISTINCT commande.commentaire), NULL)) as commande_commentaire,
 array_to_json(array_remove(array_agg(DISTINCT paiement.reference), NULL)) as paiement_reference,
-array_to_json(array_remove(array_agg(DISTINCT to_char(paiement.date_paiement, 'Day DD Month YYYY à  HH24:MI:SS' )), NULL)) as paiement_date,
+array_to_json(array_remove(array_agg(DISTINCT to_char(paiement.date_paiement, 'TMDay DD TMMonth YYYY à  HH24:MI:SS' )), NULL)) as paiement_date,
 array_to_json(array_remove(array_agg(DISTINCT paiement.methode), NULL)) as paiement_methode,
 array_to_json(array_remove(array_agg(DISTINCT paiement.montant), NULL)) as paiement_montant
 FROM mada.client
@@ -905,6 +905,41 @@ ORDER BY client.id ASC; */
 --LEFT JOIN car quioiqu'il y ai dans mes autres colonnes, je veux dans tous les cas tous les clients 
 
 
+--Une vue compléte pour les livraisons
+
+CREATE VIEW mada.view_livraisons AS
+SELECT 
+livraison.id as id_livraison,
+livraison.reference as ref_livraison,
+to_char(livraison.created_date,'TMDay DD TMMonth YYYY à  HH24:MI:SS' ) as date_livraison,
+livraison.numero_suivi,
+livraison.URL_suivi,
+client.id as id_client, 
+client.prenom as client_prenom, 
+client.nom_famille as client_nomFamille,
+adresse.prenom as adresse_prenom,
+adresse.nom_famille as adresse_nomFamille,
+adresse.ligne1 as adresse1,
+adresse.ligne2 as adresse2,
+adresse.ligne3 as adresse3,
+adresse.code_postal as codePostal,
+adresse.ville,
+adresse.pays,
+adresse.telephone,
+transporteur.nom as transporteur,
+transporteur.frais_expedition,
+commande.reference as ref_commande,
+paiement.reference as ref_paiement,
+paiement.montant as montant_paiement,
+to_char(paiement.date_paiement,'TMDay DD TMMonth YYYY à  HH24:MI:SS' ) as date_paiement
+FROM
+mada.livraison
+JOIN mada.client ON client.id = livraison.id_client
+JOIN mada.adresse ON client.id = adresse.id_client AND adresse.envoie = TRUE
+JOIN mada.transporteur ON livraison.id_transporteur = transporteur.id
+JOIN mada.commande ON commande.id = livraison.id_commande
+JOIN mada.paiement ON paiement.id_commande = commande.id
+ORDER BY livraison.id;
 
 
 

@@ -49,6 +49,53 @@ class Livraison {
     }
 
 
+
+
+
+
+
+
+// pour la vue mada.view_livraisons
+
+    set id_livraison(val) {
+        this.idlivraison = val;
+    }
+    set ref_livraison(val) {
+        this.refLivraison = val;
+    }
+    set id_client(val) {
+        this.idClient = val;
+    }
+    set client_prenom(val) {
+        this.clientPrenom = val;
+    }
+    set client_nomfamille(val) {
+        this.clientNomFamille = val;
+    }
+    set adresse_prenom(val) {
+        this.adressePrenom = val;
+    }
+    set adresse_nomfamille(val) {
+        this.adresseNomFamille = val;
+    }
+    set codepostal(val) {
+        this.codePostal = val;
+    }
+    set ref_commande(val) {
+        this.refCommande = val;
+    }
+    set ref_paiement(val) {
+        this.refpaiement = val;
+    }
+    set montant_paiement(val) {
+        this.montantPaiement = val;
+    }
+    set date_paiement(val) {
+        this.datePaiement = val;
+    }
+
+
+
     /**
      * @constructor
      */
@@ -67,10 +114,10 @@ class Livraison {
     static async findAll() {
         const {
             rows
-        } = await db.query('SELECT * FROM mada.livraison ORDER BY livraison.id ASC');
+        } = await db.query('SELECT * FROM mada.view_livraisons;');
 
         if (!rows[0]) {
-            throw new Error("Aucun livraisons dans la BDD");
+            throw new Error("Aucune livraisons dans la BDD");
         }
         consol.model(
             `les informations des ${rows.length} livraisons ont été demandées !`
@@ -94,6 +141,34 @@ class Livraison {
             rows,
         } = await db.query(
             'SELECT * FROM mada.livraison WHERE livraison.id = $1;',
+            [id]
+        );
+
+        if (!rows[0]) {
+            throw new Error("Aucun livraison avec cet id");
+        }
+
+        consol.model(
+            `la livraison id : ${id} a été demandé en BDD !`
+        );
+
+        return new Livraison(rows[0]);
+    }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à une livraison via son id passée en paramétre
+     * @param - un id d'une livraison
+     * @returns - les informations d'une livraison demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findPlus(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.view_livraisons WHERE id_client = $1;',
             [id]
         );
 

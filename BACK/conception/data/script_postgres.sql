@@ -383,27 +383,6 @@ CREATE TABLE transporteur(
 
 );
 
-------------------------------------------------------------
--- Table: livraison
-------------------------------------------------------------
-CREATE TABLE livraison(
-	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	reference			text_valid UNIQUE NOT NULL,
-	numero_suivi       text_valid,
-	URL_suivi          text_valid,
-	poid               posrealsup  NOT NULL DEFAULT 2, -- en KG
-	created_date        timestamptz NOT NULL DEFAULT now(),
-	updated_date        timestamptz,
-	
-	CHECK (created_date < updated_date),
-
-	id_client            INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
-	id_commande          INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE,
-	id_transporteur		 INT NOT NULL REFERENCES transporteur(id) ON DELETE CASCADE
-	
-
-	
-);
 
 
 -- CREATE INDEX idx_livraison_id ON livraison(idClient,idLivraison);
@@ -530,7 +509,25 @@ CREATE TABLE sous_categorie_image(
 
 
 
+------------------------------------------------------------
+-- Table: livraison
+------------------------------------------------------------
+CREATE TABLE livraison(
+	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	reference			text_valid UNIQUE NOT NULL,
+	numero_suivi       text_valid,
+	URL_suivi          text_valid,
+	poid               posrealsup  NOT NULL DEFAULT 2, -- en KG
+	created_date        timestamptz NOT NULL DEFAULT now(),
+	updated_date        timestamptz,
+	
+	CHECK (created_date < updated_date),
 
+	id_client            INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
+	id_commande          INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE,
+	id_transporteur		 INT NOT NULL REFERENCES transporteur(id) ON DELETE CASCADE
+	
+);
 
 ------------------------------------------------------------
 -- Table: ligne_commande
@@ -542,7 +539,8 @@ CREATE TABLE ligne_commande(
 	updated_date        timestamptz,
 
 	id_produit          INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE,
-	id_commande			INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
+	id_commande			INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE,
+	id_livraison        INT NOT NULL REFERENCES livraison(id)  
 	
 );
 
@@ -551,7 +549,7 @@ CREATE TABLE ligne_commande(
 ------------------------------------------------------------
 -- Table: ligne_livraison
 ------------------------------------------------------------
-CREATE TABLE ligne_livraison(
+/* CREATE TABLE ligne_livraison(
 	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	quantite_livraison  posintsup  NOT NULL,
 	created_date        timestamptz NOT NULL DEFAULT now(),
@@ -560,7 +558,7 @@ CREATE TABLE ligne_livraison(
 	id_livraison        INT  NOT NULL REFERENCES livraison(id) ON DELETE CASCADE,
 	id_commandeLigne    INT  NOT NULL REFERENCES ligne_commande(id) ON DELETE CASCADE
 	
-);
+); */
 
 
 -- CREATE INDEX idx_ligne_livraison_id ON ligne_livraison(idClient,idLivraison,idLivraisonLigne);

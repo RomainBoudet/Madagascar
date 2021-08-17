@@ -47,6 +47,7 @@ class Livraison {
     set id_transporteur(val) {
         this.idTransporteur = val;
     }
+    
 
 
 

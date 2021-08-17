@@ -59,7 +59,7 @@ const livraisonController = {
         }
     },
 
-    getOne: async (req, res) => {
+    getOneLivraison: async (req, res) => {
         try {
 
             const livraison = await Livraison.findOne(req.params.id);
@@ -101,7 +101,7 @@ const livraisonController = {
     getByIdClient: async (req, res) => {
         try {
 
-            const livraison = await Livraison.findByIdClient(req.params.id);
+            const livraison = await Livraison.findPlus(req.params.id);
             res.json(livraison);
 
         } catch (error) {

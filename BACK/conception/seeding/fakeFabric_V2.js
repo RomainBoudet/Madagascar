@@ -572,7 +572,7 @@ const fakeData = async () => {
                 idCommande: index,
                 ref: `LIVRAISON/${uuid()}`,
                 idTransporteur: nbTranporteur[Math.floor(Math.random() * nbTranporteur.length)],
-
+                // on a construit 2500 lignes de commande pour garnir ces commandes. Pour 5 lignes de commande par commandes
 
             };
             livraisons.push(livraison);
@@ -735,20 +735,55 @@ const fakeData = async () => {
             length: volume * 3
         }, (_, i) => i + 1); // génére un tableau qui commence a 1 et va à 300
 
-        /* const arrayNumberVolumeDivideBy2 = Array.from({
-            length: volume / 2
-        }, (_, i) => i + 1); */
+        const arrayNumbercommande = Array.from({
+            length: volume * 5
+        }, (_, i) => i + 1);
+
+        const arrayNumberclient = Array.from({
+            length: volume
+        }, (_, i) => i + 1);
+
+        //je construit un tableau de 2700 valeurs comprenant des lots de 300 
+        const arrayToFlat = [];
+        for (let index = 0; index < 5; index++) {
+            const arrayConcat = arrayNumberProduits.concat(arrayNumberProduits)
+            arrayToFlat.push(arrayConcat); // on push des tableaux dans un tableau (5 lots de 500 si volume vaut 100), faudra 'flatter'
+        }
+
+        //console.log("arrayToFlat ==>> ", arrayToFlat);
+
+        const arrayProduit = arrayToFlat.flat();
+        console.log("arrayProduit ==>> ", arrayProduit);
+
+        
+        // console.table("arrayProduit ", arrayProduit);
+
+        //Je ne veux pas plusieurs lignes de commande avec le même produit au sein de la même commande/livraison.  
+        // contenant [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3  etc. ]
+        const arrayCommande = [];
+        for (const item of arrayNumbercommande) {
+            (arrayCommande.push(item));
+            (arrayCommande.push(item));
+            (arrayCommande.push(item));
+            (arrayCommande.push(item));
+            (arrayCommande.push(item));
+
+        };
+
+        //console.log("arrayCommande ==>> ", arrayCommande);
+        //console.log("arrayCommande.length ==>> ", arrayCommande.length);
+        //console.log("arrayProduit.length ", arrayProduit.length);
+
 
 
         const ligne_commandes = [];
-
-        for (let index = 1; index <= volume * 5; index++) {
+        for (let index = 1; index < volume * 25; index++) {
             const ligne_commande = {
                 index,
-                id_client: arrayNumberVolumeDivideBy2[Math.floor(Math.random() * arrayNumberVolumeDivideBy2.length)],
-                id_commande: arrayNumberVolumeDivideBy2[Math.floor(Math.random() * arrayNumberVolumeDivideBy2.length)],
-                id_produit: arrayNumberProduits[Math.floor(Math.random() * arrayNumberProduits.length)],
+                id_commande: arrayCommande[index], // 2500 par lots de 5 chiffre identique 1,1,1,1,1,2,2,2,2,2 (5000 x 5 chiffres identique)
+                id_produit: arrayProduit[index -1 ], // 2500 par lot de 300. (arraProduit contient 2700 valeurs mais via l'index pn en prend 2500)
                 quantite_commande: Math.floor(Math.random() * (5 - 1 + 1)) + 1, // un random entre 1 et 5.
+                id_livraison: arrayCommande[index], // 500 par lots de 5 chiffre identique !
 
             };
             ligne_commandes.push(ligne_commande);
@@ -757,11 +792,15 @@ const fakeData = async () => {
         console.table(ligne_commandes);
         consol.seed(`Fin de la génération de fake ligne_commandes`);
 
+        console.log("ligne_commandes ====>> ", ligne_commandes);
+
+      
 
         //! LIGNE_LIVRAISON
 
 
-        consol.seed(`Début de la génération de fake ligne_livraisons`);
+        //EDIT : on passe directement par lign Commande puisque pas de diff entre QT livré et QT commandé
+        /* consol.seed(`Début de la génération de fake ligne_livraisons`);
         console.time(`Génération de ${volume*15} ligne_livraisons`);
 
 
@@ -779,7 +818,7 @@ const fakeData = async () => {
         console.timeEnd(`Génération de ${volume*15} ligne_livraisons`);
         console.table(ligne_livraisons);
         consol.seed(`Fin de la génération de fake ligne_livraisons`);
-
+ */
 
         //! LIGNE_PANIER
 
@@ -929,7 +968,7 @@ const fakeData = async () => {
                 telephone: custumers.map(function (x) {
                     return x.telephone
                 })[index - 1],
-                envoi:'true',
+                envoi: 'true',
 
             };
             adresses.push(adresse);
@@ -1224,7 +1263,6 @@ const fakeData = async () => {
 
 
 
-        //FLAG
 
         /* const statutCommandes = [{
             nom: 'en attente',
@@ -1299,14 +1337,14 @@ const fakeData = async () => {
 
         //! TRANPORTEUR 
 
-       
+
 
         consol.seed(`Début de l'import de ${transporteurs.length} transporteurs`);
         console.time(`Import de ${transporteurs.length} transporteurs`);
         const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, logo) VALUES ($1, $2, $3, $4, $5);";
 
         for (const transporteur of transporteurs) {
-        
+
             consol.seed(`Import du livraison pour le client id ${transporteur.nom_transporteur}`);
             await db.query(transporteursInsert, [transporteur.nom_transporteur, transporteur.description, transporteur.frais_expedition, transporteur.estime_arrive, transporteur.logo]);
         }
@@ -1323,7 +1361,7 @@ const fakeData = async () => {
         const livraisonsInsert = "INSERT INTO mada.livraison (reference, numero_suivi, URL_suivi, poid, id_client, id_commande, id_transporteur) VALUES ($1, $2, $3, $4, $5, $6, $7);";
 
         for (const livraison of livraisons) {
-            consol.seed(`Import du livraison pour le client id ${livraison.indexClientCommande} et l'id commande ${livraison.indexClientCommande} via le transporteur ${livraison.idTransporteur}`);
+            consol.seed(`Import du livraison pour le client id ${livraison.indexClientCommande} et l'id commande ${livraison.indexClientCommande} `);
             await db.query(livraisonsInsert, [livraison.ref, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.indexClientCommande, livraison.idCommande, livraison.idTransporteur]);
         }
 
@@ -1485,11 +1523,11 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${ligne_commandes.length} ligne_commandes`);
         console.time(`Import de ${ligne_commandes.length} ligne_commandes`);
-        const ligne_commandesInsert = "INSERT INTO mada.ligne_commande ( quantite_commande, id_produit, id_commande) VALUES ($1, $2, $3);";
+        const ligne_commandesInsert = "INSERT INTO mada.ligne_commande ( quantite_commande, id_produit, id_commande, id_livraison) VALUES ($1, $2, $3, $4);";
 
         for (const ligne_commande of ligne_commandes) {
             consol.seed(`Import de la ligne_commande pour la commande id : ${ligne_commande.id_commande} avec l'index numéro ${ligne_commande.index}`);
-            await db.query(ligne_commandesInsert, [ligne_commande.quantite_commande, ligne_commande.id_produit, ligne_commande.id_commande]);
+            await db.query(ligne_commandesInsert, [ligne_commande.quantite_commande, ligne_commande.id_produit, ligne_commande.id_commande, ligne_commande.id_livraison]);
         }
 
         consol.seed(`Fin de l'import de ${ligne_commandes.length} ligne_commandes`);
@@ -1499,7 +1537,7 @@ const fakeData = async () => {
         //! LIGNE_LIVRAISON
 
 
-        consol.seed(`Début de l'import de ${ligne_livraisons.length} ligne_livraisons`);
+        /* consol.seed(`Début de l'import de ${ligne_livraisons.length} ligne_livraisons`);
         console.time(`Import de ${ligne_livraisons.length} ligne_livraisons`);
         const ligne_livraisonsInsert = "INSERT INTO mada.ligne_livraison (quantite_livraison, id_livraison, id_commandeLigne) VALUES ($1, $2, $3);";
 
@@ -1509,7 +1547,7 @@ const fakeData = async () => {
         }
 
         consol.seed(`Fin de l'import de ${ligne_livraisons.length} ligne_livraisons`);
-        console.timeEnd(`Import de ${ligne_livraisons.length} ligne_livraisons`);
+        console.timeEnd(`Import de ${ligne_livraisons.length} ligne_livraisons`); */
 
 
         //! LIGNE_PANIER

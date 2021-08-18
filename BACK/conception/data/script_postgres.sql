@@ -427,6 +427,8 @@ CREATE TABLE adresse (
 	pays			  text_valid NOT NULL,
 	telephone         phonenumber  NOT NULL, 
 	envoie		      BOOLEAN,
+	facturation		  BOOLEAN DEFAULT TRUE,
+
 	
 	created_date       timestamptz NOT NULL DEFAULT now(),
 	updated_date       timestamptz,
@@ -435,10 +437,12 @@ CREATE TABLE adresse (
 	id_client         INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
  
-CREATE UNIQUE INDEX only_one_row_with_column_true 
+CREATE UNIQUE INDEX only_one_row_with_column_true_envoie 
     ON adresse (id_client) WHERE envoie; 
 --la colonne envoie pourra contenir un seul null par id_client !
 
+CREATE UNIQUE INDEX only_one_row_with_column_true_facturation 
+    ON adresse (id_client) WHERE facturation; 
 
 ------------------------------------------------------------
 -- Table: facture
@@ -673,7 +677,7 @@ adresse.ligne3 as ligne3,
 adresse.telephone as telephone,
 adresse.envoie as envoie,
 adresse.pays as pays,
-CAST (adresse.code_postal as INTEGER) as codePostal,
+CAST (adresse.code_postal as INTEGER) as code_postal,
 adresse.ville as ville,
 adresse.created_date,
 adresse.updated_date,

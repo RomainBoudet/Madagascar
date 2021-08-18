@@ -755,7 +755,7 @@ const fakeData = async () => {
         const arrayProduit = arrayToFlat.flat();
         console.log("arrayProduit ==>> ", arrayProduit);
 
-        
+
         // console.table("arrayProduit ", arrayProduit);
 
         //Je ne veux pas plusieurs lignes de commande avec le même produit au sein de la même commande/livraison.  
@@ -781,7 +781,7 @@ const fakeData = async () => {
             const ligne_commande = {
                 index,
                 id_commande: arrayCommande[index], // 2500 par lots de 5 chiffre identique 1,1,1,1,1,2,2,2,2,2 (5000 x 5 chiffres identique)
-                id_produit: arrayProduit[index -1 ], // 2500 par lot de 300. (arraProduit contient 2700 valeurs mais via l'index pn en prend 2500)
+                id_produit: arrayProduit[index - 1], // 2500 par lot de 300. (arraProduit contient 2700 valeurs mais via l'index pn en prend 2500)
                 quantite_commande: Math.floor(Math.random() * (5 - 1 + 1)) + 1, // un random entre 1 et 5.
                 id_livraison: arrayCommande[index], // 500 par lots de 5 chiffre identique !
 
@@ -794,7 +794,7 @@ const fakeData = async () => {
 
         console.log("ligne_commandes ====>> ", ligne_commandes);
 
-      
+
 
         //! LIGNE_LIVRAISON
 
@@ -948,7 +948,7 @@ const fakeData = async () => {
         for (let index = 1; index <= volume; index++) {
             const adresse = {
                 idClient: index,
-                titre: "Maison",
+                titre: uuid(),
                 prenom: custumers.map(function (x) {
                     return x.prenom
                 })[index - 1],
@@ -976,7 +976,7 @@ const fakeData = async () => {
 
             const adresseBis = {
                 idClient: index,
-                titre: "Bureau",
+                titre: uuid(),
                 prenom: custumers.map(function (x) {
                     return x.prenom
                 })[index - 1],
@@ -995,7 +995,7 @@ const fakeData = async () => {
 
             const adresseTis = {
                 idClient: index,
-                titre: "Bureau",
+                titre: uuid(),
                 prenom: custumers.map(function (x) {
                     return x.prenom
                 })[index - 1],
@@ -1398,17 +1398,20 @@ const fakeData = async () => {
 
 
         //! ADRESSE
-
+        //FLAG                                                                                                                                                          
 
         consol.seed(`Début de l'import de ${adresses.length *3} adresses`);
         console.time(`Import de ${adresses.length *3} adresses`);
         const adressesInsertEnvoieTrue = "INSERT INTO mada.adresse (titre, prenom, nom_famille, ligne1, code_postal, ville, pays, telephone, envoie, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, TRUE, now(), $9);";
-
+        const delet = "UPDATE mada.adresse SET facturation = NULL WHERE titre = $1;";
         const adressesInsert = "INSERT INTO mada.adresse (titre, prenom, nom_famille, ligne1, code_postal, ville, pays, telephone, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, now(), $9);";
 
         for (const addressCustumer of adresses) {
             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
+
             await db.query(adressesInsertEnvoieTrue, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+            // je delete la facturation qui est a TRUE par défault cai il y a un index partiel unique sur la colonne
+            await db.query(delet, [addressCustumer.titre]);
         }
         // Deux fake adresses pour un même client ! :)
 
@@ -1416,11 +1419,13 @@ const fakeData = async () => {
         for (const addressCustumer of adressesBis) {
             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
             await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+            await db.query(delet, [addressCustumer.titre]);
         }
 
         for (const addressCustumer of adressesTis) {
             consol.seed(`Import de l'addresse du client habitant : ${addressCustumer.adresse1} avec l'id : ${addressCustumer.idClient}`);
             await db.query(adressesInsert, [addressCustumer.titre, addressCustumer.prenom, addressCustumer.nomFamille, addressCustumer.adresse1, addressCustumer.codePostal, addressCustumer.ville, addressCustumer.pays, addressCustumer.telephone, addressCustumer.idClient]);
+           // await db.query(delet, [addressCustumer.titre]); ici je le laisse a true (par défault) !
         }
         consol.seed(`Fin de l'import de ${adresses.length *3} adresses`);
         console.timeEnd(`Import de ${adresses.length *3} adresses`);

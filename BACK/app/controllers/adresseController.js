@@ -20,6 +20,129 @@ const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
  */
 const adresseController = {
 
+
+    /**
+     * Une méthode pour passer a TRUE la valeur de la colonne Envoie d'une adresse.
+     */
+    setAdresseEnvoiTrue: async (req, res) => {
+        try {
+            //recois dans req.params.id ==> un id.adresse a passer a true.
+
+            //Je vérifie si une adresse est déja a TRUE dans la liste
+            //si oui, je supprime le true.
+            //je passe l'adreese demandé a TRUE dans la colonne Envoi
+
+            //Attention si aucune adresse ne posséde l'attribue TRUE, on ne doit pas bloquer le processus...
+
+            const adresseExist = await Adresse.findOne(req.params.id);
+
+
+            if (adresseExist === null) {
+                return res.status(404).json({
+                    message: "Cette adresse n'existe pas."
+                })
+            };
+            
+            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== adresseExist.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+
+            };
+
+            if (adresseExist.envoie === true) {
+                return res.status(404).json({
+                    message: "Cette adresse est déja défini comme adresse d'envoi."
+                })
+            };
+
+            const adresse = await Adresse.findByEnvoiTrue(req.session.user.idClient);
+
+            //Si l'utilisateur a déja une adresse indiqués commen adresse de livraison, je vérifie son identité et je passe a null cette adresse.
+            if (adresse && adresse.idClient !== undefined) {
+                
+                const adresseToSetNull = new Adresse({id:adresse.id});
+                 await adresseToSetNull.updateEnvoieNull();
+
+            }; // ici aucune adresse de l'utilisateur en session n'a d'adresse indiqué comme valide pour la livraison, on va pouvoir indiqué celle reçu en paramétre.
+
+            const adresseToSetTrue = new Adresse({id: req.params.id});
+            const adresseNowTrue = await adresseToSetTrue.updateEnvoieTrue();
+
+            adresseNowTrue.codePostal = parseInt(adresseNowTrue.codePostal, 10);
+
+            res.status(200).json(adresseNowTrue);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode setAdresseEnvoiTrue du adresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+     /**
+     * Une méthode pour passer a TRUE la valeur de la colonne Envoie d'une adresse.
+     */
+      setAdresseFacturationTrue: async (req, res) => {
+        try {
+            //recois dans req.params.id ==> un id.adresse a passer a true.
+
+            //Je vérifie si une adresse est déja a TRUE dans la liste
+            //si oui, je supprime le true.
+            //je passe l'adreese demandé a TRUE dans la colonne Envoi
+
+            //Attention si aucune adresse ne posséde l'attribue TRUE, on ne doit pas bloquer le processus...
+
+
+
+            const adresseExist = await Adresse.findOne(req.params.id);
+
+            if (adresseExist === null) {
+                return res.status(404).json({
+                    message: "Cette adresse n'existe pas."
+                })
+            };
+
+            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== adresseExist.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+
+            };
+
+            if (adresseExist.facturation === true) {
+                return res.status(404).json({
+                    message: "Cette adresse est déja défini comme adresse de facturation."
+                })
+            };
+
+            const adresse = await Adresse.findByFacturationTrue(req.session.user.idClient);
+
+
+            //Si l'utilisateur a déja une adresse indiqués commen adresse de facturation, je vérifie son identité et je passe a null cette adresse.
+            if (adresse && adresse.idClient !== undefined) {
+
+                const adresseToSetNull = new Adresse({id:adresse.id});
+                const adresseNowNull = await adresseToSetNull.updateFacturationNull();
+
+
+            }; // ici aucune adresse de l'utilisateur en session n'a d'adresse indiqué comme valide pour la livraison, on va pouvoir indiqué celle reçu en paramétre.
+
+            const adresseToSetTrue = new Adresse({id: req.params.id});
+            const adresseNowTrue = await adresseToSetTrue.updateFacturationTrue();
+
+            adresseNowTrue.codePostal = parseInt(adresseNowTrue.codePostal, 10);
+
+            res.status(200).json(adresseNowTrue);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode setAdresseFacturationTrue du adresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
     /**
      * Une méthode pour avoir les adresses complete de tous les utilisateurs, incluant les pays, villes et code postaux
      */
@@ -83,6 +206,7 @@ const adresseController = {
 
 
             const client = await Adresse.findByIdClient(req.params.id);
+            console.log(client);
 
             client.map(item => item.codePostal = parseInt(item.codePostal, 10));
 
@@ -90,6 +214,31 @@ const adresseController = {
 
         } catch (error) {
             console.trace('Erreur dans la méthode getAdresseByIdClient du adresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
+    getLastAdresseByIdClient: async (req, res) => {
+        try {
+
+            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== parseInt(req.params.id, 10)) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
+
+            const client = await Adresse.findLastAdresseByIdClient(req.params.id);
+            console.log(client);
+
+            client.codePostal = Number(client.codePostal);
+            res.status(200).json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getLastAdresseByIdClient du adresseController :',
                 error);
             res.status(500).json(error.message);
         }
@@ -118,6 +267,7 @@ const adresseController = {
             data.ligne2 = req.body.ligne2;
             data.ligne3 = req.body.ligne3;
             data.codePostal = req.body.codePostal;
+            setAdresseEnvoiTrueAdresse.
             data.ville = req.body.ville;
             data.pays = req.body.pays;
             data.telephone = req.body.telephone;
@@ -155,6 +305,9 @@ const adresseController = {
             let resultatAdresse;
             let ligneAdresse;
             let custumer;
+
+
+            // Si une adresse est déja a true dans la facturation, je passe cette donneé a FALSE, pour permettre un passage a TRUE automatique pour la nouvelle
 
 
             if (req.body.envoie && req.body.envoie === 'true') {
@@ -260,9 +413,11 @@ const adresseController = {
             } = req.body;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
-            
+
             const clientInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
 
             if (!clientInDb) {

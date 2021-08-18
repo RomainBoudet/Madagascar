@@ -388,6 +388,16 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  */
  router.get('/client/adresse/:id(\\d+)', client, adresseController.getOneAdresse);
 
+/**
+ * Renvoie la derniére adresse saisi d'un client selon son idClient
+ * @route GET /client/adresselast/:id
+ * @group utilisateur
+ * @summary Renvoie la derniére adresse saisi d'un client selon son idClient
+ * @returns {JSON} 200 - Renvoie la derniére adresse saisi d'un client selon son idClient
+ */
+ router.get('/client/adresselast/:id(\\d+)', client, adresseController. getLastAdresseByIdClient);
+
+
 
  /**
  * Une route pour insérer une adresse
@@ -467,7 +477,6 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  */
   router.delete('/admin/transporteur/:id(\\d+)', admin, livraisonController.deleteTransporteur);
 
-//FLAG     WORK IN PROGRESS
 //! ROUTE LIVRAISONS ----------------------------
 
 /**
@@ -555,6 +564,27 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  * @returns {JSON} 200 - Les données de la livraison supprimée
  */
   router.delete('/admin/livraison/:id(\\d+)', admin, livraisonController.delete);
+
+
+/**
+ * Une route pour modifier l'adresse d'envoi en passant a TRUE la colonne Envoi d'une adresse. Et enléve la valeur TRUE de la précédente adresse
+ * @route POST /admin/livraison/new
+ * @group utilisateur
+ * @summary Met a jour une nouvelle livraison 
+ * @returns {JSON} 200 - Les données d'une nouvelle livraison mise a jour
+ */
+ router.patch('/user/choixAdresseEnvoi/:id(\\d+)', client, adresseController.setAdresseEnvoiTrue);
+
+
+ /**
+ * Une route pour modifier l'adresse d'envoi en passant a TRUE la colonne Facturation d'une adresse. Et enléve la valeur TRUE de la précédente adresse
+ * @route POST /admin/livraison/new
+ * @group Administrateur
+ * @summary Met a jour une nouvelle livraison 
+ * @returns {JSON} 200 - Les données d'une nouvelle livraison mise a jour
+ */
+  router.patch('/user/choixAdresseFacturation/:id(\\d+)', client, adresseController.setAdresseFacturationTrue);
+
 
 
   //! ROUTES DEVELOPPEUR ----------------

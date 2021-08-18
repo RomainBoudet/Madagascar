@@ -61,6 +61,10 @@ const paiementController = {
 
             //Pour payer, l'utilisateur doit avoir :
 
+            console.log("la session en amont du paiement ==> ",req.session);
+
+           
+
             // été authentifié
             if (!req.session.user) {
                 console.log("Le client ne s'est pas authentifié !")
@@ -82,17 +86,25 @@ const paiementController = {
                 })
             }
 
-            //TODO
-            // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
-            const isEnvoieOk = await Adresse.findByEnvoie(req.session.user.idClient);
-            if (!isEnvoieOk) {
+            
+            // Avoir choisi un transporteur 
+
+            if (req.session.idTransporteur === undefined ) {
+
                 return res.status(200).json({
-                    message: "Pour effectuer un paiement, vous devez avoir enregistré une adresse de livraison en plus de votre adresse de facturation."
+                    message: "Pour  finaliser votre paiement, merci de choisir un mode de livraison parmis ceux proposé ."
                 })
             }
 
-            //TODO
-            // Avoir choisi un transporteur 
+            // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
+            const isEnvoieOk = await Adresse.findByEnvoie(req.session.user.idClient);
+            if (!isEnvoieOk && req.session.idTransporteur != 3) {
+                return res.status(200).json({
+                    message: "Pour effectuer un paiement, vous devez avoir enregistré une adresse de livraison en plus de votre adresse de facturation ou choisir le mode de livraison : 'Retrait sur le stand'."
+                })
+            }
+
+          
 
 
             const articles = [];

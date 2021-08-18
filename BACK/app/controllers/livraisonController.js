@@ -30,11 +30,11 @@ const livraisonController = {
 
             // Je met a jour le prix du panier en prenant en compte le cout du transport
 
-            const transporteur = await Transporteur.findOne(req.session.idTransporteur);
+            const transporteurData = await Transporteur.findOne(req.session.idTransporteur);
 
-            console.log("transporteur ==> ", transporteur);
+            console.log("transporteur ==> ", transporteurData);
 
-            req.session.coutTransporteur = arrondi(transporteur.fraisExpedition);
+            req.session.coutTransporteur = arrondi(transporteurData.fraisExpedition);
 
             // Je remet a jour le total dans le panier.
 
@@ -42,7 +42,17 @@ const livraisonController = {
 
             console.log("req.session a la sortie du choix du transporteur ==> ", req.session);
 
-            return res.status(200).json({message: "Le choix du transporteur a bien été pris en compte."})
+            const message = "Le choix du transporteur a bien été pris en compte."
+
+            const totalHT = req.session.totalHT;
+            const totalTTC = req.session.totalTTC;
+            const totalTVA = req.session.totalTVA;
+            const transporteur = transporteurData.nom;
+            const coutTransporteur = req.session.coutTransporteur;
+            const totalTTCAvecTransport = (req.session.totalStripe) /100; // je le reconvertis pour le rendre lisible en euro
+
+
+            return res.status(200).json({totalHT, totalTTC, totalTVA, coutTransporteur, transporteur, totalTTCAvecTransport, message});
 
 
         } catch (error) {

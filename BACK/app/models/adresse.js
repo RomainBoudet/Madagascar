@@ -16,10 +16,11 @@ class Adresse {
     pays;
     telephone;
     envoie;
+    facturation;
     createdDate;
     updatedDate;
     idClient;
-    
+
 
 
 
@@ -42,9 +43,9 @@ class Adresse {
         this.idClient = val;
     }
 
-   /*  set adresse_titre(val) {
-        this.adresseTitre = val;
-    }
+    /*   set adresse_titre(val) {
+         this.adresseTitre = val;
+     } */
 
     set adresse_prenom(val) {
         this.adressePrenom = val;
@@ -56,7 +57,7 @@ class Adresse {
 
     set id_adresse(val) {
         this.idAdresse = val;
-    } */
+    }
 
     /**
      * @constructor
@@ -147,9 +148,9 @@ class Adresse {
     }
 
     /**
-     * Méthode chargé d'aller chercher les informations relatives à un Adresse passé en paramétre
-     * @param id - un id d'un Adresse
-     * @returns - les informations du Adresse demandées
+     * Méthode chargé d'aller chercher toutes les adresses d'un client passé en paramétre
+     * @param id - un id d'un client
+     * @returns - les informations du client demandé
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
@@ -162,7 +163,7 @@ class Adresse {
             'SELECT * FROM mada.view_adresse WHERE id_client = $1;',
             [id]
         );
-
+        console.log("rows0 ==>> ", rows[0]);
         if (!rows[0]) {
             return null
         }
@@ -175,14 +176,14 @@ class Adresse {
     }
 
 
-     /**
+    /**
      * Méthode chargé d'aller chercher les informations relatives à un Adresse passé en paramétre
      * @param id - un id d'un Adresse
      * @returns - les informations du Adresse demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-      static async findByIdClientsansJointure(id) {
+    static async findByIdClientsansJointure(id) {
 
 
         const {
@@ -201,6 +202,35 @@ class Adresse {
         );
 
         return rows.map((adresse) => new Adresse(adresse));
+    }
+
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à la derniére adresse saisie d'un client
+     * @param id - un id d'un client
+     * @returns - les informations de l'Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    static async findLastAdresseByIdClient(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.adresse WHERE id_client = $1 ORDER BY adresse.id DESC LIMIT 1;',
+            [id]
+        );
+
+        if (!rows[0]) {
+            return null
+        }
+
+        consol.model(
+            `La derniére adresse du client id : ${id} a été demandé en BDD !`
+        );
+
+        return new Adresse(rows[0]);
     }
 
 
@@ -233,6 +263,183 @@ class Adresse {
         return new Adresse(rows[0]);
     }
 
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à une adresse avec TRUE dans la colonne Envoi pour un utilisateur donné
+     * @param id - un id d'une adresse
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    static async findByEnvoiTrue(idClient) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.adresse WHERE adresse.id_client  = $1 and adresse.envoie = TRUE;',
+            [idClient]
+        );
+
+        if (!rows[0]) {
+            console.log("Aucune adresse avec envoi TRUE n'éxiste déja pour cette utilisateur.")
+            return null;
+        }
+
+        consol.model(
+            `l'adresse avec pour envoi TRUE pour le client id : ${idClient} a été demandée en BDD !`
+        );
+
+        return new Adresse(rows[0]);
+    }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à une adresse avec TRUE dans la colonne Facturation pour un utilisateur donné
+     * @param id - un id d'une adresse
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    static async findByFacturationTrue(idClient) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.adresse WHERE adresse.id_client  = $1 and adresse.facturation = TRUE;',
+            [idClient]
+        );
+
+        if (!rows[0]) {
+            console.log("Aucune adresse avec facturation TRUE n'éxiste déja pour cette utilisateur.")
+            return null;
+        }
+
+        consol.model(
+            `l'adresse avec pour facturation TRUE pour le client id : ${idClient} a été demandée en BDD !`
+        );
+
+        return new Adresse(rows[0]);
+    }
+
+
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à une adresse avec TRUE dans la colonne Envoi pour un utilisateur donné
+     * @param id - un id d'une adresse
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    async updateEnvoieNull() {
+
+        console.log("this.id =>", this.id);
+
+        const {
+            rows,
+        } = await db.query(
+            'UPDATE mada.adresse SET envoie = NULL WHERE id  = $1 RETURNING * ;',
+            [this.id]
+        );
+
+        if (!rows[0]) {
+            console.log(`Aucune adresse avec envoi TRUE n'as été passé a null pour l'adresse  ${this.id}.`)
+            return null;
+        }
+
+        consol.model(
+            `l'adresse avec pour envoi TRUE pour l'adresse  ${this.id} a été passé a NULL en BDD !`
+        );
+
+        return new Adresse(rows[0]);
+    }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à une adresse avec TRUE dans la colonne Facturation pour un utilisateur donné
+     * @param id - un id d'une adresse
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    async updateFacturationNull() {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'UPDATE mada.adresse SET facturation = NULL WHERE id  = $1 RETURNING *;',
+            [this.id]
+        );
+
+        if (!rows[0]) {
+            console.log(`Aucune adresse avec facturation TRUE n'as été passé a null pour l'adresse ${this.id}.`)
+            return null;
+        }
+
+        consol.model(
+            `l'adresse avec pour facturation TRUE pour l'adresse ${this.id} a été passé a NULL en BDD !`
+        );
+
+        return new Adresse(rows[0]);
+    }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à une adresse avec TRUE dans la colonne Envoi pour un utilisateur donné
+     * @param id - un id d'une adresse
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    async updateEnvoieTrue() {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'UPDATE mada.adresse SET envoie = TRUE WHERE id  = $1 RETURNING * ;',
+            [this.id]
+        );
+        console.log(rows[0]);
+        if (!rows[0]) {
+            console.log(`Aucune adresse avec envoi TRUE n'as été passé a null pour l'adresse ${this.id}.`)
+            return null;
+        }
+
+
+        consol.model(
+            `l'adresse avec pour envoi TRUE pour l'adresse ${this.id} a été passé a NULL en BDD !`
+        );
+
+        return new Adresse(rows[0]);
+    }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à une adresse avec TRUE dans la colonne Facturation pour un utilisateur donné
+     * @param id - un id d'une adresse
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    async updateFacturationTrue() {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'UPDATE mada.adresse SET facturation = TRUE WHERE id  = $1 RETURNING * ;',
+            [this.id]
+        );
+
+        if (!rows[0]) {
+            console.log(`Aucune adresse avec facturation TRUE n'as été passé a null pour l'adresse ${this.id}.`)
+            return null;
+        }
+
+        consol.model(
+            `l'adresse avec pour facturation TRUE pour l'adresse ${this.id} a été passé a NULL en BDD !`
+        );
+
+        return new Adresse(rows[0]);
+    }
 
 
 
@@ -254,7 +461,7 @@ class Adresse {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun adresse avec cet id");
+            return null;
         }
 
         consol.model(
@@ -376,8 +583,8 @@ class Adresse {
      * @returns - les informations du Adresse mis à jour
      * @async - une méthode asynchrone
      */
-      async update() {
-       
+    async update() {
+
         const {
             rows,
         } = await db.query(
@@ -387,13 +594,13 @@ class Adresse {
         console.log("rows dans le model ==>> ", rows);
 
         this.updatedDate = rows[0].updated_date;
-         console.log(
+        console.log(
             `l'adresse id : ${this.id} du client id ${this.idClient}, avec le nom ${this.prenom} ${this.nomFamille} a été mise à jour le ${this.updatedDate}  !`
         );
         return new Adresse(rows[0]);
 
 
-    }    
+    }
 
 
     /**
@@ -411,7 +618,7 @@ class Adresse {
         );
         this.envoie = rows[0].envoie;
         console.log(
-            `La valeur envoie du le Adresse id : ${this.id} a été passé a ${this.envoie} avec succés !`
+            `La valeur envoie de l'Adresse id : ${this.id} a été passé a ${this.envoie} avec succés !`
         );
 
         return new Adresse(rows[0]);
@@ -434,7 +641,54 @@ class Adresse {
         console.log('rows ==>> ', rows);
         this.envoie = rows[0].envoie;
         console.log(
-            `La valeur envoie du le Adresse id : ${this.id} a été passé a ${this.envoie} avec succés !`
+            `La valeur envoie de l'Adresse id : ${this.id} a été passé a ${this.envoie} avec succés !`
+        );
+
+        return new Adresse(rows[0]);
+
+    }
+
+
+
+    /**
+     * Méthode chargé d'aller mettre à jour la valeur de la colonne facturation pour l'envoie d'un colis a l'utilisateur
+     * @param id - l'identifiant d'une adresse a modifié
+     * @returns - les informations du Adresse mis à jour
+     * @async - une méthode asynchrone
+     */
+    async facturationTrue() {
+        const {
+            rows,
+        } = await db.query(
+            `UPDATE mada.adresse SET facturation = TRUE WHERE id = $1 RETURNING *;`,
+            [this.id]
+        );
+        this.facturation = rows[0].facturation;
+        console.log(
+            `La valeur facturation de l'adresse id : ${this.id} a été passé a ${this.facturation} avec succés !`
+        );
+
+        return new Adresse(rows[0]);
+
+    }
+
+    /**
+     * Méthode chargé d'aller mettre à jour la valeur de la colonne facturation pour l'envoie d'un colis a l'utilisateur
+     * @param id - l'identifiant d'une adresse a modifié
+     * @returns - les informations du Adresse mis à jour
+     * @async - une méthode asynchrone
+     */
+    async facturationNull() {
+        const {
+            rows,
+        } = await db.query(
+            `UPDATE mada.adresse SET facturation = NULL WHERE id = $1 RETURNING *;`,
+            [this.id]
+        );
+        console.log('rows ==>> ', rows);
+        this.facturation = rows[0].facturation;
+        console.log(
+            `La valeur facturation de l'adresse id : ${this.id} a été passé a ${this.facturation} avec succés !`
         );
 
         return new Adresse(rows[0]);
@@ -459,7 +713,7 @@ class Adresse {
         );
 
         if (!rows[0]) {
-            console.log("Aucune adresse avec cet id et la valeur TRUE de l'envoie n'éxist.")
+            console.log("Aucune adresse avec cet id et la valeur TRUE de l'envoie n'éxiste.")
             return null;
         }
 
@@ -469,6 +723,36 @@ class Adresse {
 
         return new Adresse(rows[0]);
     }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à un id client passé en paramétre
+     * @param id - un id d'un client
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    static async findByFacturation(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.adresse WHERE id_client = $1  AND facturation = TRUE ;',
+            [id]
+        );
+
+        if (!rows[0]) {
+            console.log("Aucune adresse avec cet id et la valeur TRUE de la facturation n'éxiste.")
+            return null;
+        }
+
+        consol.model(
+            `l'adresse avec pour client id : ${id} et la valeur true de la facturation a été demandée en BDD !`
+        );
+
+        return new Adresse(rows[0]);
+    }
+
 
 
 

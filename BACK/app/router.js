@@ -55,6 +55,8 @@ const adressePostSchema = require('./schemas/adressePostSchema');
 const passwordSchema = require('./schemas/passwordOnlySchema');
 const transporteurSchema = require('./schemas/transporteurShema');
 const transporteurPostSchema = require('./schemas/transporteurPostSchema');
+const livraisonPostSchema = require('./schemas/livraisonPostSchema');
+const livraisonSchema = require('./schemas/livraisonSchema');
 
 
 //Redis pour le cache
@@ -423,7 +425,6 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema), adresseController.deleteByIdClient);
 
  
-//FLAG
 //! ROUTE TRANSPORTEUR ---------------------
 
 /**
@@ -455,7 +456,7 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
 
 
  /**
- * Une route pour supprimer toutes un transporteur
+ * Une route pour supprimer un un transporteur
  * @route DELETE /admin/transporteur/:id
  * @group Administrateur
  * @summary Supprime un transporteur
@@ -463,18 +464,94 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  */
   router.delete('/admin/transporteur/:id(\\d+)', admin, livraisonController.deleteTransporteur);
 
-//FLAG
+//FLAG                                                                                         
 //! ROUTE LIVRAISONS ----------------------------
 
 /**
  * Renvoie toutes les livraisons en BDD
- * @route GET /user/livraisons
- * @group utilisateur
- * @summary  Renvoie tous les livraisons en BDD
+ * @route GET /admin/livraisons
+ * @group Administrateur
+ * @summary  Renvoie toutes les livraisons en BDD
  * @returns {JSON} 200 - Renvoie tous les livraisons en BDD
  */
- router.get('/user/livraisons', admin, livraisonController.getAll);
+ router.get('/admin/livraisons', admin, livraisonController.getAllLivraison);
 
+/**
+ * Renvoie toutes les livraisons pour un client 
+ * @route GET /user/livraisons/:id
+ * @group utilisateur
+ * @summary  Renvoie toutes les livraisons d'un client en BDD
+ * @returns {JSON} 200 - Renvoie toutes les livraisons d'un client en BDD
+ */
+ router.get('/user/livraisons/:id(\\d+)', client, livraisonController.getByIdClient);
+  
+
+/**
+ * Renvoie toutes les produit commandé / livré en BDD
+ * @route GET /admin/produitLivre
+ * @group Administrateur
+ * @summary  Renvoie toutes les livraisons en BDD
+ * @returns {JSON} 200 - Renvoie tous les livraisons en BDD
+ */
+ router.get('/admin/produitcommande', admin, livraisonController.getAllLigneCommande);
+
+
+ /**
+ * Renvoie toutes les produit commandé / livré pour un client en particulier
+ * @route GET /user/produitLivre
+ * @group utilisateur
+ * @summary  Renvoie toutes les livraisons d'un client en BDD
+ * @returns {JSON} 200 - Renvoie tous les livraisons d'un client en BDD
+ */
+  router.get('/user/produitcommande/:id(\\d+)', client, livraisonController.getAllLivraisonByIdClient);
+  
+
+/**
+ * Renvoie tous les produits commandés / livré pour une commande particuliére
+ * @route GET /user/produitLivreByCommande
+ * @group utilisateur
+ * @summary  Renvoie toutes les livraisons d'un client en BDD
+ * @returns {JSON} 200 - Renvoie tous les livraisons d'un client en BDD
+ */
+    router.get('/user/produitLivreByCommande/:id(\\d+)', client, livraisonController.getByIdCommande);
+  
+
+/**
+ * Une route pour insérer une nouvelle livraison
+ * @route POST /admin/transporteur/new
+ * @group Administrateur
+ * @summary Insére une nouvelle livraison 
+ * @returns {JSON} 200 - Les données de la nouvelle livraison insérée
+ */
+ router.post('/admin/livraison/new', admin, validateBody(livraisonPostSchema), livraisonController.new);
+
+/**
+ * Une route pour mettre a jour un transporteur
+ * @route POST /admin/transporteur/new
+ * @group Administrateur
+ * @summary Met a jour un nouveau transporteur 
+ * @returns {JSON} 200 - Les données du nouveau transporteur mis a jour
+ */
+ router.patch('/admin/livraison/:id(\\d+)', admin, validateBody(livraisonSchema), livraisonController.update);
+
+ /**
+ * Une route pour supprimer une livraison
+ * @route DELETE /admin/livraison/:id
+ * @group Administrateur
+ * @summary Supprime une livraison
+ * @returns {JSON} 200 - Les données de la livraison supprimée
+ */
+  router.delete('/admin/livraison/:id(\\d+)', admin, livraisonController.delete);
+
+
+  /**
+ * Une route pour supprimer une livraison
+ * @route DELETE /admin/livraison/:id
+ * @group Administrateur
+ * @summary Supprime une livraison
+ * @returns {JSON} 200 - Les données de la livraison supprimée
+ */
+  router.delete('/admin/livraison/:id(\\d+)', admin, livraisonController.delete);
 
 
   //! ROUTES DEVELOPPEUR ----------------

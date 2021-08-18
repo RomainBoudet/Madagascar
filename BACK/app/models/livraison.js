@@ -47,7 +47,6 @@ class Livraison {
     set id_transporteur(val) {
         this.idTransporteur = val;
     }
-    
 
 
 
@@ -56,7 +55,8 @@ class Livraison {
 
 
 
-// pour la vue mada.view_livraisons
+
+    // pour la vue mada.view_livraisons
 
     set id_livraison(val) {
         this.idlivraison = val;
@@ -94,6 +94,18 @@ class Livraison {
     set date_paiement(val) {
         this.datePaiement = val;
     }
+    set date_livraison(val) {
+        this.dateLivraison = val;
+    }
+    set quantite_commande(val) {
+        this.quantiteCommande = val;
+    }
+    set prix_ht(val) {
+        this.prixHT = val;
+    }
+    set image_mini(val) {
+        this.imageMini = val;
+    }
 
 
 
@@ -112,13 +124,34 @@ class Livraison {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-    static async findAll() {
+    static async findAllPlus() {
         const {
             rows
         } = await db.query('SELECT * FROM mada.view_livraisons;');
 
         if (!rows[0]) {
             throw new Error("Aucune livraisons dans la BDD");
+        }
+        consol.model(
+            `les informations des ${rows.length} livraisons ont été demandées !`
+        );
+
+        return rows.map((livraison) => new Livraison(livraison));
+    }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à tous les produits commandé /livré
+     * @returns - tous les livraisons présent en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    static async findAllProduitLivrer() {
+        const {
+            rows
+        } = await db.query('SELECT * FROM mada.view_produit_livrer;');
+
+        if (!rows[0]) {
+            throw new Error("Aucun produits livrés  dans la BDD");
         }
         consol.model(
             `les informations des ${rows.length} livraisons ont été demandées !`
@@ -163,13 +196,13 @@ class Livraison {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-     static async findPlus(id) {
+    static async findOnePlus(id) {
 
 
         const {
             rows,
         } = await db.query(
-            'SELECT * FROM mada.view_livraisons WHERE id_client = $1;',
+            'SELECT * FROM mada.view_produit_livrer WHERE id_client = $1;',
             [id]
         );
 
@@ -181,7 +214,7 @@ class Livraison {
             `la livraison id : ${id} a été demandé en BDD !`
         );
 
-        return new Livraison(rows[0]);
+        return rows.map((livraison) => new Livraison(livraison));
     }
 
 
@@ -215,14 +248,14 @@ class Livraison {
     }
 
 
-     /**
+    /**
      * Méthode chargé d'aller chercher les informations relatives à un idLivraison passé en paramétre
      * @param idClient - un idLivraison d'une livraison
      * @returns - les informations d'une livraison demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-      static async findByIdTransporteur(idTransporteur) {
+    static async findByIdTransporteur(idTransporteur) {
 
 
         const {
@@ -250,13 +283,13 @@ class Livraison {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-     static async findByIdCommande(idCommande) {
+    static async findByIdCommande(idCommande) {
 
 
         const {
             rows,
         } = await db.query(
-            'SELECT * FROM mada.livraison WHERE livraison.id_commande = $1;',
+            'SELECT * FROM mada.view_produit_livrer WHERE id_livraison = $1;',
             [idCommande]
         );
 
@@ -289,7 +322,7 @@ class Livraison {
             rows,
         } = await db.query(
             `INSERT INTO mada.livraison (reference, numero_suivi, URL_suivi, poid, created_date, id_client, id_commande, id_transporteur) VALUES ($1, $2, $3, $4, now(), $5, $6, $7) RETURNING *;`,
-            [ this.reference, this.numeroSuivi, this.URLSuivi, this.poid, this.idClient, this.idCommande, this.idTransporteur]
+            [this.reference, this.numeroSuivi, this.URLSuivi, this.poid, this.idClient, this.idCommande, this.idTransporteur]
         );
 
         this.id = rows[0].id;
@@ -369,7 +402,7 @@ class Livraison {
      * @returns - les informations du livraison qui viennent d'être supprimés.
      * @async - une méthode asynchrone
      */
-     async deleteByIdCommande() {
+    async deleteByIdCommande() {
         const {
             rows
         } = await db.query('DELETE FROM mada.livraison WHERE livraison.id_commande = $1 RETURNING *;', [

@@ -1,9 +1,10 @@
 const Livraison = require('../models/livraison');
 const Transporteur = require('../models/transporteur');
-const LigneLivraison = require('../models/ligneLivraison');
+const LigneCommande = require('../models/ligneCommande');
 const {
     arrondi
 } = require('../services/arrondi');
+const { updateStock } = require('./produitController');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Livraison pour les intéractions avec la BDD
@@ -16,11 +17,9 @@ const {
 const livraisonController = {
 
 
-    getAll: async (req, res) => {
+    getAllLivraison: async (req, res) => {
         try {
-            const livraisons = await Livraison.findAll();
-
-            livraisons.map(livraison => livraison.poid = Number(livraison.poid));
+            const livraisons = await Livraison.findAllPlus();
 
             res.status(200).json(livraisons);
         } catch (error) {
@@ -47,22 +46,30 @@ const livraisonController = {
     },
 
 
-    getAllLigneLivraison: async (req, res) => {
+    getAllLigneCommande: async (req, res) => {
         try {
-            const livraisons = await LigneLivraison.findAll();
-
+            const livraisons = await Livraison.findAllProduitLivrer();
+            console.log(livraisons)
             res.status(200).json(livraisons);
         } catch (error) {
-            console.trace('Erreur dans la méthode getAllLigneLivraison du livraisonController :',
+            console.trace('Erreur dans la méthode getAllLigneCommande du livraisonController :',
                 error);
             res.status(500).json(error.message);
         }
     },
 
-    getOneLivraison: async (req, res) => {
+    getAllLivraisonByIdClient: async (req, res) => {
         try {
+            
 
-            const livraison = await Livraison.findOne(req.params.id);
+            if (req.session.user.privilege === 'Client' && req.session.user.idClient !== parseInt(req.params.id, 10)) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
+
+            const livraison = await Livraison.findOnePlus(req.params.id);
             res.json(livraison);
 
         } catch (error) {
@@ -71,24 +78,23 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-    getOneLigneLivraison: async (req, res) => {
-        try {
-
-            const livraison = await LigneLivraison.findOne(req.params.id);
-            res.json(livraison);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getOneLigneLivraison du livraisonController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
+   
 
     getByIdCommande: async (req, res) => {
         try {
 
             const livraison = await Livraison.findByIdCommande(req.params.id);
+            
+            console.log(livraison);
+            
+            
+            if (req.session.user.privilege === 'Client' && req.session.user.idClient !== livraison.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
+
             res.json(livraison);
 
         } catch (error) {
@@ -101,8 +107,16 @@ const livraisonController = {
     getByIdClient: async (req, res) => {
         try {
 
-            const livraison = await Livraison.findPlus(req.params.id);
-            res.json(livraison);
+            if (req.session.user.privilege === 'Client' && req.session.user.idClient !== parseInt(req.params.id, 10)) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
+            const livraisons = await Livraison.findByIdClient(req.params.id);
+            livraisons.map(livraison => livraison.poid = arrondi(livraison.poid));
+
+            res.json(livraisons);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du livraisonController :',
@@ -110,21 +124,6 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-
-
-    getLigneLivraisonByIdLivraison: async (req, res) => {
-        try {
-
-            const livraison = await LigneLivraison.findByIdLivraison(req.params.id);
-            res.json(livraison);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode getLigneLivraisonByIdLivraison du livraisonController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
 
 
     new: async (req, res) => {
@@ -141,8 +140,6 @@ const livraisonController = {
             data.idTransporteur = req.body.idTransporteur;
 
             const newLivraison = new Livraison(data);
-            console.log(req.body);
-            console.log('newLivraison ==>> ', newLivraison);
 
             await newLivraison.save();
             res.json(newLivraison);
@@ -151,7 +148,7 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-    newLigneLivraison: async (req, res) => {
+    newLigneCommande: async (req, res) => {
         try {
 
             const data = {};
@@ -161,13 +158,13 @@ const livraisonController = {
             data.idCommandeLigne = req.body.idCommandeLigne;
 
 
-            const newLivraison = new LigneLivraison(data);
+            const newLivraison = new LigneCommande(data);
 
 
             await newLivraison.save();
             res.json(newLivraison);
         } catch (error) {
-            console.log(`Erreur dans la méthode newLigneLivraison du livraisonController : ${error.message}`);
+            console.log(`Erreur dans la méthode newLigneCommande du livraisonController : ${error.message}`);
             res.status(500).json(error.message);
         }
     },
@@ -207,14 +204,22 @@ const livraisonController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateLivraison = await Livraison.findOne(id);
 
+            if (req.session.user.privilege === 'Client' && req.session.user.idClient !== updateLivraison.idClient) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
             const reference = req.body.reference;
             const numeroSuivi = req.body.numeroSuivi;
-            const URLsuivi = req.body.URLsuivi;
+            const URLSuivi = req.body.URLSuivi;
             const poid = req.body.poid;
             const idClient = req.body.idClient;
             const idCommande = req.body.idCommande;
@@ -236,11 +241,11 @@ const livraisonController = {
                 message.numeroSuivi = 'Votre numeroSuivi n\'a pas changé';
             }
 
-            if (URLsuivi) {
-                updateLivraison.URLsuivi = URLsuivi;
-                message.URLsuivi = 'Votre nouveau URLsuivi a bien été enregistré ';
+            if (URLSuivi) {
+                updateLivraison.URLSuivi = URLSuivi;
+                message.URLSuivi = 'Votre nouveau URLSuivi a bien été enregistré ';
             } else if (!URLsuivi) {
-                message.URLsuivi = 'Votre nom de URLsuivi n\'a pas changé';
+                message.URLSuivi = 'Votre nom de URLSuivi n\'a pas changé';
             }
 
 
@@ -274,7 +279,6 @@ const livraisonController = {
                 message.idTransporteur = 'Votre nom de idransporteur n\'a pas changé';
             }
 
-
             await updateLivraison.update();
 
             res.json(message);
@@ -293,11 +297,12 @@ const livraisonController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
-                const updateTransporteur = await Transporteur.findOne(id);
-
+            const updateTransporteur = await Transporteur.findOne(id);
 
             const nom = req.body.nom;
             const description = req.body.description;
@@ -353,7 +358,7 @@ const livraisonController = {
     },
 
 
-    updateLigneLivraison: async (req, res) => {
+    updateLigneCommande: async (req, res) => {
         try {
 
             const {
@@ -361,10 +366,12 @@ const livraisonController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
-            const updateLivraison = await LigneLivraison.findOne(id);
+            const updateLivraison = await LigneCommande.findOne(id);
 
 
             const quantiteLivraison = req.body.quantiteLivraison;
@@ -404,7 +411,7 @@ const livraisonController = {
             res.json(message);
 
         } catch (error) {
-            console.log(`Erreur dans la méthode updateLigneLivraison du livraisonController ${error.message}`);
+            console.log(`Erreur dans la méthode updateLigneCommande du livraisonController ${error.message}`);
             res.status(500).json(error.message);
         }
     },
@@ -443,91 +450,7 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-
-
-    deleteLigneLivraison: async (req, res) => {
-
-        try {
-
-            const livraisonInDb = await LigneLivraison.findOne(req.params.id);
-
-            const livraison = await livraisonInDb.delete();
-
-            res.json(livraison);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteLigneLivraison du livraisonController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-    deleteByIdClient: async (req, res) => {
-
-        try {
-
-            const livraisonsInDb = await Livraison.findByIdClient(req.params.id);
-            const arrayDeleted = [];
-            for (const livraisonInDb of livraisonsInDb) {
-
-                const livraison = await livraisonInDb.deleteByIdClient();
-                arrayDeleted.push(livraison);
-            }
-
-
-            res.json(arrayDeleted[0]);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteByIdClient du livraisonController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-    deleteByIdCommande: async (req, res) => {
-
-        try {
-
-            const livraisonsInDb = await Livraison.findByIdCommande(req.params.id);
-            const arrayDeleted = [];
-            for (const livraisonInDb of livraisonsInDb) {
-
-                const livraison = await livraisonInDb.deleteByIdCommande();
-                arrayDeleted.push(livraison);
-            }
-
-
-            res.json(arrayDeleted[0]);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteByIdCommande du livraisonController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-    deleteLigneLivraisonByIdLivraison: async (req, res) => {
-
-        try {
-
-            const livraisonsInDb = await LigneLivraison.findByIdLivraison(req.params.id);
-            const arrayDeleted = [];
-            for (const livraisonInDb of livraisonsInDb) {
-
-                const livraison = await livraisonInDb.deleteByIdLivraison();
-                arrayDeleted.push(livraison);
-            }
-
-
-            res.json(arrayDeleted[0]);
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode deleteLigneLivraisonByIdLivraison du livraisonController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    },
-
-
+   
 
 
 }

@@ -9,6 +9,7 @@ class LigneCommande {
     updatedDate;
     idProduit;
     idCommande;
+    idLivraison;
 
 
     set quantite_commande(val) {
@@ -28,6 +29,9 @@ class LigneCommande {
 
     set id_commande(val) {
         this.idCommande = val;
+    }
+    set id_livraison(val) {
+        this.idLivraison = val;
     }
 
 

@@ -540,7 +540,7 @@ CREATE TABLE ligne_commande(
 
 	id_produit          INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE,
 	id_commande			INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE,
-	id_livraison        INT NOT NULL REFERENCES livraison(id)  
+	id_livraison        INT NOT NULL REFERENCES livraison(id)  ON DELETE CASCADE
 	
 );
 
@@ -673,7 +673,7 @@ adresse.ligne3 as ligne3,
 adresse.telephone as telephone,
 adresse.envoie as envoie,
 adresse.pays as pays,
-adresse.code_postal as code_postal,
+CAST (adresse.code_postal as INTEGER) as codePostal,
 adresse.ville as ville,
 adresse.created_date,
 adresse.updated_date,
@@ -684,102 +684,19 @@ JOIN mada.privilege ON client.id_privilege = privilege.id
 ORDER BY client.id ASC;
 
 
-
-
-
-
-/* CREATE VIEW mada.view_client_adresse AS
-SELECT 
-client.id as id_client,
-client_adresse.id as id_adresse,
-client.prenom,
-client.nom_famille,
-client.email as email,
-client_adresse.titre as adresse_titre,
-client_adresse.prenom as adresse_prenom,
-client_adresse.nom_famille as adresse_nomFamille,
-client_adresse.ligne1 as adresse1,
-client_adresse.ligne2 as adresse2,
-client_adresse.ligne3 as adresse3,
-client_adresse.telephone as telephone,
-client_adresse.envoie as envoie,
-pays.nom as pays,
-code_postal.code_postal as code_postal,
-ville.nom as ville,
-privilege.nom as privilege
-FROM mada.client
-JOIN mada.client_adresse ON client_adresse.id_client = client.id
-JOIN mada.ville ON ville.id = client_adresse.id_ville
-JOIN mada.pays ON pays.id = ville.id_pays
-JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
-JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
-JOIN mada.privilege ON client.id_privilege = privilege.id
-ORDER BY client.id ASC;
- */
-
-
-
-/* CREATE VIEW mada.view_adresse_update AS
-SELECT 
-client.id as id_client,
-client_adresse.id as id_adresse,
-pays.id as id_pays,
-ville.id as id_ville,
-code_postal.id as id_codePostal,
-ville_a_codePostal.id as id_liaisonVilleCodePostal,
-client.prenom,
-client.nom_famille,
-client.email as email,
-client_adresse.titre as titre,
-client_adresse.ligne1,
-client_adresse.ligne2,
-client_adresse.ligne3,
-client_adresse.telephone as telephone,
-client_adresse.envoie as envoie,
-pays.nom as pays,
-code_postal.code_postal as code_postal,
-ville.nom as ville,
-privilege.nom as privilege
-FROM mada.client
-LEFT JOIN mada.client_adresse ON client_adresse.id_client = client.id
-LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
-ORDER BY client.id ASC; */
-
-/* CREATE VIEW mada.view_adresse_update AS
-SELECT 
-client.id as id_client,
-adresse.id as id_adresse,
-client.prenom,
-client.nom_famille,
-client.email as email,
-adresse.titre as titre,
-adresse.ligne1,
-adresse.ligne2,
-adresse.ligne3,
-adresse.telephone as telephone,
-adresse.envoie as envoie,
-adresse.pays as pays,
-adresse.code_postal as code_postal,
-adresse.ville as ville,
-privilege.nom as privilege
-FROM mada.client
-LEFT JOIN mada.adresse ON adresse.id_client = client.id
-LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
-ORDER BY client.id ASC; */
-
 -- Une vue simplifié pour les produits sans leurs avis et photos aggrégés, utilisé notamment pour les paniers
 
 CREATE VIEW mada.view_produit AS 
 SELECT
 produit.nom as produit,
-produit.prix_HT as prix,
+CAST (produit.prix_HT as FLOAT) as prix,
 produit.image_mini as image,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,
-stock.quantite as stock,
-reduction.pourcentage_reduction as reduction,
+CAST (stock.quantite as INTEGER) as stock,
+CAST (reduction.pourcentage_reduction as FLOAT) as reduction,
 produit.id,
-tva.taux as tva
+CAST (tva.taux as FLOAT) as tva
 FROM mada.produit 
 LEFT JOIN mada.tva ON produit.id_tva = tva.id
 LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id
@@ -792,13 +709,13 @@ CREATE VIEW mada.view_produit_plus AS
 SELECT
 produit.nom as produit,
 produit.description as description,
-produit.prix_HT as prix,
+CAST (produit.prix_HT as FLOAT) as prix,
 produit.image_mini,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,
-stock.quantite as stock,
-reduction.pourcentage_reduction as reduction,
-tva.taux as tva,
+CAST (stock.quantite as INTEGER) as stock,
+CAST (reduction.pourcentage_reduction as FLOAT) as reduction,
+CAST (tva.taux as FLOAT) as tva,
 categorie.nom as categorie,
 array_to_json(array_remove(array_agg(DISTINCT image.URL), NULL)) image,
 array_to_json(array_remove(array_agg(DISTINCT avis.avis), NULL)) avis,
@@ -820,13 +737,13 @@ CREATE VIEW mada.view_categorie AS
 SELECT
 produit.nom as produit,
 produit.description as description_produit,
-produit.prix_HT as prix,
+CAST (produit.prix_HT as FLOAT) as prix,
 produit.image_mini,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,
-stock.quantite as stock,
-reduction.pourcentage_reduction as reduction,
-tva.taux as tva,
+CAST (stock.quantite as INTEGER) as stock,
+CAST (reduction.pourcentage_reduction as FLOAT) as reduction,
+CAST (tva.taux as FLOAT) as tva,
 categorie.nom as categorie,
 categorie.id as categorie_id,
 categorie.description as description_categorie,
@@ -845,6 +762,10 @@ LEFT JOIN mada.categorie_image ON categorie_image.id_categorie = categorie.id
 GROUP BY produit, categorie.id, produit.description, prix, couleur, taille, stock, reduction, tva, categorie, produit.id
 ORDER BY produit.nom ASC;
 
+--! EXPLICATION array_to_json(array_remove(array_agg(DISTINCT ma_colonne), NULL)) as le_beau_nom_de_ma_colonne
+-- Un client peut avoir plusieurs adresses. Je veux pour chaque client, toutes les adresses en une ligne, comprises dans un tableau. 
+--Je veux un tableau et pas un objet comme rendu par array_agg. Donc => DISTINCT pour ne pas avoir de double dans ma colonne, array_agg pour que ça me rassemble les valeurs en un objet, remove_array pour enlever les NULL (ne fonctionne pas directement sus json_agg qui rend un objet, ce qui explique l'étape intémédiaire du array_agg au lieu du json_agg direct), puis je convertit mon objet sans NULL en véritable tableau avec array_to_json. 
+--LEFT JOIN car quioiqu'il y ai dans mes autres colonnes, je veux dans tous les cas tous les clients 
 
 CREATE VIEW mada.view_paiement AS
 SELECT 
@@ -854,7 +775,7 @@ client.nom_famille,
 client.email,
 paiement.reference as paiement_ref,
 paiement.methode as paiement_methode,
-paiement.montant as paiement_montant,
+CAST (paiement.montant as FLOAT) as paiement_montant,
 to_char(paiement.date_paiement, 'TMDay DD TMMonth YYYY à  HH24:MI:SS') as paiement_date
 FROM mada.paiement
 JOIN mada.commande ON commande.id = paiement.id_commande
@@ -862,45 +783,8 @@ JOIN mada.client ON client.id = commande.id_client
 ORDER BY client.id ASC;
 
 
-/* CREATE VIEW mada.view_client_full AS
-SELECT 
-client.prenom as prenom,
-client.id as id_client,
-client.nom_famille as nom_famille,
-client.email as email,
-array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne1), NULL)) as adresse1,
-array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne2), NULL)) as adresse2,
-array_to_json(array_remove(array_agg(DISTINCT client_adresse.ligne3), NULL)) as adresse3,
-array_to_json(array_remove(array_agg(DISTINCT client_adresse.telephone), NULL)) as telephone,
-array_to_json(array_remove(array_agg(DISTINCT pays.nom), NULL)) as pays,
-array_to_json(array_remove(array_agg(DISTINCT code_postal.code_postal), NULL)) as code_postal,
-array_to_json(array_remove(array_agg(DISTINCT ville.nom), NULL)) as ville,
-privilege.nom as privilege,
-array_to_json(array_remove(array_agg(DISTINCT client_historique_connexion.connexion_date), NULL)) as derniere_connexion,
-array_to_json(array_remove(array_agg(DISTINCT client_historique_connexion.connexion_succes), NULL)) as statut_connexion,
-array_to_json(array_remove(array_agg(DISTINCT commande.reference), NULL)) as commande_reference,
-array_to_json(array_remove(array_agg(DISTINCT commande.commentaire), NULL)) as commande_commentaire,
-array_to_json(array_remove(array_agg(DISTINCT paiement.reference), NULL)) as paiement_reference,
-array_to_json(array_remove(array_agg(DISTINCT to_char(paiement.date_paiement, 'TMDay DD TMMonth YYYY à  HH24:MI:SS' )), NULL)) as paiement_date,
-array_to_json(array_remove(array_agg(DISTINCT paiement.methode), NULL)) as paiement_methode,
-array_to_json(array_remove(array_agg(DISTINCT paiement.montant), NULL)) as paiement_montant
-FROM mada.client
-LEFT JOIN mada.client_adresse ON client_adresse.id_client = client.id
-LEFT JOIN mada.ville ON ville.id = client_adresse.id_ville
-LEFT JOIN mada.pays ON pays.id = ville.id_pays
-LEFT JOIN mada.ville_a_codePostal ON ville_a_codePostal.id_ville = ville.id
-LEFT JOIN mada.code_postal ON ville_a_codePostal.id_codePostal = code_postal.id
-LEFT JOIN mada.privilege ON client.id_privilege = privilege.id
-LEFT JOIN mada.client_historique_connexion ON client_historique_connexion.id_client = client.id
-LEFT JOIN mada.commande ON commande.id_client = client.id
-LEFT JOIN mada.paiement ON paiement.id_commande = commande.id
-GROUP BY client.prenom, client.nom_famille, email, privilege, client.id
-ORDER BY client.id ASC; */
 
---! EXPLICATION array_to_json(array_remove(array_agg(DISTINCT ma_colonne), NULL)) as le_beau_nom_de_ma_colonne
--- Un client peut avoir plusieurs adresses. Je veux pour chaque client, toutes les adresses en une ligne, comprises dans un tableau. Je veux un tableau et pas un objet comme rendu par array_agg. Donc => DISTINCT pour ne pas avoir de double dans ma colonne, array_agg pour que ça me rassemble les valeurs en un objet, remove_array pour enlever les NULL (ne fonctionne pas directement sus json_agg qui rend un objet, ce qui explique l'étape intémédiaire du array_agg au lieu du json_agg direct), puis je convertit mon objet sans NULL en véritable tableau avec array_to_json. 
 
---LEFT JOIN car quioiqu'il y ai dans mes autres colonnes, je veux dans tous les cas tous les clients 
 
 
 --Une vue compléte pour les livraisons
@@ -912,6 +796,7 @@ livraison.reference as ref_livraison,
 to_char(livraison.created_date,'TMDay DD TMMonth YYYY à  HH24:MI:SS' ) as date_livraison,
 livraison.numero_suivi,
 livraison.URL_suivi,
+CAST (livraison.poid AS FLOAT),
 client.id as id_client, 
 client.prenom as client_prenom, 
 client.nom_famille as client_nomFamille,
@@ -920,15 +805,15 @@ adresse.nom_famille as adresse_nomFamille,
 adresse.ligne1 as adresse1,
 adresse.ligne2 as adresse2,
 adresse.ligne3 as adresse3,
-adresse.code_postal as codePostal,
+CAST (adresse.code_postal as INTEGER) as codePostal,
 adresse.ville,
 adresse.pays,
 adresse.telephone,
 transporteur.nom as transporteur,
-transporteur.frais_expedition,
+CAST (transporteur.frais_expedition as FLOAT),
 commande.reference as ref_commande,
 paiement.reference as ref_paiement,
-paiement.montant as montant_paiement,
+CAST(paiement.montant as FLOAT) as montant_paiement,
 to_char(paiement.date_paiement,'TMDay DD TMMonth YYYY à  HH24:MI:SS' ) as date_paiement
 FROM
 mada.livraison
@@ -939,6 +824,45 @@ JOIN mada.commande ON commande.id = livraison.id_commande
 JOIN mada.paiement ON paiement.id_commande = commande.id
 ORDER BY livraison.id;
 
+
+--Une vue compléte pour les produits livrés / commandés
+
+CREATE VIEW mada.view_produit_livrer AS
+SELECT 
+produit.nom,
+CAST(ligne_commande.quantite_commande as INTEGER),
+CAST (produit.prix_HT as FLOAT),
+CAST (tva.taux as FLOAT),
+CAST (transporteur.frais_expedition as FLOAT),
+produit.image_mini,
+livraison.id as id_livraison,
+livraison.reference as ref_livraison,
+to_char(livraison.created_date,'TMDay DD TMMonth YYYY à  HH24:MI:SS' ) as date_livraison,
+livraison.numero_suivi,
+livraison.URL_suivi,
+CAST(livraison.poid as FLOAT),
+client.id as id_client,
+client.prenom as client_prenom, 
+client.nom_famille as client_nomFamille,
+adresse.prenom as adresse_prenom,
+adresse.nom_famille as adresse_nomFamille,
+adresse.ligne1 as adresse1,
+adresse.ligne2 as adresse2,
+adresse.ligne3 as adresse3,
+CAST (adresse.code_postal as INTEGER) as codePostal,
+adresse.ville,
+adresse.pays,
+adresse.telephone,
+transporteur.nom as transporteur
+FROM
+mada.ligne_commande
+JOIN mada.produit ON produit.id = ligne_commande.id_produit
+JOIN mada.tva ON tva.id = produit.id_tva
+JOIN mada.livraison ON ligne_commande.id_livraison = livraison.id
+JOIN mada.client ON client.id = livraison.id_client 
+JOIN mada.adresse ON client.id = adresse.id_client AND adresse.envoie = TRUE
+JOIN mada.transporteur ON livraison.id_transporteur = transporteur.id
+ORDER BY livraison.reference;
 
 
 COMMIT;

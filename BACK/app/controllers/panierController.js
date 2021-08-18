@@ -26,7 +26,7 @@ const panierController = {
 
            // let totalHT = 0;
            // let totalTTC = 0;
-            let coutTransporteurDefault = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
+            let coutTransporteur = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
 
             if (cart) {
 
@@ -65,17 +65,17 @@ const panierController = {
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
-                req.session.coutTransporteurDefault = coutTransporteurDefault;
+                req.session.coutTransporteur = coutTransporteur;
 
 
                 //! ATTENTION avec le .toFixed()  ==>> 0.1 + 0.2 === 0.3 returning false car Les nombres à virgule flottante ne peuvent pas représenter toutes les décimales avec précision en binaire
-                req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteurDefault * 100); // je convertit en centimes et Entier pour STRIPE
+                req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteur * 100); // je convertit en centimes et Entier pour STRIPE
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,
                     totalTTC,
                     totalTVA,
-                    coutTransporteurDefault,
+                    coutTransporteur,
                     cart,
                 });
 
@@ -94,6 +94,9 @@ const panierController = {
 
     addArticlePanier: async (req, res) => {
         try {
+
+            console.log("req.session a l'entrée du addPanier ==> ",req.session);
+
             const articleId = parseInt(req.params.id, 10);
             // Je vérifie qu'il est en stock pour pouvoir l'ajouter au panier
             const monArticle = await Produit.findOne(articleId);
@@ -149,11 +152,12 @@ const panierController = {
 
             //let totalHT = 0;
             //let totalTTC = 0;
-            let coutTransporteurDefault = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
+            let coutTransporteur = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
 
             if (cart) {
 
-                //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier. Si la réduction est de 0, cette valeur sera identique au prix...
+                //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier.
+                // Si la réduction est de 0, cette valeur sera identique au prix...
                 cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi(article.prix * (1 - article.reduction))));
 
                 totalHT1 = cart.reduce(
@@ -183,19 +187,22 @@ const panierController = {
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
-                req.session.coutTransporteurDefault = coutTransporteurDefault;
+                req.session.coutTransporteur = coutTransporteur;
 
 
                 //! ATTENTION avec le .toFixed()  ==>> 0.1 + 0.2 === 0.3 returning false car Les nombres à virgule flottante ne peuvent pas représenter toutes les décimales avec précision en binaire
-                req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteurDefault * 100); // je convertit en centimes et Entier pour STRIPE
+                req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteur * 100); // je convertit en centimes et Entier pour STRIPE
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,
                     totalTTC,
                     totalTVA,
-                    coutTransporteurDefault,
+                    coutTransporteur,
                     cart,
                 });
+
+                console.log("req.session a la sortie du addPanier ==> ",req.session);
+
 
             }
 
@@ -211,6 +218,9 @@ const panierController = {
 
     delArticlePanier: async (req, res) => {
         try {
+
+            console.log("req.session a l'entrée du delPanier ==> ",req.session);
+
 
             const articleId = parseInt(req.params.id, 10);
 
@@ -238,7 +248,7 @@ const panierController = {
 
             //let totalHT = 0;
             //let totalTTC = 0;
-            let coutTransporteurDefault = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
+            let coutTransporteur = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
 
             if (cart) {
 
@@ -272,19 +282,22 @@ const panierController = {
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
-                req.session.coutTransporteurDefault = coutTransporteurDefault;
+                req.session.coutTransporteur = coutTransporteur;
 
 
                 //! ATTENTION avec le .toFixed()  ==>> 0.1 + 0.2 === 0.3 returning false car Les nombres à virgule flottante ne peuvent pas représenter toutes les décimales avec précision en binaire
-                req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteurDefault * 100); // je convertit en centimes et Entier pour STRIPE
+                req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteur * 100); // je convertit en centimes et Entier pour STRIPE
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,
                     totalTTC,
                     totalTVA,
-                    coutTransporteurDefault,
+                    coutTransporteur,
                     cart,
                 });
+
+                console.log("req.session a la sortie du delPanier ==> ",req.session);
+
 
             }
 

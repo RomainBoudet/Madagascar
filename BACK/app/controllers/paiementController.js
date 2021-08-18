@@ -25,12 +25,22 @@ const paiementController = {
 
             //le user a accecepté les CGV
             // je vérifie si req.session.user.cookie existe déja et si sa valeur est déja 'true'
-            console.log('req.session.user ==> ', req.session.user.cgv);
-            if (req.session.user.cgv === 'true') {
+            //console.log('req.session.user ==> ', req.session.user.cgv);
+            console.log("req.session a l'entrée des cgv ==> ", req.session);
+            // console.log(req.session.user.cgv);
+
+            /*  if (req.session.user === undefined) {
+                 req.session.cgv = 'true'
+
+             } */
+            if (req.session.user !== undefined && req.session.user.cgv === 'true') {
                 console.log("Les Conditions Générales de Ventes ont déja été accéptés.")
                 return res.status(200).json("Les Conditions Générales de Ventes ont déja été accéptés.")
             } else(
-                req.session.user.cgv = 'true')
+                req.session.cgv = 'true')
+
+            console.log("req.session a la sortie des cgv ==> ", req.session);
+
 
             return res.status(200).json("Les Conditions Générales de Ventes ont été accéptés.")
 
@@ -54,23 +64,36 @@ const paiementController = {
             // été authentifié
             if (!req.session.user) {
                 console.log("Le client ne s'est pas authentifié !")
-                return res.status(200).json({message: "Merci de vous connecter afin de finaliser votre paiement."})
+                return res.status(200).json({
+                    message: "Merci de vous connecter afin de finaliser votre paiement."
+                })
             }
             // avoir accepté les CGV
-            if (req.session.user.cgv !== 'true') {
+            if (req.session.cgv !== 'true') {
                 console.log("Les Conditions Générales de Ventes n'ont pas été accéptés.")
-                return res.status(200).json({message: "Les Conditions Générales de Ventes n'ont pas été accéptés. Merci de les accéptés afin de finaliser votre paiement."})
+                return res.status(200).json({
+                    message: "Les Conditions Générales de Ventes n'ont pas été accéptés. Merci de les accéptés afin de finaliser votre paiement."
+                })
             }
             // avoir un montant de panier supérieur a 0.
             if (req.session.totalTTC == 0 || req.session.totalTTC === undefined) {
-                return res.status(200).json({message: "Pour effectuer un paiement vous devez avoir des articles dans votre panier."})
+                return res.status(200).json({
+                    message: "Pour effectuer un paiement vous devez avoir des articles dans votre panier."
+                })
             }
 
-            // et avoir une adresse de livraison définit (et non seulement une adresse de facturation).
+            //TODO
+            // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
             const isEnvoieOk = await Adresse.findByEnvoie(req.session.user.idClient);
-            if(!isEnvoieOk){
-                return res.status(200).json({message: "Pour effectuer un paiement, vous devez avoir enregistré une adresse de livraison en plus de votre adresse de facturation."})
+            if (!isEnvoieOk) {
+                return res.status(200).json({
+                    message: "Pour effectuer un paiement, vous devez avoir enregistré une adresse de livraison en plus de votre adresse de facturation."
+                })
             }
+
+            //TODO
+            // Avoir choisi un transporteur 
+
 
             const articles = [];
             req.session.cart.map(article => (`${articles.push(article.produit+' / '+'Qte: '+article.quantite)}`));
@@ -305,7 +328,9 @@ const paiementController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updatePaiement = await Paiement.findOne(id);

@@ -26,7 +26,7 @@ const authController = {
 
         try {
 
-              if(request.session.user === undefined && request.signedCookies.xsrfToken === request.headers['x-xsrf-token'] ){
+              if(request.session.user !== undefined && request.signedCookies.xsrfToken === request.headers['x-xsrf-token'] ){
                 
               return response.status(200).json({message: "Vous vous êtes déja authentifié et vos informations de connection sont toujours valide."});
 
@@ -138,15 +138,9 @@ const authController = {
     deconnexion: async (req, res) => {
         try {
 
-            const {
-                headers
-            } = req;
+            
 
-            const cookieXsrfToken = req.signedCookies.xsrfToken;
-
-            if (req.session.user === undefined) {
-                return res.status(200).json('Vous avez déja été déconnecté avec succés !')
-            }
+            console.log("req.session a l'entrée de la déconnexion ==> ",req.session);
 
             //je change a false la valeur du headers
             //res.append('x-xsrf-token', 'false');

@@ -57,6 +57,9 @@ const transporteurSchema = require('./schemas/transporteurShema');
 const transporteurPostSchema = require('./schemas/transporteurPostSchema');
 const livraisonPostSchema = require('./schemas/livraisonPostSchema');
 const livraisonSchema = require('./schemas/livraisonSchema');
+const choixLivraisonSchema = require('./schemas/choixLivraisonSchema');
+
+
 
 
 //Redis pour le cache
@@ -235,7 +238,7 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  L'acceptation des Conditions Générale de Ventes est stocké en session
  * @returns {JSON} 200 - L'acceptation des Conditions Générale de Ventes est stocké en session
  */
- router.get('/cgv', client, paiementController.cgv);
+ router.get('/cgv', paiementController.cgv);
 
 
 /**
@@ -464,8 +467,18 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  */
   router.delete('/admin/transporteur/:id(\\d+)', admin, livraisonController.deleteTransporteur);
 
-//FLAG                                                                                         
+//FLAG     WORK IN PROGRESS
 //! ROUTE LIVRAISONS ----------------------------
+
+/**
+ * Une route pour déterminer le type de livraison choisi par l'utilisateur
+ * @route POST /client/livraisonChoix
+ * @group utilisateur
+ * @summary Permet de déterminer le choix du transporteur fait par le client
+ * @returns {JSON} 200 - Le choix du transporteur fait par le client
+ */
+ router.post('/admin/livraisonChoix', validateBody(choixLivraisonSchema), livraisonController.choixLivraison);
+
 
 /**
  * Renvoie toutes les livraisons en BDD
@@ -518,7 +531,7 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
 
 /**
  * Une route pour insérer une nouvelle livraison
- * @route POST /admin/transporteur/new
+ * @route POST /admin/livraison/new
  * @group Administrateur
  * @summary Insére une nouvelle livraison 
  * @returns {JSON} 200 - Les données de la nouvelle livraison insérée
@@ -526,11 +539,11 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
  router.post('/admin/livraison/new', admin, validateBody(livraisonPostSchema), livraisonController.new);
 
 /**
- * Une route pour mettre a jour un transporteur
- * @route POST /admin/transporteur/new
+ * Une route pour mettre a jour une livraison
+ * @route POST /admin/livraison/new
  * @group Administrateur
- * @summary Met a jour un nouveau transporteur 
- * @returns {JSON} 200 - Les données du nouveau transporteur mis a jour
+ * @summary Met a jour une nouvelle livraison 
+ * @returns {JSON} 200 - Les données d'une nouvelle livraison mise a jour
  */
  router.patch('/admin/livraison/:id(\\d+)', admin, validateBody(livraisonSchema), livraisonController.update);
 
@@ -544,18 +557,7 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
   router.delete('/admin/livraison/:id(\\d+)', admin, livraisonController.delete);
 
 
-  /**
- * Une route pour supprimer une livraison
- * @route DELETE /admin/livraison/:id
- * @group Administrateur
- * @summary Supprime une livraison
- * @returns {JSON} 200 - Les données de la livraison supprimée
- */
-  router.delete('/admin/livraison/:id(\\d+)', admin, livraisonController.delete);
-
-
   //! ROUTES DEVELOPPEUR ----------------
-
 
 /**
  * Faire appel a la méthode smsBalance envoi un sms avec la balance du compte Twilio. 

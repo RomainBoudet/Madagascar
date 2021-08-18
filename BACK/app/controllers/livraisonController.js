@@ -4,7 +4,9 @@ const LigneCommande = require('../models/ligneCommande');
 const {
     arrondi
 } = require('../services/arrondi');
-const { updateStock } = require('./produitController');
+const {
+    expression
+} = require('joi');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Livraison pour les intéractions avec la BDD
@@ -15,6 +17,41 @@ const { updateStock } = require('./produitController');
  * @return {JSON}  - une donnée en format json
  */
 const livraisonController = {
+
+    choixLivraison: async (req, res) => {
+        try {
+
+
+            // on insére le choix de la livraison en session, 
+            // Depuis le front on envoie un entier qui fait référence a un transporteur, selon son id : 1,2,3, ou 4
+            //  1 : DPD, 2 : TNT express, 3 : retrait sur place, 4 : La Poste
+         
+            req.session.idTransporteur = req.body.idTransporteur
+
+            // Je met a jour le prix du panier en prenant en compte le cout du transport
+
+            const transporteur = await Transporteur.findOne(req.session.idTransporteur);
+
+            console.log("transporteur ==> ", transporteur);
+
+            req.session.coutTransporteur = arrondi(transporteur.fraisExpedition);
+
+            // Je remet a jour le total dans le panier.
+
+            req.session.totalStripe = parseInt(req.session.totalTTC * 100) + parseInt(req.session.coutTransporteur * 100); 
+
+            console.log("req.session a la sortie du choix du transporteur ==> ", req.session);
+
+            return res.status(200).json({message: "Le choix du transporteur a bien été pris en compte."})
+
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode choixLivraison du livraisonController :',
+                error);
+            res.status(500).json(error.message);
+        }
+
+    },
 
 
     getAllLivraison: async (req, res) => {
@@ -60,7 +97,7 @@ const livraisonController = {
 
     getAllLivraisonByIdClient: async (req, res) => {
         try {
-            
+
 
             if (req.session.user.privilege === 'Client' && req.session.user.idClient !== parseInt(req.params.id, 10)) {
                 return res.status(403).json({
@@ -78,16 +115,16 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-   
+
 
     getByIdCommande: async (req, res) => {
         try {
 
             const livraison = await Livraison.findByIdCommande(req.params.id);
-            
+
             console.log(livraison);
-            
-            
+
+
             if (req.session.user.privilege === 'Client' && req.session.user.idClient !== livraison.idClient) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
@@ -450,7 +487,6 @@ const livraisonController = {
             res.status(500).json(error.message);
         }
     },
-   
 
 
 }

@@ -20,11 +20,11 @@ const choixLivraisonSchema = Joi.object({
     .max(4)
     .required()
     .messages({
-        'any.number': 'Le champs de votre poid doit être un chiffre !',
-        'number.empty': 'Le champs de votre poid doit être un chiffre !',
-        'any.required': 'Le champs de votre poid ne peut être vide !',
-        'number.max': 'Le champs de votre poid ne peut être supérieur a 4 !',
-        'number.positive': 'Le champs de votre poid ne peut être inférieur a zéro !',
+        'any.number': 'Le champs de votre idTransporteur doit être un chiffre !',
+        'number.empty': 'Le champs de votre idTransporteur doit être un chiffre !',
+        'any.required': 'Le champs de votre idTransporteur ne peut être vide !',
+        'number.max': 'Le champs de votre idTransporteur ne peut être supérieur a 4 !',
+        'number.positive': 'Le champs de votre idTransporteur ne peut être inférieur a zéro !',
 
     }),
 

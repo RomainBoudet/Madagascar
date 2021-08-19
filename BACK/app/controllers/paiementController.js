@@ -6,6 +6,8 @@ const {
 } = require('../services/date');
 
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
+const redis = require('../services/redis');
+
 
 
 /**
@@ -61,9 +63,9 @@ const paiementController = {
 
             //Pour payer, l'utilisateur doit avoir :
 
-            console.log("la session en amont du paiement ==> ",req.session);
+            console.log("la session en amont du paiement ==> ", req.session);
 
-           
+
 
             // été authentifié
             if (!req.session.user) {
@@ -86,10 +88,10 @@ const paiementController = {
                 })
             }
 
-            
+
             // Avoir choisi un transporteur 
 
-            if (req.session.idTransporteur === undefined ) {
+            if (req.session.idTransporteur === undefined) {
 
                 return res.status(200).json({
                     message: "Pour  finaliser votre paiement, merci de choisir un mode de livraison parmis ceux proposé ."
@@ -104,7 +106,7 @@ const paiementController = {
                 })
             }
 
-          
+
 
 
             const articles = [];
@@ -131,9 +133,12 @@ const paiementController = {
                 // Si il n'existe pas, je dois avant tout, le créer
                 //https://stripe.com/docs/payments/payment-intents
 
+                // Je récupére les info STRIPE du client via REDIS 
+                const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
                 const paymentIntent = await stripe.paymentIntents.create({
                     amount: req.session.totalStripe, // total en centimes et en Integer
                     currency: 'eur',
+                    custumer: idClientStripe,
                     payment_method_types: ['card'],
                     setup_future_usage: 'on_session',
                     receipt_email: req.session.user.email,

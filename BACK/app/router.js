@@ -441,6 +441,16 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
 //! ROUTE TRANSPORTEUR ---------------------
 
 /**
+ * Une route pour déterminer le type de livraison choisi par l'utilisateur
+ * @route POST /client/livraisonChoix
+ * @group utilisateur
+ * @summary Permet de déterminer le choix du transporteur fait par le client
+ * @returns {JSON} 200 - Le choix du transporteur fait par le client
+ */
+ router.post('/client/livraisonChoix', validateBody(choixLivraisonSchema), livraisonController.choixLivraison);
+
+
+/**
  * Renvoie tous les transporteurs en BDD
  * @route GET /user/transporteurs
  * @group utilisateur
@@ -479,14 +489,6 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
 
 //! ROUTE LIVRAISONS ----------------------------
 
-/**
- * Une route pour déterminer le type de livraison choisi par l'utilisateur
- * @route POST /client/livraisonChoix
- * @group utilisateur
- * @summary Permet de déterminer le choix du transporteur fait par le client
- * @returns {JSON} 200 - Le choix du transporteur fait par le client
- */
- router.post('/admin/livraisonChoix', validateBody(choixLivraisonSchema), livraisonController.choixLivraison);
 
 
 /**

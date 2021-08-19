@@ -42,7 +42,7 @@ const adresseController = {
                     message: "Cette adresse n'existe pas."
                 })
             };
-            
+
             if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== adresseExist.idClient) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
@@ -58,15 +58,19 @@ const adresseController = {
 
             const adresse = await Adresse.findByEnvoiTrue(req.session.user.idClient);
 
-            //Si l'utilisateur a déja une adresse indiqués commen adresse de livraison, je vérifie son identité et je passe a null cette adresse.
+            //Si l'utilisateur a déja une adresse indiqués commen adresse de livraison, je passe a null cette adresse.
             if (adresse && adresse.idClient !== undefined) {
-                
-                const adresseToSetNull = new Adresse({id:adresse.id});
-                 await adresseToSetNull.updateEnvoieNull();
+
+                const adresseToSetNull = new Adresse({
+                    id: adresse.id
+                });
+                await adresseToSetNull.updateEnvoieNull();
 
             }; // ici aucune adresse de l'utilisateur en session n'a d'adresse indiqué comme valide pour la livraison, on va pouvoir indiqué celle reçu en paramétre.
 
-            const adresseToSetTrue = new Adresse({id: req.params.id});
+            const adresseToSetTrue = new Adresse({
+                id: req.params.id
+            });
             const adresseNowTrue = await adresseToSetTrue.updateEnvoieTrue();
 
             adresseNowTrue.codePostal = parseInt(adresseNowTrue.codePostal, 10);
@@ -80,10 +84,10 @@ const adresseController = {
         }
     },
 
-     /**
+    /**
      * Une méthode pour passer a TRUE la valeur de la colonne Envoie d'une adresse.
      */
-      setAdresseFacturationTrue: async (req, res) => {
+    setAdresseFacturationTrue: async (req, res) => {
         try {
             //recois dans req.params.id ==> un id.adresse a passer a true.
 
@@ -119,16 +123,20 @@ const adresseController = {
             const adresse = await Adresse.findByFacturationTrue(req.session.user.idClient);
 
 
-            //Si l'utilisateur a déja une adresse indiqués commen adresse de facturation, je vérifie son identité et je passe a null cette adresse.
+            //Si l'utilisateur a déja une adresse indiqués commen adresse de facturation,  je passe a null cette adresse.
             if (adresse && adresse.idClient !== undefined) {
 
-                const adresseToSetNull = new Adresse({id:adresse.id});
+                const adresseToSetNull = new Adresse({
+                    id: adresse.id
+                });
                 const adresseNowNull = await adresseToSetNull.updateFacturationNull();
 
 
             }; // ici aucune adresse de l'utilisateur en session n'a d'adresse indiqué comme valide pour la livraison, on va pouvoir indiqué celle reçu en paramétre.
 
-            const adresseToSetTrue = new Adresse({id: req.params.id});
+            const adresseToSetTrue = new Adresse({
+                id: req.params.id
+            });
             const adresseNowTrue = await adresseToSetTrue.updateFacturationTrue();
 
             adresseNowTrue.codePostal = parseInt(adresseNowTrue.codePostal, 10);
@@ -258,6 +266,16 @@ const adresseController = {
                 });
             }
 
+            //Si l'utilisateur a déja une adresse indiqués commen adresse de facturation,  je passe a null cette adresse puisque celle qu'il vient de demander de créer sera automatiquement par défaul, sa nouvelle adresse de facturation.
+            const adresse = await Adresse.findByFacturationTrue(req.session.user.idClient);
+            if (adresse && adresse.idClient !== undefined) {
+
+                const adresseToSetNull = new Adresse({
+                    id: adresse.id
+                });
+                await adresseToSetNull.updateFacturationNull();
+            };
+
             const data = {};
 
             data.titre = req.body.titre;
@@ -267,7 +285,6 @@ const adresseController = {
             data.ligne2 = req.body.ligne2;
             data.ligne3 = req.body.ligne3;
             data.codePostal = req.body.codePostal;
-            setAdresseEnvoiTrueAdresse.
             data.ville = req.body.ville;
             data.pays = req.body.pays;
             data.telephone = req.body.telephone;
@@ -290,6 +307,7 @@ const adresseController = {
                 })
             };
 
+            //Si l'utilisateur a rentré deux titres d'adresse identique, on lui refuse..
             if (await Adresse.findByTitre(req.body.titre, req.session.user.idClient)) {
                 console.log('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
                 return res.status(404).json({
@@ -308,8 +326,6 @@ const adresseController = {
 
 
             // Si une adresse est déja a true dans la facturation, je passe cette donneé a FALSE, pour permettre un passage a TRUE automatique pour la nouvelle
-
-
             if (req.body.envoie && req.body.envoie === 'true') {
 
                 //NOTE 

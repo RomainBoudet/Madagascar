@@ -567,21 +567,21 @@ router.post('/client/adresse/new', client, validateBody(adressePostSchema), adre
 
 
 /**
- * Une route pour modifier l'adresse d'envoi en passant a TRUE la colonne Envoi d'une adresse. Et enléve la valeur TRUE de la précédente adresse
- * @route POST /admin/livraison/new
+ * Une route pour modifier le choix de l'adresse d'envoi. Enléve la valeur TRUE de la précédente adresse et la met a une autre adresse
+ * @route PATCH /user/choixAdresseEnvoi/:id
  * @group utilisateur
- * @summary Met a jour une nouvelle livraison 
- * @returns {JSON} 200 - Les données d'une nouvelle livraison mise a jour
+ * @summary Met a jour la nouvelle adresse de livraison 
+ * @returns {JSON} 200 - Les données d'une adresse de livraison mise a jour
  */
  router.patch('/user/choixAdresseEnvoi/:id(\\d+)', client, adresseController.setAdresseEnvoiTrue);
 
 
  /**
- * Une route pour modifier l'adresse d'envoi en passant a TRUE la colonne Facturation d'une adresse. Et enléve la valeur TRUE de la précédente adresse
- * @route POST /admin/livraison/new
- * @group Administrateur
- * @summary Met a jour une nouvelle livraison 
- * @returns {JSON} 200 - Les données d'une nouvelle livraison mise a jour
+ * Une route pour modifier le choix de l'adresse de facturation. Enléve la valeur TRUE de la précédente adresse et la met a une autre adresse
+ * @route PATCH /user/choixAdresseFacturation/:id
+ * @group utilisateur
+ * @summary Met a jour la nouvelle adresse de facturation 
+ * @returns {JSON} 200 - Les données d'une adresse de facturation mise a jour
  */
   router.patch('/user/choixAdresseFacturation/:id(\\d+)', client, adresseController.setAdresseFacturationTrue);
 

@@ -676,6 +676,7 @@ adresse.ligne2 as ligne2,
 adresse.ligne3 as ligne3,
 adresse.telephone as telephone,
 adresse.envoie as envoie,
+adresse.facturation as facturation,
 adresse.pays as pays,
 CAST (adresse.code_postal as INTEGER) as code_postal,
 adresse.ville as ville,
@@ -703,7 +704,7 @@ produit.id,
 CAST (tva.taux as FLOAT) as tva
 FROM mada.produit 
 LEFT JOIN mada.tva ON produit.id_tva = tva.id
-LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id
+LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id AND reduction.actif = TRUE
 LEFT JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
 LEFT JOIN mada.stock ON stock.id_produit = produit.id;
 
@@ -727,7 +728,7 @@ produit.id
 FROM mada.produit 
 LEFT JOIN mada.categorie ON produit.id_categorie = categorie.id
 LEFT JOIN mada.tva ON produit.id_tva = tva.id
-LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id
+LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id AND reduction.actif = TRUE
 LEFT JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
 LEFT JOIN mada.stock ON stock.id_produit = produit.id
 LEFT JOIN mada.image ON image.id_produit = produit.id

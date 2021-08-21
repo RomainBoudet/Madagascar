@@ -13,6 +13,7 @@ const dev = require('./middlewares/dev');
 
 
 const {
+  cleanPassword,
   clean,
 } = require('./middlewares/sanitizer'); //cleanPassword => supression de <> + cleanPassword. Pour les routes avec password // clean => pour toutes les routes sans password (ou on n'a pas besoin de caractéres spéciaux..)
 
@@ -420,7 +421,7 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Insére une nouvelle adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse insérée
  */
-router.post('/client/adresse/new', client, validateBody(adressePostSchema), adresseController.newAdresse);
+router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema), adresseController.newAdresse);
 
  /**
  * Une route pour mettre a jour une adresse

@@ -1,4 +1,6 @@
 const validator = require('validator');
+const capitalize = (string) => string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+const capitalizeNotForceLowerCase = (string) => string.charAt(0).toUpperCase() + string.slice(1); //Que pour la ligne d'adresse, si celle çi contient des noms propres, l'utilisateur peut les mettre en majuscule...
 
 
 
@@ -22,11 +24,11 @@ const clean = (req, res, next) => {
         for (let prop in theBody) {
             theBody[prop] = validator.blacklist(theBody[prop], ['>']);
             theBody[prop] = validator.blacklist(theBody[prop], ['<']);
-            theBody[prop] = validator.blacklist(theBody[prop], ['&']);
+            //theBody[prop] = validator.blacklist(theBody[prop], ['&']);
             theBody[prop] = validator.blacklist(theBody[prop], ['"']);
-            theBody[prop] = validator.blacklist(theBody[prop], ['/']);
+            //theBody[prop] = validator.blacklist(theBody[prop], ['/']);
             theBody[prop] = validator.blacklist(theBody[prop], ['|']);
-            theBody[prop] = validator.blacklist(theBody[prop], ['#']);
+            //theBody[prop] = validator.blacklist(theBody[prop], ['#']);
             theBody[prop] = validator.blacklist(theBody[prop], ['{']);
             theBody[prop] = validator.blacklist(theBody[prop], ['}']);
             theBody[prop] = validator.blacklist(theBody[prop], ['[']);
@@ -35,10 +37,37 @@ const clean = (req, res, next) => {
             theBody[prop] = validator.blacklist(theBody[prop], ['*']);
             theBody[prop] = validator.blacklist(theBody[prop], ['$']);
             theBody[prop] = validator.blacklist(theBody[prop], ['%']);
-            theBody[prop] = validator.blacklist(theBody[prop], ['_']);
+            //theBody[prop] = validator.blacklist(theBody[prop], ['_']);
 
             theBody[prop] = validator.trim(theBody[prop]);
         }
+
+        //Je formate quelque entrées pour que ca soit propre en BDD...
+
+    if (req.body.pays) {
+        req.body.pays = req.body.pays.toUpperCase();
+    }
+    if (req.body.prenom) {
+        req.body.prenom = capitalize(req.body.prenom);
+    }
+    if (req.body.nomFamille) {
+        req.body.nomFamille = capitalize(req.body.nomFamille);
+    }
+    if (req.body.ligne1) {
+        req.body.ligne1 = capitalizeNotForceLowerCase(req.body.ligne1);
+    }
+    if (req.body.ligne2) {
+        req.body.ligne2 = capitalize(req.body.ligne2);
+    }
+    if (req.body.ligne3) {
+        req.body.ligne3 = capitalize(req.body.ligne3);
+    }
+    if (req.body.titre) {
+        req.body.titre = capitalize(req.body.titre);
+    }
+    if (req.body.ville) {
+        req.body.ville = capitalize(req.body.ville);
+    }
 
         next();
 

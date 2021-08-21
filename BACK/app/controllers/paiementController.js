@@ -219,16 +219,19 @@ const paiementController = {
 
             //je verifis la signature STRIPE et je récupére la situation du paiement.
             const sig = req.headers['stripe-signature'];
+            //let sig = req.get('stripe-signature');
 
-            console.log("sid ==>> ", sig);
+
+            console.log("sig ==>> ", sig);
             console.log("endpointSecret ==>>", endpointSecret);
            console.log("req.body ==>>", req.body);
+           console.log("req.rawBody ==>> ", req.rawBody );
 
 
             let event;
 
             try {
-                event = stripe.webhooks.constructEvent(req.text, sig, endpointSecret);
+                event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
             } catch (err) {
                 return res.status(400).json(`Webhook erreur de la récupération de l'event: ${err.message}`);
             }
@@ -240,15 +243,15 @@ const paiementController = {
                 message = {
                     message: "paiement bien validé !"
                 };
-
-                return res.status(200).json(paymentIntent, message);
+                        console.log(message);
+                return res.status(200).json(message);
             } else {
 
                 message = {
                     message: "erreur lors du paiement!"
                 };
 
-                return res.status(200).json(event.type, message);
+                return res.status(200).json(event.type);
             }
 
 
@@ -286,7 +289,7 @@ const paiementController = {
             else {
                 console.log(`on a bien délivré la clé au front : ${req.session.clientSecret}`)
                 return res.status(200).json({
-                    client_secret: "pi_3JQj3FLNa9FFzz1X05BQ9zw9_secret_aWkoXjb0jGUxyHsbYcy5NIuF7"
+                    client_secret: "pi_3JQkVvLNa9FFzz1X1fW06z33_secret_XtuhSplddLgaZCDr575ITX8tF"
                 });
             }
 

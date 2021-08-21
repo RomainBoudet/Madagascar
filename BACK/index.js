@@ -18,6 +18,7 @@ const redisSession = require('redis');
 const helmet = require('helmet');
 const router = require('./app/router');
 const cookieParser = require("cookie-parser");
+const bodyParser = require('body-parser');
 
 //passage de notre api en http2
 const spdy = require('spdy');
@@ -56,7 +57,16 @@ app.use(logger);
 
 
 // le parser JSON qui récupère le payload quand il y en a un et le transforme en objet JS disponible sous request.body
-app.use(express.json());
+app.use(express.json({
+    verify: (req, res, buf) => {
+        const url = req.originalUrl;
+        if (url.startsWith('/v1/webhookpaiement')) {
+            req.rawBody = buf
+        }
+    }
+}));
+/// ==>> j'ai besoin du raw body pour le webhook de STRIPE ! 
+
 //cookie parser, qui me permet d'avoir accés a req.cookies dans mes MW auth, admin, en transformant mes cookies en un bel objet  
 app.use(cookieParser(process.env.SECRET));
 
@@ -64,10 +74,10 @@ app.use(cookieParser(process.env.SECRET));
 
 app.use(express.urlencoded({
     extended: true
-}));  
+}));
 
 //On se prémunit des failles xss avec ce module qui filtre, en enlevant tout tag. Un filtre par défault ici qui laisse passer certains caractéres spéciaux pour MdP. Un filtre plus restrictif sera appilqué 
-app.use(cleanPass);
+//app.use(cleanPass);
 
 //helmet : https://expressjs.com/fr/advanced/best-practice-security.html 
 //https://blog.risingstack.com/node-js-security-checklist/

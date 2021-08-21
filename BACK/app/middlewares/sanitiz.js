@@ -13,15 +13,15 @@ cleanPass.use((req, res, next) => {
 
 
     for (let prop in req.body) {
-        req.body[prop] = validator.trim(req.body[prop]);
+        //req.body[prop] = validator.trim(req.body[prop]);
 
         req.body[prop] = validator.blacklist(req.body[prop], ['>']);
         req.body[prop] = validator.blacklist(req.body[prop], ['<']);
         req.body[prop] = validator.blacklist(req.body[prop], ['"']);
-        //req.body[prop] = validator.blacklist(req.body[prop], ['/']); // besoin pour les URL...
+        req.body[prop] = validator.blacklist(req.body[prop], ['/']); // besoin pour les URL...
         req.body[prop] = validator.blacklist(req.body[prop], ['|']);
-        req.body[prop] = validator.blacklist(req.body[prop], ['{']);
-        req.body[prop] = validator.blacklist(req.body[prop], ['}']);
+        //req.body[prop] = validator.blacklist(req.body[prop], ['{']);
+        //req.body[prop] = validator.blacklist(req.body[prop], ['}']);
         req.body[prop] = validator.blacklist(req.body[prop], ['[']);
         req.body[prop] = validator.blacklist(req.body[prop], [']']);
         req.body[prop] = validator.blacklist(req.body[prop], ['=']);

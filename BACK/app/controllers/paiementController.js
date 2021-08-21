@@ -219,14 +219,6 @@ const paiementController = {
 
             //je verifis la signature STRIPE et je récupére la situation du paiement.
             const sig = req.headers['stripe-signature'];
-            //let sig = req.get('stripe-signature');
-
-
-            console.log("sig ==>> ", sig);
-            console.log("endpointSecret ==>>", endpointSecret);
-           console.log("req.body ==>>", req.body);
-           console.log("req.rawBody ==>> ", req.rawBody );
-
 
             let event;
 
@@ -240,11 +232,36 @@ const paiementController = {
             if (event.type === 'payment_intent.succeeded') {
                 const paymentIntent = event.data.object;
 
-                message = {
-                    message: "paiement bien validé !"
-                };
-                        console.log(message);
-                return res.status(200).json(message);
+                console.log("paiement bien validé !");
+
+                //TODO
+                // Ici le paiement est bien validé !!
+                // TODO 
+                // Supprimer le client secret en session
+                // Envoyer un sms pour dire qu'une nouvelle commande a bien été saisi (ou aprés la commande)
+                // Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produit.
+                // Faire la méthode "Recevoir un sms m'avertissant de l'envoi de ma commande en temps réel ?"
+                // mettre a jour les stocks
+                // insérer l'info en BDD dans la table commande !
+                // Insérer l'info en BDD dabns la table ligne commande 
+                // passer le statut de la commande a "paiement vérifié" ou du genre..
+                // écrire une facture!
+
+                // Gére tous les cas de figures ou se passe mal !
+                // permettre un nouveau paiement dans tous les cas nécéssaire
+                //
+
+
+                //! ==>> Prendre en charge tous les cas un webhook peut être appelé : https://stripe.com/docs/api/events/types 
+                //payment_intent.payment_failed
+                //payment_intent.canceled
+                //payment_intent.processing
+                //payment_intent.processing
+                //payment_intent.succeeded
+                //info aussi quand on configure les retours d'infos des webhooks
+
+
+                return res.status(200).json(paymentIntent);
             } else {
 
                 message = {
@@ -289,8 +306,9 @@ const paiementController = {
             else {
                 console.log(`on a bien délivré la clé au front : ${req.session.clientSecret}`)
                 return res.status(200).json({
-                    client_secret: "pi_3JQkVvLNa9FFzz1X1fW06z33_secret_XtuhSplddLgaZCDr575ITX8tF"
-                });
+                    client_secret: "pi_3JQkVvLNa9FFzz1X1fW06z33_secret_XtuhSplddLgaZCDr575ITX8tF" //!req.session.clientSecret
+                }); //TODO 
+                //valeur a changé aprés test !
             }
 
 

@@ -5,7 +5,10 @@ const {
     formatLong
 } = require('../services/date');
 
+
+
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
+const endpointSecret = process.env.SECRETENDPOINT;
 const redis = require('../services/redis');
 
 
@@ -57,15 +60,19 @@ const paiementController = {
     },
 
 
-
+    //STRIPE processus complet = https://stripe.com/docs/connect/collect-then-transfer-guide?platform=web 
+    // comprendre les différent type de paiement sur STRIP : https://stripe.com/docs/payments/payment-intents/migration/charges 
+    // API PaymentIntent a privilégier sur API Charge !
     paiement: async (req, res) => {
         try {
 
+            // Méthode a metre en lien avec le bouton "payer votre commande" avant que l'utilisateur ne choissise son mode de paiement.
+
+            // Quand il sera pret a payer et qu'il choisira son mode de paiement, alors le bouton "payer par carte bancaire" devra être lié a la méthode du "confirmPaiement" qui suit cette méthode.
+
+
             //Pour payer, l'utilisateur doit avoir :
-
             console.log("la session en amont du paiement ==> ", req.session);
-
-
 
             // été authentifié
             if (!req.session.user) {
@@ -107,17 +114,15 @@ const paiementController = {
             }
 
 
-
-
+            //je construit ce que je vais passer comme metadata
             const articles = [];
-            req.session.cart.map(article => (`${articles.push(article.produit+' / '+'Qte: '+article.quantite)}`));
+            req.session.cart.map(article => (`${articles.push(article.produit+' / ' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
             articlesBought = articles.join(', ');
 
             //Je vérifie si le client est déja venu tenter de payer sa commande
             if (req.session.IdPaymentIntentStripe) {
                 //Si oui, je met a jour le montant dans l'objet payementIntent qui existe déja, via la méthode proposé par STRIPE
                 //https://stripe.com/docs/api/payment_intents/update?lang=node
-
 
                 await stripe.paymentIntents.update(
                     req.session.IdPaymentIntentStripe, {
@@ -127,6 +132,7 @@ const paiementController = {
                         amount: req.session.totalStripe,
                     }
                 );
+
 
             } else {
 
@@ -138,7 +144,7 @@ const paiementController = {
                 const paymentIntent = await stripe.paymentIntents.create({
                     amount: req.session.totalStripe, // total en centimes et en Integer
                     currency: 'eur',
-                    custumer: idClientStripe,
+                    customer: idClientStripe,
                     payment_method_types: ['card'],
                     setup_future_usage: 'on_session',
                     receipt_email: req.session.user.email,
@@ -150,13 +156,17 @@ const paiementController = {
                         ip: req.ip,
                     },
 
+
                 });
                 // On insére la clé secrete en session pour pouvoir l'envoyer sur la route /user/paiementkey
+                //TODO 
+                //bien pensé a supprimé cette donnée en session quand le webhook de stripe confirm le paiement 
                 req.session.IdPaymentIntentStripe = paymentIntent.id;
                 req.session.clientSecret = paymentIntent.client_secret;
 
-            }
 
+
+            }
 
             //ici désormais, l'objet paiementIntent contient la clé secrete "secret_client" qui est passé au front via la route /user/paiementkey
             // Pour la récupérer en Front :
@@ -168,66 +178,10 @@ const paiementController = {
               // Call stripe.confirmCardPayment() with the client secret.
             }); */
 
-            // console.log("req.session  =>", req.session);
 
 
-
-
-
-
-
-
-
-
-
-
-            //!https://stripe.com/docs/payments/accept-a-payment-synchronously 
-            /*  let intent;
-                if (req.body.payment_method_id) {
-                    // Create the PaymentIntent
-                    intent = await stripe.paymentIntents.create({
-                        payment_method: req.body.payment_method_id,
-                        amount: 1099,
-                        currency: 'usd',
-                        confirmation_method: 'manual',
-                        confirm: true
-                    });
-                } else if (req.body.payment_intent_id) {
-                    intent = await stripe.paymentIntents.confirm(
-                        req.body.payment_intent_id
-                    );
-                }
-                // Send the response to the client
-                res.send(generateResponse(intent));
-
-                const generateResponse = (intent) => {
-                    // Note that if your API version is before 2019-02-11, 'requires_action'
-                    // appears as 'requires_source_action'.
-                    if (
-                        intent.status === 'requires_action' &&
-                        intent.next_action.type === 'use_stripe_sdk'
-                    ) {
-                        // Tell the client to handle the action
-                        return {
-                            requires_action: true,
-                            payment_intent_client_secret: intent.client_secret
-                        };
-                    } else if (intent.status === 'succeeded') {
-                        // The payment didn’t need any additional actions and completed!
-                        // Handle post-payment fulfillment
-                        return {
-                            success: true
-                        };
-                    } else {
-                        // Invalid status
-                        return {
-                            error: 'Invalid PaymentIntent status'
-                        }
-                    }
-                };
-
- */
             console.log("la clé secrete a bien été envoyé en session !");
+
             res.status(200).end();
 
 
@@ -244,6 +198,79 @@ const paiementController = {
     },
 
 
+    //NOTE 
+    //! EDIT 
+    //! Pas besoin de faire appel a la methode paymentIntents.confirm dans le back (qui nécéssite un paymentMethod que je n'ai pas encore!), si on passe en front par la méthode stripe.confirmCardPayment, qui devrait confirmer automatiquement le paymentIntent 
+    // https://stripe.com/docs/js/payment_methods/create_payment_method et surtout : https://stripe.com/docs/js/payment_intents/confirm_card_payment
+
+
+    // https://stripe.com/docs/connect/collect-then-transfer-guide?platform=web : 
+    /* "To complete the payment when the user clicks, retrieve the client secret from the PaymentIntent you created in Step 3.1 and call stripe.confirmCardPayment with the client secret."" */
+
+
+    //https://stripe.com/docs/ips  //https://stripe.com/docs/webhooks/signatures
+    webhookpaiement: async (req, res) => {
+        try {
+
+            console.log("on passe 1");
+            //https://stripe.com/docs/webhooks/build
+            //https://stripe.com/docs/api/events/types 
+
+
+            //je verifis la signature STRIPE et je récupére la situation du paiement.
+            const sig = req.headers['stripe-signature'];
+
+            console.log("sid ==>> ", sig);
+            console.log("endpointSecret ==>>", endpointSecret);
+           console.log("req.body ==>>", req.body);
+
+
+            let event;
+
+            try {
+                event = stripe.webhooks.constructEvent(req.text, sig, endpointSecret);
+            } catch (err) {
+                return res.status(400).json(`Webhook erreur de la récupération de l'event: ${err.message}`);
+            }
+
+
+            if (event.type === 'payment_intent.succeeded') {
+                const paymentIntent = event.data.object;
+
+                message = {
+                    message: "paiement bien validé !"
+                };
+
+                return res.status(200).json(paymentIntent, message);
+            } else {
+
+                message = {
+                    message: "erreur lors du paiement!"
+                };
+
+                return res.status(200).json(event.type, message);
+            }
+
+
+
+        } catch (error) {
+            const errorMessage = process.env.NODE_ENV === 'production' ?
+                'Erreur serveur.' :
+                `Erreur dans la méthode paiement du paiementController : ${error.message})`
+
+
+            res.status(500).json(errorMessage);
+            console.trace(error);
+        }
+
+
+    },
+
+
+
+
+
+    // Méthode pour envoyer au front la clé secréte !
     key: async (req, res) => {
         try {
 
@@ -252,13 +279,14 @@ const paiementController = {
                 return res.status(401).json("Merci de vous authentifier avant d'accéder a cette ressource.");
             }
 
-            if (req.session.IdPaymentIntentStripe === undefined || req.session.clientSecret === undefined) {
+            /* if (req.session.IdPaymentIntentStripe === undefined || req.session.clientSecret === undefined) {
                 return res.status(404).json("Merci de réaliser une tentative de paiement avant d'accéder a cette ressource.");
 
-            } else {
-
+            } */
+            else {
+                console.log(`on a bien délivré la clé au front : ${req.session.clientSecret}`)
                 return res.status(200).json({
-                    client_secret: req.session.clientSecret
+                    client_secret: "pi_3JQj3FLNa9FFzz1X05BQ9zw9_secret_aWkoXjb0jGUxyHsbYcy5NIuF7"
                 });
             }
 

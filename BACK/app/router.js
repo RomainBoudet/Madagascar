@@ -10,6 +10,8 @@ const client = require('./middlewares/client');
 const admin = require('./middlewares/admin');
 const dev = require('./middlewares/dev');
 
+
+
 const {
   clean,
 } = require('./middlewares/sanitizer'); //cleanPassword => supression de <> + cleanPassword. Pour les routes avec password // clean => pour toutes les routes sans password (ou on n'a pas besoin de caractéres spéciaux..)
@@ -240,9 +242,10 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  */
  router.get('/cgv', paiementController.cgv);
 
+ //! PAIEMENT -----------------------------------------------------------------------------------------------------------------------------------------
 
 /**
- * Prend en charge le paiement via STRIPE
+ * Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client valide le panier, avant de choisir son mode paiement mais apres avoir choisit son transporteur.
  *  @route GET /user/paiement
  * @group utilisateur
  * @summary  Prend en charge le paiement via STRIPE
@@ -251,13 +254,24 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  router.get('/user/paiement', client, paiementController.paiement);
 
  /**
- * Permet de récupérer la clé client secret nécéssaire a STRIPE
+ * Permet de récupérer la clé client secret nécéssaire a STRIPE, nécéssaire pour le front.
  *  @route GET /user/paiementkey
  * @group utilisateur
  * @summary  Permet de récupérer la clé client secret nécéssaire a STRIPE *** nécéssite d'être authentifié et d'avoir tenté d'effectuer un paiement.
  * @returns {JSON} 200 -  Renvoie la valeur de payementIntent.client_secret
  */
-  router.get('/user/paiementkey', client, paiementController.key);
+  router.get('/user/paiementkey', paiementController.key);
+
+
+  /**
+ * Prend en charge le webhook STRIPE apres un paiement
+ * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
+ *  @route POST /webhookpaiement
+ * @group utilisateur
+ * @summary  Prend en charge le webhook STRIPE apres un paiement
+ * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres un paiement
+ */
+ router.post('/webhookpaiement', paiementController.webhookpaiement);
 
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------

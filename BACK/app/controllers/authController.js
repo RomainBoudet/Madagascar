@@ -52,7 +52,6 @@ const authController = {
                 nomFamille: clientInDb.nomFamille,
                 email: clientInDb.email,
                 privilege: clientInDb.nom,
-                uuid: uuid(), //un identifiant de session unique facilement retrouvable pour le paiement
             };
 
             console.log("req.session ==>", request.session);

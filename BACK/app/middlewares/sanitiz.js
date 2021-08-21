@@ -12,9 +12,9 @@ const capitalizeNotForceLowerCase = (string) => string.charAt(0).toUpperCase() +
 cleanPass.use((req, res, next) => {
 
 
-
     for (let prop in req.body) {
         req.body[prop] = validator.trim(req.body[prop]);
+
         req.body[prop] = validator.blacklist(req.body[prop], ['>']);
         req.body[prop] = validator.blacklist(req.body[prop], ['<']);
         req.body[prop] = validator.blacklist(req.body[prop], ['"']);
@@ -40,7 +40,7 @@ cleanPass.use((req, res, next) => {
     }
     if (req.body.ligne1) {
         req.body.ligne1 = capitalizeNotForceLowerCase(req.body.ligne1);
-    } 
+    }
     if (req.body.ligne2) {
         req.body.ligne2 = capitalize(req.body.ligne2);
     }
@@ -53,6 +53,7 @@ cleanPass.use((req, res, next) => {
     if (req.body.ville) {
         req.body.ville = capitalize(req.body.ville);
     }
+
 
 
     next();

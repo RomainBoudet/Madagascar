@@ -51,18 +51,20 @@ app.set('views', 'app/views');
 //-----------------------------------------------------------------------------------
 
 // module de log d'identification : me donne l'ip, l'heure et l'url de chaque connexion => en console ET en dur dans le dossier logs
+
 app.use(logger);
+
 
 // le parser JSON qui récupère le payload quand il y en a un et le transforme en objet JS disponible sous request.body
 app.use(express.json());
-
 //cookie parser, qui me permet d'avoir accés a req.cookies dans mes MW auth, admin, en transformant mes cookies en un bel objet  
 app.use(cookieParser(process.env.SECRET));
 
 // on va devoir gérer des données en POST, on ajoute le middleware urlencoded pour récupérer les infos dans request.body 
+
 app.use(express.urlencoded({
     extended: true
-}));
+}));  
 
 //On se prémunit des failles xss avec ce module qui filtre, en enlevant tout tag. Un filtre par défault ici qui laisse passer certains caractéres spéciaux pour MdP. Un filtre plus restrictif sera appilqué 
 app.use(cleanPass);
@@ -131,11 +133,10 @@ app.use(
 
 
 // Je require le middleware pour dire à express d'être plus permissif sur l'origine des requête
-
 app.use(cors({
     optionsSuccessStatus: 200,
     credentials: true, // pour envoyer des cookies et des en-têtes d'autorisations faut rajouter une autorisation avec l'option credential
-    origin: ['https://localhost:8080', 'http://127.0.0.1:4040 '], // true = req.header('Origin') //! a pas oublier pour la prod ! => remplacer par le bon nom de domaine
+    origin: ['http://localhost:3000', 'http://127.0.0.1:4040 '], // true = req.header('Origin') //! a pas oublier pour la prod ! => remplacer par le bon nom de domaine
     methods: "GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS", // ok via un array aussi
     allowedHeaders: ['Content-Type', 'x-xsrf-token'],
 }));

@@ -126,7 +126,7 @@ class ClientHistoConn {
         const {
             rows,
         } = await db.query(
-            `SELECT to_char(client_historique_connexion.connexion_date, 'TMDay DD TMMonth YYYY à HH24:MI:SS') FROM mada.client_historique_connexion WHERE client_historique_connexion.id_client = $1 AND client_historique_connexion.connexion_succes='true' ORDER BY client_historique_connexion.id DESC LIMIT 1; `,
+            `SELECT to_char(client_historique_connexion.connexion_date, 'TMDay DD TMMonth YYYY à HH24:MI:SS'), id_client FROM mada.client_historique_connexion WHERE client_historique_connexion.id_client = $1 AND client_historique_connexion.connexion_succes='true' ORDER BY client_historique_connexion.id DESC LIMIT 1; `,
             [idClient]
         );
 

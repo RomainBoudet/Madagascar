@@ -1,9 +1,15 @@
 const Paiement = require('../models/paiement');
 const Adresse = require('../models/adresse');
 const Shop = require('../models/shop');
+const Twillio = require('../models/twillio');
+const Stock = require('../models/stock');
+
+
 const {
     formatLong
 } = require('../services/date');
+const validator = require('validator');
+
 
 
 
@@ -116,7 +122,7 @@ const paiementController = {
 
             //je construit ce que je vais passer comme metadata
             const articles = [];
-            req.session.cart.map(article => (`${articles.push(article.produit+' / ' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
+            req.session.cart.map(article => (`${articles.push(article.produit+' / ' + 'idArticle = ' + '' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
             articlesBought = articles.join(', ');
 
             //Je vérifie si le client est déja venu tenter de payer sa commande
@@ -212,7 +218,6 @@ const paiementController = {
     webhookpaiement: async (req, res) => {
         try {
 
-            console.log("on passe 1");
             //https://stripe.com/docs/webhooks/build
             //https://stripe.com/docs/api/events/types 
 
@@ -234,22 +239,73 @@ const paiementController = {
 
                 console.log("paiement bien validé !");
 
-                //TODO
-                // Ici le paiement est bien validé !!
-                // TODO 
                 // Supprimer le client secret en session
+                req.session.IdPaymentIntentStripe = false;
+                req.session.clientSecret = false;
+
+
+                //Mise a jour des stocks
+                //Toutes les valeurs de quantité dans req.session.cart devront être intégrer a la table stock pour chaque produit.
+                console.log("req.session ==> ", req.session);
+                console.log("req.session.cart ==> ", req.session.cart);
+                console.log("event ==> ", event.data.object.metadata);
+
+                //BUG
+                //ici ça renvoie depuis stripe, et non depuis un user, req.session est vide !!!
+                // Idée de solution => faire on objet plus propre pour les métadata envoyé reprenant toutes les infos du session.cart.
+                // du genre :
+                /* const  metadata = {
+                     article:{prixHT: 20, id: 52, couleur:"rouge", taille:"L", quantite:2, prixHTAvecReduc:20 },
+                     article2:{prixHT: 14, id: 57, couleur:"vert", taille:"S", quantite:1, prixHTAvecReduc:18 }
+                } */
+                // ou je peux retrouver facilement toutes ces données !
+                //NOTE
+                //Ou je calle la session dans REDIS pour la reprendre ici facilement !!
+
+
+                const cart = req.session.cart;
+
+                for (const item in cart) {
+                    console.log(`On met a jour les stock pour l'item ${item.produit}`);
+                    const updateProduit = await Stock.findOne(item.id);
+                    updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
+                    await updateProduit.update();
+                    console.log("stock bien mis a jour");
+
+                }
+                /* cart: [
+                    {
+                      id: 250,
+                      produit: 'Handmade Cotton Keyboard',
+                      prix: 27,
+                      image: 'http://placeimg.com/640/480',
+                      couleur: 'blanc',
+                      taille: 'XS',
+                      stock: 2,
+                      reduction: 0.28,
+                      tva: 0.05,
+                      quantite: 1,
+                      prixHTAvecReduc: 19.44
+                    }
+                  ],
+                  totalHT: 19.44,
+                  totalTTC: 20.41,
+                  totalTVA: 0.97, */
+
+                // TODO 
                 // Envoyer un sms pour dire qu'une nouvelle commande a bien été saisi (ou aprés la commande)
                 // Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produit.
                 // Faire la méthode "Recevoir un sms m'avertissant de l'envoi de ma commande en temps réel ?"
-                // mettre a jour les stocks
                 // insérer l'info en BDD dans la table commande !
                 // Insérer l'info en BDD dabns la table ligne commande 
                 // passer le statut de la commande a "paiement vérifié" ou du genre..
                 // écrire une facture!
+                // supprimer les articles dans req.session.cart quand plus besoin !
 
                 // Gére tous les cas de figures ou se passe mal !
                 // permettre un nouveau paiement dans tous les cas nécéssaire
-                //
+                // autorisation d'ip pour webhook https://stripe.com/docs/ips 
+                // Permettre d'autre mode de paiement, virement et paypal ? puis google pay apple pay et un truc chinois !
 
 
                 //! ==>> Prendre en charge tous les cas un webhook peut être appelé : https://stripe.com/docs/api/events/types 
@@ -259,6 +315,22 @@ const paiementController = {
                 //payment_intent.processing
                 //payment_intent.succeeded
                 //info aussi quand on configure les retours d'infos des webhooks
+
+                /* const dataTwillio = await Twillio.findFirst();
+                const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+                if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
+                        strictMode: true
+                    }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
+                        strictMode: true
+                    }))) {
+                    return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
+                }
+                twilio.messages.create({
+                    body: `Votre commande contenant : ${event.data.object.metadata.articles} pour un montant total de ${event.data.object.metadata.amount_received}, a bien été validé !  `,
+                    from: dataTwillio.twillioNumber,
+                    to: dataTwillio.devNumber,
+
+                }) */
 
 
                 return res.status(200).json(paymentIntent);
@@ -306,7 +378,7 @@ const paiementController = {
             else {
                 console.log(`on a bien délivré la clé au front : ${req.session.clientSecret}`)
                 return res.status(200).json({
-                    client_secret: "pi_3JQkVvLNa9FFzz1X1fW06z33_secret_XtuhSplddLgaZCDr575ITX8tF" //!req.session.clientSecret
+                    client_secret: "pi_3JR5cLLNa9FFzz1X1JlAgl3C_secret_jlGTGFKIS4pLBpZ9ny25Ia2Ui" //!req.session.clientSecret
                 }); //TODO 
                 //valeur a changé aprés test !
             }

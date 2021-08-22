@@ -97,6 +97,8 @@ const clientHistoController = {
             
             const client = await ClientHistoConn.findLastTrueConnexionByIdClient(req.params.id);
 
+            console.log(client);
+
             if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== client.idClient) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
@@ -105,6 +107,7 @@ const clientHistoController = {
            
             client.derniereConnexion = client.to_char;
             delete client.to_char;
+            delete client.idClient;
             res.json(client);
 
         } catch (error) {

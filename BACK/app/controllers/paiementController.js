@@ -4,6 +4,22 @@ const Shop = require('../models/shop');
 const Twillio = require('../models/twillio');
 const Stock = require('../models/stock');
 
+//Nécéssaire pour retrouver les donnée de session dans la méthode du webhook avec le cookie de session !
+const redisSession = require('redis');
+const session = require('express-session');
+let RedisStore = require('connect-redis')(session);
+let redisClient = redisSession.createClient();
+const sessionStore = new RedisStore({
+    client: redisClient
+});
+
+const {
+    promisify
+} = require('util');
+
+
+
+
 
 const {
     formatLong
@@ -16,6 +32,9 @@ const validator = require('validator');
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 const endpointSecret = process.env.SECRETENDPOINT;
 const redis = require('../services/redis');
+const {
+    bind
+} = require('../schemas/userLoginSchema');
 
 
 
@@ -38,13 +57,9 @@ const paiementController = {
             // je vérifie si req.session.user.cookie existe déja et si sa valeur est déja 'true'
             //console.log('req.session.user ==> ', req.session.user.cgv);
             console.log("req.session a l'entrée des cgv ==> ", req.session);
-            // console.log(req.session.user.cgv);
 
-            /*  if (req.session.user === undefined) {
-                 req.session.cgv = 'true'
 
-             } */
-            if (req.session.user !== undefined && req.session.user.cgv === 'true') {
+            if (req.session.user !== undefined && req.session.cgv === 'true') {
                 console.log("Les Conditions Générales de Ventes ont déja été accéptés.")
                 return res.status(200).json("Les Conditions Générales de Ventes ont déja été accéptés.")
             } else(
@@ -72,9 +87,7 @@ const paiementController = {
     paiement: async (req, res) => {
         try {
 
-            // Méthode a metre en lien avec le bouton "payer votre commande" avant que l'utilisateur ne choissise son mode de paiement.
-
-            // Quand il sera pret a payer et qu'il choisira son mode de paiement, alors le bouton "payer par carte bancaire" devra être lié a la méthode du "confirmPaiement" qui suit cette méthode.
+            // Méthode a metre en lien avec le bouton ""payer par carte bancaire"" avant que l'utilisateur ne rentre ses coordonnées bancaires.
 
 
             //Pour payer, l'utilisateur doit avoir :
@@ -125,6 +138,7 @@ const paiementController = {
             req.session.cart.map(article => (`${articles.push(article.produit+' / ' + 'idArticle = ' + '' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
             articlesBought = articles.join(', ');
 
+
             //Je vérifie si le client est déja venu tenter de payer sa commande
             if (req.session.IdPaymentIntentStripe) {
                 //Si oui, je met a jour le montant dans l'objet payementIntent qui existe déja, via la méthode proposé par STRIPE
@@ -133,7 +147,8 @@ const paiementController = {
                 await stripe.paymentIntents.update(
                     req.session.IdPaymentIntentStripe, {
                         metadata: {
-                            articles: articlesBought
+                            articles: articlesBought,
+                            amount: req.session.totalStripe,
                         },
                         amount: req.session.totalStripe,
                     }
@@ -159,14 +174,15 @@ const paiementController = {
                         date: `${formatLong(new Date())}`,
                         articles: articlesBought,
                         client: `${req.session.user.prenom} ${req.session.user.nomFamille}`,
+                        idClient: req.session.idClient,
+                        email: req.session.user.email,
+                        amount: req.session.totalStripe,
                         ip: req.ip,
                     },
 
 
                 });
-                // On insére la clé secrete en session pour pouvoir l'envoyer sur la route /user/paiementkey
-                //TODO 
-                //bien pensé a supprimé cette donnée en session quand le webhook de stripe confirm le paiement 
+
                 req.session.IdPaymentIntentStripe = paymentIntent.id;
                 req.session.clientSecret = paymentIntent.client_secret;
 
@@ -237,35 +253,37 @@ const paiementController = {
             if (event.type === 'payment_intent.succeeded') {
                 const paymentIntent = event.data.object;
 
-                console.log("paiement bien validé !");
+                console.log("paiement bien validé !", paymentIntent);
 
-                // Supprimer le client secret en session
-                req.session.IdPaymentIntentStripe = false;
-                req.session.clientSecret = false;
 
+                // Supprimer le client secret en session ainsi que les données du panier
+                  sessionStore.get(req.signedCookies['connect.sid'], function (err, session) {
+                    console.log("session ==>>", session);
+                    delete session.cart,
+                        delete session.totalTTC,
+                        delete session.totalHT,
+                        delete session.totalTVA,
+                        delete session.coutTransporteur,
+                        delete session.totalStripe,
+                        delete session.idTransporteur,
+                        delete session.IdPaymentIntentStripe,
+                        delete session.clientSecret,
+                        session.paiementValide = true,
+                        console.log("session after ==>>", session);
+
+                    sessionStore.set(req.signedCookies['connect.sid'], session, function (err, session) {
+                        console.log("session dans le sessionStrore.set ==>> ", session)
+                    })
+
+                })  
 
                 //Mise a jour des stocks
-                //Toutes les valeurs de quantité dans req.session.cart devront être intégrer a la table stock pour chaque produit.
-                console.log("req.session ==> ", req.session);
-                console.log("req.session.cart ==> ", req.session.cart);
-                console.log("event ==> ", event.data.object.metadata);
-
-                //BUG
-                //ici ça renvoie depuis stripe, et non depuis un user, req.session est vide !!!
-                // Idée de solution => faire on objet plus propre pour les métadata envoyé reprenant toutes les infos du session.cart.
-                // du genre :
-                /* const  metadata = {
-                     article:{prixHT: 20, id: 52, couleur:"rouge", taille:"L", quantite:2, prixHTAvecReduc:20 },
-                     article2:{prixHT: 14, id: 57, couleur:"vert", taille:"S", quantite:1, prixHTAvecReduc:18 }
-                } */
-                // ou je peux retrouver facilement toutes ces données !
-                //NOTE
                 //Ou je calle la session dans REDIS pour la reprendre ici facilement !!
 
 
-                const cart = req.session.cart;
-
-                for (const item in cart) {
+                for (const item of cart) {
+                    /* console.log(`On met a jour les stock pour l'item ${item.produit}`);
+                    console.log("item ===>>", item); */
                     console.log(`On met a jour les stock pour l'item ${item.produit}`);
                     const updateProduit = await Stock.findOne(item.id);
                     updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
@@ -273,26 +291,10 @@ const paiementController = {
                     console.log("stock bien mis a jour");
 
                 }
-                /* cart: [
-                    {
-                      id: 250,
-                      produit: 'Handmade Cotton Keyboard',
-                      prix: 27,
-                      image: 'http://placeimg.com/640/480',
-                      couleur: 'blanc',
-                      taille: 'XS',
-                      stock: 2,
-                      reduction: 0.28,
-                      tva: 0.05,
-                      quantite: 1,
-                      prixHTAvecReduc: 19.44
-                    }
-                  ],
-                  totalHT: 19.44,
-                  totalTTC: 20.41,
-                  totalTVA: 0.97, */
 
                 // TODO 
+
+                //NOTE  => supression de req.session.cart aprés achat ??
                 // Envoyer un sms pour dire qu'une nouvelle commande a bien été saisi (ou aprés la commande)
                 // Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produit.
                 // Faire la méthode "Recevoir un sms m'avertissant de l'envoi de ma commande en temps réel ?"
@@ -365,23 +367,41 @@ const paiementController = {
     // Méthode pour envoyer au front la clé secréte !
     key: async (req, res) => {
         try {
+            console.log(req.session);
 
             //simple rappel si j'oubli le MW d'autorisation client... a enlever en prod peut être..
-            if (!req.session) {
+
+            //TODO 
+            //valeur décpmmenté aprés test 
+            //NOTE => a décommenter quand un front sera présent. Sinon, vu qu'aucun token n'est renvoyé, req.seesion.user ne contient rien, comme req.session.clientsecret. on tombe dans une érreur  
+            /* if (!req.session.user) {
                 return res.status(401).json("Merci de vous authentifier avant d'accéder a cette ressource.");
             }
 
-            /* if (req.session.IdPaymentIntentStripe === undefined || req.session.clientSecret === undefined) {
-                return res.status(404).json("Merci de réaliser une tentative de paiement avant d'accéder a cette ressource.");
+            if (req.session.IdPaymentIntentStripe === undefined || req.session.clientSecret === undefined) {
+                return res.status(400).json("Merci de réaliser une tentative de paiement avant d'accéder a cette ressource.");
 
-            } */
-            else {
+            } else {
                 console.log(`on a bien délivré la clé au front : ${req.session.clientSecret}`)
+                NOTE : lors de l'appel de la clé secrete depuis le front, on insére dans REDIS la valeur de req.session.cart pour pouvoir aller le chercher dans le webhook avec le mail utilisateur dans les métadonnée.
+                await redis.set(`mada/cartAfterPayment:${req.session.user.email}`, JSON.stringify(req.session.cart));
+
                 return res.status(200).json({
-                    client_secret: "pi_3JR5cLLNa9FFzz1X1JlAgl3C_secret_jlGTGFKIS4pLBpZ9ny25Ia2Ui" //!req.session.clientSecret
-                }); //TODO 
-                //valeur a changé aprés test !
-            }
+                    client_secret: req.session.clientSecret,
+                });
+            } */
+
+            //TODO 
+            //contenu a commenté aprés test 
+            console.log(`on a bien délivré la clé au front : ${req.session.clientSecret}`)
+            //! quand j'utilise le front REACT je dois commenter req.session.user.email, car celui ci n'existe pas quand c'est le front qui fait l'appel
+            //! je dois néanmoins appeler cette méthode via postman AVEC redis.set non commenter pour le mettre dans REDIS la premiére fois...
+            //await redis.set(`mada/cartAfterPayment:${req.session.user.email}`, JSON.stringify(req.session.cart));
+
+            //! A chaque test, on lance la méthode key dans postman, on remplace la clé en dure par la clé dynamique donné en console.
+            return res.status(200).json({
+                client_secret: "pi_3JVPw6LNa9FFzz1X1zZXOI6E_secret_GCwGtRqxesZPTbOENNYtHPu2t",
+            });
 
 
         } catch (error) {

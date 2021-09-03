@@ -141,6 +141,8 @@ app.use(
     })
 );
 
+ 
+
 
 // Je require le middleware pour dire à express d'être plus permissif sur l'origine des requête
 app.use(cors({

@@ -91,8 +91,8 @@ app.use(helmet.contentSecurityPolicy({
         directives: { //je dois configurer la CSP pour autoriser mon serveur a utiliser du CSS et mes images cloud pour le rendu de la validation du mail
             defaultSrc: [`'self'`], // le fallback, pas présent par défault, 
             imgSrc: [`self`, `filedn.eu`], //je configure helmet pour la CSP : ok pour aller chercher mes images sur mon cloud perso, tout le reste, ça dégage !
-            styleSrc: [(_, res) => `'nonce-${ res.locals.nonce }'`], // je peux utiliser res ici je suis dans un app.use ! Je convertis dynamiquement le nonce de ma vue avec cette méthode, sans avoir besoin de mettre 'unsafe-inline' pour lire CSS de ma vue, ce qui affaiblirait considérablement ma CSP ! 
-            upgradeInsecureRequests: [], // On convertit tout ce qui rentre en HTTP et HTTPS direct !
+            //styleSrc: [(_, res) => `'nonce-${ res.locals.nonce }'`], // je peux utiliser res ici je suis dans un app.use ! Je convertis dynamiquement le nonce de ma vue avec cette méthode, sans avoir besoin de mettre 'unsafe-inline' pour lire CSS de ma vue, ce qui affaiblirait considérablement ma CSP ! 
+            //upgradeInsecureRequests: [], // On convertit tout ce qui rentre en HTTP et HTTPS direct ! //TODO décommenter
             //reportUri: `/api/csp/report`, ==>> a prévoir une url pour l'admin pour savoir quelle ressource ont été bloqué par ma CSP ! et a loggé avec Winston aussi
         },
         //reportOnly: true
@@ -102,7 +102,7 @@ app.use(helmet.contentSecurityPolicy({
     }),
     helmet.expectCt({
         maxAge: 0,
-        enforce: true, //demander qu'un navigateur applique toujours l'exigence de transparence du certificat SSL !
+        enforce: false, //demander qu'un navigateur applique toujours l'exigence de transparence du certificat SSL ! //TODO  repasser a true
         //reportUri: "https://example.com/report", Pourrait être intérresant de se prévoir une url pour l'admin avec aussi 
     }))
 
@@ -119,6 +119,8 @@ app.use((req, res, next) => {
 });
 
 
+
+
 //mise en place du système de sessions pour stocker les infos utilisateur // https://www.npmjs.com/package/express-session
 app.use(
     session({
@@ -132,7 +134,7 @@ app.use(
             secure: true, //si true, la navigateur n'envoit que des cookie sur du HTTPS
             maxAge: 1000 * 60 * 60 * 24 * 15, // ça fait une heure * 24h * 15 jours
             httpOnly: true, // Garantit que le cookie n’est envoyé que sur HTTP(S), pas au JavaScript du client, ce qui renforce la protection contre les attaques de type cross-site scripting.
-            sameSite: 'strict', //le mode Strict empêche l’envoi d’un cookie de session dans le cas d’un accès au site via un lien externe//https://blog.dareboost.com/fr/2017/06/securisation-cookies-attribut-samesite/
+            sameSite: 'Strict', //le mode Strict empêche l’envoi d’un cookie de session dans le cas d’un accès au site via un lien externe//https://blog.dareboost.com/fr/2017/06/securisation-cookies-attribut-samesite/
             //!il faudra définir les options de sécurité pour accroitre la sécurité. (https://expressjs.com/fr/advanced/best-practice-security.html)
             //domain: 'example.com',  Indique le domaine du cookie ; utilisez cette option pour une comparaison avec le domaine du serveur dans lequel l’URL est demandée. S’ils correspondent, vérifiez ensuite l’attribut de chemin.
             //path: 'foo/bar', Indique le chemin du cookie ; utilisez cette option pour une comparaison avec le chemin demandé. Si le chemin et le domaine correspondent, envoyez le cookie dans la demande.

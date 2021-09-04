@@ -56,7 +56,6 @@ const paiementController = {
             //le user a accecepté les CGV
             // je vérifie si req.session.user.cookie existe déja et si sa valeur est déja 'true'
             //console.log('req.session.user ==> ', req.session.user.cgv);
-            console.log("req.session a l'entrée des cgv ==> ", req.session);
 
 
             if (req.session.user !== undefined && req.session.cgv === 'true') {
@@ -67,6 +66,7 @@ const paiementController = {
 
             console.log("req.session a la sortie des cgv ==> ", req.session);
 
+            console.log("req.signedCookies['connect.sid'] ==>> ", req.signedCookies['connect.sid']); // Valeur a insérer en dur dans la méthode insertSessionForWebhook pour tester la méthode webhookpaiement
 
             return res.status(200).json("Les Conditions Générales de Ventes ont été accéptés.")
 
@@ -176,6 +176,7 @@ const paiementController = {
                         client: `${req.session.user.prenom} ${req.session.user.nomFamille}`,
                         idClient: req.session.idClient,
                         email: req.session.user.email,
+                        session: req.sessionID,
                         amount: req.session.totalStripe,
                         ip: req.ip,
                     },
@@ -253,12 +254,110 @@ const paiementController = {
             if (event.type === 'payment_intent.succeeded') {
                 const paymentIntent = event.data.object;
 
-                console.log("paiement bien validé !", paymentIntent);
+                // un petit visuel sur mes metadata accesible :
+                console.log("paiement bien validé ! Mes metadata ==> ", paymentIntent.metadata);
 
+                // Ici req.session ne vaut rien car c'est stripe qui contact ce endpoint. Je récupére donc la session pour savoir ce que le client vient de commander.
+                // avec mes metadata passé a la création du payment intent
+                sessionStore.get(paymentIntent.metadata.session, async function (err, session) {
 
-                // Supprimer le client secret en session ainsi que les données du panier
-                  sessionStore.get(req.signedCookies['connect.sid'], function (err, session) {
+                    // ici j'ai accés a la session du user qui a passé commande !
+
                     console.log("session ==>>", session);
+
+                    // je met a jour les stocks suite au produits achetés avec succés !!
+                    for (const item of session.cart) {
+                        console.log(`On met a jour les stock pour l'item ${item.produit}`);
+                        const updateProduit = await Stock.findOne(item.id);
+                        updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
+                        await updateProduit.update();
+                        console.log("stock bien mis a jour");
+
+                    }
+
+                    /* session ==>> {
+  cookie: {
+    originalMaxAge: 1296000000,
+    expires: '2021-09-19T19:04:12.044Z',
+    secure: true,
+    httpOnly: true,
+    path: '/',
+    sameSite: 'Strict'
+  },
+  user: {
+    idClient: 101,
+    prenom: 'leo',
+    nomFamille: 'Pape',
+    email: 'romain@boudet.me',
+    privilege: 'Client'
+  },
+  cgv: 'true',
+  cart: [
+    {
+      id: 1,
+      produit: 'Refined Fresh Towels',
+      prix: 38,
+      image: 'http://placeimg.com/640/480',
+      couleur: 'blanc',
+      taille: 'S',
+      stock: 4,
+      reduction: null,
+      tva: 0.05,
+      quantite: 4,
+      prixHTAvecReduc: 37.62
+    },
+    {
+      id: 2,
+      produit: 'Handcrafted Wooden Chicken',
+      prix: 75,
+      image: 'http://placeimg.com/640/480',
+      couleur: 'bleu',
+      taille: 'M',
+      stock: 6,
+      reduction: 0.01,
+      tva: 0.05,
+      quantite: 6,
+      prixHTAvecReduc: 74.25
+    }
+  ],
+  totalHT: 595.98,
+  totalTTC: 625.78,
+  totalTVA: 29.8,
+  coutTransporteur: 0,
+  totalStripe: 62578,
+  idTransporteur: '3',
+  IdPaymentIntentStripe: 'pi_3JW49rLNa9FFzz1X1PBWifo2',
+  clientSecret: 'pi_3JW49rLNa9FFzz1X1PBWifo2_secret_R9CMOmjlhd0nR7CkGBYQsNfWK'
+} */
+
+
+
+
+
+                    //! Insérer l'info en BDD dabns la table ligne commande 
+
+
+
+
+                    //! insérer l'info en BDD dans la table commande !
+
+
+
+
+                    //! passer le statut de la commande a "paiement vérifié" ou du genre..
+
+
+
+
+
+
+
+
+
+
+
+
+                    // je supprime ce que contient la session du user qui vient de payer avec succés
                     delete session.cart,
                         delete session.totalTTC,
                         delete session.totalHT,
@@ -268,29 +367,11 @@ const paiementController = {
                         delete session.idTransporteur,
                         delete session.IdPaymentIntentStripe,
                         delete session.clientSecret,
-                        session.paiementValide = true,
-                        console.log("session after ==>>", session);
+                        // j'insere cette session modifié dans REDIS !
+                        sessionStore.set(req.sessionID, session, function (err, session) {})
 
-                    sessionStore.set(req.signedCookies['connect.sid'], session, function (err, session) {
-                        console.log("session dans le sessionStrore.set ==>> ", session)
-                    })
+                })
 
-                })  
-
-                //Mise a jour des stocks
-                //Ou je calle la session dans REDIS pour la reprendre ici facilement !!
-
-
-                for (const item of cart) {
-                    /* console.log(`On met a jour les stock pour l'item ${item.produit}`);
-                    console.log("item ===>>", item); */
-                    console.log(`On met a jour les stock pour l'item ${item.produit}`);
-                    const updateProduit = await Stock.findOne(item.id);
-                    updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
-                    await updateProduit.update();
-                    console.log("stock bien mis a jour");
-
-                }
 
                 // TODO 
 
@@ -335,7 +416,7 @@ const paiementController = {
                 }) */
 
 
-                return res.status(200).json(paymentIntent);
+                return res.status(200).end();
             } else {
 
                 message = {
@@ -367,7 +448,7 @@ const paiementController = {
     // Méthode pour envoyer au front la clé secréte !
     key: async (req, res) => {
         try {
-            console.log(req.session);
+
 
             //simple rappel si j'oubli le MW d'autorisation client... a enlever en prod peut être..
 
@@ -383,7 +464,7 @@ const paiementController = {
 
             } else {
                 console.log(`on a bien délivré la clé au front : ${req.session.clientSecret}`)
-                NOTE : lors de l'appel de la clé secrete depuis le front, on insére dans REDIS la valeur de req.session.cart pour pouvoir aller le chercher dans le webhook avec le mail utilisateur dans les métadonnée.
+                //NOTE : lors de l'appel de la clé secrete depuis le front, on insére dans REDIS la valeur de req.session.cart pour pouvoir aller le chercher dans le webhook avec le mail utilisateur dans les métadonnée.
                 await redis.set(`mada/cartAfterPayment:${req.session.user.email}`, JSON.stringify(req.session.cart));
 
                 return res.status(200).json({
@@ -393,14 +474,13 @@ const paiementController = {
 
             //TODO 
             //contenu a commenté aprés test 
-            console.log(`on a bien délivré la clé au front : ${req.session.clientSecret}`)
-            //! quand j'utilise le front REACT je dois commenter req.session.user.email, car celui ci n'existe pas quand c'est le front qui fait l'appel
-            //! je dois néanmoins appeler cette méthode via postman AVEC redis.set non commenter pour le mettre dans REDIS la premiére fois...
-            //await redis.set(`mada/cartAfterPayment:${req.session.user.email}`, JSON.stringify(req.session.cart));
+            console.log(`on a bien délivré la clé au front, a insérer en dure dans la méthode key, en mode test (car req.session n'existe pas)  : ${req.session.clientSecret}`);
+            //console.log("req.sessionID, a insérer ligne 245 dans le webhook du paiement ==>> ", req.sessionID);
 
-            //! A chaque test, on lance la méthode key dans postman, on remplace la clé en dure par la clé dynamique donné en console.
+            //! A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
+            //TODO  en pro rempacer la clé en dure par req.session.clientSecret
             return res.status(200).json({
-                client_secret: "pi_3JVPw6LNa9FFzz1X1zZXOI6E_secret_GCwGtRqxesZPTbOENNYtHPu2t",
+                client_secret: "pi_3JW4zSLNa9FFzz1X0u1FuVTm_secret_w2G9rxJHRIbD1XpYPSfB6u50I"
             });
 
 
@@ -413,6 +493,35 @@ const paiementController = {
             console.trace(error);
         }
     },
+
+    /* insertCookieForWebhookTest: async (req, res) => {
+        try {
+
+            console.log(req.signedCookies['connect.sid']);
+
+            res.cookie('connect.sid', "s%3AFv27Al5Z56cy5FGlqyXiDrXG8KErb7h_.%2BSjXPZGw2mfWZOBP2aN5jJyqPgAGIosVjhouYjGUs68", {
+                path: '/',
+                maxAge: 900000,
+                //httpOnly: true, //doc => https://expressjs.com/en/api.html#res.sendStatus
+                secure: true,
+                sameSite: 'None',
+                //signed: true,
+            })
+
+
+            console.log("cookie after ==>>", req.cookies);
+            console.log("req.signedCookie ==>> ", req.signedCookies);
+
+
+            res.end();
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode insertSessionForWebhook du paiementController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    }, 
+ */
 
     getAll: async (req, res) => {
         try {

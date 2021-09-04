@@ -264,7 +264,9 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
   router.get('/user/paiementkey', paiementController.key);
 
 
-  /**
+// router.get('/insertCookieForWebhookTest', paiementController.insertCookieForWebhookTest);
+
+/**
  * Prend en charge le webhook STRIPE apres un paiement
  * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
  *  @route POST /webhookpaiement

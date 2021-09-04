@@ -146,7 +146,7 @@ const authController = {
             //je détruis la session
             req.session.destroy(); // je supprime ma session => aprés vérif ça supprime bien la clé dans REDIS !
             //je supprime le cookie qui contient une patie de l'information pour s'authentifier (le token contre les XSS)
-            res.clearCookie('xsrfToken', { //La doc stipule que le cookie sera supprimé par le client seulement si les options données sont équivalent a ceux données lors de sa création. Je redonne donc les options de cookie (excluding expires and maxAge.).
+            res.cookie('xsrfToken', "", { //ou res.clearCookie  => La doc stipule que le cookie sera supprimé par le client seulement si les options données sont équivalent a ceux données lors de sa création. Je redonne donc les options de cookie (excluding expires and maxAge.).
                 path: '/',
                 httpOnly: true, //doc => https://expressjs.com/en/api.html#res.sendStatus
                 secure: true,

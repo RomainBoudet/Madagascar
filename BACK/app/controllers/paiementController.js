@@ -3,6 +3,7 @@ const Adresse = require('../models/adresse');
 const Commande = require('../models/commande');
 const StatutCommande = require('../models/statutCommande');
 const LigneCommande = require('../models/ligneCommande');
+const Transporteur = require('../models/transporteur');
 const Shop = require('../models/shop');
 const Twillio = require('../models/twillio');
 const Stock = require('../models/stock');
@@ -20,16 +21,24 @@ const {
     promisify
 } = require('util');
 
+
 const {
     formatLong,
-    formatJMAHMS
+    formatJMAHMSsecret
 } = require('../services/date');
+
+const {
+    adresseEnvoieFormatHTML
+} = require('../services/adresse');
 
 const validator = require('validator');
 
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 const endpointSecret = process.env.SECRETENDPOINT;
 const redis = require('../services/redis');
+
+const nodemailer = require('nodemailer');
+
 
 
 
@@ -256,19 +265,7 @@ const paiementController = {
                 // avec mes metadata passé a la création du payment intent
                 sessionStore.get(paymentIntent.metadata.session, async function (err, session) {
 
-                    // ici j'ai accés a la session du user qui a passé commande !
 
-                    console.log("session ==>>", session);
-
-                    // je met a jour les stocks suite au produits achetés avec succés !!
-                    for (const item of session.cart) {
-                        console.log(`On met a jour les stock pour l'item ${item.produit}`);
-                        const updateProduit = await Stock.findOne(item.id);
-                        updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
-                        await updateProduit.update();
-                        console.log("stock bien mis a jour");
-
-                    }
 
                     /* session ==>> {
   cookie: {
@@ -328,18 +325,32 @@ const paiementController = {
 
                     try {
 
+                        // ici j'ai accés a la session du user qui a passé commande !
+                        //console.log("session ==>>", session);
+
+                        //! je met a jour les stocks suite au produits achetés avec succés !!
+
+                        for (const item of session.cart) {
+                            console.log(`On met a jour les stock pour l'item ${item.produit}`);
+                            const updateProduit = await Stock.findOne(item.id);
+                            updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
+                            await updateProduit.update();
+                            console.log("stock bien mis a jour");
+
+                        }
+
                         //! insérer l'info en BDD dans la table commande !
 
                         const paymentData = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
 
                         //je construit ce que je vais passer comme donnée de reférence..
                         const articles = [];
-                        session.cart.map(article => (`${articles.push(article.produit+'_' + 'idArticle_=_' + article.id + '_' + 'prix_HT_avec_reduction:_'+article.prixHTAvecReduc+'€'+'_'+'Qte:_'+article.quantite)}`));
-                        articlesBought = articles.join('/_');
+                        session.cart.map(article => (`${articles.push(article.id+"."+article.quantite)}`));
+                        articlesBought = articles.join('.');
 
                         const dataCommande = {};
 
-                        const referenceCommande = `COMMANDE//${articlesBought}_${session.user.prenom}_${session.user.nomFamille}_${session.user.email}_${session.totalTTC}€_${paymentData.type}_${paymentData.card.brand}_${formatJMAHMS(new Date())}`
+                        const referenceCommande = `${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
 
                         dataCommande.reference = referenceCommande;
                         //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
@@ -361,7 +372,7 @@ const paiementController = {
 
                         const dataPaiement = {};
 
-                        const referencePaiement = `PAIEMENT//${session.user.prenom}_${session.user.nomFamille}_${session.user.email}_${session.totalTTC}€_${paymentData.type}_${paymentData.card.brand}_${formatJMAHMS(new Date())}`
+                        const referencePaiement = `${paymentData.card.exp_month}${paymentData.card.exp_year}${paymentData.card.last4}.${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`
                         const methode = `moyen_de_paiement:${paymentData.type}/_marque:_${paymentData.card.brand}/_type_de_carte:_${paymentData.card.funding}/_pays_origine:_${paymentData.card.country}/_mois_expiration:_${paymentData.card.exp_month}/_annee_expiration:_${paymentData.card.exp_year}/_4_derniers_chiffres:_${paymentData.card.last4}`
 
                         dataPaiement.reference = referencePaiement;
@@ -379,19 +390,122 @@ const paiementController = {
 
                         //Je boucle sur chaque produit commandé dans le cart...
 
-                        for (const article of session.cart)  {
+                        for (const article of session.cart) {
 
                             const dataLigneCommande = {};
                             dataLigneCommande.quantiteCommande = article.quantite;
                             dataLigneCommande.idProduit = article.id;
                             dataLigneCommande.idCommande = resultCommande.id;
-    
+
                             const newLigneCommande = new LigneCommande(dataLigneCommande);
                             const resultLigneCommande = await newLigneCommande.save();
 
                             console.log("resultLigneCommande ==>> ", resultLigneCommande);
                         }
-                        
+
+                        const transporter = nodemailer.createTransport({
+                            host: 'smtp.gmail.com',
+                            port: 465,
+                            secure: true, // true for 465, false for other ports
+                            auth: {
+                                user: process.env.EMAIL,
+                                pass: process.env.PASSWORD_EMAIL,
+                            },
+                        });
+
+                        // je récupére les infos du transporteur choisi pour insérer les infos dans le mail.
+                        const transporteurData = await Transporteur.findOne(session.idTransporteur);
+
+                        let mail;
+                        // Je différencie l'utilisateur qui souahite se faire envoyer son colis ou le récupérer au marché
+                        console.log("session ==>> ", session);
+                        console.log("session.idTransporteur ==>> ", session.idTransporteur);
+                        if (Number(session.idTransporteur) === 3) {
+
+                             mail = `<h3>Bonjour <span class="username"> ${session.user.prenom} ${session.user.nomFamille}, </span> </h3> <br>
+                                Nous vous remercions de votre commande. Nous vous tiendrons informé par e-mail lorsque les articles de votre commande auront été expédiés. 
+                                Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier celle-ci dans 
+                                Vos commandes sur votre espace peronnel.<br>
+                                Commande N°${resultCommande.reference} <br>
+                                Votre mode de livraison : ${transporteurData.nom}<br>
+                                Délai de livraison :
+                                Vous avez choisi un retrait sur le marché, votre comande ne sera pas expédié.<br>
+                                Montant total de votre commande : ${session.totalTTC}€ <br>
+                                Moyen de paiement selectionné : carte bancaire ${paymentData.card.brand} <br>
+                                    Vos produit commandés : `
+
+                            for (const item of session.cart) {
+                                `${item.produit} ${item.prixHTAvecReduc} ${item.quantite} ${item.image} <br>`
+                            }
+
+                            +
+                            `Nous espérons vous revoir bientôt.`
+
+                        } else {
+                            // je récupére les infos de l'adresse d'envoie
+                            const adresse = await Adresse.findByEnvoiTrue(session.user.idClient);
+
+                             mail = `<h3>Bonjour <span class="username"> ${session.user.prenom} ${session.user.nomFamille}, </span> </h3> <br>
+                                    Nous vous remercions de votre commande. Nous vous tiendrons informé par e-mail lorsque les articles de votre commande auront été expédiés. 
+                                    Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier celle-ci dans 
+                                    Vos commandes sur votre espace peronnel.<br>
+                                    Commande N°${resultCommande.reference} <br>
+                                    Votre mode de livraison : ${transporteurData.nom}<br>
+                                    Délai de livraison :
+                                    Votre commande sera expédié à votre adresse "${adresse.titre}" : ${adresseEnvoieFormatHTML(session.user.idClient)}
+                                    Montant total de votre commande : ${session.totalTTC}€ <br>
+                                    Moyen de paiement selectionné : carte bancaire ${paymentData.card.brand} <br>
+                                    Vos produit commandés : `
+
+                            for (const item of session.cart) {
+                                `${item.produit} ${item.prixHTAvecReduc} ${item.quantite} ${item.image} <br>`
+                            }
+
+                            +
+                            `Nous espérons vous revoir bientôt.`
+                        }
+
+
+                        // l'envoie d'email définit par l'object "transporter"
+                        const info = await transporter.sendMail({
+                            from: process.env.EMAIL, //l'envoyeur
+                            to: session.user.email,
+                            subject: `Votre achat sur le site d'artisanat Malgache`, // le sujet du mail
+                            text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}.`,
+                            //TODO finir le mail en insérant les produit récement acheté !!
+                            html: mail // Mail a finir de personaliser !!
+                        });
+
+                        // le message envoyé ressemble a ça : <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+                        console.log(`Un email de confirmation d'achat à bien envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);
+                        // Email bien envoyé : 250 2.0.0 OK  1615639005 y16sm12341865wrh.3 - gsmtp => si tout va bien !
+
+
+                        sessionStore.get(paymentIntent.metadata.session, function (err, session) {
+
+                            delete session.cart,
+                                delete session.totalTTC,
+                                delete session.totalHT,
+                                delete session.totalTVA,
+                                delete session.coutTransporteur,
+                                delete session.totalStripe,
+                                delete session.idTransporteur,
+                                delete session.IdPaymentIntentStripe,
+                                delete session.clientSecret,
+                                delete session.commentaire,
+                                // j'insere cette session modifié dans REDIS !
+                                sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
+
+
+                        });
+
+
+                        //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produits récemment achetés.
+
+                        //! Envoyer un mail a l'admin lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
+
+                        //! Envoyer un sms a l'admin, si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
+
 
                     } catch (error) {
                         console.log(`Erreur dans la méthode d'insertion de la commande / paiement / ligne commande du paiementController : ${error.message}`);
@@ -400,23 +514,7 @@ const paiementController = {
                     }
 
 
-                //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produit.
-
-
-
-
-
-
-                //! Envoyer un mail a l'admin lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
-
-
-
-
-
-
-
-
-                //! Envoyer un sms a l'admin, si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
+                });
 
 
 
@@ -429,20 +527,24 @@ const paiementController = {
 
 
 
-                    // je supprime ce que contient la session du user qui vient de payer avec succés
-                    delete session.cart,
-                        delete session.totalTTC,
-                        delete session.totalHT,
-                        delete session.totalTVA,
-                        delete session.coutTransporteur,
-                        delete session.totalStripe,
-                        delete session.idTransporteur,
-                        delete session.IdPaymentIntentStripe,
-                        delete session.clientSecret,
-                        // j'insere cette session modifié dans REDIS !
-                        sessionStore.set(req.sessionID, session, function (err, session) {})
 
-                })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
                 // TODO 
@@ -549,7 +651,7 @@ const paiementController = {
             //! A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             //TODO  en pro rempacer la clé en dure par req.session.clientSecret
             return res.status(200).json({
-                client_secret: "pi_3JWCPcLNa9FFzz1X0GUeRrjg_secret_2QNrtlDSMaS5UQtX5RfU6aWCP",
+                client_secret: "pi_3JWNhoLNa9FFzz1X0vM6BVOL_secret_8jdumGwWSpZniUUmQKgWY2vql",
             });
 
 

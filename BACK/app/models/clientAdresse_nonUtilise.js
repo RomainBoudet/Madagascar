@@ -139,6 +139,7 @@ class ClientAdresse {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
+    //BUG  aucune vue avec ce nom...
     static async findOneForUpdate(id) {
 
 

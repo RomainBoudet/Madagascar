@@ -25,6 +25,11 @@ const formatJMAHMS = (date) => {
     return date;
 }
 
+const formatJMAHMSsecret = (date) => {
+    date = dayjs(date).format('DDMMYYYYHHmmss');
+    return date;
+}
+
 const formatForBack = (date) => {
     data = dayjs(date).toISOString();
     return date;
@@ -35,5 +40,6 @@ module.exports = {
     formatJMA,
     formatLong,
     formatForBack,
-    formatJMAHMS
+    formatJMAHMS,
+    formatJMAHMSsecret
 };

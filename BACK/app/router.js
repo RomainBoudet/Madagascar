@@ -458,11 +458,11 @@ router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema
 //! ROUTE TRANSPORTEUR ---------------------
 
 /**
- * Une route pour déterminer le type de livraison choisi par l'utilisateur
+ * Une route pour déterminer le type de livraison choisi par l'utilisateur et permet de laisser un commentaire en session 
  * @route POST /client/livraisonChoix
  * @group utilisateur
- * @summary Permet de déterminer le choix du transporteur fait par le client
- * @returns {JSON} 200 - Le choix du transporteur fait par le client
+ * @summary Permet de déterminer le choix du transporteur fait par le client et de laisser un commentaire en session
+ * @returns {JSON} 200 - Le choix du transporteur fait par le client et permet de laisser un commentaire en session  
  */
  router.post('/client/livraisonChoix', validateBody(choixLivraisonSchema), livraisonController.choixLivraison);
 

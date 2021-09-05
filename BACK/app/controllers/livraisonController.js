@@ -26,7 +26,14 @@ const livraisonController = {
             // Depuis le front on envoie un entier qui fait référence a un transporteur, selon son id : 1,2,3, ou 4
             //  1 : DPD, 2 : TNT express, 3 : retrait sur place, 4 : La Poste
          
-            req.session.idTransporteur = req.body.idTransporteur
+            req.session.idTransporteur = req.body.idTransporteur;
+
+            //Je permet a l'utilisateur de laisser un commentaire sur la commande...
+
+            if (req.body.commentaire) {
+                req.session.commentaire = req.body.commentaire;
+            }
+            
 
             // Je met a jour le prix du panier en prenant en compte le cout du transport
 
@@ -50,9 +57,10 @@ const livraisonController = {
             const transporteur = transporteurData.nom;
             const coutTransporteur = req.session.coutTransporteur;
             const totalTTCAvecTransport = (req.session.totalStripe) /100; // je le reconvertis pour le rendre lisible en euro
+            const commentaire = req.session.commentaire;
 
 
-            return res.status(200).json({totalHT, totalTTC, totalTVA, coutTransporteur, transporteur, totalTTCAvecTransport, message});
+            return res.status(200).json({totalHT, totalTTC, totalTVA, coutTransporteur, transporteur, totalTTCAvecTransport, message, commentaire});
 
 
         } catch (error) {

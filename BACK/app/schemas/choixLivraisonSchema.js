@@ -15,6 +15,7 @@ const choixLivraisonSchema = Joi.object({
 
 
     idTransporteur: Joi.number()
+    .integer()
     .positive()
     .min(1)
     .max(4)
@@ -27,6 +28,17 @@ const choixLivraisonSchema = Joi.object({
         'number.positive': 'Le champs de votre idTransporteur ne peut être inférieur a zéro !',
 
     }),
+
+    commentaire: Joi.string()
+    .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
+    .max(300)
+    .allow(null, '')
+    .messages({
+        'string.max': `Votre commentaire doit avoir une longeur maximum de {#limit} caractéres !`,
+        'string.pattern.base': 'Le format de votre commentaire est incorrect : Il ne doit pas être composé d\'un de ces caractéres spéciaux : [<>&#=+*/"|] !',
+    }),
+
+
 
 });
 

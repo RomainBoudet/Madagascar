@@ -146,6 +146,9 @@ class LigneCommande {
         consol.model(
             `la ligne_commande id ${this.id} avec comme quantité ${this.quantiteCommande} lié a l'id ${this.idProduit} à bien été inséré le ${this.createdDate} !`
         );
+
+        return new LigneCommande(rows[0]);
+
     }
 
     /**
@@ -161,13 +164,16 @@ class LigneCommande {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.ligne_commande SET quantite_commande = $1, updated_date = now(), id_produit = $2, id_commande = $3  WHERE id = $4 RETURNING *;`,
-            [this.quantiteCommande, this.idProduit, this.idCommande, this.id]
+            `UPDATE mada.ligne_commande SET quantite_commande = $1, updated_date = now(), id_produit = $2, id_commande = $3, id_livraison = $4  WHERE id = $5 RETURNING *;`,
+            [this.quantiteCommande, this.idProduit, this.idCommande, this.idLivraison, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(
             `la ligne_commande id ${this.id} avec le statut ${this.idLigneCommandeStatut} et la référence ${this.reference} a été mise à jour le ${this.updatedDate} !`
         );
+
+        return new LigneCommande(rows[0]);
+
     }
 
 

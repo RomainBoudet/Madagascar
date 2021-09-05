@@ -422,27 +422,27 @@ const fakeData = async () => {
 
         const statut_commandes = [];
         const statutCommandes = [{
-            nom: 'en attente',
+            nom: 'En attente',
             description: 'Vous avez choisi le paiement par virement ? Ce statut est normal et n’évoluera qu’à partir du moment où le virement sera réalisé et les fonds reçus sur notre compte.'
 
         }, {
-            nom: 'annulée',
+            nom: 'Annulée',
             description: "Vous avez choisi d'annuler votre commande ou avez demandé à notre service client de l'annuler ? Vous serez remboursé du montant que vous avez réglé sur le moyen de paiement utilisé.Vous n'avez pas choisi d'annuler votre commande ? Ce statut indique que le paiement en ligne n’a pas abouti (paiement rejeté, coordonnées bancaires non renseignées dans le délai imparti …) Cette commande ne sera pas préparée, vous pouvez faire une nouvelle tentative."
 
         }, {
-            nom: 'en cours de traitement',
+            nom: 'Paiement validé',
             description: 'La commande est validée et va être prise en charge par notre équipe de préparation.'
 
         }, {
-            nom: 'en cours de préparation',
+            nom: 'En cours de préparation',
             description: 'La commande est en cours de préparation par notre équipe logistique.'
 
         }, {
-            nom: 'prêt pour expédition',
+            nom: 'Prêt pour expédition',
             description: 'La préparation de votre commande est terminée. Elle sera remise au transporteur dans la journée.'
 
         }, {
-            nom: 'expédiée',
+            nom: 'Expédiée',
             description: "La commande a remis au transporteur. Vous avez dû recevoir un email contenant le numéro de tracking vous permettant de suivre l'acheminement de votre colis. Ce numéro de tracking est également accessible dans votre compte client dans la rubrique Mes commandes / Onglet Expéditions"
         }]
 

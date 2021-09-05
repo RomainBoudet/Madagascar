@@ -7,7 +7,6 @@ class Commande {
     reference;
     dateAchat;
     commentaire;
-    montant;
     updatedDate;
     idCommandeStatut;
     idClient;
@@ -131,11 +130,26 @@ class Commande {
      */
     async save() {
 
+        let query;
+
+        const data = [
+            this.reference,
+            this.idCommandeStatut,
+            this.idClient,
+        ];
+        // si j'ai le commentaire, je l'insére.. 
+        if (this.commentaire) {
+            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, commentaire) VALUES ($1, now(), $2, $3, $4) RETURNING *;";
+            data.push(this.commentaire);
+        } else {
+            //sinon, je fais sans... il aura la valeur null dans la BDD...
+            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client) VALUES ($1, now(), $2, $3) RETURNING *;"
+        }
+
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.commande (reference, date_achat, commentaire, id_commandeStatut, id_client) VALUES ($1, now(), $2, $3, $4) RETURNING *;`,
-            [this.reference, this.commentaire, this.idCommandeStatut, this.idClient]
+            query, data
         );
 
         this.id = rows[0].id;
@@ -143,6 +157,8 @@ class Commande {
         consol.model(
             `la commande id ${this.id} a été inséré à la date du ${this.createdDate} avec comme statut de commande ${this.idCommandeStatut} !`
         );
+        return new Commande(rows[0]);
+
     }
 
     /**
@@ -200,7 +216,7 @@ class Commande {
         } = await db.query('DELETE FROM mada.commande WHERE commande.id_client = $1 RETURNING *;', [
             this.idClient
         ]);
-        
+
         //this.id = rows[0].id;
         consol.model(`la ou les commandes avec l'idClient ${this.idClient} a / ont été supprimé ! (ainsi que potentiellement: la livraison, la ligne de commande, la ligne de livraison...)`);
 

@@ -337,7 +337,7 @@ CREATE TABLE commande(
 	id                 INT  GENERATED ALWAYS AS IDENTITY UNIQUE,
 	reference          text_valid UNIQUE NOT NULL,
 	date_achat         timestamptz NOT NULL DEFAULT now(),
-	commentaire        text_valid NOT NULL,
+	commentaire        text_valid,
 	updated_date        timestamptz,
 	CHECK (date_achat < updated_date),
 
@@ -544,7 +544,7 @@ CREATE TABLE ligne_commande(
 
 	id_produit          INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE,
 	id_commande			INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE,
-	id_livraison        INT NOT NULL REFERENCES livraison(id)  ON DELETE CASCADE
+	id_livraison        INT  REFERENCES livraison(id)  ON DELETE CASCADE
 	
 );
 

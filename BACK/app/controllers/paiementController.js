@@ -1,5 +1,8 @@
 const Paiement = require('../models/paiement');
 const Adresse = require('../models/adresse');
+const Commande = require('../models/commande');
+const StatutCommande = require('../models/statutCommande');
+const LigneCommande = require('../models/ligneCommande');
 const Shop = require('../models/shop');
 const Twillio = require('../models/twillio');
 const Stock = require('../models/stock');
@@ -17,24 +20,17 @@ const {
     promisify
 } = require('util');
 
-
-
-
-
 const {
-    formatLong
+    formatLong,
+    formatJMAHMS
 } = require('../services/date');
+
 const validator = require('validator');
-
-
-
 
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 const endpointSecret = process.env.SECRETENDPOINT;
 const redis = require('../services/redis');
-const {
-    bind
-} = require('../schemas/userLoginSchema');
+
 
 
 
@@ -56,7 +52,6 @@ const paiementController = {
             //le user a accecepté les CGV
             // je vérifie si req.session.user.cookie existe déja et si sa valeur est déja 'true'
             //console.log('req.session.user ==> ', req.session.user.cgv);
-
 
             if (req.session.user !== undefined && req.session.cgv === 'true') {
                 console.log("Les Conditions Générales de Ventes ont déja été accéptés.")
@@ -135,7 +130,7 @@ const paiementController = {
 
             //je construit ce que je vais passer comme metadata
             const articles = [];
-            req.session.cart.map(article => (`${articles.push(article.produit+' / ' + 'idArticle = ' + '' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
+            req.session.cart.map(article => (`${articles.push(article.produit+' / ' + 'idArticle = ' + article.id + ' /' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
             articlesBought = articles.join(', ');
 
 
@@ -255,7 +250,7 @@ const paiementController = {
                 const paymentIntent = event.data.object;
 
                 // un petit visuel sur mes metadata accesible :
-                console.log("paiement bien validé ! Mes metadata ==> ", paymentIntent.metadata);
+                console.log("paiement bien validé ! paymentIntent. ==> ", paymentIntent.metadata);
 
                 // Ici req.session ne vaut rien car c'est stripe qui contact ce endpoint. Je récupére donc la session pour savoir ce que le client vient de commander.
                 // avec mes metadata passé a la création du payment intent
@@ -331,20 +326,97 @@ const paiementController = {
 } */
 
 
+                    try {
+
+                        //! insérer l'info en BDD dans la table commande !
+
+                        const paymentData = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
+
+                        //je construit ce que je vais passer comme donnée de reférence..
+                        const articles = [];
+                        session.cart.map(article => (`${articles.push(article.produit+'_' + 'idArticle_=_' + article.id + '_' + 'prix_HT_avec_reduction:_'+article.prixHTAvecReduc+'€'+'_'+'Qte:_'+article.quantite)}`));
+                        articlesBought = articles.join('/_');
+
+                        const dataCommande = {};
+
+                        const referenceCommande = `COMMANDE//${articlesBought}_${session.user.prenom}_${session.user.nomFamille}_${session.user.email}_${session.totalTTC}€_${paymentData.type}_${paymentData.card.brand}_${formatJMAHMS(new Date())}`
+
+                        dataCommande.reference = referenceCommande;
+                        //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
+                        dataCommande.idCommandeStatut = 3;
+                        dataCommande.idClient = session.user.idClient;
+
+                        if (session.commentaire && session.commentaire !== '') {
+                            dataCommande.commentaire = session.commentaire
+                        };
+
+
+                        const newCommande = new Commande(dataCommande);
+                        const resultCommande = await newCommande.save();
+
+                        console.log("resultCommande ==>> ", resultCommande);
+
+
+                        //! Insérer l'info en BDD dabns la table paiement !
+
+                        const dataPaiement = {};
+
+                        const referencePaiement = `PAIEMENT//${session.user.prenom}_${session.user.nomFamille}_${session.user.email}_${session.totalTTC}€_${paymentData.type}_${paymentData.card.brand}_${formatJMAHMS(new Date())}`
+                        const methode = `moyen_de_paiement:${paymentData.type}/_marque:_${paymentData.card.brand}/_type_de_carte:_${paymentData.card.funding}/_pays_origine:_${paymentData.card.country}/_mois_expiration:_${paymentData.card.exp_month}/_annee_expiration:_${paymentData.card.exp_year}/_4_derniers_chiffres:_${paymentData.card.last4}`
+
+                        dataPaiement.reference = referencePaiement;
+                        dataPaiement.methode = methode;
+                        dataPaiement.montant = session.totalTTC;
+                        dataPaiement.idCommande = resultCommande.id;
+
+                        const newPaiement = new Paiement(dataPaiement);
+                        const resultpaiement = await newPaiement.save();
+
+                        console.log("resultpaiement ==>> ", resultpaiement);
+
+                        //! Insérer l'info en BDD dabns la table ligne commande 
+
+
+                        //Je boucle sur chaque produit commandé dans le cart...
+
+                        for (const article of session.cart)  {
+
+                            const dataLigneCommande = {};
+                            dataLigneCommande.quantiteCommande = article.quantite;
+                            dataLigneCommande.idProduit = article.id;
+                            dataLigneCommande.idCommande = resultCommande.id;
+    
+                            const newLigneCommande = new LigneCommande(dataLigneCommande);
+                            const resultLigneCommande = await newLigneCommande.save();
+
+                            console.log("resultLigneCommande ==>> ", resultLigneCommande);
+                        }
+                        
+
+                    } catch (error) {
+                        console.log(`Erreur dans la méthode d'insertion de la commande / paiement / ligne commande du paiementController : ${error.message}`);
+                        console.trace(error);
+                        res.status(500).end();
+                    }
+
+
+                //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produit.
 
 
 
-                    //! Insérer l'info en BDD dabns la table ligne commande 
+
+
+
+                //! Envoyer un mail a l'admin lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
 
 
 
 
-                    //! insérer l'info en BDD dans la table commande !
 
 
 
 
-                    //! passer le statut de la commande a "paiement vérifié" ou du genre..
+                //! Envoyer un sms a l'admin, si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
 
 
 
@@ -379,13 +451,10 @@ const paiementController = {
                 // Envoyer un sms pour dire qu'une nouvelle commande a bien été saisi (ou aprés la commande)
                 // Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produit.
                 // Faire la méthode "Recevoir un sms m'avertissant de l'envoi de ma commande en temps réel ?"
-                // insérer l'info en BDD dans la table commande !
-                // Insérer l'info en BDD dabns la table ligne commande 
-                // passer le statut de la commande a "paiement vérifié" ou du genre..
                 // écrire une facture!
                 // supprimer les articles dans req.session.cart quand plus besoin !
 
-                // Gére tous les cas de figures ou se passe mal !
+                // Gére tous les cas de figures ou se passe mal ! Envoyez un e-mail ou une notification Push pour demander au client d’essayer un autre moyen de paiement.
                 // permettre un nouveau paiement dans tous les cas nécéssaire
                 // autorisation d'ip pour webhook https://stripe.com/docs/ips 
                 // Permettre d'autre mode de paiement, virement et paypal ? puis google pay apple pay et un truc chinois !
@@ -480,7 +549,7 @@ const paiementController = {
             //! A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             //TODO  en pro rempacer la clé en dure par req.session.clientSecret
             return res.status(200).json({
-                client_secret: "pi_3JW4zSLNa9FFzz1X0u1FuVTm_secret_w2G9rxJHRIbD1XpYPSfB6u50I"
+                client_secret: "pi_3JWCPcLNa9FFzz1X0GUeRrjg_secret_2QNrtlDSMaS5UQtX5RfU6aWCP",
             });
 
 

@@ -137,6 +137,8 @@ class Paiement {
         consol.model(
             `le paiement id ${this.id} a été inséré à la date du ${this.createdDate} pour la commande id ${this.idCommande} !`
         );
+        return new Paiement(rows[0]);
+
     }
 
     /**

@@ -13,6 +13,7 @@ const {
 const {
     exec
 } = require("child_process");
+const passwordSchema = require('../schemas/passwordOnlySchema');
 
 
 //Config Twillio
@@ -40,6 +41,61 @@ const date = dat.charAt(0).toUpperCase() + dat.slice(1);
  * @return {JSON}  - une donnée en format json
  */
 const adminController = {
+
+    smsChoice: async (req, res) => {
+        try {
+            // on s'attent a recevoir soit true ou false en body...
+
+            // Je vérifit que l'admin a bien déja fait vérifié son numéro. Sinon je le réoriente vers une vérification...
+            const phoneInDb = await AdminPhone.findByIdClient(req.session.user.idClient);
+
+            console.log(phoneInDb);
+            console.log(req.body.true);
+            if (phoneInDb === null) {
+                return res.status(200).json({
+                    message: 'Merci de verifier votre numéro de téléphone avant de pouvoir recevoir des information de commande sur votre téléphone.'
+                })
+            };
+
+            // ici req.body peut être true ou false . Pas strcitement identique === pour autoriser les érreurs de type..
+
+            if (req.body.true === 'true') {
+
+                if (phoneInDb.smsNewCommande === true) {
+                    console.log("L'envoie de sms a chaque commande est déja configuré !")
+                    res.status(200).end();
+
+                }
+
+                const newSmsChoice = new AdminPhone({idClient: req.session.user.idClient});
+                const result = await newSmsChoice.updateSmsTrue();
+                console.log("req.body = true ==>> ", result);
+            }
+
+            if (req.body.false == 'false') {
+
+                if (phoneInDb.smsNewCommande === false) {
+                    console.log("L'absence d'envoie de sms a chaque commande est déja configuré !")
+                    res.status(200).end();
+
+                }
+                const newSmsChoice = new AdminPhone({idClient: req.session.user.idClient});
+                const result = await newSmsChoice.updateSmsFalse();
+                console.log("req.body = false ==>> ", result);
+
+            }
+            // Le choix de l'admin a bien été inséré en BDD
+
+            res.status(200).end();
+
+        } catch (error) {
+            console.log(`Erreur dans la methode smsChoice du adminController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
+
 
 
     updatePrivilege: async (req, res) => {
@@ -149,7 +205,7 @@ const adminController = {
                 // je créer un objet "transporteur" réutilisable à l'aide du transport SMTP par défaut
 
                 const transporter = nodemailer.createTransport({
-                    host: 'smtp.gmail.com',
+                    host: process.env.HOST,
                     port: 465,
                     secure: true, // true for 465, false for other ports
                     auth: {
@@ -209,12 +265,14 @@ const adminController = {
         try {
             // pas d'appel inutile a l'API, on vérifit d'abord..
             const phoneInDb = await AdminPhone.findByIdClient(req.session.user.idClient);
-        
+
             if (!phoneInDb === null) {
                 return res.status(200).json('Votre numéro de téléphone a déja été vérifié avec succés !')
             }
             //Malgrés la validator en backup, ne pas oublier que Joi sanctionnera avant si le format neconvient pas...
-            if (validator.isMobilePhone(req.body.phoneNumber, 'fr-FR', {strictMode:true})) {
+            if (validator.isMobilePhone(req.body.phoneNumber, 'fr-FR', {
+                    strictMode: true
+                })) {
 
                 twilio.verify.services(dataTwillio.sidVerify)
                     .verifications
@@ -281,7 +339,11 @@ const adminController = {
         const dataTwillio = await Twillio.findFirst();
         const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
 
-        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {strictMode:true}) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {strictMode:true}) )) {
+        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
+                strictMode: true
+            }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
+                strictMode: true
+            }))) {
             return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
         }
         try {
@@ -303,7 +365,7 @@ const adminController = {
         }
     },
 
-    
+
 
     //https://www.twilio.com/docs/sms/tutorials/how-to-receive-and-reply-node-js
     // pour tester via ngrok => (en ligne de commande) ngrok http https://localhost:3000 -region eu
@@ -312,7 +374,11 @@ const adminController = {
     smsRespond: async (req, res) => {
         const dataTwillio = await Twillio.findFirst();
         const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
-        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {strictMode:true}) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {strictMode:true}) )) {
+        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
+                strictMode: true
+            }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
+                strictMode: true
+            }))) {
             return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
         }
         try {
@@ -382,20 +448,24 @@ const adminController = {
         const dataTwillio = await Twillio.findFirst();
         const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
 
-        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {strictMode:true}) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {strictMode:true}) )) {
+        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
+                strictMode: true
+            }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
+                strictMode: true
+            }))) {
             return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
         }
         try {
             const balance = await twilio.balance.fetch()
-                twilio.messages.create({
-                        body: `La balance du compte Twillio est de ${balance.balance}$.`,
-                        from: dataTwillio.twillioNumber,
-                        to: dataTwillio.devNumber,
-                    })
-                    .then(message => console.log(message.sid));
+            twilio.messages.create({
+                    body: `La balance du compte Twillio est de ${balance.balance}$.`,
+                    from: dataTwillio.twillioNumber,
+                    to: dataTwillio.devNumber,
+                })
+                .then(message => console.log(message.sid));
 
-                return res.status(200).json('Sms bien envoyé !');
-            
+            return res.status(200).json('Sms bien envoyé !');
+
 
         } catch (error) {
             console.trace(
@@ -408,13 +478,13 @@ const adminController = {
     balanceTwillio: async (req, res) => {
         const dataTwillio = await Twillio.findFirst();
         const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
-        
-        try {
-            
-               const balance = await twilio.balance.fetch()
 
-                return res.status(200).json(balance);
-            
+        try {
+
+            const balance = await twilio.balance.fetch()
+
+            return res.status(200).json(balance);
+
 
         } catch (error) {
             console.trace(
@@ -476,7 +546,9 @@ const adminController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateClient = await Twillio.findOne(id);
@@ -485,9 +557,9 @@ const adminController = {
             const devNumber = req.body.devNumber;
             const clientNumber = req.body.clientNumber;
             const accountSid = req.body.accountSid;
-            const authToken= req.body.authToken;
-            const sidVerify= req.body.sidVerify;
-            
+            const authToken = req.body.authToken;
+            const sidVerify = req.body.sidVerify;
+
             let userMessage = {};
 
             if (twillioNumber) {
@@ -845,9 +917,11 @@ const adminController = {
             const {
                 id
             } = req.params;
-            
+
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateClient = await AdminVerifEmail.findByIdClient(id);
@@ -882,7 +956,7 @@ const adminController = {
         }
     },
 
-    
+
 
 
     // Pour vérifier un payement, twillio nous fournit également une méthode psd2 => Payment Service Directive 2  => https://www.twilio.com/blog/dynamic-linking-psd2      //https://www.twilio.com/docs/verify/verifying-transactions-psd2#
@@ -894,7 +968,7 @@ const adminController = {
                 .verifications
                 .create({
                     locale: 'fr',
-                    amount:'test', //a dynamiser avec des infos provenant du paiement si on utilise la méthode...
+                    amount: 'test', //a dynamiser avec des infos provenant du paiement si on utilise la méthode...
                     payee: 'test', // 
                     to: req.body.phoneNumber,
                     channel: 'sms'
@@ -920,9 +994,9 @@ const adminController = {
                 .verificationChecks
                 .create({
                     to: req.session.phoneNumber,
-                    amount: req.body.amount,// les infos reçu pas SMS
-                    payee: req.body.payee,//
-                    code: req.body.code,//
+                    amount: req.body.amount, // les infos reçu pas SMS
+                    payee: req.body.payee, //
+                    code: req.body.code, //
                 })
             console.log(statut);
             if (statut.status === 'approved') {

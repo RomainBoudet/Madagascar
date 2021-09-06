@@ -208,6 +208,7 @@ CREATE TABLE client(
 
 CREATE INDEX idx_client_id ON client(id);
 
+
 -----------------------------------------------------------
 -- Table: admin_verif_email
 ------------------------------------------------------------
@@ -220,11 +221,12 @@ CREATE TABLE admin_verif_email(
 
 
 ------------------------------------------------------------
--- Table: admin_phone
+-- Table: admin_phone -- insertion uniquement si vérifié...
 ------------------------------------------------------------
 CREATE TABLE admin_phone(
 	id                INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	admin_telephone   phonenumber  NOT NULL,
+	sms_new_commande  BOOLEAN NOT NULL DEFAULT FALSE,
 	created_date      timestamptz NOT NULL DEFAULT now(),
 	updated_date      timestamptz,
 	id_client         INT UNIQUE NOT NULL REFERENCES client(id) ON DELETE CASCADE,

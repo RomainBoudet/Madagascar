@@ -517,6 +517,7 @@ const paiementController = {
 
 
                         //! Envoyer un sms a l'admin, si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
+                        // produit, quantité, adresse, transporteur.
 
 
 

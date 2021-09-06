@@ -62,6 +62,8 @@ const transporteurPostSchema = require('./schemas/transporteurPostSchema');
 const livraisonPostSchema = require('./schemas/livraisonPostSchema');
 const livraisonSchema = require('./schemas/livraisonSchema');
 const choixLivraisonSchema = require('./schemas/choixLivraisonSchema');
+const smsChoiceSchema = require('./schemas/smsChoiceSchema');
+
 
 
 
@@ -329,6 +331,18 @@ router.post('/admin/smsVerify', admin, clean, validateBody(phoneNumberSchema), a
  * @returns {JSON} 200 - Un un json informant que le téléphone a été authentifié
  */
 router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminController.smsCheck);
+
+//
+/**
+ * Reçoie un true ou false pour pouvoir choisir l'envoie de sms a l'admin a chaque commande, ou non. Nécéssite d'avoir vérifié son téléphone avant.
+ * @route POST /admin/smsChoice
+ * @group Administrateur
+ * @summary Permet d'insérer en BDD le choix de l'admin en matiére d'envoie de sms a chaque commande reçu
+ * @param {Administrateur.Model} Administrateur.body.required
+ */
+ router.post('/admin/smsChoice', admin, clean, validateBody(smsChoiceSchema), adminController.smsChoice);
+
+
 
 /**
  * Faire appel a la méthode smsSend envoi un sms avec le contenu voulu. Ici un exemple générique qui renvoie le nombre d'enregistrement dans la table clients, a chaque demande. A modifier selon les besoins d'envoie de SMS...

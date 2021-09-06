@@ -44,11 +44,9 @@ const clean = (req, res, next) => {
 
         //Je formate quelque entrées pour que ca soit propre en BDD...
 
-        console.log("req.body.pays dans le sanitizer, avant ==> ", req.body.pays);
         if (req.body.pays) {
             req.body.pays = req.body.pays.toUpperCase();
         }
-        console.log("req.body.pays dans le sanitizer, apres ==> ", req.body.pays);
 
         if (req.body.prenom) {
             req.body.prenom = capitalize(req.body.prenom);

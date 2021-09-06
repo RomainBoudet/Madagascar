@@ -5,12 +5,17 @@ class AdminPhone {
 
     id;
     adminTelephone;
+    smsNewCommande;
     createdDate;
     updatedDate;
     idClient;
 
     set admin_telephone(val) {
         this.adminTelephone = val;
+    }
+
+    set sms_new_commande(val) {
+        this.smsNewCommande = val;
     }
 
     set created_date(val) {
@@ -34,6 +39,7 @@ class AdminPhone {
             this[prop] = data[prop];
         }
     }
+
 
     /**
      * Méthode chargé d'aller chercher toutes les informations relatives à tous les admin_phones
@@ -106,7 +112,7 @@ class AdminPhone {
         );
 
         if (!rows[0]) {
-            return null 
+            return null
         }
         /*  if (!rows[0]) {
             throw new Error("Aucun admin_phone avec cet idClient");
@@ -165,6 +171,69 @@ class AdminPhone {
             `le admin_phone du client id : ${this.idClient} comprenant le nouveau numéro ${this.adminTelephone} a été mise à jour le ${this.updatedDate} !`
         );
     }
+
+
+
+    /**
+     * Méthode chargé d'aller mettre a jour les informations relatives à une smsNewCommande avec TRUE 
+     * @param id - un id d'un client
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    async updateSmsTrue() {
+
+        const {
+            rows,
+        } = await db.query(
+            'UPDATE mada.admin_phone SET sms_new_commande = TRUE, updated_date = now() WHERE id_client  = $1 RETURNING * ;',
+            [this.idClient]
+        );
+        if (!rows[0]) {
+            console.log(`Aucune smsNewCommande n'as été passé a TRUE pour le client ${this.idClient}.`)
+            return null;
+        }
+
+        consol.model(
+            `smsNewCommande pour le client id ${this.idClient} a été passé a TRUE en BDD !`
+        );
+
+        return new AdminPhone(rows[0]);
+    }
+
+    /**
+     * Méthode chargé d'aller mettre a jour les informations relatives à une smsNewCommande avec FALSE 
+     * @param id - un id d'un client
+     * @returns - les informations du Adresse demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    async updateSmsFalse() {
+
+        const {
+            rows,
+        } = await db.query(
+            'UPDATE mada.admin_phone SET sms_new_commande = FALSE, updated_date = now() WHERE id_client  = $1 RETURNING * ;',
+            [this.idClient]
+        );
+        if (!rows[0]) {
+            console.log(`Aucune smsNewCommande n'as été passé a FALSE pour le client ${this.idClient}.`)
+            return null;
+        }
+
+        consol.model(
+            `smsNewCommande pour le client id ${this.idClient} a été passé a FALSE en BDD !`
+        );
+
+        return new AdminPhone(rows[0]);
+    }
+
+
+
+
+
+
+
     /**
      * Méthode chargé d'aller supprimer un admin_phone passé en paramétre
      * @param id - l'id d'un admin_phone

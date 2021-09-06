@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<style>
+    p {
+        border-top: 1px solid rgb(170, 66, 66);
+        padding: 1rem;
+    }
+
+    h2 {
+        color: blueviolet;
+    }
+
+    h3 {
+        border-top: 1px solid rgb(138, 128, 128);
+        padding: 0.5rem;
+    }
+
+</style>
+
+<body>
+
+    <h2>Bonjour Kevin <span> </span> </h3> <br>
+   <h3>Tu as reçu une nouvelle commande via le site internet !</h3> <br>
+        <p> Commande N°{{refCommande}} <br>
+        Statut de la commande : {{statutCommande}} <br>
+        Mode de livraison choisi : {{nomTransporteur}}<br>
+        Délai de livraison estimé : {{delai}} <br>
+
+        {{#compare idTransporteur "==" 3}}
+        Un retrait sur un marché a été choisi, la commande ne devra pas être expédié.<br>
+        {{else}}
+        La commande est a expédié à : {{adresse}} <br>
+        {{/compare}}
+        Commentaire du client : {{commentaire}} <br>
+        Montant total de la commande : {{montant}}€ <br>
+        Moyen de paiement selectionné : carte bancaire {{marqueCB}} <br>
+        Produit commandés et quantité :
+        {{#each dataArticles}}
+        <li>{{this.produit}}, {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, <a href="{{this.image}}">image du
+                produit</a></li>
+        {{/each}}
+        <br>
+    </p>
+
+</body>
+
+</html>
+
+{{!-- pour la syntaxe et les opérateur de conditions =>  https://www.npmjs.com/package/handlebars-helpers --}}

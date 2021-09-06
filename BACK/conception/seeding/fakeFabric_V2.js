@@ -527,6 +527,7 @@ const fakeData = async () => {
                 nom_transporteur: "DPD",
                 description: "DPD en point relai pickup",
                 estime_arrive: "Expédié sous 24 à 48h",
+                estime_arrive_number: 2,
                 poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
@@ -536,6 +537,7 @@ const fakeData = async () => {
                 logo: faker.image.business(),
                 nom_transporteur: "TNT",
                 estime_arrive: "Livraison le lendemain pour toute commande avant 12h00",
+                estime_arrive_number: 1,
                 description: "Express à domicile pour une livraison à domicile en france métropolitaine. livraison en mains propres et contre signature dès le lendemain de l'expédition de votre commande (1).(1) avant 13 heures ou en début d'après-midi en zone rurale.",
                 poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
@@ -546,6 +548,7 @@ const fakeData = async () => {
                 logo: faker.image.business(),
                 nom_transporteur: "Retrait sur le stand durant le prochain marché",
                 estime_arrive: "Durant le prochain marché. Nous contacter pour connaitre la date",
+                estime_arrive_number: 'Prochain marché',
                 description: "Une livraison de la main a la main, sur notre stand",
                 poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
@@ -555,6 +558,7 @@ const fakeData = async () => {
                 logo: faker.image.business(),
                 nom_transporteur: "La poste Collisimmo",
                 estime_arrive: "Livraison dans les 48h a 72h",
+                estime_arrive_number: 3,
                 description: "Le service colis de La Poste",
                 poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
@@ -1341,12 +1345,12 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${transporteurs.length} transporteurs`);
         console.time(`Import de ${transporteurs.length} transporteurs`);
-        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, logo) VALUES ($1, $2, $3, $4, $5);";
+        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, estime_arrive_number, logo) VALUES ($1, $2, $3, $4, $5, $6);";
 
         for (const transporteur of transporteurs) {
 
             consol.seed(`Import du livraison pour le client id ${transporteur.nom_transporteur}`);
-            await db.query(transporteursInsert, [transporteur.nom_transporteur, transporteur.description, transporteur.frais_expedition, transporteur.estime_arrive, transporteur.logo]);
+            await db.query(transporteursInsert, [transporteur.nom_transporteur, transporteur.description, transporteur.frais_expedition, transporteur.estime_arrive, transporteur.estime_arrive_number, transporteur.logo]);
         }
 
         consol.seed(`Fin de l'import de ${transporteurs.length} transporteurs`);

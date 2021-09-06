@@ -8,6 +8,7 @@ const capitalizeNotForceLowerCase = (string) => string.charAt(0).toUpperCase() +
 
 
 //module installé comme MW dans l'index !
+//! Non utilisé, fait pplanter la vérification de la signature de STRIPE dans le webhook du payment !! "Expected a string but received a number"
 
 cleanPass.use((req, res, next) => {
 
@@ -17,19 +18,19 @@ cleanPass.use((req, res, next) => {
 
         req.body[prop] = validator.blacklist(req.body[prop], ['>']);
         req.body[prop] = validator.blacklist(req.body[prop], ['<']);
-        req.body[prop] = validator.blacklist(req.body[prop], ['"']);
-        req.body[prop] = validator.blacklist(req.body[prop], ['/']); // besoin pour les URL...
-        req.body[prop] = validator.blacklist(req.body[prop], ['|']);
+        //req.body[prop] = validator.blacklist(req.body[prop], ['"']);
+        //req.body[prop] = validator.blacklist(req.body[prop], ['/']); // besoin pour les URL...
+        //req.body[prop] = validator.blacklist(req.body[prop], ['|']);
         //req.body[prop] = validator.blacklist(req.body[prop], ['{']);
         //req.body[prop] = validator.blacklist(req.body[prop], ['}']);
-        req.body[prop] = validator.blacklist(req.body[prop], ['[']);
-        req.body[prop] = validator.blacklist(req.body[prop], [']']);
-        req.body[prop] = validator.blacklist(req.body[prop], ['=']);
+        //req.body[prop] = validator.blacklist(req.body[prop], ['[']);
+        //req.body[prop] = validator.blacklist(req.body[prop], [']']);
+        //req.body[prop] = validator.blacklist(req.body[prop], ['=']);
 
     }
     //Je formate quelque entrées pour que ca soit propre en BDD...
 
-    if (req.body.pays) {
+    /* if (req.body.pays) {
         req.body.pays = req.body.pays.toUpperCase();
     }
     if (req.body.prenom) {
@@ -52,7 +53,7 @@ cleanPass.use((req, res, next) => {
     }
     if (req.body.ville) {
         req.body.ville = capitalize(req.body.ville);
-    }
+    } */
 
 
 

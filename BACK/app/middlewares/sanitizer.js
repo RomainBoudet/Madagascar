@@ -44,30 +44,33 @@ const clean = (req, res, next) => {
 
         //Je formate quelque entrées pour que ca soit propre en BDD...
 
-    if (req.body.pays) {
-        req.body.pays = req.body.pays.toUpperCase();
-    }
-    if (req.body.prenom) {
-        req.body.prenom = capitalize(req.body.prenom);
-    }
-    if (req.body.nomFamille) {
-        req.body.nomFamille = capitalize(req.body.nomFamille);
-    }
-    if (req.body.ligne1) {
-        req.body.ligne1 = capitalizeNotForceLowerCase(req.body.ligne1);
-    }
-    if (req.body.ligne2) {
-        req.body.ligne2 = capitalize(req.body.ligne2);
-    }
-    if (req.body.ligne3) {
-        req.body.ligne3 = capitalize(req.body.ligne3);
-    }
-    if (req.body.titre) {
-        req.body.titre = capitalize(req.body.titre);
-    }
-    if (req.body.ville) {
-        req.body.ville = capitalize(req.body.ville);
-    }
+        console.log("req.body.pays dans le sanitizer, avant ==> ", req.body.pays);
+        if (req.body.pays) {
+            req.body.pays = req.body.pays.toUpperCase();
+        }
+        console.log("req.body.pays dans le sanitizer, apres ==> ", req.body.pays);
+
+        if (req.body.prenom) {
+            req.body.prenom = capitalize(req.body.prenom);
+        }
+        if (req.body.nomFamille) {
+            req.body.nomFamille = capitalize(req.body.nomFamille);
+        }
+        if (req.body.ligne1) {
+            req.body.ligne1 = capitalizeNotForceLowerCase(req.body.ligne1);
+        }
+        if (req.body.ligne2) {
+            req.body.ligne2 = capitalize(req.body.ligne2);
+        }
+        if (req.body.ligne3) {
+            req.body.ligne3 = capitalize(req.body.ligne3);
+        }
+        if (req.body.titre) {
+            req.body.titre = capitalize(req.body.titre);
+        }
+        if (req.body.ville) {
+            req.body.ville = capitalize(req.body.ville);
+        }
 
         next();
 
@@ -85,7 +88,7 @@ const clean = (req, res, next) => {
 
 }
 //le MW suivant n'est pas utilisé et a été remplacé par un MW direct dans l'index, en amont.
- const cleanPassword = (req, res, next) => {
+const cleanPassword = (req, res, next) => {
 
     try {
         const theBody = req.body;
@@ -104,27 +107,55 @@ const clean = (req, res, next) => {
             theBody[prop] = validator.blacklist(theBody[prop], [']']);
             theBody[prop] = validator.blacklist(theBody[prop], ['=']);
             theBody[prop] = validator.blacklist(theBody[prop], ['_']);
+        }
 
+        //Je formate quelque entrées pour que ca soit propre en BDD...
+
+        if (req.body.pays) {
+            req.body.pays = req.body.pays.toUpperCase();
+        }
+
+        if (req.body.prenom) {
+            req.body.prenom = capitalize(req.body.prenom);
+        }
+        if (req.body.nomFamille) {
+            req.body.nomFamille = capitalize(req.body.nomFamille);
+        }
+        if (req.body.ligne1) {
+            req.body.ligne1 = capitalizeNotForceLowerCase(req.body.ligne1);
+        }
+        if (req.body.ligne2) {
+            req.body.ligne2 = capitalize(req.body.ligne2);
+        }
+        if (req.body.ligne3) {
+            req.body.ligne3 = capitalize(req.body.ligne3);
+        }
+        if (req.body.titre) {
+            req.body.titre = capitalize(req.body.titre);
+        }
+        if (req.body.ville) {
+            req.body.ville = capitalize(req.body.ville);
         }
         next();
 
-         //le password doit pouvoir contenir => @#$%^&* et le phone number : +
+        //le password doit pouvoir contenir => @#$%^&* et le phone number : +
 
     } catch (err) {
 
         console.trace(
             'Erreur dans la méthode cleanPassword du sanitizer :',
             err);
-            return res.status(500).json({
-                message: 'Erreur dans le sanitizer'
-              });
+        return res.status(500).json({
+            message: 'Erreur dans le sanitizer'
+        });
 
     }
-} 
+}
 
 
 module.exports = {
     clean,
-    cleanPassword
+    cleanPassword,
+    capitalize,
 
 };

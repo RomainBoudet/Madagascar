@@ -21,14 +21,20 @@ const {
     promisify
 } = require('util');
 
+const {
+    capitalize
+} = require('../middlewares/sanitizer');
 
 const {
     formatLong,
-    formatJMAHMSsecret
+    formatJMAHMSsecret,
+    dayjs,
+    formatLongSansHeure,
 } = require('../services/date');
 
 const {
-    adresseEnvoieFormatHTML
+    adresseEnvoieFormatHTML,
+    adresseEnvoieFormat
 } = require('../services/adresse');
 
 const validator = require('validator');
@@ -37,8 +43,10 @@ const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 const endpointSecret = process.env.SECRETENDPOINT;
 const redis = require('../services/redis');
 
+const path = require('path');
 const nodemailer = require('nodemailer');
-
+const hbs = require('nodemailer-express-handlebars');
+const helpers = require('handlebars-helpers')();
 
 
 
@@ -365,7 +373,7 @@ const paiementController = {
                         const newCommande = new Commande(dataCommande);
                         const resultCommande = await newCommande.save();
 
-                        console.log("resultCommande ==>> ", resultCommande);
+                        //console.log("resultCommande ==>> ", resultCommande);
 
 
                         //! Insérer l'info en BDD dabns la table paiement !
@@ -383,7 +391,7 @@ const paiementController = {
                         const newPaiement = new Paiement(dataPaiement);
                         const resultpaiement = await newPaiement.save();
 
-                        console.log("resultpaiement ==>> ", resultpaiement);
+                        //console.log("resultpaiement ==>> ", resultpaiement);
 
                         //! Insérer l'info en BDD dabns la table ligne commande 
 
@@ -400,11 +408,15 @@ const paiementController = {
                             const newLigneCommande = new LigneCommande(dataLigneCommande);
                             const resultLigneCommande = await newLigneCommande.save();
 
-                            console.log("resultLigneCommande ==>> ", resultLigneCommande);
+                            //console.log("resultLigneCommande ==>> ", resultLigneCommande);
                         }
 
+                        //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produits récemment achetés.
+
+                        //Sendgrid ou MailGun serait préférable en prod...
+                        //https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
                         const transporter = nodemailer.createTransport({
-                            host: 'smtp.gmail.com',
+                            host: process.env.HOST,
                             port: 465,
                             secure: true, // true for 465, false for other ports
                             auth: {
@@ -413,77 +425,105 @@ const paiementController = {
                             },
                         });
 
+                        // Config pour les templates et le moteur handlebars lié a Nodemailer
+                        const options = {
+                            viewEngine: {
+                                extName: ".hbs",
+                                partialsDir: path.resolve(__dirname, "./views"),
+                                defaultLayout: false
+                            },
+                            extName: ".hbs",
+                            viewPath: path.resolve(__dirname, "../views"),
+                        };
+
+                        transporter.use('compile', hbs(options));
+
                         // je récupére les infos du transporteur choisi pour insérer les infos dans le mail.
                         const transporteurData = await Transporteur.findOne(session.idTransporteur);
+                        const statutCommande = await StatutCommande.findOne(resultCommande.idCommandeStatut);
 
-                        let mail;
-                        // Je différencie l'utilisateur qui souahite se faire envoyer son colis ou le récupérer au marché
-                        console.log("session ==>> ", session);
-                        console.log("session.idTransporteur ==>> ", session.idTransporteur);
+
+                        // car estimeArriveNumber (le délai) peut être une string ou un number...:/
+                        let contexte;
                         if (Number(session.idTransporteur) === 3) {
+                             contexte = {
+                                nom: session.user.nomFamille,
+                                prenom: session.user.prenom,
+                                refCommande: resultCommande.reference,
+                                statutCommande : statutCommande.statut,
+                                nomTransporteur: transporteurData.nom,
+                                idTransporteur: Number(session.idTransporteur),
+                                delai: transporteurData.estimeArriveNumber, // ici une string et non un number...
+                                adresse: await adresseEnvoieFormat(session.user.idClient),
+                                montant: session.totalTTC,
+                                marqueCB: paymentData.card.brand,
+                                dataArticles: session.cart,
+                                commentaire: resultCommande.commentaire,
 
-                             mail = `<h3>Bonjour <span class="username"> ${session.user.prenom} ${session.user.nomFamille}, </span> </h3> <br>
-                                Nous vous remercions de votre commande. Nous vous tiendrons informé par e-mail lorsque les articles de votre commande auront été expédiés. 
-                                Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier celle-ci dans 
-                                Vos commandes sur votre espace peronnel.<br>
-                                Commande N°${resultCommande.reference} <br>
-                                Votre mode de livraison : ${transporteurData.nom}<br>
-                                Délai de livraison :
-                                Vous avez choisi un retrait sur le marché, votre comande ne sera pas expédié.<br>
-                                Montant total de votre commande : ${session.totalTTC}€ <br>
-                                Moyen de paiement selectionné : carte bancaire ${paymentData.card.brand} <br>
-                                    Vos produit commandés : `
-
-                            for (const item of session.cart) {
-                                `${item.produit} ${item.prixHTAvecReduc} ${item.quantite} ${item.image} <br>`
                             }
-
-                            +
-                            `Nous espérons vous revoir bientôt.`
-
                         } else {
-                            // je récupére les infos de l'adresse d'envoie
-                            const adresse = await Adresse.findByEnvoiTrue(session.user.idClient);
+                             contexte = {
+                                nom: session.user.nomFamille,
+                                prenom: session.user.prenom,
+                                refCommande: resultCommande.reference,
+                                statutCommande : statutCommande.statut,
+                                nomTransporteur: transporteurData.nom,
+                                idTransporteur: Number(session.idTransporteur),
+                                delai: capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber,
+                                    'day'))),
+                                adresse: await adresseEnvoieFormat(session.user.idClient),
+                                montant: session.totalTTC,
+                                marqueCB: paymentData.card.brand,
+                                dataArticles: session.cart,
+                                commentaire: resultCommande.commentaire,
 
-                             mail = `<h3>Bonjour <span class="username"> ${session.user.prenom} ${session.user.nomFamille}, </span> </h3> <br>
-                                    Nous vous remercions de votre commande. Nous vous tiendrons informé par e-mail lorsque les articles de votre commande auront été expédiés. 
-                                    Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier celle-ci dans 
-                                    Vos commandes sur votre espace peronnel.<br>
-                                    Commande N°${resultCommande.reference} <br>
-                                    Votre mode de livraison : ${transporteurData.nom}<br>
-                                    Délai de livraison :
-                                    Votre commande sera expédié à votre adresse "${adresse.titre}" : ${adresseEnvoieFormatHTML(session.user.idClient)}
-                                    Montant total de votre commande : ${session.totalTTC}€ <br>
-                                    Moyen de paiement selectionné : carte bancaire ${paymentData.card.brand} <br>
-                                    Vos produit commandés : `
 
-                            for (const item of session.cart) {
-                                `${item.produit} ${item.prixHTAvecReduc} ${item.quantite} ${item.image} <br>`
                             }
-
-                            +
-                            `Nous espérons vous revoir bientôt.`
                         }
-
 
                         // l'envoie d'email définit par l'object "transporter"
                         const info = await transporter.sendMail({
                             from: process.env.EMAIL, //l'envoyeur
                             to: session.user.email,
                             subject: `Votre achat sur le site d'artisanat Malgache`, // le sujet du mail
-                            text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}.`,
-                            //TODO finir le mail en insérant les produit récement acheté !!
-                            html: mail // Mail a finir de personaliser !!
+                            text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande.`,
+                            /* attachement:[
+                                {filename: 'picture.JPG', path: './picture.JPG'}
+                            ] */
+                            template: 'apresAchat',
+                            context: contexte,
+
                         });
-
-                        // le message envoyé ressemble a ça : <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
                         console.log(`Un email de confirmation d'achat à bien envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);
-                        // Email bien envoyé : 250 2.0.0 OK  1615639005 y16sm12341865wrh.3 - gsmtp => si tout va bien !
 
 
+                        //! Envoyer un mail a l'admin lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
+
+                        const shop = await Shop.findOne(1); // les données du premier enregistrement...
+
+                        const info2 = await transporter.sendMail({
+                            from: process.env.EMAIL, //l'envoyeur
+                            to: shop.emailContact,
+                            subject: `Une nouvelle commande sur le site internet !! `, // le sujet du mail
+                            text: `Bonjour cher Administrateur, tu as reçu une nouvelle commande !`,
+                            /* attachement:[
+                                {filename: 'picture.JPG', path: './picture.JPG'}
+                            ] */
+                            template: 'nouvelleCommande',
+                            context: contexte,
+
+                        });
+                        console.log(`Un email d'information d'une nouvelle commande à bien envoyé a ${shop.emailContact} : ${info2.response}`);
+
+
+                        //! Envoyer un sms a l'admin, si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
+
+
+
+                        // Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectué un autre paiement aprés. 
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
 
-                            delete session.cart,
+                                delete session.cart,
                                 delete session.totalTTC,
                                 delete session.totalHT,
                                 delete session.totalTVA,
@@ -500,11 +540,7 @@ const paiementController = {
                         });
 
 
-                        //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produits récemment achetés.
 
-                        //! Envoyer un mail a l'admin lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
-
-                        //! Envoyer un sms a l'admin, si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
 
 
                     } catch (error) {
@@ -515,32 +551,6 @@ const paiementController = {
 
 
                 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -613,9 +623,6 @@ const paiementController = {
     },
 
 
-
-
-
     // Méthode pour envoyer au front la clé secréte !
     key: async (req, res) => {
         try {
@@ -636,7 +643,6 @@ const paiementController = {
             } else {
                 console.log(`on a bien délivré la clé au front : ${req.session.clientSecret}`)
                 //NOTE : lors de l'appel de la clé secrete depuis le front, on insére dans REDIS la valeur de req.session.cart pour pouvoir aller le chercher dans le webhook avec le mail utilisateur dans les métadonnée.
-                await redis.set(`mada/cartAfterPayment:${req.session.user.email}`, JSON.stringify(req.session.cart));
 
                 return res.status(200).json({
                     client_secret: req.session.clientSecret,
@@ -644,14 +650,12 @@ const paiementController = {
             } */
 
             //TODO 
-            //contenu a commenté aprés test 
+            //!contenu a commenté aprés test 
             console.log(`on a bien délivré la clé au front, a insérer en dure dans la méthode key, en mode test (car req.session n'existe pas)  : ${req.session.clientSecret}`);
-            //console.log("req.sessionID, a insérer ligne 245 dans le webhook du paiement ==>> ", req.sessionID);
 
-            //! A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
-            //TODO  en pro rempacer la clé en dure par req.session.clientSecret
+            // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JWNhoLNa9FFzz1X0vM6BVOL_secret_8jdumGwWSpZniUUmQKgWY2vql",
+                client_secret: "pi_3JWj7ELNa9FFzz1X18JnKs0z_secret_wr8FOMPOyAcKP6cyQFkPlULQM",
             });
 
 
@@ -665,35 +669,7 @@ const paiementController = {
         }
     },
 
-    /* insertCookieForWebhookTest: async (req, res) => {
-        try {
-
-            console.log(req.signedCookies['connect.sid']);
-
-            res.cookie('connect.sid', "s%3AFv27Al5Z56cy5FGlqyXiDrXG8KErb7h_.%2BSjXPZGw2mfWZOBP2aN5jJyqPgAGIosVjhouYjGUs68", {
-                path: '/',
-                maxAge: 900000,
-                //httpOnly: true, //doc => https://expressjs.com/en/api.html#res.sendStatus
-                secure: true,
-                sameSite: 'None',
-                //signed: true,
-            })
-
-
-            console.log("cookie after ==>>", req.cookies);
-            console.log("req.signedCookie ==>> ", req.signedCookies);
-
-
-            res.end();
-
-        } catch (error) {
-            console.trace('Erreur dans la méthode insertSessionForWebhook du paiementController :',
-                error);
-            res.status(500).json(error.message);
-        }
-    }, 
- */
-
+   
     getAll: async (req, res) => {
         try {
             const paiements = await Paiement.findAll();

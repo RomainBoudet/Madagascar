@@ -15,7 +15,8 @@ const dev = require('./middlewares/dev');
 const {
   cleanPassword,
   clean,
-} = require('./middlewares/sanitizer'); //cleanPassword => supression de <> + cleanPassword. Pour les routes avec password // clean => pour toutes les routes sans password (ou on n'a pas besoin de caractéres spéciaux..)
+} = require('./middlewares/sanitizer'); //cleanPassword => moins restrictif, pour laisser passer les caractéres spéciaux des password. 
+// clean => pour toutes les routes sans password (ou on n'a pas besoin de caractéres spéciaux..)
 
 
 // le MW limitant le nombre de requetes pour un user (defense contre les attaques par Brute-Force)
@@ -98,8 +99,8 @@ const apiLimiter = rateLimit({
 //on ajoute "auth" aprés la route   ex = router.get('/produits', auth, produitController.allproduits);
 //! pour autoriser une route aux seuls Administrateurs :
 //on ajoute "admin" aprés la route  ex = router.get('/produits', admin, produitController.allproduits);
-//! pour autoriser une route aux modérateurs ET au Administrateurs :
-//on ajoute "moderateur" apres la route  ex = router.get('/produits', moderateur, produitController.allproduits);
+//! pour autoriser une route aux Developpeur :
+//on ajoute "dev" apres la route  ex = router.get('/produits', dev, produitController.dropdb);
 
 /*//! RAPPEL de la nomanclature des MW possible :
 cache = le résultat de la route est stoké dans REDIS si ce ce n'est pas déja le cas
@@ -200,7 +201,7 @@ router.post('/signin', dev, validateBody(userSigninSchema), adminController.sign
  * @param {number} id.path.required - l'id à fournir
  * @returns {JSON} 200 - les données d'un utilisateur ont été mises a jour
  */
-router.patch('/user/update/:id(\\d+)', client, validateBody(userUpdateSchema), clientController.updateClient);
+router.patch('/user/update/:id(\\d+)', cleanPassword, client, validateBody(userUpdateSchema), clientController.updateClient);
 
 /**
  * Envoie un email si l'utilisateur ne se souvient plus de son mot de passe, pour mettre en place un nouveau mot de passe de maniére sécurisé.
@@ -210,7 +211,7 @@ router.patch('/user/update/:id(\\d+)', client, validateBody(userUpdateSchema), c
  * @param {utilisateur.Model} utilisateur.body.required
  * @returns {JSON} 200 - Un email a été délivré
  */
-router.post('/user/new_pwd', clean, validateBody(verifyEmailSchema), clientController.new_pwd);
+router.post('/user/new_pwd', cleanPassword, validateBody(verifyEmailSchema), clientController.new_pwd);
 // ETAPE 2 => envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
 
 /**
@@ -423,7 +424,7 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Insére une nouvelle adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse insérée
  */
-router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema), adresseController.newAdresse);
+router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePostSchema), adresseController.newAdresse);
 
  /**
  * Une route pour mettre a jour une adresse
@@ -432,7 +433,7 @@ router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema
  * @summary Met a jour une adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
-  router.patch('/client/adresse/:id(\\d+)', client, validateBody(adresseSchema), adresseController.updateAdresse);
+  router.patch('/client/adresse/:id(\\d+)', cleanPassword, client, validateBody(adresseSchema), adresseController.updateAdresse);
 
 /**
  * Une route pour supprimer une adresse
@@ -464,7 +465,7 @@ router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema
  * @summary Permet de déterminer le choix du transporteur fait par le client et de laisser un commentaire en session
  * @returns {JSON} 200 - Le choix du transporteur fait par le client et permet de laisser un commentaire en session  
  */
- router.post('/client/livraisonChoix', validateBody(choixLivraisonSchema), livraisonController.choixLivraison);
+ router.post('/client/livraisonChoix', clean, validateBody(choixLivraisonSchema), livraisonController.choixLivraison);
 
 
 /**
@@ -483,7 +484,7 @@ router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema
  * @summary Insére un nouveau transporteur 
  * @returns {JSON} 200 - Les données du nouveau transporteur inséré
  */
- router.post('/admin/transporteur/new', admin, validateBody(transporteurPostSchema), livraisonController.newTransporteur);
+ router.post('/admin/transporteur/new', clean, admin, validateBody(transporteurPostSchema), livraisonController.newTransporteur);
 
 /**
  * Une route pour mettre a jour un transporteur
@@ -492,7 +493,7 @@ router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema
  * @summary Met a jour un nouveau transporteur 
  * @returns {JSON} 200 - Les données du nouveau transporteur mis a jour
  */
- router.patch('/admin/transporteurs/:id(\\d+)', admin, validateBody(transporteurSchema), livraisonController.updateTransporteur);
+ router.patch('/admin/transporteurs/:id(\\d+)', clean, admin, validateBody(transporteurSchema), livraisonController.updateTransporteur);
 
 
  /**
@@ -564,7 +565,7 @@ router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema
  * @summary Insére une nouvelle livraison 
  * @returns {JSON} 200 - Les données de la nouvelle livraison insérée
  */
- router.post('/admin/livraison/new', admin, validateBody(livraisonPostSchema), livraisonController.new);
+ router.post('/admin/livraison/new', clean, admin, validateBody(livraisonPostSchema), livraisonController.new);
 
 /**
  * Une route pour mettre a jour une livraison
@@ -573,7 +574,7 @@ router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema
  * @summary Met a jour une nouvelle livraison 
  * @returns {JSON} 200 - Les données d'une nouvelle livraison mise a jour
  */
- router.patch('/admin/livraison/:id(\\d+)', admin, validateBody(livraisonSchema), livraisonController.update);
+ router.patch('/admin/livraison/:id(\\d+)', clean, admin, validateBody(livraisonSchema), livraisonController.update);
 
  /**
  * Une route pour supprimer une livraison
@@ -592,7 +593,7 @@ router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema
  * @summary Met a jour la nouvelle adresse de livraison 
  * @returns {JSON} 200 - Les données d'une adresse de livraison mise a jour
  */
- router.patch('/user/choixAdresseEnvoi/:id(\\d+)', client, adresseController.setAdresseEnvoiTrue);
+ router.patch('/user/choixAdresseEnvoi/:id(\\d+)', clean, client, adresseController.setAdresseEnvoiTrue);
 
 
  /**
@@ -602,7 +603,7 @@ router.post('/client/adresse/new',clean,  client, validateBody(adressePostSchema
  * @summary Met a jour la nouvelle adresse de facturation 
  * @returns {JSON} 200 - Les données d'une adresse de facturation mise a jour
  */
-  router.patch('/user/choixAdresseFacturation/:id(\\d+)', client, adresseController.setAdresseFacturationTrue);
+  router.patch('/user/choixAdresseFacturation/:id(\\d+)', clean, client, adresseController.setAdresseFacturationTrue);
 
 
 
@@ -662,7 +663,7 @@ router.get('/dev/oneTwillio/:id(\\d+)', dev, adminController.getOneTwillio);
  * @summary  Insére une information de connexion lié a un compte twillio
  * @returns {JSON} 200 - Renvoie les informations souhaitées
  */
-router.post('/dev/newTwillio', dev, adminController.newTwillio);
+router.post('/dev/newTwillio', clean, dev, adminController.newTwillio);
 
 /**
  * Met a jour une ligne d'infos twillio
@@ -671,7 +672,7 @@ router.post('/dev/newTwillio', dev, adminController.newTwillio);
  * @summary  Met a jour une information de connexion lié a un compte twillio
  * @returns {JSON} 200 - Renvoie les informations mis a jour
  */
-router.patch('/dev/updateTwillio/:id(\\d+)', dev, adminController.updateTwillio);
+router.patch('/dev/updateTwillio/:id(\\d+)', clean, dev, adminController.updateTwillio);
 
 /**
  * Supprime une ligne d'infos twillio
@@ -689,7 +690,7 @@ router.delete('/dev/deleteTwillio/:id(\\d+)', dev, adminController.deleteTwillio
  * @summary  Permet de certifier un paiement, mesure de sécurité redondante si 3D secure... codé pour le plaisir ;)
  * @returns {JSON} 200 - Envoie un SMS averc un code, le montant d'un paiement et le site 
  */
-router.post('/dev/psd2Verify', dev, adminController.smsVerifypsd2);
+router.post('/dev/psd2Verify', clean, dev, adminController.smsVerifypsd2);
 
 /**
  * Retour de la route psq2Verify Pour vérifier un paiement avec Twillio et sa méthode PSD2 // ETAPE 2
@@ -698,7 +699,7 @@ router.post('/dev/psd2Verify', dev, adminController.smsVerifypsd2);
  * @summary  Permet de certifier un paiement, mesure de sécurité redondante si 3D secure... codé pour le plaisir ;)
  * @returns {JSON} 200 - Valide les données reçu pas sms avec un code, le montant d'un paiement et le site 
  */
-router.post('/dev/psd2Check', dev, adminController.smsVerifypsd2);
+router.post('/dev/psd2Check', clean, dev, adminController.smsVerifypsd2);
 
 /**
  * Permet de donner le privilege Administrateur a un client.
@@ -709,7 +710,7 @@ router.post('/dev/psd2Check', dev, adminController.smsVerifypsd2);
  * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
  */
-router.patch('/dev/updateprivilege/:id(\\d+)', dev, clean, adminController.updatePrivilege);
+router.patch('/dev/updateprivilege/:id(\\d+)', clean, dev, clean, adminController.updatePrivilege);
 
 //! GESTION DES EMAILS VERIFIE !
 
@@ -751,7 +752,7 @@ router.get('/dev/emailVerifByIdClient/:id(\\d+)', dev, adminController.getEmailV
  * @summary Insére un email d'admins existant, non vérifié 
  * @returns {JSON} 200 - un email d'admin, non vérifié
  */
-router.post('/dev/newEmailVerif', dev, adminController.newVerifEmail);
+router.post('/dev/newEmailVerif', clean, dev, adminController.newVerifEmail);
 
 /**
  * Permet de mettre a jour un email pour un admin
@@ -761,7 +762,7 @@ router.post('/dev/newEmailVerif', dev, adminController.newVerifEmail);
  * @summary Met a jour un email d'admins, non vérifié 
  * @returns {JSON} 200 - un email d'admin, non vérifié
  */
-router.patch('/dev/updateEmailVerif', dev, adminController.updateVerifEmail);
+router.patch('/dev/updateEmailVerif', clean, dev, adminController.updateVerifEmail);
 
 /**
  * Permet de supprimer un email pour un admin
@@ -869,7 +870,7 @@ router.get('/dev/privilege/:id(\\d+)', dev, adminController.getOnePrivilege);
  * @summary Insére un privilege
  * @returns {JSON} 200 - un privilege
  */
-router.post('/dev/newPrivilege', dev, adminController.newPrivilege);
+router.post('/dev/newPrivilege', clean, dev, adminController.newPrivilege);
 
 
 /**
@@ -1934,36 +1935,6 @@ router.delete('/admin/delAvis/:id(\\d+)', client, avisController.delete);
  * @returns {JSON} 200 - Les données d'un avis supprimmé
  */
 router.delete('/admin/delAvisByIdClient/:id(\\d+)', client, avisController.deleteByIdClient);
-
-
-
-
-//! route mise en place pour tester.. 
-
-
-
-
-//router.get('/getSsCatImageByIdSsCat/:id(\\d+)', produitController.getCategorieImageByIdCategorie);
-
-//router.post('/new', produitController.new);
-
-//router.post('/newProd', produitController.new);
-
-//router.delete('/del/:id(\\d+)', clientController.delete);
-
-//router.delete('/deleteSsCatImageByIdSsCat/:id(\\d+)', produitController.deleteCategorieImageByIdCategorie);
-
-//router.delete('/delByIdLivraison/:id(\\d+)', panierController.deleteLignePanierByIdPanier);
-
-//router.patch('/update/:id(\\d+)', produitController.update);
-
-
-
-
-
-
-
-
 
 
 /**

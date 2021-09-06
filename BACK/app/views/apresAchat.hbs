@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+
+<style>
+    p{
+    border-top:1px solid #000;
+    padding: 2rem;
+}
+</style>
+
+
+<body>
+
+    <h3>Bonjour <span> {{prenom}} {{nom}}, </span> </h3> <br>
+    <p>Nous vous remercions de votre commande. Nous vous tiendrons informé par e-mail lorsque les articles de votre
+        commande auront été expédiés.
+        Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier
+        celle-ci dans
+        Vos commandes sur votre espace peronnel.<br>
+        Commande N°{{refCommande}} <br>
+        Statut de votre commande : {{statutCommande}} <br>
+        Votre mode de livraison : {{nomTransporteur}}<br>
+        Délai de livraison estimé : {{delai}} <br>
+
+        {{#compare idTransporteur "==" 3}}
+        Vous avez choisi un retrait sur le marché, votre commande ne sera pas expédié.<br>
+        {{else}}
+        Votre commande sera expédié à : {{adresse}} <br>
+        {{/compare}}
+
+        Montant total de votre commande : {{montant}}€ <br>
+        Moyen de paiement selectionné : carte bancaire {{marqueCB}} <br>
+        Vos produit commandés :
+        {{#each dataArticles}}
+        <li>{{this.produit}}, {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, <a href="{{this.image}}" >image du produit</a></li>
+        {{/each}}
+        <br>
+        Nous espérons vous revoir bientôt.</p>
+
+</body>
+
+</html>
+
+{{!-- pour la syntaxe et les opérateur de conditions =>  https://www.npmjs.com/package/handlebars-helpers --}}

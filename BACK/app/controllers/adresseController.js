@@ -262,7 +262,7 @@ const adresseController = {
             const clientInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
             if (!clientInDb) {
                 return res.status(401).json({
-                    message: "Erreur d'authentification : vous n'êtes pas autoriser a modifier cette adresse."
+                    message: "Erreur d'authentification : vous n'êtes pas autoriser a insérer une adresse."
                 });
             }
 
@@ -301,6 +301,7 @@ const adresseController = {
 
             // On n'accepte que les adresses en France pour cette premiére version de l'API
             // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
+            console.log(req.body.pays);
             if (req.body.pays !== 'FRANCE') {
                 return res.status(404).json({
                     message: "Bonjour, merci de renseigner une adresse en France pour cette version de l'API"
@@ -325,7 +326,7 @@ const adresseController = {
             let custumer;
 
 
-            // Si une adresse est déja a true dans la facturation, je passe cette donneé a FALSE, pour permettre un passage a TRUE automatique pour la nouvelle
+            // Si une adresse est déja a true dans l'envoie, je passe cette donneé a FALSE, pour permettre un passage a TRUE automatique pour la nouvelle
             if (req.body.envoie && req.body.envoie === 'true') {
 
                 //NOTE 
@@ -406,6 +407,7 @@ const adresseController = {
                 adresse2: resultatAdresse.ligne2,
                 adresse3: resultatAdresse.ligne3,
                 envoie: resultatAdresse.envoie,
+                facturation:resultatAdresse.facturation,
                 codePostal: parseInt(resultatAdresse.codePostal, 10),
                 ville: resultatAdresse.ville,
                 pays: resultatAdresse.pays,

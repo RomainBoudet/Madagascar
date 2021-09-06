@@ -19,6 +19,8 @@ const helmet = require('helmet');
 const router = require('./app/router');
 const cookieParser = require("cookie-parser");
 const bodyParser = require('body-parser');
+const cleanPass = require('./app/middlewares/sanitiz');
+
 
 //passage de notre api en http2
 const spdy = require('spdy');
@@ -37,14 +39,10 @@ const port = process.env.PORT || 5000;
 //-----------------------------------------------------------------------------------
 const expressSwagger = require('express-swagger-generator')(app);
 let optionsSwagger = require('./swagger-config.json');
-const cleanPass = require('./app/middlewares/sanitiz');
 optionsSwagger.basedir = __dirname; // __dirname désigne le dossier du point d'entrée
 optionsSwagger.swaggerDefinition.host = `localhost:${port}`;
 expressSwagger(optionsSwagger);
 
-//configuration pour utiliser EJS comme moteur de templates si besoin //
-app.set('view engine', 'ejs');
-app.set('views', 'app/views');
 
 //app.use(express.static(__dirname + '/public'));
 
@@ -77,7 +75,7 @@ app.use(express.urlencoded({
 }));
 
 //On se prémunit des failles xss avec ce module qui filtre, en enlevant tout tag. Un filtre par défault ici qui laisse passer certains caractéres spéciaux pour MdP. Un filtre plus restrictif sera appilqué 
-//app.use(cleanPass);
+//app.use(cleanPass); // fait planter la vérification de la signature STRIPE dans le webhook payment ! "Expected a string but received a number"
 
 //helmet : https://expressjs.com/fr/advanced/best-practice-security.html 
 //https://blog.risingstack.com/node-js-security-checklist/

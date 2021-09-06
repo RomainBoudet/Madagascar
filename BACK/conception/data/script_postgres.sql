@@ -374,6 +374,7 @@ CREATE TABLE transporteur(
 	description			text_valid NOT NULL,
 	frais_expedition    posreal  NOT NULL,
 	estime_arrive       text_valid,
+	estime_arrive_number text_valid, -- en jour, aprés la date de la commande... ne peut être un integer car si choix du marché => string : "Prochain marché"
 	logo				text_valid NOT NULL,
 	created_date        timestamptz NOT NULL DEFAULT now(),
 	updated_date        timestamptz,

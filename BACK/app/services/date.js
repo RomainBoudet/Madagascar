@@ -15,6 +15,11 @@ const formatLong = (date) => {
     return date;
 }
 
+const formatLongSansHeure = (date) => {
+    date = dayjs(date).format('dddd D MMMM YYYY');
+    return date;
+}
+
 const formatJMA = (date) => {
     date = dayjs(date).format('DD/MM/YYYY');
     return date;
@@ -41,5 +46,6 @@ module.exports = {
     formatLong,
     formatForBack,
     formatJMAHMS,
-    formatJMAHMSsecret
+    formatJMAHMSsecret,
+    formatLongSansHeure
 };

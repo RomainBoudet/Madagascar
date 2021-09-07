@@ -23,13 +23,22 @@
         padding: 0.5rem;
     }
 
+    h4 {
+        border-top: 1px solid rgb(71, 20, 20);
+        padding: 0.1rem;
+    }
+
 </style>
 
 <body>
 
     <h2>Bonjour Kevin <span> </span> </h3> <br>
-   <h3>Tu as reçu une nouvelle commande via le site internet !</h3> <br>
-        <p> Commande N°{{refCommande}} <br>
+   <h3> 🎉 Tu as reçu une nouvelle commande via le site internet ! 🎉 </h3> <br>
+        <p> <h4>Commande N°{{refCommande}} <br></h4>
+        Prenom du client : {{prenom}} <br>
+        Nom de famille du client : {{nom}} <br>
+        Email du client : {{email}} <br>
+        Nombre de commande déja effectué par ce client : {{commandeLenght}} <br> 
         Statut de la commande : {{statutCommande}} <br>
         Mode de livraison choisi : {{nomTransporteur}}<br>
         Délai de livraison estimé : {{delai}} <br>
@@ -39,13 +48,21 @@
         {{else}}
         La commande est a expédié à : {{adresse}} <br>
         {{/compare}}
-        Commentaire du client : {{commentaire}} <br>
+        {{#if commentaire}}
+        Commentaire du client : "{{commentaire}}" <br>
+        {{else}}
+        {{/if}}
+        {{#compare sendSmsWhenShipping "==" 'true'}}
+        Le client a souhaité l'envoie d'un sms quand la commande sera envoyé. <br>
+        {{else}}
+        Le client n'a pas souhaité l'envoie d'un sms quand la commande sera envoyé. <br>
+        {{/compare}}
         Montant total de la commande : {{montant}}€ <br>
         Moyen de paiement selectionné : carte bancaire {{marqueCB}} <br>
         Produit commandés et quantité :
         {{#each dataArticles}}
-        <li>{{this.produit}}, {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, <a href="{{this.image}}">image du
-                produit</a></li>
+        <li>{{this.produit}}, TVA : {{this.tva}}, réduction : {{this.reduction}}, prix HT (avec réduction si existante) :{{this.prixHTAvecReduc}}€,  quantité: {{this.quantite}}, stock restant:  {{minus this.stock this.quantite}} <a href="{{this.image}}">image du
+                produit</a>✅</li>
         {{/each}}
         <br>
     </p>

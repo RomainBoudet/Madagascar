@@ -53,7 +53,28 @@ class AdminPhone {
         } = await db.query('SELECT * FROM mada.admin_phone ORDER BY admin_phone.id ASC');
 
         if (!rows[0]) {
-            throw new Error("Aucun admin_phone dans la BDD");
+           null;
+        }
+        consol.model(
+            `les informations des ${rows.length} admin_phones ont été demandé !`
+        );
+
+        return rows.map((adminPhone) => new AdminPhone(adminPhone));
+    }
+
+    /**
+     * Méthode chargé d'aller chercher toutes les admin qui veulent recevoir des sms a chaque commande
+     * @returns - tous les admin_phones vérifié, présent en BDD, qui veulent recevoir des sms a chaque commande
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findAllSmsNewCommande() {
+        const {
+            rows
+        } = await db.query('SELECT * FROM mada.admin_phone WHERE sms_new_commande = true ORDER BY admin_phone.updated_date ASC');
+
+        if (!rows[0]) {
+            null;
         }
         consol.model(
             `les informations des ${rows.length} admin_phones ont été demandé !`

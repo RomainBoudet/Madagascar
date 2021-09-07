@@ -35,12 +35,19 @@
         {{else}}
         Votre commande sera expédié à : {{adresse}} <br>
         {{/compare}}
-
+        {{#if commentaire }}
+        Votre commentaire : "{{commentaire}}" <br>
+        {{else}}
+        {{/if}}
         Montant total de votre commande : {{montant}}€ <br>
         Moyen de paiement selectionné : carte bancaire {{marqueCB}} <br>
+        {{#compare sendSmsWhenShipping "==" 'true'}}
+        Un sms vous sera envoyé lorsque votre commande sera remis au tranporteur. <br>
+        {{else}}
+        {{/compare}}
         Vos produit commandés :
         {{#each dataArticles}}
-        <li>{{this.produit}}, {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, <a href="{{this.image}}" >image du produit</a></li>
+        <li>{{this.produit}}, {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, <a href="{{this.image}}" >image du produit</a> ✅ </li>
         {{/each}}
         <br>
         Nous espérons vous revoir bientôt.</p>

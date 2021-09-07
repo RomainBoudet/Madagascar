@@ -53,7 +53,7 @@ const adminController = {
             console.log(req.body.true);
             if (phoneInDb === null) {
                 return res.status(200).json({
-                    message: 'Merci de verifier votre numéro de téléphone avant de pouvoir recevoir des information de commande sur votre téléphone.'
+                    message: 'Merci de verifier votre numéro de téléphone avant de pouvoir recevoir des informations de commande sur votre téléphone.'
                 })
             };
 
@@ -94,13 +94,8 @@ const adminController = {
         }
     },
 
-
-
-
-
     updatePrivilege: async (req, res) => {
         try {
-            console.log("on passe dans le controler");
             const {
                 id
             } = req.params;
@@ -120,8 +115,6 @@ const adminController = {
             res.status(500).json(error.message);
         }
     },
-
-
 
     signInAdmin: async (req, response) => {
         try {
@@ -334,7 +327,7 @@ const adminController = {
         }
     },
 
-    // pas plus de 153 caractéres pa envoi.... !
+    // pas plus de 153 caractéres par envoi.... !
     smsSend: async (_, res) => {
         const dataTwillio = await Twillio.findFirst();
         const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);

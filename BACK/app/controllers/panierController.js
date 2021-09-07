@@ -95,7 +95,7 @@ const panierController = {
     addArticlePanier: async (req, res) => {
         try {
 
-            console.log("req.session a l'entrée du addPanier ==> ", req.session);
+            //console.log("req.session a l'entrée du addPanier ==> ", req.session);
 
             const articleId = parseInt(req.params.id, 10);
             // Je vérifie qu'il est en stock pour pouvoir l'ajouter au panier
@@ -117,7 +117,7 @@ const panierController = {
             //TODO
             // je dois vérifier ici que la réduction a bien le statut actif en base de données. et qu'on ne considére que les reduction avec le statut actif ici !  
 
-            console.log("mon artcile ==>>  ", monArticle);
+            //console.log("mon artcile ==>>  ", monArticle);
 
             let reduction;
 
@@ -132,11 +132,6 @@ const panierController = {
             } else {
                 reduction = 0;
             }
-
-
-
-
-
 
             if (!article) {
                 // Si article est vide, le panier ne contient pas encore cette article
@@ -156,7 +151,7 @@ const panierController = {
                 };
 
                 req.session.cart.push(monArticle);
-                console.log("req.session.cart aprés le 1er ajout =>", req.session.cart);
+                //console.log("req.session.cart aprés le 1er ajout =>", req.session.cart);
 
             } else {
                 // Si on a trouvé l'article alors on va incrementer la qté
@@ -165,7 +160,7 @@ const panierController = {
                     return res.status(200).json("Il n'existe pas assez d'article en stock pour la quantité choisie !")
                 }
                 article.quantite++;
-                console.log("req.session.cart aprés ajout si l'article était déja présent =>", req.session.cart);
+                //console.log("req.session.cart aprés ajout si l'article était déja présent =>", req.session.cart);
 
             }
 

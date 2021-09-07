@@ -340,6 +340,7 @@ CREATE TABLE commande(
 	reference          text_valid UNIQUE NOT NULL,
 	date_achat         timestamptz NOT NULL DEFAULT now(),
 	commentaire        text_valid,
+	send_sms_shipping	boolean NOT NULL DEFAULT FALSE,
 	updated_date        timestamptz,
 	CHECK (date_achat < updated_date),
 
@@ -697,7 +698,7 @@ ORDER BY client.id ASC;
 CREATE VIEW mada.view_produit AS 
 SELECT
 produit.nom as produit,
-CAST (produit.prix_HT as FLOAT) as prix,
+CAST (produit.prix_HT as FLOAT) as prixHT,
 produit.image_mini as image,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,
@@ -717,7 +718,7 @@ CREATE VIEW mada.view_produit_plus AS
 SELECT
 produit.nom as produit,
 produit.description as description,
-CAST (produit.prix_HT as FLOAT) as prix,
+CAST (produit.prix_HT as FLOAT) as prixHT,
 produit.image_mini,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,

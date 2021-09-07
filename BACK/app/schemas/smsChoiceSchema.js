@@ -14,11 +14,11 @@ const Joi = require('joi');
 const smsChoiceSchema = Joi.object({
     true: Joi.boolean().valid(true).sensitive()
         .messages({
-            'boolean.base': `Seule les valeures true ou false seront accéptées.`,
+            'boolean.base': `Seule les valeurs true ou false seront accéptées.`,
         }),
     false: Joi.boolean().valid(false).sensitive()
         .messages({
-            'boolean.base': `Seule les valeures true ou false seront accéptées.`,
+            'boolean.base': `Seule les valeurs true ou false seront accéptées.`,
         }),
 
 }).xor('true', 'false');

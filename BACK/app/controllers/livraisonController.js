@@ -24,16 +24,22 @@ const livraisonController = {
 
             // on insére le choix de la livraison en session, 
             // Depuis le front on envoie un entier qui fait référence a un transporteur, selon son id : 1,2,3, ou 4
-            //  1 : DPD, 2 : TNT express, 3 : retrait sur place, 4 : La Poste
-         
-            req.session.idTransporteur = req.body.idTransporteur;
+            //  1 : DPD, 2 : TNT express, 3 : retrait sur place, 4 : La Poste (exemple)
+
+            req.session.idTransporteur = Number(req.body.idTransporteur);
 
             //Je permet a l'utilisateur de laisser un commentaire sur la commande...
 
             if (req.body.commentaire) {
                 req.session.commentaire = req.body.commentaire;
             }
-            
+            // Concerne l'option permettant de recevoir un sms, si le client le souhaite, lorsque sa commande sera remis au transporteur.
+            // on garde la donnée au chaud concernant l'envoie d'un sms et on l'enverra en BDD dans le webbhook du paiement quand on est certain de la commande et du client..
+            // n'est possible que si il y a une expédition avec une livraison, donc si req.session.idTransporteur = 3 , on ne permet pas !
+            if (req.body.sendSmsWhenShipping && req.body.idTransporteur !== 3 ) {
+                req.session.sendSmsWhenShipping = req.body.sendSmsWhenShipping;
+            }
+
 
             // Je met a jour le prix du panier en prenant en compte le cout du transport
 
@@ -45,7 +51,7 @@ const livraisonController = {
 
             // Je remet a jour le total dans le panier.
 
-            req.session.totalStripe = parseInt(req.session.totalTTC * 100) + parseInt(req.session.coutTransporteur * 100); 
+            req.session.totalStripe = parseInt(req.session.totalTTC * 100) + parseInt(req.session.coutTransporteur * 100);
 
             console.log("req.session a la sortie du choix du transporteur ==> ", req.session);
 
@@ -56,11 +62,22 @@ const livraisonController = {
             const totalTVA = req.session.totalTVA;
             const transporteur = transporteurData.nom;
             const coutTransporteur = req.session.coutTransporteur;
-            const totalTTCAvecTransport = (req.session.totalStripe) /100; // je le reconvertis pour le rendre lisible en euro
+            const totalTTCAvecTransport = (req.session.totalStripe) / 100; // je le reconvertis pour le rendre lisible en euro
             const commentaire = req.session.commentaire;
+            const sendSmsWhenShipping = req.session.sendSmsWhenShipping;
 
 
-            return res.status(200).json({totalHT, totalTTC, totalTVA, coutTransporteur, transporteur, totalTTCAvecTransport, message, commentaire});
+            return res.status(200).json({
+                totalHT,
+                totalTTC,
+                totalTVA,
+                coutTransporteur,
+                transporteur,
+                totalTTCAvecTransport,
+                message,
+                commentaire,
+                sendSmsWhenShipping,
+            });
 
 
         } catch (error) {

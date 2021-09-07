@@ -46,6 +46,8 @@ const redis = require('../services/redis');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const hbs = require('nodemailer-express-handlebars');
+const AdminPhone = require('../models/adminPhone');
+const smsChoiceSchema = require('../schemas/smsChoiceSchema');
 const helpers = require('handlebars-helpers')();
 
 
@@ -368,12 +370,16 @@ const paiementController = {
                         if (session.commentaire && session.commentaire !== '') {
                             dataCommande.commentaire = session.commentaire
                         };
+                        if (session.sendSmsWhenShipping == 'true') {
+                            //const isTrueSet = (session.sendSmsWhenShipping === 'true');
+                            dataCommande.sendSmsShipping = session.sendSmsWhenShipping
+                        };
 
 
                         const newCommande = new Commande(dataCommande);
                         const resultCommande = await newCommande.save();
 
-                        //console.log("resultCommande ==>> ", resultCommande);
+                        console.log("resultCommande ==>> ", resultCommande);
 
 
                         //! Insérer l'info en BDD dabns la table paiement !
@@ -442,42 +448,49 @@ const paiementController = {
                         const transporteurData = await Transporteur.findOne(session.idTransporteur);
                         const statutCommande = await StatutCommande.findOne(resultCommande.idCommandeStatut);
 
+                        // Nombre de commande déja passé par ce client ?
+                        const commandes = await Commande.findByIdClient(session.user.idClient);
+                        const commandeLenght = commandes.length - 1; // on enléve la commande récente..
 
                         // car estimeArriveNumber (le délai) peut être une string ou un number...:/
                         let contexte;
                         if (Number(session.idTransporteur) === 3) {
-                             contexte = {
+                            contexte = {
+                                commandeLenght,
                                 nom: session.user.nomFamille,
                                 prenom: session.user.prenom,
+                                email: session.user.email,
                                 refCommande: resultCommande.reference,
-                                statutCommande : statutCommande.statut,
+                                statutCommande: statutCommande.statut,
                                 nomTransporteur: transporteurData.nom,
                                 idTransporteur: Number(session.idTransporteur),
                                 delai: transporteurData.estimeArriveNumber, // ici une string et non un number...
                                 adresse: await adresseEnvoieFormat(session.user.idClient),
-                                montant: session.totalTTC,
+                                montant: (session.totalStripe)/100,
                                 marqueCB: paymentData.card.brand,
                                 dataArticles: session.cart,
                                 commentaire: resultCommande.commentaire,
+                                sendSmsWhenShipping: session.sendSmsWhenShipping,
 
                             }
                         } else {
-                             contexte = {
+                            contexte = {
+                                commandeLenght,
                                 nom: session.user.nomFamille,
                                 prenom: session.user.prenom,
+                                email: session.user.email,
                                 refCommande: resultCommande.reference,
-                                statutCommande : statutCommande.statut,
+                                statutCommande: statutCommande.statut,
                                 nomTransporteur: transporteurData.nom,
                                 idTransporteur: Number(session.idTransporteur),
                                 delai: capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber,
                                     'day'))),
                                 adresse: await adresseEnvoieFormat(session.user.idClient),
-                                montant: session.totalTTC,
+                                montant: (session.totalStripe)/100,
                                 marqueCB: paymentData.card.brand,
                                 dataArticles: session.cart,
                                 commentaire: resultCommande.commentaire,
-
-
+                                sendSmsWhenShipping: session.sendSmsWhenShipping,
                             }
                         }
 
@@ -485,7 +498,7 @@ const paiementController = {
                         const info = await transporter.sendMail({
                             from: process.env.EMAIL, //l'envoyeur
                             to: session.user.email,
-                            subject: `Votre achat sur le site d'artisanat Malgache`, // le sujet du mail
+                            subject: `Votre achat sur le site d'artisanat Malgache ✅ `, // le sujet du mail
                             text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande.`,
                             /* attachement:[
                                 {filename: 'picture.JPG', path: './picture.JPG'}
@@ -504,7 +517,7 @@ const paiementController = {
                         const info2 = await transporter.sendMail({
                             from: process.env.EMAIL, //l'envoyeur
                             to: shop.emailContact,
-                            subject: `Une nouvelle commande sur le site internet !! `, // le sujet du mail
+                            subject: `Une nouvelle commande sur le site internet !! 🎉 `, // le sujet du mail
                             text: `Bonjour cher Administrateur, tu as reçu une nouvelle commande !`,
                             /* attachement:[
                                 {filename: 'picture.JPG', path: './picture.JPG'}
@@ -516,15 +529,77 @@ const paiementController = {
                         console.log(`Un email d'information d'une nouvelle commande à bien envoyé a ${shop.emailContact} : ${info2.response}`);
 
 
-                        //! Envoyer un sms a l'admin, si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
+                        //! Envoyer un sms a l'admin (numéro dans la table Twilio), si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
                         // produit, quantité, adresse, transporteur.
 
+                        //Faire une méthode dans le model qui ne prend que les numéros de tel avec new_sms_commande a true.
+                        // Envoyer un sms sur chacun d'eux !!
+
+                        const smsChoice = await AdminPhone.findAllSmsNewCommande();
+
+                        // On ne lance des sms que si un des admin au moins, a choisi d'en recevoir a chaque commande...
+                        if (smsChoice !== null) {
+                            const dataTwillio = await Twillio.findFirst();
+                            const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+
+                            const articles2 = [];
+                            session.cart.map(article => (`${articles2.push(article.produit+"x"+article.quantite+"/"+article.taille+"/"+article.couleur)}`));
+                            articlesachat = articles2.join('.');
+
+                            if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
+                                    strictMode: true
+                                }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
+                                    strictMode: true
+                                }))) {
+                                return res.status(404).json({
+                                    message: 'Votre numéro de téléphone ne correspond pas au format souhaité !'
+                                })
+                            }
+                            //J'indique juste la présence ou non de commentaire, a lire par mail...
+                            let comment;
+                            if (resultCommande.commentaire) {
+                                comment = "Présence Commentaire."
+                            } else {
+                                comment = "Absence Commentaire."
+                            }
+
+                            // si retrait sur le marché , on n'envoit pas d'adresse par sms !
+                            if (Number(session.idTransporteur) === 3) {
+
+                                for (const admin of smsChoice) {
+
+                                    twilio.messages.create({
+                                            body: ` 🎉 New commande ! ${transporteurData.nom}/${comment}/${session.totalStripe/100}€/${articlesachat} `,
+                                            from: dataTwillio.twillioNumber,
+                                            to: admin.adminTelephone,
+
+                                        })
+                                        .then(message => console.log(message.sid));
+                                    console.log("SMS bien envoyé !")
+                                }
+
+                            } else {
+
+                                for (const admin of smsChoice) {
+
+                                    twilio.messages.create({
+                                            body: ` 🎉 New commande ! ${transporteurData.nom}/${comment}/${await adresseEnvoieFormat(session.user.idClient)}/${session.totalStripe/100}€/${articlesachat} `,
+                                            from: dataTwillio.twillioNumber,
+                                            to: admin.adminTelephone,
+
+                                        })
+                                        .then(message => console.log(message.sid));
+                                    console.log("SMS bien envoyé !")
+                                }
+                            }
+
+                        }
 
 
-                        // Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectué un autre paiement aprés. 
+                        //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement aprés. 
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
 
-                                delete session.cart,
+                            delete session.cart,
                                 delete session.totalTTC,
                                 delete session.totalHT,
                                 delete session.totalTVA,
@@ -534,6 +609,7 @@ const paiementController = {
                                 delete session.IdPaymentIntentStripe,
                                 delete session.clientSecret,
                                 delete session.commentaire,
+                                delete session.sendSmsWhenShipping,
                                 // j'insere cette session modifié dans REDIS !
                                 sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
 
@@ -542,10 +618,8 @@ const paiementController = {
 
 
 
-
-
                     } catch (error) {
-                        console.log(`Erreur dans la méthode d'insertion de la commande / paiement / ligne commande du paiementController : ${error.message}`);
+                        console.log(`Erreur dans la méthode d'insertion de la commande / paiement / ligne commande / envoi mail et sms du Webhook du paiementController : ${error.message}`);
                         console.trace(error);
                         res.status(500).end();
                     }
@@ -656,7 +730,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JWj7ELNa9FFzz1X18JnKs0z_secret_wr8FOMPOyAcKP6cyQFkPlULQM",
+                client_secret: "pi_3JWthiLNa9FFzz1X1jgy3TMu_secret_HnyLbRQ7zJDrA8Z4llQtxuMrl",
             });
 
 
@@ -670,7 +744,7 @@ const paiementController = {
         }
     },
 
-   
+
     getAll: async (req, res) => {
         try {
             const paiements = await Paiement.findAll();

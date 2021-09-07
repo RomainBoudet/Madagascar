@@ -7,6 +7,7 @@ class Commande {
     reference;
     dateAchat;
     commentaire;
+    sendSmsShipping;
     updatedDate;
     idCommandeStatut;
     idClient;
@@ -18,6 +19,10 @@ class Commande {
 
     set updated_date(val) {
         this.updatedDate = val;
+    }
+
+    set send_sms_shipping(val) {
+        this.sendSmsShipping = val;
     }
 
     set id_commandestatut(val) {
@@ -50,7 +55,7 @@ class Commande {
         } = await db.query('SELECT * FROM mada.commande ORDER BY commande.id ASC');
 
         if (!rows[0]) {
-            throw new Error("Aucun commandes dans la BDD");
+            null;
         }
         consol.model(
             `les informations des ${rows.length} commandes ont été demandées !`
@@ -78,7 +83,7 @@ class Commande {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun commande avec cet id");
+            null;
         }
 
         consol.model(
@@ -108,7 +113,7 @@ class Commande {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucune commande avec cet idClient");
+            null;
         }
 
         consol.model(
@@ -137,12 +142,23 @@ class Commande {
             this.idCommandeStatut,
             this.idClient,
         ];
-        // si j'ai le commentaire, je l'insére.. 
-        if (this.commentaire) {
+        // si j'ai le commentaire et/ou le sendSmsWhenShipping, je l'insére.. 
+        if (this.commentaire && this.sendSmsShipping) {
+            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, commentaire, send_sms_shipping) VALUES ($1, now(), $2, $3, $4, $5) RETURNING *;";
+            data.push(this.commentaire);
+            data.push(this.sendSmsShipping);
+        }
+       else if (this.commentaire) {
             query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, commentaire) VALUES ($1, now(), $2, $3, $4) RETURNING *;";
             data.push(this.commentaire);
-        } else {
-            //sinon, je fais sans... il aura la valeur null dans la BDD...
+        } 
+        else if (this.sendSmsShipping) {
+            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, send_sms_shipping) VALUES ($1, now(), $2, $3, $4) RETURNING *;";
+            data.push(this.sendSmsShipping);
+        } 
+        
+        else {
+            //sinon, je fais sans... commentaire aura la valeur null dans la BDD et le sendSmsWhenShipping aura la valeur FALSE.
             query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client) VALUES ($1, now(), $2, $3) RETURNING *;"
         }
 
@@ -183,6 +199,8 @@ class Commande {
         console.log(
             `la commande id ${this.id} avec le statut ${this.idCommandeStatut} et la référence ${this.reference} a été mise à jour le ${this.updatedDate} !`
         );
+        return new Commande(rows[0]);
+
     }
 
 

@@ -37,6 +37,11 @@ const choixLivraisonSchema = Joi.object({
         'string.max': `Votre commentaire doit avoir une longeur maximum de {#limit} caractéres !`,
         'string.pattern.base': 'Le format de votre commentaire est incorrect : Il ne doit pas être composé d\'un de ces caractéres spéciaux : [<>&#=+*/"|]',
     }),
+    
+    sendSmsWhenShipping: Joi.boolean().sensitive()
+        .messages({
+            'boolean.base': `Seule les valeurs true ou false seront accéptées.`,
+        }),
 
 
 

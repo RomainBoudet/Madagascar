@@ -72,7 +72,7 @@ class Produit {
         } = await db.query('SELECT * FROM mada.view_produit_plus');
 
         if (!rows[0]) {
-            throw new Error("Aucunes produits dans la BDD");
+            null;
         }
         consol.model(
             `les informations des ${rows.length} produits ont été demandées !`
@@ -101,7 +101,7 @@ class Produit {
 
 
         if (!rows[0]) {
-            throw new Error("Aucun produit avec cet id");
+            null;
         }
         consol.model(
             `le produit id : ${id} a été demandé en BDD !`
@@ -130,7 +130,7 @@ class Produit {
 
 
         if (!rows[0]) {
-            throw new Error("Aucun produit avec cet id");
+            null;
         }
         consol.model(
             `le produit id : ${id} a été demandé en BDD !`
@@ -190,7 +190,7 @@ class Produit {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun produit avec cet idCategorie");
+            null;
         }
         consol.model(
             `la produit pour le idClient : ${idCategorie} a été demandé en BDD !`
@@ -225,6 +225,8 @@ class Produit {
         consol.model(
             `le produit id ${this.id} et nom ${this.nom} a été inséré à la date du ${this.createdDate} !`
         );
+        return new Produit(rows[0]);
+
     }
 
     /**
@@ -251,6 +253,8 @@ class Produit {
         console.log(
             `le produit  id : ${this.id} avec le nom : ${this.nom} a été mise à jour le ${this.updatedDate} !`
         );
+        return new Produit(rows[0]);
+
     }
 
 

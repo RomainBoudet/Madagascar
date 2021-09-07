@@ -101,7 +101,7 @@ class AdminVerifEmail {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun admin_verif_email avec cet idClient");
+            return null;
         }
 
         consol.model(

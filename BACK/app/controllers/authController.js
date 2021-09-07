@@ -94,7 +94,7 @@ const authController = {
                 const adminInDbEmail = await AdminVerifEmail.findByIdClient(clientInDb.id);
 
 
-                if (adminInDbEmail.verifEmail === false) {
+                if (adminInDbEmail === null || adminInDbEmail.verifEmail === false) {
 
                     response.status(200).json({
                         xsrfToken: xsrfToken,

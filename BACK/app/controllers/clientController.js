@@ -156,10 +156,6 @@ const clientController = {
             const userNowInDb = new Client(newUser);
             const user = await userNowInDb.save();
 
-            await AdminVerifEmail.false(user.id);
-
-
-
             console.log(`L'utilisateur ${newUser.prenom} ${newUser.nomFamille} est désormais enregistré dans la BDD`);
 
             // je donne quelques infos a STRIPE maintenant que mon utilisateur a également créer une adresse en plus d'un compte.

@@ -103,12 +103,17 @@ const adminController = {
             const updateClient = await Client.findOne(id);
 
 
-            await updateClient.updatePrivilege();
+            const newAdmin = await updateClient.updatePrivilege();
             const message = {
                 message: `Votre nouveau privilege a bien été enregistré pour le client id ${id}`
             };
 
-            res.json(message);
+            console.log(message);
+
+            // je passe a false la vérification du mail de ce new admin !
+            await AdminVerifEmail.false(newAdmin.id);
+
+            res.status(200).end();
 
         } catch (error) {
             console.log(`Erreur dans la methode updatePrivilege du adminController ${error.message}`);
@@ -150,7 +155,7 @@ const adminController = {
             const userInDb = await Client.findByEmail(email);
             if (userInDb.email) {
                 //il y a déjà un utilisateur avec cet email, on envoie une erreur
-                return response.json('Cet email n\'est pas disponible');
+                return response.json({message: 'Cet email n\'est pas disponible'});
             }
 
 
@@ -184,6 +189,8 @@ const adminController = {
 
             const user = await userNowInDb.saveAdmin();
             console.log(user.id);
+            
+            // je passe a false la vérification du mail de ce new admin !
             await AdminVerifEmail.false(user.id);
 
 

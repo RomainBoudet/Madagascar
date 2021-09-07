@@ -205,18 +205,6 @@ const paiementController = {
 
             }
 
-            //ici désormais, l'objet paiementIntent contient la clé secrete "secret_client" qui est passé au front via la route /user/paiementkey
-            // Pour la récupérer en Front :
-
-            /* const response = fetch('/v1/user/paiementkey').then(function(response) {
-              return response.json();
-            }).then(function(responseJson) {
-             const clientSecret = responseJson.client_secret;
-              // Call stripe.confirmCardPayment() with the client secret.
-            }); */
-
-
-
             console.log("la clé secrete a bien été envoyé en session !");
 
             res.status(200).end();
@@ -260,387 +248,412 @@ const paiementController = {
             } catch (err) {
                 return res.status(400).json(`Webhook erreur de la récupération de l'event: ${err.message}`);
             }
+            const paymentIntent = event.data.object;
 
-            console.log("event.type.paymentIntent ==>>   ", event.type.paymentIntent);
+            // Ici req.session ne vaut rien car c'est stripe qui contact ce endpoint. Je récupére donc la session pour savoir ce que le client vient de commander.
+            // avec mes metadata passé a la création du payment intent
+            sessionStore.get(paymentIntent.metadata.session, async function (err, session) {
+
+                // ici j'ai accés a la session du user qui a passé commande !
+
+                //Si le paiement à bien été effectué :
+                if (event.type === 'payment_intent.succeeded' && event.data.object.amount_received === session.totalStripe) {
 
 
-            if (event.type === 'payment_intent.succeeded') {
-
-                const paymentIntent = event.data.object;
-
-                // un petit visuel sur mes metadata accesible :
-                console.log("paiement bien validé ! paymentIntent. ==> ", paymentIntent.metadata);
-
-                // Ici req.session ne vaut rien car c'est stripe qui contact ce endpoint. Je récupére donc la session pour savoir ce que le client vient de commander.
-                // avec mes metadata passé a la création du payment intent
-                sessionStore.get(paymentIntent.metadata.session, async function (err, session) {
+                    // un petit visuel sur mes metadata accesible :
+                    //console.log("paiement bien validé !  ==> paymentIntent.metadata", paymentIntent.metadata);
 
                     try {
 
-                        console.log("session => ",session);
-
-
-                        // ici j'ai accés a la session du user qui a passé commande !
-                        //console.log("session ==>>", session);
 
                         //! je met a jour les stocks suite au produits achetés avec succés !!
+                        try {
+                            for (const item of session.cart) {
+                                console.log(`On met a jour les stock pour l'item ${item.produit}`);
+                                const updateProduit = await Stock.findOne(item.id);
+                                updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
+                                await updateProduit.update();
+                                console.log("stock bien mis a jour");
 
-                        for (const item of session.cart) {
-                            console.log(`On met a jour les stock pour l'item ${item.produit}`);
-                            const updateProduit = await Stock.findOne(item.id);
-                            updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
-                            await updateProduit.update();
-                            console.log("stock bien mis a jour");
-
+                            }
+                        } catch (error) {
+                            console.log(`Erreur lors de la mise a jour des stock dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
                         }
+
 
                         //! insérer l'info en BDD dans la table commande !
-                        // je récupére les infos de la CB
-                        const paymentData = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
+                        let paymentData;
+                        let resultCommande;
+                        let articlesBought;
 
-                        //je construit ce que je vais passer comme donnée de reférence..
-                        const articles = [];
-                        session.cart.map(article => (`${articles.push(article.id+"."+article.quantite)}`));
-                        articlesBought = articles.join('.');
+                        try {
+                            // je récupére les infos de la CB
+                            paymentData = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
 
-                        const dataCommande = {};
+                            //je construit ce que je vais passer comme donnée de reférence..
+                            const articles = [];
+                            session.cart.map(article => (`${articles.push(article.id+"."+article.quantite)}`));
+                            articlesBought = articles.join('.');
 
-                        const referenceCommande = `${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
+                            const dataCommande = {};
 
-                        dataCommande.reference = referenceCommande;
-                        //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
-                        dataCommande.idCommandeStatut = 3;
-                        dataCommande.idClient = session.user.idClient;
+                            const referenceCommande = `${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
 
-                        if (session.commentaire && session.commentaire !== '') {
-                            dataCommande.commentaire = session.commentaire
-                        };
-                        if (session.sendSmsWhenShipping == 'true') {
-                            //const isTrueSet = (session.sendSmsWhenShipping === 'true');
-                            dataCommande.sendSmsShipping = session.sendSmsWhenShipping
-                        };
+                            dataCommande.reference = referenceCommande;
+                            //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
+                            dataCommande.idCommandeStatut = 3;
+                            dataCommande.idClient = session.user.idClient;
+
+                            if (session.commentaire && session.commentaire !== '') {
+                                dataCommande.commentaire = session.commentaire
+                            };
+                            if (session.sendSmsWhenShipping == 'true') {
+                                //const isTrueSet = (session.sendSmsWhenShipping === 'true');
+                                dataCommande.sendSmsShipping = session.sendSmsWhenShipping
+                            };
 
 
-                        const newCommande = new Commande(dataCommande);
-                        const resultCommande = await newCommande.save();
+                            const newCommande = new Commande(dataCommande);
+                            resultCommande = await newCommande.save();
 
-                        console.log("resultCommande ==>> ", resultCommande);
+                            //console.log("resultCommande ==>> ", resultCommande);
 
+                        } catch (error) {
+                            console.log(`Erreur dans la méthode d'insertion de la commande dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
+                        }
 
                         //! Insérer l'info en BDD dabns la table paiement !
+                        try {
+                            const dataPaiement = {};
+                            const referencePaiement = `${paymentData.card.exp_month}${paymentData.card.exp_year}${paymentData.card.last4}.${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`
+                            const methode = `moyen_de_paiement:${paymentData.type}/_marque:_${paymentData.card.brand}/_type_de_carte:_${paymentData.card.funding}/_pays_origine:_${paymentData.card.country}/_mois_expiration:_${paymentData.card.exp_month}/_annee_expiration:_${paymentData.card.exp_year}/_4_derniers_chiffres:_${paymentData.card.last4}`
 
-                        const dataPaiement = {};
+                            dataPaiement.reference = referencePaiement;
+                            dataPaiement.methode = methode;
+                            dataPaiement.montant = session.totalTTC;
+                            dataPaiement.idCommande = resultCommande.id;
 
-                        const referencePaiement = `${paymentData.card.exp_month}${paymentData.card.exp_year}${paymentData.card.last4}.${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`
-                        const methode = `moyen_de_paiement:${paymentData.type}/_marque:_${paymentData.card.brand}/_type_de_carte:_${paymentData.card.funding}/_pays_origine:_${paymentData.card.country}/_mois_expiration:_${paymentData.card.exp_month}/_annee_expiration:_${paymentData.card.exp_year}/_4_derniers_chiffres:_${paymentData.card.last4}`
+                            const newPaiement = new Paiement(dataPaiement);
+                            await newPaiement.save();
 
-                        dataPaiement.reference = referencePaiement;
-                        dataPaiement.methode = methode;
-                        dataPaiement.montant = session.totalTTC;
-                        dataPaiement.idCommande = resultCommande.id;
 
-                        const newPaiement = new Paiement(dataPaiement);
-                        const resultpaiement = await newPaiement.save();
+                        } catch (error) {
+                            console.log(`Erreur dans la méthode d'insertion du paiement dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
+                        }
 
-                        console.log("resultpaiement ==>> ", resultpaiement);
 
                         //! Insérer l'info en BDD dabns la table ligne commande 
+                        try {
+                            //Je boucle sur chaque produit commandé dans le cart...
+                            for (const article of session.cart) {
 
+                                const dataLigneCommande = {};
+                                dataLigneCommande.quantiteCommande = article.quantite;
+                                dataLigneCommande.idProduit = article.id;
+                                dataLigneCommande.idCommande = resultCommande.id;
 
-                        //Je boucle sur chaque produit commandé dans le cart...
+                                const newLigneCommande = new LigneCommande(dataLigneCommande);
+                                resultLigneCommande = await newLigneCommande.save();
 
-                        for (const article of session.cart) {
-
-                            const dataLigneCommande = {};
-                            dataLigneCommande.quantiteCommande = article.quantite;
-                            dataLigneCommande.idProduit = article.id;
-                            dataLigneCommande.idCommande = resultCommande.id;
-
-                            const newLigneCommande = new LigneCommande(dataLigneCommande);
-                            const resultLigneCommande = await newLigneCommande.save();
-
-                            console.log("resultLigneCommande ==>> ", resultLigneCommande);
+                            }
+                        } catch (error) {
+                            console.log(`Erreur dans la méthode d'insertion des ligne de commandes dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
                         }
+
 
                         //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produits récemment achetés.
-
-                        //Sendgrid ou MailGun serait préférable en prod...
-                        //https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
-                        const transporter = nodemailer.createTransport({
-                            host: process.env.HOST,
-                            port: 465,
-                            secure: true, // true for 465, false for other ports
-                            auth: {
-                                user: process.env.EMAIL,
-                                pass: process.env.PASSWORD_EMAIL,
-                            },
-                        });
-
-                        // Config pour les templates et le moteur handlebars lié a Nodemailer
-                        const options = {
-                            viewEngine: {
-                                extName: ".hbs",
-                                partialsDir: path.resolve(__dirname, "./views"),
-                                defaultLayout: false
-                            },
-                            extName: ".hbs",
-                            viewPath: path.resolve(__dirname, "../views"),
-                        };
-
-                        transporter.use('compile', hbs(options));
-
-                        // je récupére les infos du transporteur choisi pour insérer les infos dans le mail.
-                        const transporteurData = await Transporteur.findOne(session.idTransporteur);
-                        const statutCommande = await StatutCommande.findOne(resultCommande.idCommandeStatut);
-
-                        // Nombre de commande déja passé par ce client ?
-                        const commandes = await Commande.findByIdClient(session.user.idClient);
-                        const commandeLenght = commandes.length - 1; // on enléve la commande récente..
-
-                        // car estimeArriveNumber (le délai) peut être une string ou un number...:/
+                        let transporter;
+                        let transporteurData;
+                        let statutCommande;
                         let contexte;
-                        if (Number(session.idTransporteur) === 3) {
-                            contexte = {
-                                commandeLenght,
-                                nom: session.user.nomFamille,
-                                prenom: session.user.prenom,
-                                email: session.user.email,
-                                refCommande: resultCommande.reference,
-                                statutCommande: statutCommande.statut,
-                                nomTransporteur: transporteurData.nom,
-                                idTransporteur: Number(session.idTransporteur),
-                                delai: transporteurData.estimeArriveNumber, // ici une string et non un number...
-                                adresse: await adresseEnvoieFormat(session.user.idClient),
-                                montant: (session.totalStripe) / 100,
-                                marqueCB: paymentData.card.brand,
-                                dataArticles: session.cart,
-                                commentaire: resultCommande.commentaire,
-                                sendSmsWhenShipping: session.sendSmsWhenShipping,
+                        try {
+                            //Sendgrid ou MailGun serait préférable en prod...
+                            //https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
+                            transporter = nodemailer.createTransport({
+                                host: process.env.HOST,
+                                port: 465,
+                                secure: true, // true for 465, false for other ports
+                                auth: {
+                                    user: process.env.EMAIL,
+                                    pass: process.env.PASSWORD_EMAIL,
+                                },
+                            });
 
+                            // Config pour les templates et le moteur handlebars lié a Nodemailer
+                            const options = {
+                                viewEngine: {
+                                    extName: ".hbs",
+                                    partialsDir: path.resolve(__dirname, "./views"),
+                                    defaultLayout: false
+                                },
+                                extName: ".hbs",
+                                viewPath: path.resolve(__dirname, "../views"),
+                            };
+
+                            transporter.use('compile', hbs(options));
+
+                            // je récupére les infos du transporteur choisi pour insérer les infos dans le mail.
+                            transporteurData = await Transporteur.findOne(session.idTransporteur);
+                            statutCommande = await StatutCommande.findOne(resultCommande.idCommandeStatut);
+
+                            // Nombre de commande déja passé par ce client ?
+                            const commandes = await Commande.findByIdClient(session.user.idClient);
+                            const commandeLenght = commandes.length - 1; // on enléve la commande récente..
+
+                            // car estimeArriveNumber (le délai) peut être une string ou un number...:/
+                            if (Number(session.idTransporteur) === 3) {
+                                contexte = {
+                                    commandeLenght,
+                                    nom: session.user.nomFamille,
+                                    prenom: session.user.prenom,
+                                    email: session.user.email,
+                                    refCommande: resultCommande.reference,
+                                    statutCommande: statutCommande.statut,
+                                    nomTransporteur: transporteurData.nom,
+                                    idTransporteur: Number(session.idTransporteur),
+                                    delai: transporteurData.estimeArriveNumber, // ici une string et non un number...
+                                    adresse: await adresseEnvoieFormat(session.user.idClient),
+                                    montant: (session.totalStripe) / 100,
+                                    marqueCB: paymentData.card.brand,
+                                    dataArticles: session.cart,
+                                    commentaire: resultCommande.commentaire,
+                                    sendSmsWhenShipping: session.sendSmsWhenShipping,
+
+                                }
+                            } else {
+                                contexte = {
+                                    commandeLenght,
+                                    nom: session.user.nomFamille,
+                                    prenom: session.user.prenom,
+                                    email: session.user.email,
+                                    refCommande: resultCommande.reference,
+                                    statutCommande: statutCommande.statut,
+                                    nomTransporteur: transporteurData.nom,
+                                    idTransporteur: Number(session.idTransporteur),
+                                    delai: capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber,
+                                        'day'))),
+                                    adresse: await adresseEnvoieFormat(session.user.idClient),
+                                    montant: (session.totalStripe) / 100,
+                                    marqueCB: paymentData.card.brand,
+                                    dataArticles: session.cart,
+                                    commentaire: resultCommande.commentaire,
+                                    sendSmsWhenShipping: session.sendSmsWhenShipping,
+                                }
                             }
-                        } else {
-                            contexte = {
-                                commandeLenght,
-                                nom: session.user.nomFamille,
-                                prenom: session.user.prenom,
-                                email: session.user.email,
-                                refCommande: resultCommande.reference,
-                                statutCommande: statutCommande.statut,
-                                nomTransporteur: transporteurData.nom,
-                                idTransporteur: Number(session.idTransporteur),
-                                delai: capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber,
-                                    'day'))),
-                                adresse: await adresseEnvoieFormat(session.user.idClient),
-                                montant: (session.totalStripe) / 100,
-                                marqueCB: paymentData.card.brand,
-                                dataArticles: session.cart,
-                                commentaire: resultCommande.commentaire,
-                                sendSmsWhenShipping: session.sendSmsWhenShipping,
-                            }
+
+                            // l'envoie d'email définit par l'object "transporter"
+                            const info = await transporter.sendMail({
+                                from: process.env.EMAIL, //l'envoyeur
+                                to: session.user.email,
+                                subject: `Votre commande sur le site d'artisanat Malgache ✅ `, // le sujet du mail
+                                text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande.`,
+                                /* attachement:[
+                                    {filename: 'picture.JPG', path: './picture.JPG'}
+                                ] */
+                                template: 'apresAchat',
+                                context: contexte,
+
+                            });
+                            console.log(`Un email de confirmation d'achat à bien envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);
+
+
+                        } catch (error) {
+                            console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés achat dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
                         }
-
-                        // l'envoie d'email définit par l'object "transporter"
-                        const info = await transporter.sendMail({
-                            from: process.env.EMAIL, //l'envoyeur
-                            to: session.user.email,
-                            subject: `Votre commande sur le site d'artisanat Malgache ✅ `, // le sujet du mail
-                            text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande.`,
-                            /* attachement:[
-                                {filename: 'picture.JPG', path: './picture.JPG'}
-                            ] */
-                            template: 'apresAchat',
-                            context: contexte,
-
-                        });
-                        console.log(`Un email de confirmation d'achat à bien envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);
 
 
                         //! Envoyer un mail a l'admin lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
+                        try {
+                            //NOTE pourquoi prendre le mail de cette table et non des admin en BDD (table client) et boucler comme pour SMS ?? 
+                            //NOTE ou les deux...
+                            const shop = await Shop.findOne(1); // les données du premier enregistrement...
+                            const info2 = await transporter.sendMail({
+                                from: process.env.EMAIL, //l'envoyeur
+                                to: shop.emailContact,
+                                subject: `Une nouvelle commande sur le site internet !! 🎉 `, // le sujet du mail
+                                text: `Bonjour cher Administrateur, tu as reçu une nouvelle commande !`,
+                                /* attachement:[
+                                    {filename: 'picture.JPG', path: './picture.JPG'}
+                                ] */
+                                template: 'nouvelleCommande',
+                                context: contexte,
 
-                        const shop = await Shop.findOne(1); // les données du premier enregistrement...
+                            });
+                            console.log(`Un email d'information d'une nouvelle commande à bien envoyé a ${shop.emailContact} : ${info2.response}`);
 
-                        const info2 = await transporter.sendMail({
-                            from: process.env.EMAIL, //l'envoyeur
-                            to: shop.emailContact,
-                            subject: `Une nouvelle commande sur le site internet !! 🎉 `, // le sujet du mail
-                            text: `Bonjour cher Administrateur, tu as reçu une nouvelle commande !`,
-                            /* attachement:[
-                                {filename: 'picture.JPG', path: './picture.JPG'}
-                            ] */
-                            template: 'nouvelleCommande',
-                            context: contexte,
-
-                        });
-                        console.log(`Un email d'information d'une nouvelle commande à bien envoyé a ${shop.emailContact} : ${info2.response}`);
-
-
-                        //! Envoyer un sms a l'admin (numéro dans la table Twilio), si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
-                        // produit, quantité, adresse, transporteur.
-
-                        //Faire une méthode dans le model qui ne prend que les numéros de tel avec new_sms_commande a true.
-                        // Envoyer un sms sur chacun d'eux !!
-
-                        const smsChoice = await AdminPhone.findAllSmsNewCommande();
-
-                        // On ne lance des sms que si un des admin au moins, a choisi d'en recevoir a chaque commande...
-                        if (smsChoice !== null) {
-                            const dataTwillio = await Twillio.findFirst();
-                            const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
-
-                            const articles2 = [];
-                            session.cart.map(article => (`${articles2.push(article.produit+"x"+article.quantite+"/"+article.taille+"/"+article.couleur)}`));
-                            articlesachat = articles2.join('.');
-
-                            if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
-                                    strictMode: true
-                                }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
-                                    strictMode: true
-                                }))) {
-                                return res.status(404).json({
-                                    message: 'Votre numéro de téléphone ne correspond pas au format souhaité !'
-                                })
-                            }
-                            //J'indique juste la présence ou non de commentaire, a lire par mail...
-                            let comment;
-                            if (resultCommande.commentaire) {
-                                comment = "Présence Commentaire."
-                            } else {
-                                comment = "Absence Commentaire."
-                            }
-
-                            // si retrait sur le marché , on n'envoit pas d'adresse par sms !
-                            if (Number(session.idTransporteur) === 3) {
-
-                                for (const admin of smsChoice) {
-
-                                    twilio.messages.create({
-                                            body: ` 🎉 New commande ! ${transporteurData.nom}/${comment}/${session.totalStripe/100}€/${articlesachat} `,
-                                            from: dataTwillio.twillioNumber,
-                                            to: admin.adminTelephone,
-
-                                        })
-                                        .then(message => console.log(message.sid));
-                                    console.log("SMS bien envoyé !")
-                                }
-
-                            } else {
-
-                                for (const admin of smsChoice) {
-
-                                    twilio.messages.create({
-                                            body: ` 🎉 New commande ! ${transporteurData.nom}/${comment}/${await adresseEnvoieFormat(session.user.idClient)}/${session.totalStripe/100}€/${articlesachat} `,
-                                            from: dataTwillio.twillioNumber,
-                                            to: admin.adminTelephone,
-
-                                        })
-                                        .then(message => console.log(message.sid));
-                                    console.log("SMS bien envoyé !")
-                                }
-                            }
-
+                        } catch (error) {
+                            console.log(`Erreur dans la méthode d'envoie d'un mail a l'admin aprés nouvelle commande dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
                         }
 
 
-                        //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement sans devoir se déconnecter. 
+                        //! Envoyer un sms a l'admin (numéro dans la table Twilio), si il a choisi l'option "recevoir un sms a chaque commande" lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
+                        try {
+                            const smsChoice = await AdminPhone.findAllSmsNewCommande();
+
+                            // On ne lance des sms que si un des admin au moins, a choisi d'en recevoir a chaque commande...
+                            if (smsChoice !== null) {
+                                const dataTwillio = await Twillio.findFirst();
+                                const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+
+                                const articles2 = [];
+                                session.cart.map(article => (`${articles2.push(article.produit+"x"+article.quantite+"/"+article.taille+"/"+article.couleur)}`));
+                                articlesachat = articles2.join('.');
+
+                                if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
+                                        strictMode: true
+                                    }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
+                                        strictMode: true
+                                    }))) {
+                                    return res.status(404).json({
+                                        message: 'Votre numéro de téléphone ne correspond pas au format souhaité !'
+                                    })
+                                }
+                                //J'indique juste la présence ou non de commentaire, a lire par mail...
+                                let comment;
+                                if (resultCommande.commentaire) {
+                                    comment = "Présence Commentaire."
+                                } else {
+                                    comment = "Absence Commentaire."
+                                }
+
+                                // si retrait sur le marché , on n'envoit pas d'adresse par sms !
+                                if (Number(session.idTransporteur) === 3) {
+
+                                    for (const admin of smsChoice) {
+
+                                        twilio.messages.create({
+                                                body: ` 🎉 New commande ! ${transporteurData.nom}/${comment}/${session.totalStripe/100}€/${articlesachat} `,
+                                                from: dataTwillio.twillioNumber,
+                                                to: admin.adminTelephone,
+
+                                            })
+                                            .then(message => console.log(message.sid));
+                                        console.log("SMS bien envoyé !")
+                                    }
+
+                                } else {
+
+                                    for (const admin of smsChoice) {
+
+                                        twilio.messages.create({
+                                                body: ` 🎉 New commande ! ${transporteurData.nom}/${comment}/${await adresseEnvoieFormat(session.user.idClient)}/${session.totalStripe/100}€/${articlesachat} `,
+                                                from: dataTwillio.twillioNumber,
+                                                to: admin.adminTelephone,
+
+                                            })
+                                            .then(message => console.log(message.sid));
+                                        console.log("SMS bien envoyé !")
+                                    }
+                                }
+
+                            }
+                        } catch (error) {
+                            console.log(`Erreur dans la méthode d'envoie d'un ou plusieur SMS a l'admin aprés nouvelle commande dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
+                        }
+
+
+
+                        //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement sans devoir se reconnecter. 
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
 
                             delete session.cart,
-                                delete session.totalTTC,
-                                delete session.totalHT,
-                                delete session.totalTVA,
-                                delete session.coutTransporteur,
-                                delete session.totalStripe,
-                                delete session.idTransporteur,
-                                delete session.IdPaymentIntentStripe,
-                                delete session.clientSecret,
-                                delete session.commentaire,
-                                delete session.sendSmsWhenShipping,
-                                // j'insere cette session modifié dans REDIS !
-                                sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
-
+                            delete session.totalTTC,
+                            delete session.totalHT,
+                            delete session.totalTVA,
+                            delete session.coutTransporteur,
+                            delete session.totalStripe,
+                            delete session.idTransporteur,
+                            delete session.IdPaymentIntentStripe,
+                            delete session.clientSecret,
+                            delete session.commentaire,
+                            delete session.sendSmsWhenShipping,
+                            // j'insere cette session modifié dans REDIS !
+                            sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
 
                         });
 
-
-
                     } catch (error) {
-                        console.log(`Erreur dans la méthode d'insertion de la commande / paiement / ligne commande / envoi mail et sms du Webhook du paiementController : ${error.message}`);
+                        console.log(`Erreur dans la méthode du Webhook du paiementController : ${error.message}`);
                         console.trace(error);
                         res.status(500).end();
                     }
 
 
-                });
+                    // TODO 
+                    // écrire une facture!
 
+                    // permettre un nouveau paiement dans tous les cas nécéssaire
+                    // autorisation d'ip pour webhook https://stripe.com/docs/ips 
+                    // Permettre d'autre mode de paiement, virement et paypal ? puis google pay apple pay et un truc chinois !
 
-
-
-
-
-                // TODO 
-                // écrire une facture!
-
-                // Gére tous les cas de figures ou se passe mal ! Envoyez un e-mail ou une notification Push pour demander au client d’essayer un autre moyen de paiement.
-                // permettre un nouveau paiement dans tous les cas nécéssaire
-                // autorisation d'ip pour webhook https://stripe.com/docs/ips 
-                // Permettre d'autre mode de paiement, virement et paypal ? puis google pay apple pay et un truc chinois !
-
+                    return res.status(200).end();
+                }
 
                 //! ==>> Prendre en charge tous les cas un webhook peut être appelé : https://stripe.com/docs/api/events/types 
-                //payment_intent.payment_failed
-                //payment_intent.canceled
-                //payment_intent.processing
-                //payment_intent.processing
-                //payment_intent.succeeded
-                //info aussi quand on configure les retours d'infos des webhooks
 
-                return res.status(200).end();
-            }
-            if (event.type === 'payment_intent.amount_capturable_updated')
+                //NOTE que fait on des data en session, qui n'ont pas été supprimé encore.. on les garde pour un nouveau essai de paiement ??
+                if (event.type === 'payment_intent.amount_capturable_updated')
 
-            {   // Bloquer une somme d'argent sur une carte :
-                //https://stripe.com/docs/payments/capture-later //https://stripe.com/docs/api/payment_intents/capture?lang=node
+                { // Bloquer une somme d'argent sur une carte :
+                    //https://stripe.com/docs/payments/capture-later //https://stripe.com/docs/api/payment_intents/capture?lang=node
 
-                message = {
-                    message: "Une erreur est survenu lors du paiement! Vous n'avez pas été débité. Merci de réassayer."
-                };
+                    message = {
+                        message: "Une erreur est survenu lors du paiement! Vous n'avez pas été débité. Merci de réassayer."
+                    };
+                    console.log(message);
+                    console.log(event.type);
+                    return res.status(404).json(event.type);
 
-                return res.status(404).json(event.type);
+                }
+                if (event.type === 'payment_intent.canceled')
 
-            }
-            if (event.type === 'payment_intent.canceled')
+                {
 
-            {
+                    message = {
+                        message: "Vous avez annulé le paiement, celui-çi n'a donc pas été effectué ! Vous n'avez pas été débité."
+                    };
+                    console.log(message);
+                    console.log(event.type);
+                    return res.status(404).json(event.type);
 
-                message = {
-                    message: "Vous avez annulé le paiement, celui-çi n'a donc pas été effectué ! Vous n'avez pas été débité."
-                };
+                }
+                if (event.type === 'payment_intent.payment_failed')
 
-                return res.status(404).json(event.type);
+                {
 
-            }
-            if (event.type === 'payment_intent.payment_failed')
+                    message = {
+                        message: "Une erreur est apparut lors du paiement ! Vous n'avez pas été débité. Vous pouvez réessayer. "
+                    };
+                    console.log(message);
+                    console.log(event.type);
+                    return res.status(404).json(event.type);
 
-            {
+                } else {
 
-                message = {
-                    message: "Une erreur est apparut lors du paiement ! Vous n'avez pas été débité. Vous pouvez réessayer. "
-                };
-
-                return res.status(404).json(event.type);
-
-            }
-            else {
-
-                message = {
-                    message: "Erreur lors du paiement!"
-                };
-
-                return res.status(404).json(event.type);
-            }
+                    message = {
+                        message: "Erreur lors du paiement!"
+                    };
+                    console.log(message);
+                    console.log(event.type);
+                    return res.status(404).json(event.type);
+                }
 
 
-
+            });
 
 
 
@@ -693,7 +706,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JX6zRLNa9FFzz1X0FY8nKOB_secret_wqglXavAW810q39ZtX3XZ5IZR",
+                client_secret: "pi_3JX8QgLNa9FFzz1X0ws36VIf_secret_fIKSeTpxybDlbLtqzykomacVd",
             });
 
 

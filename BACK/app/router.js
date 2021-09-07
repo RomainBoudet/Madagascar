@@ -257,7 +257,7 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  Prend en charge le paiement via STRIPE
  * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
  */
- router.get('/user/paiement', client, paiementController.paiement);
+ router.get('/user/paiementCB', client, paiementController.paiementCB);
 
  /**
  * Permet de récupérer la clé client secret nécéssaire a STRIPE, nécéssaire pour le front.
@@ -274,12 +274,12 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
 /**
  * Prend en charge le webhook STRIPE apres un paiement
  * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
- *  @route POST /webhookpaiement
+ *  @route POST /webhookpaiementCB
  * @group utilisateur
  * @summary  Prend en charge le webhook STRIPE apres un paiement
  * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres un paiement
  */
- router.post('/webhookpaiement', paiementController.webhookpaiement);
+ router.post('/webhookpaiementCB', paiementController.webhookpaiementCB);
 
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------

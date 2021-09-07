@@ -101,7 +101,7 @@ const paiementController = {
     //STRIPE processus complet = https://stripe.com/docs/connect/collect-then-transfer-guide?platform=web 
     // comprendre les différent type de paiement sur STRIP : https://stripe.com/docs/payments/payment-intents/migration/charges 
     // API PaymentIntent a privilégier sur API Charge !
-    paiement: async (req, res) => {
+    paiementCB: async (req, res) => {
         try {
 
             // Méthode a metre en lien avec le bouton ""payer par carte bancaire"" avant que l'utilisateur ne rentre ses coordonnées bancaires.
@@ -235,7 +235,7 @@ const paiementController = {
 
     //! pour tester : https://stripe.com/docs/testing 
 
-    webhookpaiement: async (req, res) => {
+    webhookpaiementCB: async (req, res) => {
         try {
 
             //https://stripe.com/docs/webhooks/build
@@ -477,10 +477,11 @@ const paiementController = {
 
                         //! Envoyer un mail a l'admin lui informant d'une nouvelle commande, lui résumant le paiment bien validé, lui rappelant les produit a emballé et l'adresse d'expéditeur !.
                         try {
-                            //NOTE pourquoi prendre le mail de cette table et non des admin en BDD (table client) et boucler comme pour SMS ?? 
-                            //NOTE ou les deux...
+                            //NOTE 
+                            // Ici on envoi un email a tous les Admin en BDD qui ont vérifié leur email et choisi de recevoir un email a chaque nouvelle commande et au mail qui est sur la table "Shop" !
                             const adminsMail = await AdminVerifEmail.findAllAdminEmailTrue();
-                            const shop = await Shop.findOne(1); // les données du premier enregistrement...
+                            const shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement...
+                            // Je rajoute une clé pour des mails avec le nom de la boutique présent dans la table shop.
                             contexte.shopNom = shop.nom;
 
                             // si j'ai des admin qui on vérifié leur email et qui souhaite recevoir les nouvelles commande sur leur mail !
@@ -488,7 +489,7 @@ const paiementController = {
 
                                 for (const admin of adminsMail) {
 
-                                    //Ici je dois ajouter dans l'objet contexte, le nom et le prenom des admin, pour un email avec un nom et prenom personalisé !
+                                    //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
                                     contexte.adminPrenom = admin.prenom;
 
                                     const info2 = await transporter.sendMail({
@@ -507,7 +508,9 @@ const paiementController = {
                                 }
                             }
 
-                            delete contexte.adminPrenom; // plus d'admin prenom ici, dans le mail on prendra la valeur pas défault : "Kevin".
+                            delete contexte.adminPrenom; // plus d'admin prenom ici, dans le mail on prendra la valeur pas défault : "cher Administrateur !".
+                            
+                            //Envoie d'email sur le mail présent dans la table "Shop".
                             const info2 = await transporter.sendMail({
                                 from: process.env.EMAIL, //l'envoyeur
                                 to: shop.emailContact,
@@ -737,7 +740,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JXCuFLNa9FFzz1X1Mcq50ru_secret_5DItidzZYz9xIe86Cn7kF4dnF",
+                client_secret: "pi_3JXDElLNa9FFzz1X0xA9Hncw_secret_EyIab6nI6VE4IOBdCqsuDMC0q",
             });
 
 

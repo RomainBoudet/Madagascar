@@ -275,64 +275,6 @@ const paiementController = {
                 // avec mes metadata passé a la création du payment intent
                 sessionStore.get(paymentIntent.metadata.session, async function (err, session) {
 
-
-
-                    /* session ==>> {
-  cookie: {
-    originalMaxAge: 1296000000,
-    expires: '2021-09-19T19:04:12.044Z',
-    secure: true,
-    httpOnly: true,
-    path: '/',
-    sameSite: 'Strict'
-  },
-  user: {
-    idClient: 101,
-    prenom: 'leo',
-    nomFamille: 'Pape',
-    email: 'romain@boudet.me',
-    privilege: 'Client'
-  },
-  cgv: 'true',
-  cart: [
-    {
-      id: 1,
-      produit: 'Refined Fresh Towels',
-      prix: 38,
-      image: 'http://placeimg.com/640/480',
-      couleur: 'blanc',
-      taille: 'S',
-      stock: 4,
-      reduction: null,
-      tva: 0.05,
-      quantite: 4,
-      prixHTAvecReduc: 37.62
-    },
-    {
-      id: 2,
-      produit: 'Handcrafted Wooden Chicken',
-      prix: 75,
-      image: 'http://placeimg.com/640/480',
-      couleur: 'bleu',
-      taille: 'M',
-      stock: 6,
-      reduction: 0.01,
-      tva: 0.05,
-      quantite: 6,
-      prixHTAvecReduc: 74.25
-    }
-  ],
-  totalHT: 595.98,
-  totalTTC: 625.78,
-  totalTVA: 29.8,
-  coutTransporteur: 0,
-  totalStripe: 62578,
-  idTransporteur: '3',
-  IdPaymentIntentStripe: 'pi_3JW49rLNa9FFzz1X1PBWifo2',
-  clientSecret: 'pi_3JW49rLNa9FFzz1X1PBWifo2_secret_R9CMOmjlhd0nR7CkGBYQsNfWK'
-} */
-
-
                     try {
 
                         // ici j'ai accés a la session du user qui a passé commande !
@@ -498,7 +440,7 @@ const paiementController = {
                         const info = await transporter.sendMail({
                             from: process.env.EMAIL, //l'envoyeur
                             to: session.user.email,
-                            subject: `Votre achat sur le site d'artisanat Malgache ✅ `, // le sujet du mail
+                            subject: `Votre commande sur le site d'artisanat Malgache ✅ `, // le sujet du mail
                             text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande.`,
                             /* attachement:[
                                 {filename: 'picture.JPG', path: './picture.JPG'}
@@ -596,22 +538,22 @@ const paiementController = {
                         }
 
 
-                        //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement aprés. 
+                        //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement sans devoir se déconnecter. 
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
 
                             delete session.cart,
-                                delete session.totalTTC,
-                                delete session.totalHT,
-                                delete session.totalTVA,
-                                delete session.coutTransporteur,
-                                delete session.totalStripe,
-                                delete session.idTransporteur,
-                                delete session.IdPaymentIntentStripe,
-                                delete session.clientSecret,
-                                delete session.commentaire,
-                                delete session.sendSmsWhenShipping,
-                                // j'insere cette session modifié dans REDIS !
-                                sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
+                            delete session.totalTTC,
+                            delete session.totalHT,
+                            delete session.totalTVA,
+                            delete session.coutTransporteur,
+                            delete session.totalStripe,
+                            delete session.idTransporteur,
+                            delete session.IdPaymentIntentStripe,
+                            delete session.clientSecret,
+                            delete session.commentaire,
+                            delete session.sendSmsWhenShipping,
+                            // j'insere cette session modifié dans REDIS !
+                            sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
 
 
                         });
@@ -633,13 +575,7 @@ const paiementController = {
 
 
                 // TODO 
-
-                //NOTE  => supression de req.session.cart aprés achat ??
-                // Envoyer un sms pour dire qu'une nouvelle commande a bien été saisi (ou aprés la commande)
-                // Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produit.
-                // Faire la méthode "Recevoir un sms m'avertissant de l'envoi de ma commande en temps réel ?"
                 // écrire une facture!
-                // supprimer les articles dans req.session.cart quand plus besoin !
 
                 // Gére tous les cas de figures ou se passe mal ! Envoyez un e-mail ou une notification Push pour demander au client d’essayer un autre moyen de paiement.
                 // permettre un nouveau paiement dans tous les cas nécéssaire
@@ -654,23 +590,6 @@ const paiementController = {
                 //payment_intent.processing
                 //payment_intent.succeeded
                 //info aussi quand on configure les retours d'infos des webhooks
-
-                /* const dataTwillio = await Twillio.findFirst();
-                const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
-                if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
-                        strictMode: true
-                    }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
-                        strictMode: true
-                    }))) {
-                    return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
-                }
-                twilio.messages.create({
-                    body: `Votre commande contenant : ${event.data.object.metadata.articles} pour un montant total de ${event.data.object.metadata.amount_received}, a bien été validé !  `,
-                    from: dataTwillio.twillioNumber,
-                    to: dataTwillio.devNumber,
-
-                }) */
-
 
                 return res.status(200).end();
             } else {

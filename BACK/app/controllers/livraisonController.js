@@ -29,17 +29,20 @@ const livraisonController = {
             req.session.idTransporteur = Number(req.body.idTransporteur);
 
             //Je permet a l'utilisateur de laisser un commentaire sur la commande...
+            req.session.commentaire = req.body.commentaire;
 
-            if (req.body.commentaire) {
-                req.session.commentaire = req.body.commentaire;
-            }
             // Concerne l'option permettant de recevoir un sms, si le client le souhaite, lorsque sa commande sera remis au transporteur.
             // on garde la donnée au chaud concernant l'envoie d'un sms et on l'enverra en BDD dans le webbhook du paiement quand on est certain de la commande et du client..
             // n'est possible que si il y a une expédition avec une livraison, donc si req.session.idTransporteur = 3 , on ne permet pas !
-            if (req.body.sendSmsWhenShipping && req.body.idTransporteur !== 3 ) {
-                req.session.sendSmsWhenShipping = req.body.sendSmsWhenShipping;
-            }
+            console.log("req.body.sendSmsWhenShipping ", req.body.sendSmsWhenShipping);
 
+            //BUG 
+            //! a fixer, quand champs vide, false par défault !!
+            if (req.body.sendSmsWhenShipping && req.body.idTransporteur !== 3) {
+                req.session.sendSmsWhenShipping = req.body.sendSmsWhenShipping;
+            } else if (req.body.sendSmsWhenShipping == 'undefined') {
+                req.session.sendSmsWhenShipping == 'false'
+            };
 
             // Je met a jour le prix du panier en prenant en compte le cout du transport
 

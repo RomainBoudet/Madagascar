@@ -737,7 +737,7 @@ LEFT JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
 LEFT JOIN mada.stock ON stock.id_produit = produit.id
 LEFT JOIN mada.image ON image.id_produit = produit.id
 LEFT JOIN mada.avis ON avis.id_produit = produit.id
-GROUP BY produit, produit.description, prix, couleur, taille, stock, reduction, tva, categorie, produit.id
+GROUP BY produit, produit.description, prixHT, couleur, taille, stock, reduction, tva, categorie, produit.id
 ORDER BY produit.id;
 
 -- Une vue compléte des catégories et de leur produits, utilisé pour afficher tous les produits d'une catégorie, trié selon le nom des produits, tous ces produits appartenant a une même catégorie...

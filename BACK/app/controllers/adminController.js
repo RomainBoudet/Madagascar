@@ -311,13 +311,14 @@ const adminController = {
                 data.adminTelephone = statut.to;
                 const newPhone = new AdminPhone(data); // et j'insére en BDD le numéro fraichement vérifié.
                 await newPhone.save();
-                req.session.phoneNumber = false;
+                delete req.session.phoneNumber;
                 return res.status(200).json('Votre numéro de téléphone a été authentifié avec succés !')
 
             } else {
-                req.session.phoneNumber = false;
+                delete req.session.phoneNumber;
                 res.status(403).json('Votre numéro de téléphone n\'a pas put être authentifié.')
             }
+
 
         } catch (error) {
             console.trace(

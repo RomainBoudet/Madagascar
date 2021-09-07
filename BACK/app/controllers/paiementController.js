@@ -183,7 +183,7 @@ const paiementController = {
                     payment_method_types: ['card'],
                     setup_future_usage: 'on_session',
                     receipt_email: req.session.user.email,
-                    statement_descriptor: 'Madagascar Shop', //22 caractéres . si mis en dynamique, concaténer au prefix du libellé dans le dashboard 
+                    statement_descriptor: 'Madagascar Shop', // Le libellé de relevé bancaire qui apparait sur le relevé des client => 22 caractéres . si mis en dynamique, concaténer au prefix du libellé dans le dashboard https://stripe.com/docs/payments/payment-intents
                     metadata: {
                         date: `${formatLong(new Date())}`,
                         articles: articlesBought,
@@ -236,22 +236,19 @@ const paiementController = {
 
 
     //NOTE 
-    //! EDIT 
     //! Pas besoin de faire appel a la methode paymentIntents.confirm dans le back (qui nécéssite un paymentMethod que je n'ai pas encore!), si on passe en front par la méthode stripe.confirmCardPayment, qui devrait confirmer automatiquement le paymentIntent 
     // https://stripe.com/docs/js/payment_methods/create_payment_method et surtout : https://stripe.com/docs/js/payment_intents/confirm_card_payment
-
-
     // https://stripe.com/docs/connect/collect-then-transfer-guide?platform=web : 
     /* "To complete the payment when the user clicks, retrieve the client secret from the PaymentIntent you created in Step 3.1 and call stripe.confirmCardPayment with the client secret."" */
-
-
     //https://stripe.com/docs/ips  //https://stripe.com/docs/webhooks/signatures
+
+    //! pour tester : https://stripe.com/docs/testing 
+
     webhookpaiement: async (req, res) => {
         try {
 
             //https://stripe.com/docs/webhooks/build
             //https://stripe.com/docs/api/events/types 
-
 
             //je verifis la signature STRIPE et je récupére la situation du paiement.
             const sig = req.headers['stripe-signature'];
@@ -264,8 +261,11 @@ const paiementController = {
                 return res.status(400).json(`Webhook erreur de la récupération de l'event: ${err.message}`);
             }
 
+            console.log("event.type.paymentIntent ==>>   ", event.type.paymentIntent);
+
 
             if (event.type === 'payment_intent.succeeded') {
+
                 const paymentIntent = event.data.object;
 
                 // un petit visuel sur mes metadata accesible :
@@ -276,6 +276,9 @@ const paiementController = {
                 sessionStore.get(paymentIntent.metadata.session, async function (err, session) {
 
                     try {
+
+                        console.log("session => ",session);
+
 
                         // ici j'ai accés a la session du user qui a passé commande !
                         //console.log("session ==>>", session);
@@ -292,7 +295,7 @@ const paiementController = {
                         }
 
                         //! insérer l'info en BDD dans la table commande !
-
+                        // je récupére les infos de la CB
                         const paymentData = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
 
                         //je construit ce que je vais passer comme donnée de reférence..
@@ -339,7 +342,7 @@ const paiementController = {
                         const newPaiement = new Paiement(dataPaiement);
                         const resultpaiement = await newPaiement.save();
 
-                        //console.log("resultpaiement ==>> ", resultpaiement);
+                        console.log("resultpaiement ==>> ", resultpaiement);
 
                         //! Insérer l'info en BDD dabns la table ligne commande 
 
@@ -356,7 +359,7 @@ const paiementController = {
                             const newLigneCommande = new LigneCommande(dataLigneCommande);
                             const resultLigneCommande = await newLigneCommande.save();
 
-                            //console.log("resultLigneCommande ==>> ", resultLigneCommande);
+                            console.log("resultLigneCommande ==>> ", resultLigneCommande);
                         }
 
                         //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produits récemment achetés.
@@ -408,7 +411,7 @@ const paiementController = {
                                 idTransporteur: Number(session.idTransporteur),
                                 delai: transporteurData.estimeArriveNumber, // ici une string et non un number...
                                 adresse: await adresseEnvoieFormat(session.user.idClient),
-                                montant: (session.totalStripe)/100,
+                                montant: (session.totalStripe) / 100,
                                 marqueCB: paymentData.card.brand,
                                 dataArticles: session.cart,
                                 commentaire: resultCommande.commentaire,
@@ -428,7 +431,7 @@ const paiementController = {
                                 delai: capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber,
                                     'day'))),
                                 adresse: await adresseEnvoieFormat(session.user.idClient),
-                                montant: (session.totalStripe)/100,
+                                montant: (session.totalStripe) / 100,
                                 marqueCB: paymentData.card.brand,
                                 dataArticles: session.cart,
                                 commentaire: resultCommande.commentaire,
@@ -542,18 +545,18 @@ const paiementController = {
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
 
                             delete session.cart,
-                            delete session.totalTTC,
-                            delete session.totalHT,
-                            delete session.totalTVA,
-                            delete session.coutTransporteur,
-                            delete session.totalStripe,
-                            delete session.idTransporteur,
-                            delete session.IdPaymentIntentStripe,
-                            delete session.clientSecret,
-                            delete session.commentaire,
-                            delete session.sendSmsWhenShipping,
-                            // j'insere cette session modifié dans REDIS !
-                            sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
+                                delete session.totalTTC,
+                                delete session.totalHT,
+                                delete session.totalTVA,
+                                delete session.coutTransporteur,
+                                delete session.totalStripe,
+                                delete session.idTransporteur,
+                                delete session.IdPaymentIntentStripe,
+                                delete session.clientSecret,
+                                delete session.commentaire,
+                                delete session.sendSmsWhenShipping,
+                                // j'insere cette session modifié dans REDIS !
+                                sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
 
 
                         });
@@ -592,14 +595,55 @@ const paiementController = {
                 //info aussi quand on configure les retours d'infos des webhooks
 
                 return res.status(200).end();
-            } else {
+            }
+            if (event.type === 'payment_intent.amount_capturable_updated')
+
+            {   // Bloquer une somme d'argent sur une carte :
+                //https://stripe.com/docs/payments/capture-later //https://stripe.com/docs/api/payment_intents/capture?lang=node
 
                 message = {
-                    message: "erreur lors du paiement!"
+                    message: "Une erreur est survenu lors du paiement! Vous n'avez pas été débité. Merci de réassayer."
                 };
 
-                return res.status(200).json(event.type);
+                return res.status(404).json(event.type);
+
             }
+            if (event.type === 'payment_intent.canceled')
+
+            {
+
+                message = {
+                    message: "Vous avez annulé le paiement, celui-çi n'a donc pas été effectué ! Vous n'avez pas été débité."
+                };
+
+                return res.status(404).json(event.type);
+
+            }
+            if (event.type === 'payment_intent.payment_failed')
+
+            {
+
+                message = {
+                    message: "Une erreur est apparut lors du paiement ! Vous n'avez pas été débité. Vous pouvez réessayer. "
+                };
+
+                return res.status(404).json(event.type);
+
+            }
+            else {
+
+                message = {
+                    message: "Erreur lors du paiement!"
+                };
+
+                return res.status(404).json(event.type);
+            }
+
+
+
+
+
+
 
 
 
@@ -649,7 +693,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JWthiLNa9FFzz1X1jgy3TMu_secret_HnyLbRQ7zJDrA8Z4llQtxuMrl",
+                client_secret: "pi_3JX6zRLNa9FFzz1X0FY8nKOB_secret_wqglXavAW810q39ZtX3XZ5IZR",
             });
 
 

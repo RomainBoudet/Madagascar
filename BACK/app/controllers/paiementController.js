@@ -7,6 +7,10 @@ const Transporteur = require('../models/transporteur');
 const Shop = require('../models/shop');
 const Twillio = require('../models/twillio');
 const Stock = require('../models/stock');
+const AdminPhone = require('../models/adminPhone');
+const AdminVerifEmail = require('../models/adminVerifEmail');
+
+
 
 //Nécéssaire pour retrouver les donnée de session dans la méthode du webhook avec le cookie de session !
 const redisSession = require('redis');
@@ -46,7 +50,6 @@ const redis = require('../services/redis');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const hbs = require('nodemailer-express-handlebars');
-const AdminPhone = require('../models/adminPhone');
 const smsChoiceSchema = require('../schemas/smsChoiceSchema');
 const helpers = require('handlebars-helpers')();
 
@@ -476,7 +479,35 @@ const paiementController = {
                         try {
                             //NOTE pourquoi prendre le mail de cette table et non des admin en BDD (table client) et boucler comme pour SMS ?? 
                             //NOTE ou les deux...
+                            const adminsMail = await AdminVerifEmail.findAllAdminEmailTrue();
                             const shop = await Shop.findOne(1); // les données du premier enregistrement...
+                            contexte.shopNom = shop.nom;
+
+                            // si j'ai des admin qui on vérifié leur email et qui souhaite recevoir les nouvelles commande sur leur mail !
+                            if (adminsMail !== null) {
+
+                                for (const admin of adminsMail) {
+
+                                    //Ici je dois ajouter dans l'objet contexte, le nom et le prenom des admin, pour un email avec un nom et prenom personalisé !
+                                    contexte.adminPrenom = admin.prenom;
+
+                                    const info2 = await transporter.sendMail({
+                                        from: process.env.EMAIL, //l'envoyeur
+                                        to: admin.email,
+                                        subject: `Une nouvelle commande sur le site internet !! 🎉 `, // le sujet du mail
+                                        text: `Bonjour cher Administrateur, tu as reçu une nouvelle commande !`,
+                                        /* attachement:[
+                                            {filename: 'picture.JPG', path: './picture.JPG'}
+                                        ] */
+                                        template: 'nouvelleCommande',
+                                        context: contexte,
+
+                                    });
+                                    console.log(`Un email d'information d'une nouvelle commande à bien envoyé a ${admin.email} : ${info2.response}`);
+                                }
+                            }
+
+                            delete contexte.adminPrenom; // plus d'admin prenom ici, dans le mail on prendra la valeur pas défault : "Kevin".
                             const info2 = await transporter.sendMail({
                                 from: process.env.EMAIL, //l'envoyeur
                                 to: shop.emailContact,
@@ -571,18 +602,18 @@ const paiementController = {
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
 
                             delete session.cart,
-                            delete session.totalTTC,
-                            delete session.totalHT,
-                            delete session.totalTVA,
-                            delete session.coutTransporteur,
-                            delete session.totalStripe,
-                            delete session.idTransporteur,
-                            delete session.IdPaymentIntentStripe,
-                            delete session.clientSecret,
-                            delete session.commentaire,
-                            delete session.sendSmsWhenShipping,
-                            // j'insere cette session modifié dans REDIS !
-                            sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
+                                delete session.totalTTC,
+                                delete session.totalHT,
+                                delete session.totalTVA,
+                                delete session.coutTransporteur,
+                                delete session.totalStripe,
+                                delete session.idTransporteur,
+                                delete session.IdPaymentIntentStripe,
+                                delete session.clientSecret,
+                                delete session.commentaire,
+                                delete session.sendSmsWhenShipping,
+                                // j'insere cette session modifié dans REDIS !
+                                sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
 
                         });
 
@@ -706,7 +737,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JX8QgLNa9FFzz1X0ws36VIf_secret_fIKSeTpxybDlbLtqzykomacVd",
+                client_secret: "pi_3JXCuFLNa9FFzz1X1Mcq50ru_secret_5DItidzZYz9xIe86Cn7kF4dnF",
             });
 
 

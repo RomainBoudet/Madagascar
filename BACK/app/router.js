@@ -63,6 +63,8 @@ const livraisonPostSchema = require('./schemas/livraisonPostSchema');
 const livraisonSchema = require('./schemas/livraisonSchema');
 const choixLivraisonSchema = require('./schemas/choixLivraisonSchema');
 const smsChoiceSchema = require('./schemas/smsChoiceSchema');
+const emailChoiceSchema = require('./schemas/emailChoiceShema');
+
 
 
 
@@ -311,7 +313,7 @@ router.post('/resendEmailLink', clean, admin, validateBody(resendEmailSchema), c
  * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD.
  * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
  */
-router.get('/verifyEmail', clean, admin, validateQuery(verifyEmailSchema), clientController.verifyEmail);
+router.get('/verifyEmail', clean, validateQuery(verifyEmailSchema), clientController.verifyEmail);
 /**
  * Permet d'enregitrer en BDD et de vérifier un téléphone par l'envoie d'un sms sur le numéro.
  * @route POST /admin/smsVerify
@@ -321,7 +323,7 @@ router.get('/verifyEmail', clean, admin, validateQuery(verifyEmailSchema), clien
  * @returns {JSON} 200 - Un code par sms a été envoyé
  */
 router.post('/admin/smsVerify', admin, clean, validateBody(phoneNumberSchema), adminController.smsVerify);
-//
+
 /**
  * Reçoi un code pour vérifier un numéro de téléphone et si le code est correct, le téléphone est enregistré en BDD sous format E. 164.
  * @route POST /admin/smsCheck
@@ -332,7 +334,7 @@ router.post('/admin/smsVerify', admin, clean, validateBody(phoneNumberSchema), a
  */
 router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminController.smsCheck);
 
-//
+
 /**
  * Reçoie un true ou false pour pouvoir choisir l'envoie de sms a l'admin a chaque commande, ou non. Nécéssite d'avoir vérifié son téléphone avant.
  * @route POST /admin/smsChoice
@@ -342,6 +344,14 @@ router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminCont
  */
  router.post('/admin/smsChoice', admin, clean, validateBody(smsChoiceSchema), adminController.smsChoice);
 
+/**
+ * Reçoie un true ou false pour pouvoir choisir l'envoie de email a l'admin a chaque commande, ou non. Nécéssite d'avoir vérifié son email avant.
+ * @route POST /admin/emailChoice
+ * @group Administrateur
+ * @summary Permet d'insérer en BDD le choix de l'admin en matiére d'envoie d'email a chaque commande reçu
+ * @param {Administrateur.Model} Administrateur.body.required
+ */
+ router.post('/admin/emailChoice', admin, clean, validateBody(emailChoiceSchema), adminController.emailChoice);
 
 
 /**

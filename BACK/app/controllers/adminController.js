@@ -94,6 +94,57 @@ const adminController = {
         }
     },
 
+    emailChoice: async (req, res) => {
+        try {
+            // on s'attent a recevoir soit true ou false en body...
+
+            // Je vérifis que l'admin a bien déja fait vérifié son email. Sinon je le réoriente vers une vérification...
+            const EmailVerifInDb = await AdminVerifEmail.findOneTrue(req.session.user.idClient);
+
+            if (EmailVerifInDb === null ) {
+                return res.status(200).json({
+                    message: 'Merci de faire verifier votre email avant de pouvoir recevoir des informations de commande sur celui-çi.'
+                })
+            };
+
+            // ici req.body peut être true ou false . Pas strcitement identique === pour autoriser les érreurs de type..
+
+            if (req.body.true === 'true') {
+
+                if (EmailVerifInDb.emailNewCommandeChoice === true) {
+                    console.log("L'envoie de sms a chaque commande est déja configuré !")
+                    res.status(200).end();
+
+                }
+
+                const newEmailChoice = new AdminVerifEmail({idClient: req.session.user.idClient});
+                const result = await newEmailChoice.trueEmailNewCommandeChoice();
+                console.log("result ==>> ", result);
+            }
+
+            if (req.body.false == 'false') {
+
+                if (EmailVerifInDb.emailNewCommandeChoice === false) {
+                    console.log("L'absence d'envoie de sms a chaque commande est déja configuré !")
+                    res.status(200).end();
+
+                }
+                const newEmailChoice = new AdminVerifEmail({idClient: req.session.user.idClient});
+                const result = await newEmailChoice.falseEmailNewCommandeChoice();
+                console.log("result ==>> ", result);
+
+            }
+            // Le choix de l'admin a bien été inséré en BDD
+
+            res.status(200).end();
+
+        } catch (error) {
+            console.log(`Erreur dans la methode emailChoice du adminController ${error.message}`);
+            res.status(500).json(error.message);
+        }
+    },
+
+
     updatePrivilege: async (req, res) => {
         try {
             const {
@@ -189,7 +240,7 @@ const adminController = {
 
             const user = await userNowInDb.saveAdmin();
             console.log(user.id);
-            
+
             // je passe a false la vérification du mail de ce new admin !
             await AdminVerifEmail.false(user.id);
 

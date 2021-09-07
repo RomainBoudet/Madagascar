@@ -6,13 +6,14 @@ const Joi = require('joi');
 
 /**
  * Valide les informations reçu dans le body et envoyé par les utilisateurs
- * @name smsChoiceSchema 
+ * @name emailChoiceSchema 
  * @group Joi - Vérifie les informations du body
  * @property {string} true  - 
  * @property {string} false  - 
+
  * @return {json} messages - Un texte adapté en cas d'érreur, en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
-const smsChoiceSchema = Joi.object({
+const emailChoiceSchema = Joi.object({
     true: Joi.boolean().valid(true).sensitive()
         .messages({
             'boolean.base': `Seule les valeurs true ou false seront accéptées.`,
@@ -24,4 +25,4 @@ const smsChoiceSchema = Joi.object({
 
 }).xor('true', 'false');
 
-module.exports = smsChoiceSchema;
+module.exports = emailChoiceSchema;

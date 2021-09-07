@@ -6,6 +6,7 @@ class AdminVerifEmail {
 
     id;
     verifEmail;
+    emailNewCommandeChoice;
     dateVerifEmail;
     idClient;
 
@@ -13,6 +14,9 @@ class AdminVerifEmail {
 
     set verif_email(val) {
         this.verifEmail = val;
+    }
+    set email_new_commande_choice(val) {
+        this.emailNewCommandeChoice = val;
     }
 
     set date_verif_email(val) {
@@ -45,7 +49,72 @@ class AdminVerifEmail {
         } = await db.query('SELECT * FROM mada.admin_verif_email ORDER BY admin_verif_email.id ASC');
 
         if (!rows[0]) {
-            throw new Error("Aucun adminVerifEmail dans la BDD");
+           return null;
+        }
+        consol.model(
+            `les informations des ${rows.length} adminVerifEmails ont été demandé !`
+        );
+
+        return rows.map((adminVerifEmail) => new AdminVerifEmail(adminVerifEmail));
+    }
+
+    /**
+     * Méthode chargé d'aller chercher toutes les informations relatives à tous les adminVerifEmails avec un email vérifié
+     * @returns - tous les adminVerifEmails avec email vérifié présent en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findAllTrue() {
+        const {
+            rows
+        } = await db.query('SELECT * FROM mada.admin_verif_email WHERE admin_verif_email.verif_email = true ORDER BY admin_verif_email.id ASC');
+
+        if (!rows[0]) {
+           return null;
+        }
+        consol.model(
+            `les informations des ${rows.length} adminVerifEmails ont été demandé !`
+        );
+
+        return rows.map((adminVerifEmail) => new AdminVerifEmail(adminVerifEmail));
+    }
+
+
+    /**
+     * Méthode chargé d'aller chercher toutes les informations relatives à tous les adminVerifEmails avec un email vérifié
+     * @returns - tous les adminVerifEmails avec email vérifié présent en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findOneTrue(idClient) {
+        const {
+            rows
+        } = await db.query('SELECT * FROM mada.admin_verif_email WHERE admin_verif_email.verif_email = true AND id_client = $1;', [idClient]);
+
+        console.log(rows);
+        if (!rows[0]) {
+           return null;
+        }
+        consol.model(
+            `les informations des ${rows.length} adminVerifEmails ont été demandé !`
+        );
+
+        return new AdminVerifEmail(rows[0]);
+    }
+
+    /**
+     * Méthode chargé d'aller chercher toutes les informations relatives à tous les adminVerifEmails TRUE
+     * @returns - tous les adminVerifEmails TRUE présent en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findAllAdminEmailTrue() {
+        const {
+            rows
+        } = await db.query('SELECT admin_verif_email.*, client.email, client.prenom, client.nom_famille FROM mada.admin_verif_email JOIN mada.client ON admin_verif_email.id_client = client.id WHERE admin_verif_email.email_new_commande_choice = true ORDER BY admin_verif_email.id ASC;');
+
+        if (!rows[0]) {
+          return null;
         }
         consol.model(
             `les informations des ${rows.length} adminVerifEmails ont été demandé !`
@@ -73,7 +142,7 @@ class AdminVerifEmail {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun admin_verif_email avec cet id");
+           return null;
         }
 
         consol.model(
@@ -113,7 +182,7 @@ class AdminVerifEmail {
 
     /**
      * Méthode chargé d'aller insérer les informations relatives à un utilisateur passé en paramétre
-     * @param verifEmail - le staut 'true' ou 'false' d'un email d'un client ayant le privilege Admin. Ici TRUE en dur..
+     * @param verifEmail - le statut 'true' ou 'false' d'un email d'un client ayant le privilege Admin. Ici TRUE en dur..
      * @param idClient - l'id d'un client ayanty le privilege Admin
      * @returns - les informations du adminVerifEmail demandées
      * @async - une méthode asynchrone
@@ -133,6 +202,8 @@ class AdminVerifEmail {
         consol.model(
             `le adminVerifEmail id ${id} avec comme statut ${this.verifEmail} a été mis a jour à la date du ${this.createdDate} !`
         );
+        return new AdminVerifEmail(rows[0]);
+
     }
 
      /**
@@ -156,7 +227,60 @@ class AdminVerifEmail {
         consol.model(
             `le adminVerifEmail id ${id} avec comme statut ${this.verifEmail} a été inséré avec succés !`
         );
+        return new AdminVerifEmail(rows[0]);
+
     }
+
+    /**
+     * Méthode chargé d'aller mettre a jour les informations d'un admin concernant le choix d'envoie d'un email lors d'une nouvelle commande d'un client
+     * @param emailNewCommandeChoice - le statut 'true' ou 'false' d'un email d'un client ayant le privilege Admin. Ici TRUE en dur..
+     * @param idClient - l'id d'un admin ayant le privilege Admin
+     * @returns - les informations du adminVerifEmail demandées
+     * @async - une méthode asynchrone
+     */
+     async trueEmailNewCommandeChoice() {
+
+        const {
+            rows,
+        } = await db.query(
+            `UPDATE mada.admin_verif_email SET email_new_commande_choice = 'true' WHERE id_client = $1 RETURNING *;`,
+            [this.idClient]
+        );
+
+        this.emailNewCommandeChoice = rows[0].email_new_commande_choice;
+
+        consol.model(
+            `Le adminVerifEmail id ${this.idClient} à été mis a jour avec comme choix d'envoie d'email lors d'une nouvelle commande à ${this.emailNewCommandeChoice} !`
+        );
+        return new AdminVerifEmail(rows[0]);
+
+    }
+
+    /**
+     * Méthode chargé d'aller mettre a jour les informations d'un admin concernant le choix d'envoie d'un email lors d'une nouvelle commande d'un client
+     * @param emailNewCommandeChoice - le statut 'true' ou 'false' d'un email d'un client ayant le privilege Admin. Ici FALSE en dur..
+     * @param idClient - l'id d'un admin ayant le privilege Admin
+     * @returns - les informations du adminVerifEmail demandées
+     * @async - une méthode asynchrone
+     */
+     async falseEmailNewCommandeChoice() {
+
+        const {
+            rows,
+        } = await db.query(
+            `UPDATE mada.admin_verif_email SET email_new_commande_choice = 'false' WHERE id_client = $1 RETURNING *;`,
+            [this.idClient]
+        );
+
+        this.emailNewCommandeChoice = rows[0].email_new_commande_choice;
+
+        consol.model(
+            `Le adminVerifEmail id ${this.idClient} à été mis a jour avec comme choix d'envoie d'email lors d'une nouvelle commande à ${this.emailNewCommandeChoice} !`
+        );
+        return new AdminVerifEmail(rows[0]);
+
+    }
+
 
 
 
@@ -179,6 +303,8 @@ class AdminVerifEmail {
         console.log(
             `le adminVerifEmail id : ${this.id} du client id ${this.idClient} a été mise à jour  !`
         );
+        return new AdminVerifEmail(rows[0]);
+
     }
  
 

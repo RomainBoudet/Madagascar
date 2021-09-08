@@ -96,7 +96,7 @@ const paiementController = {
         }
 
     },
-
+    //! différent moyen de paiement possible : https://dashboard.stripe.com/settings/payments
 
     //STRIPE processus complet = https://stripe.com/docs/connect/collect-then-transfer-guide?platform=web 
     // comprendre les différent type de paiement sur STRIP : https://stripe.com/docs/payments/payment-intents/migration/charges 
@@ -208,7 +208,7 @@ const paiementController = {
 
             }
 
-            console.log("la clé secrete a bien été envoyé en session !");
+            console.log("la clé secrete pour un paiement CB a bien été envoyé en session !");
 
             res.status(200).end();
 
@@ -216,7 +216,134 @@ const paiementController = {
         } catch (error) {
             const errorMessage = process.env.NODE_ENV === 'production' ?
                 'Erreur serveur.' :
-                `Erreur dans la méthode paiement du paiementController : ${error.message})`
+                `Erreur dans la méthode paiementCB du paiementController : ${error.message})`
+
+
+            res.status(500).json(errorMessage);
+            console.trace(error);
+        }
+
+    },
+
+
+
+    paiementSEPA: async (req, res) => {
+        try {
+
+            // Méthode a metre en lien avec le bouton ""payer par carte bancaire"" avant que l'utilisateur ne rentre ses coordonnées bancaires.
+
+
+            //Pour payer, l'utilisateur doit avoir :
+            console.log("la session en amont du paiement ==> ", req.session);
+
+            // été authentifié
+            if (!req.session.user) {
+                console.log("Le client ne s'est pas authentifié !")
+                return res.status(200).json({
+                    message: "Merci de vous connecter afin de finaliser votre paiement."
+                })
+            }
+            // avoir accepté les CGV
+            if (req.session.cgv !== 'true') {
+                console.log("Les Conditions Générales de Ventes n'ont pas été accéptés.")
+                return res.status(200).json({
+                    message: "Les Conditions Générales de Ventes n'ont pas été accéptés. Merci de les accéptés afin de finaliser votre paiement."
+                })
+            }
+            // avoir un montant de panier supérieur a 0.
+            if (req.session.totalTTC == 0 || req.session.totalTTC === undefined) {
+                return res.status(200).json({
+                    message: "Pour effectuer un paiement vous devez avoir des articles dans votre panier."
+                })
+            }
+
+
+            // Avoir choisi un transporteur 
+
+            if (req.session.idTransporteur === undefined) {
+
+                return res.status(200).json({
+                    message: "Pour  finaliser votre paiement, merci de choisir un mode de livraison parmis ceux proposé ."
+                })
+            }
+
+            // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
+            const isEnvoieOk = await Adresse.findByEnvoie(req.session.user.idClient);
+            if (!isEnvoieOk && req.session.idTransporteur != 3) {
+                return res.status(200).json({
+                    message: "Pour effectuer un paiement, vous devez avoir enregistré une adresse de livraison en plus de votre adresse de facturation ou choisir le mode de livraison : 'Retrait sur le stand'."
+                })
+            }
+
+
+            //je construit ce que je vais passer comme metadata
+            const articles = [];
+            req.session.cart.map(article => (`${articles.push(article.produit+' / ' + 'idArticle = ' + article.id + ' /' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
+            articlesBought = articles.join(', ');
+
+
+            //Je vérifie si le client est déja venu tenter de payer sa commande
+            if (req.session.IdPaymentIntentStripe) {
+                //Si oui, je met a jour le montant dans l'objet payementIntent qui existe déja, via la méthode proposé par STRIPE
+                //https://stripe.com/docs/api/payment_intents/update?lang=node
+
+                await stripe.paymentIntents.update(
+                    req.session.IdPaymentIntentStripe, {
+                        metadata: {
+                            articles: articlesBought,
+                            amount: req.session.totalStripe,
+                        },
+                        amount: req.session.totalStripe,
+                    }
+                );
+
+
+            } else {
+
+                // Si il n'existe pas, je dois avant tout, le créer
+                //https://stripe.com/docs/payments/payment-intents
+
+                // Je récupére les info STRIPE du client via REDIS 
+                const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: req.session.totalStripe, // total en centimes et en Integer
+                    currency: 'eur',
+                    customer: idClientStripe,
+                    payment_method_types: ['sepa_debit'],
+                    setup_future_usage: 'off_session',
+                    receipt_email: req.session.user.email,
+                    statement_descriptor: 'Madagascar Shop', // Le libellé de relevé bancaire qui apparait sur le relevé des client => 22 caractéres . si mis en dynamique, concaténer au prefix du libellé dans le dashboard https://stripe.com/docs/payments/payment-intents
+                    metadata: {
+                        integration_check: 'sepa_debit_accept_a_payment',
+                        date: `${formatLong(new Date())}`,
+                        articles: articlesBought,
+                        client: `${req.session.user.prenom} ${req.session.user.nomFamille}`,
+                        idClient: req.session.idClient,
+                        email: req.session.user.email,
+                        session: req.sessionID,
+                        amount: req.session.totalStripe,
+                        ip: req.ip,
+                    },
+
+
+                });
+
+                req.session.IdPaymentIntentStripe = paymentIntent.id;
+                req.session.clientSecret = paymentIntent.client_secret;
+
+
+
+            }
+
+            console.log("la clé secrete pour un paiement SEPA a bien été envoyé en session !");
+
+            res.status(200).end();
+
+
+        } catch (error) {
+            const errorMessage = process.env.NODE_ENV === 'production' ?
+                'Erreur serveur.' :
+                `Erreur dans la méthode paiementSEPA du paiementController : ${error.message})`
 
 
             res.status(500).json(errorMessage);

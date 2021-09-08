@@ -234,6 +234,9 @@ const paiementController = {
     //https://stripe.com/docs/ips  //https://stripe.com/docs/webhooks/signatures
 
     //! pour tester : https://stripe.com/docs/testing 
+    // Numéro carte avec 3D secure => 4000002760003184
+
+
 
     webhookpaiementCB: async (req, res) => {
         try {
@@ -250,7 +253,9 @@ const paiementController = {
                 event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
             } catch (err) {
                 return res.status(400).json(`Webhook erreur de la récupération de l'event: ${err.message}`);
+
             }
+
             const paymentIntent = event.data.object;
 
             // Ici req.session ne vaut rien car c'est stripe qui contact ce endpoint. Je récupére donc la session pour savoir ce que le client vient de commander.
@@ -599,9 +604,9 @@ const paiementController = {
                             res.status(500).end();
                         }
 
-                        //! Je vire l'argent dispo sur le compte STRIPE sur le compte bancaire.
+                        //! Je vire l'argent  nouvellement dispo sur le compte STRIPE vers le compte bancaire.
                         // Je demande la balance du compte et si la balance est supérieur a 0 je vire le montant disponible une fois la réponse de la balance donnée.
-
+                        // 1€ minimum pour le virement...
                         // appel asynchrone
                         try {
                             stripe.balance.retrieve(async function (err, balance) {
@@ -657,9 +662,11 @@ const paiementController = {
                     // Permettre d'autre mode de paiement, virement et paypal ? puis google pay apple pay et un truc chinois !
 
                     return res.status(200).end();
+
+
                 }
 
-                // Prendre en charge tous les cas un webhook peut être appelé : https://stripe.com/docs/api/events/types 
+
                 // Je fais le choix de garder en session les données du panier même si le paiement n'aboutit pas, pour pouvoir tester un nouveau paiement, ou un paiement avec un autre moyen.
 
                 //! CODE DE REFUS DE PAIEMENT !
@@ -669,70 +676,308 @@ const paiementController = {
                 //https://stripe.com/docs/payments/after-the-payment 
 
 
-                if (event.type === 'payment_intent.amount_capturable_updated')
+                /* outcome ==>>  {
+                                    network_status: 'declined_by_network',
+                                    reason: 'insufficient_funds',
+                                    risk_level: 'normal',
+                                    risk_score: 25,
+                                    seller_message: 'The bank returned the decline code `insufficient_funds`.',
+                                    type: 'issuer_declined'
+                                } */
+                else {
 
-                { // Bloquer une somme d'argent sur une carte :
-                    //https://stripe.com/docs/payments/capture-later //https://stripe.com/docs/api/payment_intents/capture?lang=node
-
-                    message = {
-                        message: "Une erreur est survenu lors du paiement! Vous n'avez pas été débité. Merci de réassayer."
+                    const declineCode = event.data.object.charges.data[0].outcom.reason;
+                    const message = {
+                        code_error: declineCode,
+                        network_status: event.data.object.charges.data[0].outcom.network_status,
+                        seller_message: event.data.object.charges.data[0].outcom.seller_message,
                     };
-                    console.log(message);
-                    console.log(event.type);
-                    return res.status(404).json(event.type);
+
+                    switch (declineCode) {
+
+                        case 'authentication_required':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a été refusée, car la transaction nécessite une authentification. Essayer de relancer le paiement et d'authentifier votre carte bancaire lorsque vous y serez invité. Si vous recevez ce code de refus de paiement aprés une transaction authentifiée, contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'approve_with_id':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible d’autoriser le paiement. Vous pouvez retenter le paiement. S’il ne peut toujours pas être traité, vous pouvez contacter votre banque."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'call_issuer':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'card_not_supported':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Ce type d’achat n’est pas pris en charge par cette carte bancaire. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+                        case 'card_velocity_exceeded':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le client a dépassé le solde ou la limite de crédit disponible sur sa carte bancaire. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'currency_not_supported':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La devise spécifiée n’est pas prise en charge par cette carte bancaire. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'do_not_honor':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'do_not_try_again':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'duplicate_transaction':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une transaction du même montant avec les mêmes informations de carte bancaire a été soumise tout récemment. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'expired_card':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a expiré. Merci d'utiliser une autre carte bancaire. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'fraudulent':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé car il a été identifié comme potentiellement frauduleux. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'incorrect_number':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'incorrect_cvc':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'insufficient_funds':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire ne dispose pas de fonds suffisants pour effectuer l’achat. Merci d'utiliser un autre moyen de paiement."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'incorrect_zip':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code postal est erroné. Merci de réessayer avec le bon code postal."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+
+                        case 'invalid_amount':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le montant du paiement n’est pas valide ou dépasse le montant autorisé par l’émetteur de la carte . Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'invalid_cvc':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'invalid_account':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'invalid_expiry_month':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le mois d’expiration n’est pas valide.	Merci de réessayer avec la bonne date d’expiration."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'invalid_expiry_year':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. L’année d’expiration n’est pas valide.	Merci de réessayer avec la bonne date d’expiration."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'invalid_number':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'issuer_not_available':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible de joindre l’émetteur de la carte, donc d’autoriser le paiement."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'lost_card':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée perdue."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'merchant_blacklist':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'new_account_information_available':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'no_action_taken':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'not_permitted':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’est pas autorisé. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'offline_pin_required':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'online_or_offline_pin_required':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'pickup_card':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'pin_try_exceeded':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le nombre de tentatives autorisées de saisie du code PIN a été dépassé."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'processing_error':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une erreur s’est produite lors du traitement de la carte bancaire. Vous pouvez retenter le paiement. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'reenter_transaction':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’a pas pu être traité par l’émetteur de la carte pour une raison inconnue. Vous pouvez retenter le paiement. "
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'restricted_card':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'revocation_of_all_authorizations':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'revocation_of_authorization':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'security_violation':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'service_not_allowed':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'stolen_card':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée volée."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'stop_payment_order':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'testmode_decline':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte utilisée est une carte de test. Utilisez une véritable carte bancaire pour effectuer le paiement"
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'transaction_not_allowed':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'try_again_later':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de retenter le paiement"
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+                        case 'withdrawal_count_limit_exceeded':
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Vous avez dépassé le solde ou la limite de crédit disponible sur votre carte bancaire. Merci d'utiliser un autre moyen de paiement"
+                            console.log(message);
+                            res.status(404).json(message);
+                            break;
+
+
+                        default:
+                            message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
+                            console.log(message);
+                            res.status(404).json(message);
+                    }
 
                 }
-                if (event.type === 'payment_intent.canceled')
-
-                {
-
-                    message = {
-                        message: "Vous avez annulé le paiement, celui-çi n'a donc pas été effectué ! Vous n'avez pas été débité."
-                    };
-                    console.log(message);
-                    console.log(event.type);
-                    return res.status(404).json(event.type);
-
-                }
-                if (event.type === 'payment_intent.payment_failed')
-
-                {
-
-                    message = {
-                        message: "Une erreur est apparut lors du paiement ! Vous n'avez pas été débité. Vous pouvez réessayer. "
-                    };
-                    console.log(message);
-                    console.log(event.type);
-                    return res.status(404).json(event.type);
-
-                } else {
-
-                    message = {
-                        message: "Erreur lors du paiement!"
-                    };
-                    console.log(message);
-                    console.log(event.type);
-                    return res.status(404).json(event.type);
-                }
-
 
             });
-
-
-
-
-
 
         } catch (error) {
             const errorMessage = process.env.NODE_ENV === 'production' ?
                 'Erreur serveur.' :
                 `Erreur dans la méthode paiement du paiementController : ${error.message})`
 
-
             res.status(500).json(errorMessage);
             console.trace(error);
         }
-
 
     },
 
@@ -769,7 +1014,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JXF1OLNa9FFzz1X1x2ugKTj_secret_nwkOJ7poq7zso2B63XcfZfdNU",
+                client_secret: "pi_3JXFfRLNa9FFzz1X11Z28QuH_secret_Fm43nor4tE1MhEQ6mIEhZrkeL",
             });
 
 

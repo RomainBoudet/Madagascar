@@ -509,7 +509,7 @@ const paiementController = {
                             }
 
                             delete contexte.adminPrenom; // plus d'admin prenom ici, dans le mail on prendra la valeur pas défault : "cher Administrateur !".
-                            
+
                             //Envoie d'email sur le mail présent dans la table "Shop".
                             const info2 = await transporter.sendMail({
                                 from: process.env.EMAIL, //l'envoyeur
@@ -599,6 +599,29 @@ const paiementController = {
                             res.status(500).end();
                         }
 
+                        //! Je vire l'argent dispo sur le compte STRIPE sur le compte bancaire.
+                        // Je demande la balance du compte et si la balance est supérieur a 0 je vire le montant disponible une fois la réponse de la balance donnée.
+
+                        // appel asynchrone
+                        try {
+                            stripe.balance.retrieve(async function (err, balance) {
+                                const balanc = balance.available[0].amount;
+
+                                if (balanc > 0) {
+                                    await stripe.payouts.create({
+                                        amount: balance.available[0].amount,
+                                        currency: 'eur',
+                                    });
+
+                                }
+
+
+                            });
+                        } catch (error) {
+                            console.log(`Erreur dans le try catch du virement STRIPE dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
+                        }
 
 
                         //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement sans devoir se reconnecter. 
@@ -631,15 +654,21 @@ const paiementController = {
                     // écrire une facture!
 
                     // permettre un nouveau paiement dans tous les cas nécéssaire
-                    // autorisation d'ip pour webhook https://stripe.com/docs/ips 
                     // Permettre d'autre mode de paiement, virement et paypal ? puis google pay apple pay et un truc chinois !
 
                     return res.status(200).end();
                 }
 
-                //! ==>> Prendre en charge tous les cas un webhook peut être appelé : https://stripe.com/docs/api/events/types 
+                // Prendre en charge tous les cas un webhook peut être appelé : https://stripe.com/docs/api/events/types 
+                // Je fais le choix de garder en session les données du panier même si le paiement n'aboutit pas, pour pouvoir tester un nouveau paiement, ou un paiement avec un autre moyen.
 
-                //NOTE que fait on des data en session, qui n'ont pas été supprimé encore.. on les garde pour un nouveau essai de paiement ??
+                //! CODE DE REFUS DE PAIEMENT !
+                //https://stripe.com/docs/declines/codes 
+
+                //! APRES LE PAIEMENT : 
+                //https://stripe.com/docs/payments/after-the-payment 
+
+
                 if (event.type === 'payment_intent.amount_capturable_updated')
 
                 { // Bloquer une somme d'argent sur une carte :
@@ -740,7 +769,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JXDElLNa9FFzz1X0xA9Hncw_secret_EyIab6nI6VE4IOBdCqsuDMC0q",
+                client_secret: "pi_3JXF1OLNa9FFzz1X1x2ugKTj_secret_nwkOJ7poq7zso2B63XcfZfdNU",
             });
 
 
@@ -754,7 +783,23 @@ const paiementController = {
         }
     },
 
+    balanceStripe: async (req, res) => {
+        try {
 
+            stripe.balance.retrieve(function (err, balance) {
+                // asynchronously called
+                console.log(balance.available[0].amount);
+                res.status(200).json(balance);
+
+            });
+
+            //res.status(200).end();
+        } catch (error) {
+            console.trace('Erreur dans la méthode balanceStripe du paiementController :',
+                error);
+            res.status(500).end();
+        }
+    },
     getAll: async (req, res) => {
         try {
             const paiements = await Paiement.findAll();
@@ -766,6 +811,9 @@ const paiementController = {
             res.status(500).json(error.message);
         }
     },
+
+
+
 
     getOne: async (req, res) => {
         try {

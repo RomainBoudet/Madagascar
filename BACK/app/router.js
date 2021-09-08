@@ -281,6 +281,16 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  */
  router.post('/webhookpaiementCB', paiementController.webhookpaiementCB);
 
+ /**
+ * Connaitre la balance STRIPE du compte
+ * @route GET /balanceStripe
+ * @group utilisateur
+ * @summary  Connaitre la balance STRIPE du compte
+ * @returns {JSON} 200 -  Connaitre la balance STRIPE du compte
+ */
+  router.get('/balanceStripe', admin, paiementController.balanceStripe);
+
+
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 

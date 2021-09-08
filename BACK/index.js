@@ -55,10 +55,14 @@ app.use(logger);
 
 
 // le parser JSON qui récupère le payload quand il y en a un et le transforme en objet JS disponible sous request.body
+// Je récupére un rawBody sur les deux routes du webhook de STRIPE pour verifier la signature STRIPE
 app.use(express.json({
     verify: (req, res, buf) => {
         const url = req.originalUrl;
         if (url.startsWith('/v1/webhookpaiement')) {
+            req.rawBody = buf
+        }
+        if (url.startsWith('/v1/webhookpaiementSEPA')) {
             req.rawBody = buf
         }
     }

@@ -252,7 +252,7 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
 
 /**
  * Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client valide le panier, avant de choisir son mode paiement mais apres avoir choisit son transporteur.
- *  @route GET /user/paiement
+ *  @route GET /user/paiementCB
  * @group utilisateur
  * @summary  Prend en charge le paiement via STRIPE
  * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
@@ -260,7 +260,16 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  router.get('/user/paiementCB', client, paiementController.paiementCB);
 
  /**
- * Permet de récupérer la clé client secret nécéssaire a STRIPE, nécéssaire pour le front.
+ * Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client valide le panier, avant de choisir son mode paiement mais apres avoir choisit son transporteur.
+ *  @route GET /user/paiementSEPA
+ * @group utilisateur
+ * @summary  Prend en charge le paiement via STRIPE
+ * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
+ */
+  router.get('/user/paiementSEPA', client, paiementController.paiementSEPA);
+
+ /**
+ * Permet de récupérer la clé client secret nécéssaire a STRIPE pour une paiement CB, nécéssaire pour le front.
  *  @route GET /user/paiementkey
  * @group utilisateur
  * @summary  Permet de récupérer la clé client secret nécéssaire a STRIPE *** nécéssite d'être authentifié et d'avoir tenté d'effectuer un paiement.
@@ -268,18 +277,37 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  */
   router.get('/user/paiementkey', paiementController.key);
 
+   /**
+ * Permet de récupérer la clé client secret nécéssaire a STRIPE pour un paiement SEPA, nécéssaire pour le front.
+ *  @route GET /user/paiementkeySEPA
+ * @group utilisateur
+ * @summary  Permet de récupérer la clé client secret nécéssaire a STRIPE *** nécéssite d'être authentifié et d'avoir tenté d'effectuer un paiement.
+ * @returns {JSON} 200 -  Renvoie la valeur de payementIntent.client_secret
+ */
+    router.get('/user/paiementkeySEPA', paiementController.keySEPA);
+
 
 // router.get('/insertCookieForWebhookTest', paiementController.insertCookieForWebhookTest);
 
 /**
- * Prend en charge le webhook STRIPE apres un paiement
+ * Prend en charge le webhook STRIPE apres un paiement validé CB et SEPA
  * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
- *  @route POST /webhookpaiementCB
+ *  @route POST /webhookpaiement
+ * @group utilisateur
+ * @summary  Prend en charge le webhook STRIPE apres un paiement validé CB et SEPA
+ * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres un paiement validé CB et SEPA
+ */
+ router.post('/webhookpaiement', paiementController.webhookpaiement);
+
+ /**
+ * Prend en charge le webhook STRIPE apres une tentative paiement SEPA
+ * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
+ *  @route POST /webhookpaiementSEPA
  * @group utilisateur
  * @summary  Prend en charge le webhook STRIPE apres un paiement
- * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres un paiement
+ * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres une tentative paiement SEPA
  */
- router.post('/webhookpaiementCB', paiementController.webhookpaiementCB);
+  router.post('/webhookpaiementSEPA', paiementController.webhookpaiementSEPA);
 
  /**
  * Connaitre la balance STRIPE du compte

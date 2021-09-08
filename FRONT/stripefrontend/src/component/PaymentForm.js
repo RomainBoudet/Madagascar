@@ -44,14 +44,7 @@ export default function PaymentForm() {
   const elements = useElements()
   try {
 
-
-
-
-
-
     const handleSubmit = async (e) => {
-
-
 
       e.preventDefault()
 
@@ -64,7 +57,6 @@ export default function PaymentForm() {
       const options = { 
         withCredentials: true,
         mode: 'cors',
-        //headers: {'x-xsrf-token':"9dfe68ed5174119fa30bc7fb2e69a97d2c14f4b45d8859759f8db54ea1acf5855ccb2624e47f7fcdb69f9d9e7791d2e94fae73caeb00f204ed8b81c75bcaba299e3296170c7f" },
       };
 
       
@@ -85,12 +77,33 @@ export default function PaymentForm() {
       });
 
 
+   
+  
+
+
       if (result.error) {
         // Show error to your customer (e.g., insufficient funds)
         console.log(result.error.message);
       } else {
         // The payment has been processed!
         if (result.paymentIntent.status === 'succeeded') {
+
+          // j'entregistre le moyen de payement
+          /* const payementMethod = await stripe.createPaymentMethod({
+            type: 'card',
+            card: elements.getElement(CardElement),
+            billing_details: {
+              name: clientSecret.data.client,
+            },
+          })
+
+          const payementMethodId = payementMethod.id;
+
+          await axios.post('https://localhost:4000/v1/user/payementMethod', {
+            payementMethodId,
+          }, {
+            withCredentials: true,
+          }); */
           // Show a success message to your customer
           // There's a risk of the customer closing the window before callback
           // execution. Set up a webhook or plugin to listen for the

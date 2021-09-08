@@ -41,7 +41,7 @@ class Shop {
         } = await db.query('SELECT * FROM mada.shop ORDER BY shop.id ASC');
 
         if (!rows[0]) {
-            throw new Error("Aucune shop dans la BDD");
+            null;
         }
         consol.model(
             `les informations des ${rows.length} shop ont été demandé !`
@@ -69,7 +69,7 @@ class Shop {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun shop avec cet id");
+            null;
         }
 
         consol.model(

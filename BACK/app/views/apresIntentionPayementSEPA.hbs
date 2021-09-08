@@ -25,37 +25,30 @@
 <body>
 
     <h3>Bonjour <span> {{prenom}}, </span> </h3> <br>
-    <p>Nous vous remercions de votre commande sur le site {{shopNom}} . Nous vous tiendrons informé par e-mail lorsque les articles de votre
-        commande auront été expédiés.
-        Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier
-        celle-ci dans
-        Vos commandes sur votre espace personnel.<br>
+    <p>Nous vous remercions de votre commande sur le site {{shopNom}} . 
+        Vous avez choisi le reglement par virement SEPA, ce virement peut prendre plusieurs jour. 
+        Nous vous tiendrons informé par mail lorsque le paiement aura été validé ou non.
+        Vous pouvez suivre l’état de votre commande ou modifier
+        celle-ci dans Vos commandes sur votre espace personnel.<br>
         Commande N°{{refCommande}} <br>
         Statut de votre commande : {{statutCommande}} <br>
         Votre mode de livraison : {{nomTransporteur}}<br>
-        Délai de livraison estimé : {{delai}} <br>
-
         {{#compare idTransporteur "==" 3}}
         Vous avez choisi un retrait sur le marché, votre commande ne sera pas expédié.<br>
         {{else}}
-        Votre commande sera expédié à : {{adresse}} <br>
+        Aprés validation du paiement votre commande sera expédié à : {{adresse}} <br>
         {{/compare}}
         {{#if commentaire }}
         Votre commentaire : "{{commentaire}}" <br>
         {{else}}
         {{/if}}
         Montant total de votre commande : {{montant}}€ <br>
-        {{#if marqueCB }}
-        Moyen de paiement selectionné : {{paiementType}} {{marqueCB}} <br>
-        {{else}}
-        {{/if}}
         {{#if codeBanque}}
         Moyen de paiement selectionné : {{paiementType}}, code banque : {{codeBanque}} <br>
         {{else}}
         {{/if}}
-        
         {{#compare sendSmsWhenShipping "==" 'true'}}
-        Un sms vous sera envoyé lorsque votre commande sera remis au tranporteur. <br>
+        Un sms vous sera envoyé lorsque votre commande sera remis au tranporteur (sous condition d'un paiement validé). <br>
         {{else}}
         {{/compare}}
         Vos produit commandés :

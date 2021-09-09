@@ -203,6 +203,28 @@ class Commande {
 
     }
 
+    /**
+     * Méthode chargé d'aller mettre à jour les informations relatives à une commande passé en paramétre avec le statut choisi
+     * @param idCommandeStatut - le montant d'un commande
+     * @param id - l'identifiant du champs a mettre a jour
+     * @returns - les informations du commande mis à jour
+     * @async - une méthode asynchrone
+     */
+     async updateStatutCommande() {
+        const {
+            rows,
+        } = await db.query(
+            `UPDATE mada.commande SET updated_date=now(), id_commandeStatut = $1  WHERE id = $2 RETURNING *;`,
+            [this.idCommandeStatut, this.id]
+        );
+        this.updatedDate = rows[0].updated_date;
+        console.log(
+            `la commande id ${this.id} avec le statut ${this.idCommandeStatut} a été mise à jour le ${this.updatedDate} !`
+        );
+        return new Commande(rows[0]);
+
+    }
+
 
 
 

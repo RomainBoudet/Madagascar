@@ -74,6 +74,7 @@ const cacheGenerator = (options) => {
 
                     
                     // on stocke la réponse dans le cache, sans la stringifier (plus besoin)
+                    //sinon example :  await redis.set(`key`, JSON.stringify(value));
                     redis.setex(theKey, options.ttl, theResponse);
 
 

@@ -25,11 +25,20 @@
 <body>
 
     <h3>Bonjour <span> {{prenom}}, </span> </h3> <br>
-    <p>Nous vous remercions de votre commande sur le site {{shopNom}} . Nous vous tiendrons informé par e-mail lorsque les articles de votre
-        commande auront été expédiés.
+    <p>
+        {{#if codeBanque}}
+        Nous vous remercions pour votre commande sur le site {{shopNom}} . Nous avons le plaisir de vous informer que votre paiement par virement SEPA a été validé ! Nous vous tiendrons informé par e-mail lorsque les articles de votre
+        commande auront été expédiés.<br>
+        Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier
+        celle-ci dans Vos commandes sur votre espace personnel.<br>
+        {{else}}
+        Nous vous remercions de votre commande sur le site {{shopNom}} . Nous vous tiendrons informé par e-mail lorsque les articles de votre
+        commande auront été expédiés.<br>
         Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier
         celle-ci dans
         Vos commandes sur votre espace personnel.<br>
+        {{/if}}
+        <br>
         Commande N°{{refCommande}} <br>
         Statut de votre commande : {{statutCommande}} <br>
         Votre mode de livraison : {{nomTransporteur}}<br>

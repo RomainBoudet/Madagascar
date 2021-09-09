@@ -360,8 +360,7 @@ const paiementController = {
     },
 
 
-    //NOTE 
-    //! Pas besoin de faire appel a la methode paymentIntents.confirm dans le back (qui nécéssite un paymentMethod que je n'ai pas encore!), si on passe en front par la méthode stripe.confirmCardPayment, qui devrait confirmer automatiquement le paymentIntent 
+
     // https://stripe.com/docs/js/payment_methods/create_payment_method et surtout : https://stripe.com/docs/js/payment_intents/confirm_card_payment
     // https://stripe.com/docs/connect/collect-then-transfer-guide?platform=web : 
 
@@ -381,7 +380,7 @@ const paiementController = {
     //FR5720041010050500013M02608	Le statut du PaymentIntent passe de processing à succeeded, mais un litige est immédiatement créé.
 
     //NOTE 
-    //ce webhook est contacté par 3 type d'évenement, définit dans le dashBoard STRIPE :
+    //!ce webhook est contacté par 3 type d'évenement, définit dans le dashBoard STRIPE, qu'il proviennent d'un payement CB ou SEPA :
     /*
         payment_intent.succeeded
         payment_intent.canceled
@@ -413,108 +412,132 @@ const paiementController = {
             // avec mes metadata passé a la création du payment intent
             sessionStore.get(paymentIntent.metadata.session, async function (err, session) {
 
-                // ici j'ai accés a la session du user qui a passé commande !
 
+                //ici si paymentData.type === "sepa_debit" alors session doit sortir de REDIS ! ... car toutes les données de l'achat ont été supprimé de la session apres intention paiement SEPA
+                if (paymentData.type === "sepa_debit") {
 
-                // l'évenement 'payment_intent.processing' précéde de quelques ms le 'payment_intent.succeeded' ou 'payment_intent.payment_failed'. Je n'intéragit avec cet évenement que si le client a payé avec SEPA.
-                // Si 
-                if (event.type === 'payment_intent.processing' && paymentData.type === "sepa_debit") {
+                    session = await redis.get(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`).then(JSON.parse);
 
-                    // j'envoie un email indiquant la bonne reception de la volonté de payé par virement SEPA, et l'envoi d'un prochain mail, si jamais le webhook est contacté par l'évenement 'payment_intent.succeeded' ou 'payment_intent.payment_failed'
-                    // passé le statut de commande a 1= en attente
+                };
 
-                } else if (event.type === 'payment_intent.processing' && paymentData.type === "card") {
-                    res.status(200).end();
-                }
+                // ici j'ai accés a la session du user qui a passé commande, via REDIS si commande ultérieur via SEPA ou session si paiement CB !
 
                 //Si le paiement à bien été effectué et reçu (SEPA ou CB) :
                 if (event.type === 'payment_intent.succeeded' && event.data.object.amount_received === session.totalStripe) {
 
+
                     try {
 
-                        //! je met a jour les stocks suite au produits achetés avec succés !!
-                        try {
-                            for (const item of session.cart) {
-                                console.log(`On met a jour les stock pour l'item ${item.produit}`);
-                                const updateProduit = await Stock.findOne(item.id);
-                                updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
-                                await updateProduit.update();
-                                console.log("stock bien mis a jour");
-
-                            }
-                        } catch (error) {
-                            console.log(`Erreur lors de la mise a jour des stock dans la methode Webhook du paiementController : ${error.message}`);
-                            console.trace(error);
-                            res.status(500).end();
-                        }
-
-
-                        //! insérer l'info en BDD dans la table commande !
                         let resultCommande;
                         let articlesBought;
 
-                        try {
-
-                            //je construit ce que je vais passer comme donnée de reférence..
-                            const articles = [];
-                            session.cart.map(article => (`${articles.push(article.id+"."+article.quantite)}`));
-                            articlesBought = articles.join('.');
-
-                            const dataCommande = {};
-
-                            const referenceCommande = `${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
-
-                            dataCommande.reference = referenceCommande;
-                            //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
-                            dataCommande.idCommandeStatut = 3;
-                            dataCommande.idClient = session.user.idClient;
-
-                            if (session.commentaire && session.commentaire !== '') {
-                                dataCommande.commentaire = session.commentaire
-                            };
-                            if (session.sendSmsWhenShipping == 'true') {
-                                //const isTrueSet = (session.sendSmsWhenShipping === 'true');
-                                dataCommande.sendSmsShipping = session.sendSmsWhenShipping
-                            };
+                        // Si le paiement est réalisé par SEPA les données ont déja été inséré lors de l'event payment_intent.processing
+                        if (paymentData.type !== "sepa_debit") {
 
 
-                            const newCommande = new Commande(dataCommande);
-                            resultCommande = await newCommande.save();
+                            //! je met a jour les stocks suite au produits achetés avec succés !!
+                            try {
+                                for (const item of session.cart) {
+                                    console.log(`On met a jour les stock pour l'item ${item.produit}`);
+                                    const updateProduit = await Stock.findOne(item.id);
+                                    updateProduit.quantite -= item.quantite; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
+                                    await updateProduit.update();
+                                    console.log("stock bien mis a jour");
 
-                            //console.log("resultCommande ==>> ", resultCommande);
+                                }
+                            } catch (error) {
+                                console.log(`Erreur lors de la mise a jour des stock dans la methode Webhook du paiementController : ${error.message}`);
+                                console.trace(error);
+                                res.status(500).end();
+                            }
 
-                        } catch (error) {
-                            console.log(`Erreur dans la méthode d'insertion de la commande dans la methode Webhook du paiementController : ${error.message}`);
-                            console.trace(error);
-                            res.status(500).end();
+
+
+                            //! insérer l'info en BDD dans la table commande !
+
+
+                            try {
+
+                                //je construit ce que je vais passer comme donnée de reférence..
+                                const articles = [];
+                                session.cart.map(article => (`${articles.push(article.id+"."+article.quantite)}`));
+                                articlesBought = articles.join('.');
+
+                                const dataCommande = {};
+
+                                const referenceCommande = `${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
+
+                                dataCommande.reference = referenceCommande;
+                                //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
+                                dataCommande.idCommandeStatut = 3;
+                                dataCommande.idClient = session.user.idClient;
+
+                                if (session.commentaire && session.commentaire !== '') {
+                                    dataCommande.commentaire = session.commentaire
+                                };
+                                if (session.sendSmsWhenShipping == 'true') {
+                                    //const isTrueSet = (session.sendSmsWhenShipping === 'true');
+                                    dataCommande.sendSmsShipping = session.sendSmsWhenShipping
+                                };
+
+
+                                const newCommande = new Commande(dataCommande);
+                                resultCommande = await newCommande.save();
+
+                                //console.log("resultCommande ==>> ", resultCommande);
+
+                            } catch (error) {
+                                console.log(`Erreur dans la méthode d'insertion de la commande dans la methode Webhook du paiementController : ${error.message}`);
+                                console.trace(error);
+                                res.status(500).end();
+                            }
+
+                            //! Insérer l'info en BDD dabns la table ligne commande 
+                            try {
+                                //Je boucle sur chaque produit commandé dans le cart...
+                                for (const article of session.cart) {
+
+                                    const dataLigneCommande = {};
+                                    dataLigneCommande.quantiteCommande = article.quantite;
+                                    dataLigneCommande.idProduit = article.id;
+                                    dataLigneCommande.idCommande = resultCommande.id;
+
+                                    const newLigneCommande = new LigneCommande(dataLigneCommande);
+                                    await newLigneCommande.save();
+
+                                }
+                            } catch (error) {
+                                console.log(`Erreur dans la méthode d'insertion des ligne de commandes dans la methode Webhook du paiementController : ${error.message}`);
+                                console.trace(error);
+                                res.status(500).end();
+                            }
+
                         }
 
-                        //! Insérer l'info en BDD dabns la table ligne commande 
-                        try {
-                            //Je boucle sur chaque produit commandé dans le cart...
-                            for (const article of session.cart) {
 
-                                const dataLigneCommande = {};
-                                dataLigneCommande.quantiteCommande = article.quantite;
-                                dataLigneCommande.idProduit = article.id;
-                                dataLigneCommande.idCommande = resultCommande.id;
+                        if (paymentData.type === "sepa_debit") {
 
-                                const newLigneCommande = new LigneCommande(dataLigneCommande);
-                                await newLigneCommande.save();
+                            //même si je ne dois pas insérer de new commande pour l'event SEPA, je dois néanmoins mettre a jour le status de la commande a paiement validé.
+                            resultCommande = session.resultCommande; //en provenance de REDIS !
+                            articlesBought = session.articlesBought; //''
 
-                            }
-                        } catch (error) {
-                            console.log(`Erreur dans la méthode d'insertion des ligne de commandes dans la methode Webhook du paiementController : ${error.message}`);
-                            console.trace(error);
-                            res.status(500).end();
+                            const updateStatus = new Commande({
+                                idCommandeStatut: 3,
+                                id: resultCommande.id
+                            })
+
+                            //et je redéfinis resultCommande une fois bien mis a jour, pour que les données soient a jours dans les mail et sms !
+                            resultCommande = await updateStatus.updateStatutCommande();
+
+
                         }
 
                         //! Insérer l'info en BDD dabns la table paiement !
 
                         let referencePaiement;
                         let methode;
-                        try {
 
+                        try {
 
                             if (paymentData.type === "card") {
 
@@ -548,7 +571,10 @@ const paiementController = {
 
 
 
+                        if (paymentData.type === "sepa_debit") {
 
+
+                        }
 
                         //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produits récemment achetés.
                         let transporter;
@@ -556,6 +582,8 @@ const paiementController = {
                         let statutCommande;
                         let contexte;
                         let shop;
+
+
                         try {
                             //Sendgrid ou MailGun serait préférable en prod...
                             //https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
@@ -617,17 +645,22 @@ const paiementController = {
                                 contexte.delai = capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber, 'day')))
                             }
 
+                            let subject;
                             if (paymentData.type === "card") {
-                                contexte.marqueCB = paymentData.card.brand
+                                contexte.marqueCB = paymentData.card.brand;
+                                subject = `Votre commande sur le site d'artisanat Malgache ${shop.nom} ✅ `;
                             } else if (paymentData.type === "sepa_debit") {
                                 contexte.codeBanque = paymentData.sepa_debit.bank_code
+                                subject = `Votre commande a été validé sur le site d'artisanat Malgache ${shop.nom} ✅ `;
+
                             }
+
 
                             // l'envoie d'email définit par l'object "transporter"
                             const info = await transporter.sendMail({
                                 from: process.env.EMAIL, //l'envoyeur
                                 to: session.user.email,
-                                subject: `Votre commande sur le site d'artisanat Malgache ${shop.nom} ✅ `, // le sujet du mail
+                                subject, // le sujet du mail
                                 text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande sur le site d'artisanat Malgache ${shop.nom} .`,
                                 /* attachement:[
                                     {filename: 'picture.JPG', path: './picture.JPG'}
@@ -781,7 +814,7 @@ const paiementController = {
                                         amount: balance.available[0].amount,
                                         currency: 'eur',
                                     });
-
+                                    console.log("On a bien viré le solde STRIPE dispo vers le CCP !")
                                 }
 
 
@@ -793,7 +826,14 @@ const paiementController = {
                         }
 
 
-                        //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement sans devoir se reconnecter. 
+
+                    } catch (error) {
+                        console.log(`Erreur dans la partie payment_intent.succeeded du Webhook du paiementController : ${error.message}`);
+                        console.trace(error);
+                        res.status(500).end();
+                    }
+
+                    if (paymentData.type !== "sepa_debit") {
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
 
                             delete session.cart,
@@ -805,8 +845,6 @@ const paiementController = {
                                 delete session.idTransporteur,
                                 delete session.IdPaymentIntentStripe,
                                 delete session.clientSecret,
-                                delete session.IdPaymentIntentStripeSEPA,
-                                delete session.clientSecretSEPA,
                                 delete session.commentaire,
                                 delete session.sendSmsWhenShipping,
                                 // j'insere cette session modifié dans REDIS !
@@ -814,22 +852,16 @@ const paiementController = {
 
                         });
 
-                    } catch (error) {
-                        console.log(`Erreur dans la partie payment_intent.succeeded du Webhook du paiementController : ${error.message}`);
-                        console.trace(error);
-                        res.status(500).end();
+                    } else {
+
+                        // Sinon je supprimme la session mis dans REDIS dans le webhookSEPA
+                        await redis.del(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`);
                     }
 
-
                     // TODO 
-                    // écrire une facture!
-
-                    // permettre un nouveau paiement dans tous les cas nécéssaire
-                    // Permettre d'autre mode de paiement, virement et paypal ? puis google pay apple pay et un truc chinois !
+                    // écrire une facture !
 
                     return res.status(200).end();
-
-
                 }
 
 
@@ -857,6 +889,11 @@ const paiementController = {
                         // le client a pu faire la commande SEPA il y a longtemps :
                         // email client virement SEPA fail !
                         // je lui indique la raison du refus si je la connais...
+
+                        //suppression des stock mis de coté
+
+                        // suppression de la commande !
+
 
 
                     }
@@ -1147,11 +1184,39 @@ const paiementController = {
                         }
                     }
 
-                    console.log("On tombe dans l'érreur de paiement par défault en fin de méthode webhookPaiement !");
+                    /* console.log("On tombe dans l'érreur de paiement par défault en fin de méthode webhookPaiement !");
                     res.status(404).json({
                         message: "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité."
-                    })
+                    }) */
 
+                }
+
+
+                //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement sans devoir se reconnecter. 
+
+                if (paymentData.type !== "sepa_debit") {
+                    sessionStore.get(paymentIntent.metadata.session, function (err, session) {
+
+                        delete session.cart,
+                            delete session.totalTTC,
+                            delete session.totalHT,
+                            delete session.totalTVA,
+                            delete session.coutTransporteur,
+                            delete session.totalStripe,
+                            delete session.idTransporteur,
+                            delete session.IdPaymentIntentStripe,
+                            delete session.clientSecret,
+                            delete session.commentaire,
+                            delete session.sendSmsWhenShipping,
+                            // j'insere cette session modifié dans REDIS !
+                            sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
+
+                    });
+
+                } else {
+
+                    // Sinon je supprimme la session mis dans REDIS dans le webhookSEPA
+                    await redis.del(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`);
                 }
 
             });
@@ -1236,7 +1301,7 @@ const paiementController = {
 
                         dataCommande.reference = referenceCommande;
                         //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
-                        dataCommande.idCommandeStatut = 1; // payment non validé...
+                        dataCommande.idCommandeStatut = 1; // payment non validé... "En attente"
                         dataCommande.idClient = session.user.idClient;
 
                         if (session.commentaire && session.commentaire !== '') {
@@ -1251,7 +1316,6 @@ const paiementController = {
                         const newCommande = new Commande(dataCommande);
                         resultCommande = await newCommande.save();
 
-                        console.log("resultCommande ==>> ", resultCommande);
 
                     } catch (error) {
                         console.log(`Erreur dans la méthode d'insertion de la commande dans la methode WebhookSEPA du paiementController : ${error.message}`);
@@ -1270,8 +1334,7 @@ const paiementController = {
                             dataLigneCommande.idCommande = resultCommande.id;
 
                             const newLigneCommande = new LigneCommande(dataLigneCommande);
-                            const resultLigneCommande = await newLigneCommande.save();
-                            console.log("resultLigneCommande ==>> ", resultLigneCommande);
+                            await newLigneCommande.save();
 
                         }
                     } catch (error) {
@@ -1364,12 +1427,45 @@ const paiementController = {
                         //TODO :
                         //!ATTENTION, il va falloir garder en BDD REDIS les infos de session jusqu' a savoir si le paiement a été validé ou non... sinon comment retrouver toutes ces données nécéssaire dans le webhook succeed aprés déconnexion du user ??
 
+                        // clé REDIS ==>> l'id du payement intent // value ==>> toute la session !
+                        // Je peux facilement la retrouver dans le webhook principale avec l'event !
+
+                        // Car j'en aurais besoin de le webhook principal, je stock en session resultCommande et articlesBought
+
+                        session.resultCommande = resultCommande;
+                        session.articlesBought = articlesBought;
+
+                        await redis.set(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`, JSON.stringify(session));
 
                     } catch (error) {
                         console.log(`Erreur dans la méthode d'insertion de la session dans REDIS aprés achat dans la methode WebhookSEPA du paiementController : ${error.message}`);
                         console.trace(error);
                         res.status(500).end();
                     }
+
+                    sessionStore.get(paymentIntent.metadata.session, function (err, session) {
+
+                        // supprimer la session...
+                        delete session.cart,
+                            delete session.totalTTC,
+                            delete session.totalHT,
+                            delete session.totalTVA,
+                            delete session.coutTransporteur,
+                            delete session.totalStripe,
+                            delete session.idTransporteur,
+                            delete session.IdPaymentIntentStripeSEPA,
+                            delete session.clientSecretSEPA,
+                            delete session.commentaire,
+                            delete session.sendSmsWhenShipping,
+                            delete session.resultCommande,
+                            delete session.articlesBought,
+
+                            // j'insere cette session modifié dans REDIS !
+                            sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {
+                                console.log("le panier a bien été supprimer dans le webhookSEPA", session)
+                            });
+
+                    });
 
                     //TODO :
 
@@ -1382,6 +1478,8 @@ const paiementController = {
                     //! Bien supprimer la commande, et ligne commande si le paiement échoue dans le webhook principale !!
 
                     //!ATTENTION, il va falloir garder en BDD REDIS les infos de session jusqu' a savoir si le paiement a été validé ou non... sinon comment retrouver toutes ces données nécéssaire dans le webhook secceed aprés déconnexion du user ??
+
+                    //! Dans le webhook ne pas oublier de supprimer les donnes mis dans REDIS 
 
                     res.status(200).end();
 
@@ -1485,7 +1583,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JXXRpLNa9FFzz1X1TS3bJSu_secret_v1yLWloa9TdqBI3QENeNYetwb",
+                client_secret: "pi_3JXmeLLNa9FFzz1X0WBkSNai_secret_VqSdoE5DyJobQSBWyVGOBkQ3F",
             });
 
 

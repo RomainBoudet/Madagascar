@@ -34,6 +34,7 @@ const {
     formatJMAHMSsecret,
     dayjs,
     formatLongSansHeure,
+    addWeekdays,
 } = require('../services/date');
 
 const {
@@ -624,10 +625,11 @@ const paiementController = {
                             if (Number(session.idTransporteur) === 3) {
                                 contexte.delai = transporteurData.estimeArriveNumber // ici une string et non un number...
                             } else {
-                                contexte.delai = capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber, 'day')))
+                               // contexte.delai = capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber, 'day')))
+                                contexte.delai = capitalize(addWeekdays(Date.now(), transporteurData.estimeArriveNumber));
                             }
 
-
+                    
                             let subject;
                             if (paymentData.type === "card") {
                                 contexte.marqueCB = paymentData.card.brand;
@@ -846,6 +848,8 @@ const paiementController = {
 
                     // TODO 
                     // écrire une facture !
+
+                    // Géré les jours de délai pour inclure les dimanche, (pas de livraison, reporté au jour suivant...)
 
                     return res.status(200).end();
                 }
@@ -1340,7 +1344,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JY1I0LNa9FFzz1X1v3PZ5de_secret_i1SmC8JuHduKnYYjall3mQgR3",
+                client_secret: "pi_3JYDHdLNa9FFzz1X0jexLbnB_secret_jAxxgJtTaNzEN7fxv4aYA3tSf",
             });
 
 

@@ -1,7 +1,12 @@
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
+const isoWeek = require('dayjs/plugin/isoWeek');
+dayjs.extend(isoWeek)
 require('dayjs/locale/fr');
+
+const Holidays = require('date-holidays');
+const hd = new Holidays('fr');
 
 
 dayjs.locale('fr');
@@ -40,8 +45,26 @@ const formatForBack = (date) => {
     return date;
 }
 
+function addWeekdays(date, days) {
+    date = dayjs(date);
+    while (days > 0) {
+        date = date.add(1, 'days');
+        // On décrémente "days" seulement si on est un jour de la semaine. Et seulement si c'est pas un jour férié !
+        if ((date.isoWeekday() !== 6 && date.isoWeekday() !== 7) && hd.isHoliday(date) === false) {
+            days -= 1;
+            console.log(hd.isHoliday(date));
+        }
+        
+    }
+    date = dayjs(date).format('dddd D MMMM');
+    return date;
+}
+//Quelque package qui pourrait aidé a l'avenir...
+//https://www.npmjs.com/package/dayjs-business-time    //https://www.npmjs.com/package/date-holidays
+
 module.exports = {
     dayjs,
+    addWeekdays,
     formatJMA,
     formatLong,
     formatForBack,

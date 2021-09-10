@@ -26,29 +26,18 @@
 
     <h3>Bonjour <span> {{prenom}}, </span> </h3> <br>
     <p>
-        {{#if codeBanque}}
-        Nous vous remercions pour votre commande sur le site {{shopNom}} . Nous avons le plaisir de vous informer que votre paiement par virement SEPA que vous avez éffectué le {{dateAchat}} a été validé ! Nous vous tiendrons informé par e-mail lorsque les articles de votre
-        commande auront été expédiés.<br>
-        Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier
-        celle-ci dans Vos commandes sur votre espace personnel.<br>
-        {{else}}
-        Nous vous remercions de votre commande sur le site {{shopNom}} . Nous vous tiendrons informé par e-mail lorsque les articles de votre
-        commande auront été expédiés.<br>
-        Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier
+        
+        Nous vous remercions pour votre commande sur le site {{shopNom}}. Malheuresement nous avons le regret de vous informer que votre paiement par virement SEPA n'a pa pu être validé et a été rejeté ! Vous pouvez effectuer un nouvel achat et utiliser un autre moyen de paiement si vous le souhaitez.<br>
+        Votre commande effectué le {{dateAchat}} avec pour numéro {{refCommande}} a été annulé sans que vous soyez débité. <br>
+        Vous pouvez suivre l’état de votre commande ou modifier
         celle-ci dans
         Vos commandes sur votre espace personnel.<br>
-        {{/if}}
+        <br>
+        Vous retrouverez ci-dessous un résumé des informations de votre commande annulée : <br>
         <br>
         Commande N°{{refCommande}} <br>
         Statut de votre commande : {{statutCommande}} <br>
         Votre mode de livraison : {{nomTransporteur}}<br>
-        Délai de livraison estimé : {{delai}} <br>
-
-        {{#compare idTransporteur "==" 3}}
-        Vous avez choisi un retrait sur le marché, votre commande ne sera pas expédié.<br>
-        {{else}}
-        Votre commande sera expédié à : {{adresse}} <br>
-        {{/compare}}
         {{#if commentaire }}
         Votre commentaire : "{{commentaire}}" <br>
         {{else}}
@@ -62,10 +51,6 @@
         Moyen de paiement selectionné : {{paiementType}}, code banque : {{codeBanque}} <br>
         {{else}}
         {{/if}}
-        {{#compare sendSmsWhenShipping "==" 'true'}}
-        Un sms vous sera envoyé lorsque votre commande sera remis au tranporteur. <br>
-        {{else}}
-        {{/compare}}
         Vos produit commandés :
         {{#each dataArticles}}
         <li>{{this.produit}}, {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, <a href="{{this.image}}" >image du produit</a> ✅ </li>

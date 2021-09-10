@@ -66,13 +66,15 @@
         {{/compare}}
         Montant total de la commande : {{montant}}€ <br>
         {{#if marqueCB}}
-        Moyen de paiement selectionné : {{paiementType}} {{marqueCB}} <br>
+        Moyen de paiement selectionné : {{paiementType}} {{marqueCB}}, , origine : {{pays}} <br>
         {{else}}
         {{/if}}
         {{#if codeBanque }}
         Moyen de paiement selectionné : {{paiementType}}, code banque : {{codeBanque}} <br>
         {{else}}
         {{/if}}
+        (Adresse Internet Protocol : {{ip}})  <br>
+
         
         Produit commandés et quantité :
         {{#each dataArticles}}

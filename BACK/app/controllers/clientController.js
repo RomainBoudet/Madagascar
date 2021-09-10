@@ -245,14 +245,16 @@ const clientController = {
         try {
 
 
-            if(req.session.user.idClient !== parseInt(req.params.id, 10)) {
+            if (req.session.user.idClient !== parseInt(req.params.id, 10)) {
 
-                return res.status(403).json({message: "Vous n'avez pas les droits pour accéder a cette ressource"})
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
 
             }
 
             //on vérifie si le user existe en BDD via à son ID
-            const userIdinDb = await Client.findOne(req.params.id);                                                                                         
+            const userIdinDb = await Client.findOne(req.params.id);
 
             // on extrait les infos du body //
             const {
@@ -265,7 +267,9 @@ const clientController = {
             } = req.body;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const oldEmail = userIdinDb.email; // on l'utilisera ultérieurement pour un envoi d'email...
@@ -493,6 +497,15 @@ const clientController = {
                 );
 
             }
+
+            // le mail demandé doit être relié au mail du user en session !! Seul le dev peut envoyer un lien a un email que le sien !
+            if (req.session.user.privilege === "Administrateur" && req.session.user.email !== email) {
+                console.log("vous n'avez pas les droit nécéssaire.");
+
+                return res.status(403).json({message: "Vous n'avez pas les droits nécéssaires"});
+
+            }
+
 
             const userInDb = await Client.findByEmail(email);
 

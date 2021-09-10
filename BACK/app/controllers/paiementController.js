@@ -52,8 +52,9 @@ const redis = require('../services/redis');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const hbs = require('nodemailer-express-handlebars');
-const smsChoiceSchema = require('../schemas/smsChoiceSchema');
-const helpers = require('handlebars-helpers')();
+const countrynames = require('countrynames');
+var helpers = require('handlebars-helpers')();
+
 
 
 
@@ -369,15 +370,6 @@ const paiementController = {
     //https://stripe.com/docs/webhooks/build
     //https://stripe.com/docs/api/events/types 
 
-    //! pour tester : https://stripe.com/docs/testing 
-    //CB
-    // Numéro carte avec 3D secure => 4000002760003184
-    // IBAN
-    //FR1420041010050500013M02606	Le statut du PaymentIntent passe de processing à succeeded.
-    //FR3020041010050500013M02609	Le statut du PaymentIntent passe de processing à succeeded après 3 minutes.
-    //FR8420041010050500013M02607	Le statut du PaymentIntent passe de processing à requires_payment_method.
-    //FR7920041010050500013M02600	Le statut du PaymentIntent passe de processing à requires_payment_method après 3 minutes.
-    //FR5720041010050500013M02608	Le statut du PaymentIntent passe de processing à succeeded, mais un litige est immédiatement créé.
 
     //NOTE 
     //!ce webhook est contacté par 3 type d'évenement, définit dans le dashBoard STRIPE, qu'il proviennent d'un payement CB ou SEPA :
@@ -398,32 +390,28 @@ const paiementController = {
             try {
                 event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
             } catch (err) {
-                return res.status(400).json(`Webhook erreur de la récupération de l'event: ${err.message}`);
-
+                return res.status(400).json(`Webhook erreur de la récupération de l'event depuis STRIPE`);
             }
 
-            const paymentIntent = event.data.object;
-
             // je récupére les infos de la CB ou du virement SEPA
-            const paymentData = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
-
+            const paymentIntent = event.data.object;
+            const paymentData = event.data.object.charges.data[0].payment_method_details;
 
             // Ici req.session ne vaut rien car c'est stripe qui contact ce endpoint. Je récupére donc la session pour savoir ce que le client vient de commander.
             // avec mes metadata passé a la création du payment intent
-            sessionStore.get(paymentIntent.metadata.session, async function (err, session) {
+            sessionStore.get(paymentIntent.metadata.session, async function (err, theSession) {
 
-
-                //ici si paymentData.type === "sepa_debit" alors session doit sortir de REDIS ! ... car toutes les données de l'achat ont été supprimé de la session apres intention paiement SEPA
+                let session;
+                session = theSession;
+                //ici si paymentData.type === "sepa_debit" alors session doit provenir de REDIS ! ... car toutes les données de l'achat ont été supprimé de la session apres intention paiement SEPA
                 if (paymentData.type === "sepa_debit") {
 
                     session = await redis.get(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`).then(JSON.parse);
 
                 };
 
-                // ici j'ai accés a la session du user qui a passé commande, via REDIS si commande ultérieur via SEPA ou session si paiement CB !
-
                 //Si le paiement à bien été effectué et reçu (SEPA ou CB) :
-                if (event.type === 'payment_intent.succeeded' && event.data.object.amount_received === session.totalStripe) {
+                if (event.type === 'payment_intent.succeeded' && event.data.object.amount_received === Number(event.data.object.metadata.amount)) {
 
 
                     try {
@@ -452,9 +440,7 @@ const paiementController = {
                             }
 
 
-
                             //! insérer l'info en BDD dans la table commande !
-
 
                             try {
 
@@ -570,12 +556,6 @@ const paiementController = {
                         }
 
 
-
-                        if (paymentData.type === "sepa_debit") {
-
-
-                        }
-
                         //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produits récemment achetés.
                         let transporter;
                         let transporteurData;
@@ -637,6 +617,8 @@ const paiementController = {
                                 commentaire: resultCommande.commentaire,
                                 sendSmsWhenShipping: session.sendSmsWhenShipping,
                                 paiementType: paymentData.type,
+                                ip: req.ip,
+
                             }
 
                             if (Number(session.idTransporteur) === 3) {
@@ -645,12 +627,16 @@ const paiementController = {
                                 contexte.delai = capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber, 'day')))
                             }
 
+
                             let subject;
                             if (paymentData.type === "card") {
                                 contexte.marqueCB = paymentData.card.brand;
+                                contexte.pays = countrynames.getName(paymentData.card.country);
                                 subject = `Votre commande sur le site d'artisanat Malgache ${shop.nom} ✅ `;
                             } else if (paymentData.type === "sepa_debit") {
-                                contexte.codeBanque = paymentData.sepa_debit.bank_code
+                                contexte.dateAchat =`${formatLong(resultCommande.dateAchat)}`,
+                                contexte.codeBanque = paymentData.sepa_debit.bank_code;
+                                contexte.pays = countrynames.getName(paymentData.sepa_debit.country);
                                 subject = `Votre commande a été validé sur le site d'artisanat Malgache ${shop.nom} ✅ `;
 
                             }
@@ -864,360 +850,194 @@ const paiementController = {
                     return res.status(200).end();
                 }
 
-
-                // Je fais le choix de garder en session les données du panier même si le paiement n'aboutit pas, pour pouvoir tester un nouveau paiement, ou un paiement avec un autre moyen.
-
-                //! CODE DE REFUS DE PAIEMENT !
-                //https://stripe.com/docs/declines/codes 
-
-                //! APRES LE PAIEMENT : 
-                //https://stripe.com/docs/payments/after-the-payment 
-
-
-                /* outcome ==>>  {
-                                    network_status: 'declined_by_network',
-                                    reason: 'insufficient_funds',
-                                    risk_level: 'normal',
-                                    risk_score: 25,
-                                    seller_message: 'The bank returned the decline code `insufficient_funds`.',
-                                    type: 'issuer_declined'
-                                } */
                 else {
 
-                    // Si un payement par sepa_debit a échoué, je dois envoyer un mail au client pour l'avertir, pour ne pas qu'il attende en vain un paiement validé ! 
-                    if (event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled' && paymentData.type === "sepa_debit") {
-                        // le client a pu faire la commande SEPA il y a longtemps :
-                        // email client virement SEPA fail !
-                        // je lui indique la raison du refus si je la connais...
+                    //! TRAITEMENT DES ÉRREURS 
 
-                        //suppression des stock mis de coté
+                    //! CODE DE REFUS DE PAIEMENT !
+                    //https://stripe.com/docs/declines/codes 
 
-                        // suppression de la commande !
+                    let infoErreur;
+                    const declineCode = event.data.object.charges.data[0].outcome.reason;
+                    //const sellerMessage = event.data.object.charges.data[0].outcome.seller_message;
+                    if (declineCode) {
+                        infoErreur = await redis.get(`mada/codeErreurPaiement:${declineCode}`);
+                    }
 
+                    //! SI PAIEMENT SEPA :
+
+                    if ((event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled') && paymentData.type === "sepa_debit") {
+
+
+                        //! Suppression des stock mis de coté lors du webhookSEPA
+                        // je ré-augmente la valeur des produits en stock en ajoutantceux contenu dans le panier annulé
+
+                        try {
+                            for (const item of session.cart) {
+                                console.log(`On ré-augmente les stock pour l'item ${item.produit}`);
+                                const updateProduit = await Stock.findOne(item.id);
+                                updateProduit.quantite += item.quantite; //( updateProduit.quantite = updateProduit.quantite + item.quantite)
+                                await updateProduit.update();
+                                console.log("stock augmenté mis a jour");
+
+                            }
+                        } catch (error) {
+                            console.log(`Erreur lors de la mise a jour des stock dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
+                        }
+
+                        //! Une mise a jour de la commande en "2" "Annullé" et non une supression de la commande pour gardeer une trace !
+
+                        let resultCommande;
+                        try {
+
+                            const updateStatus = new Commande({
+                                idCommandeStatut: 2,
+                                id: session.resultCommande.id
+                            })
+
+                            //et je redéfinis resultCommande une fois bien mis a jour, pour que les données soient a jours dans le mail d'échec SEPA !
+                            resultCommande = await updateStatus.updateStatutCommande();
+
+
+
+                        } catch (error) {
+                            console.log(`Erreur lors de la suppression de la commande (apres echec de paiement SEPA) dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
+                        }
+
+                        //! envoie d'un email indiquant l'échec du paiement SEPA et la cause si elle est connue.
+
+                        try {
+
+                            transporter = nodemailer.createTransport({
+                                host: process.env.HOST,
+                                port: 465,
+                                secure: true, // true for 465, false for other ports
+                                auth: {
+                                    user: process.env.EMAIL,
+                                    pass: process.env.PASSWORD_EMAIL,
+                                },
+                            });
+
+                            // Config pour les templates et le moteur handlebars lié a Nodemailer
+                            const options = {
+                                viewEngine: {
+                                    extName: ".hbs",
+                                    partialsDir: path.resolve(__dirname, "./views"),
+                                    defaultLayout: false
+                                },
+                                extName: ".hbs",
+                                viewPath: path.resolve(__dirname, "../views"),
+                            };
+
+                            transporter.use('compile', hbs(options));
+
+                            // je récupére les infos du transporteur choisi pour insérer les infos dans le mail.
+                            transporteurData = await Transporteur.findOne(session.idTransporteur);
+                            statutCommande = await StatutCommande.findOne(resultCommande.idCommandeStatut);
+                            shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement...
+
+                            contexte = {
+                                nom: session.user.nomFamille,
+                                prenom: session.user.prenom,
+                                email: session.user.email,
+                                refCommande: resultCommande.reference,
+                                statutCommande: statutCommande.statut,
+                                nomTransporteur: transporteurData.nom,
+                                idTransporteur: Number(session.idTransporteur),
+                                adresse: await adresseEnvoieFormat(session.user.idClient),
+                                montant: (session.totalStripe) / 100,
+                                shopNom: shop.nom,
+                                dataArticles: session.cart,
+                                commentaire: resultCommande.commentaire,
+                                sendSmsWhenShipping: session.sendSmsWhenShipping,
+                                paiementType: paymentData.type,
+                                declineCode,
+                                dateAchat: `${formatLong(resultCommande.dateAchat)}`,
+                                codeBanque: paymentData.sepa_debit.bank_code,
+
+
+                            }
+
+                            // l'envoie d'email définit par l'object "transporter"
+                            const info = await transporter.sendMail({
+                                from: process.env.EMAIL, //l'envoyeur
+                                to: session.user.email,
+                                subject: `Votre commande n'as pas pu être validé sur le site d'artisanat Malgache ${shop.nom} ❌`, // le sujet du mail
+                                text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, Votre paiement sur le site d'artisanat Malgache ${shop.nom} n'as pas pu être validé suite a votre paiement par virement SEPA.`,
+                                /* attachement:[
+                                    {filename: 'picture.JPG', path: './picture.JPG'}
+                                ] */
+                                template: 'echecApresAchat',
+                                context: contexte,
+
+                            });
+                            console.log(`Un email d'information d'échec de paiement SEPA à bien envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);
+
+
+                        } catch (error) {
+                            console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés achat dans la methode Webhook du paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
+                        }
+
+                        res.status(200).end();
 
 
                     }
 
-                    if (event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled' && paymentData.type === "card") {
+                    //! SI PAIEMENT cb
+                    if ((event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled') && paymentData.type === "card") {
 
-                        //! Ici une réponse différente si le paiement CB a échoué !! 
+                        // Ici une réponse différente selon les raisons d'échec potentielle! 
 
-                        const declineCode = event.data.object.charges.data[0].outcome.reason;
-                        const message = {
+                        message = {
                             code_error: declineCode,
                             network_status: event.data.object.charges.data[0].outcome.network_status,
-                            seller_message: event.data.object.charges.data[0].outcome.seller_message,
+                            //seller_message: sellerMessage,
+                            info: infoErreur,
+
                         };
+                        console.log(message);
+                        res.status(200).json(message);
 
-                        switch (declineCode) {
-
-                            case 'authentication_required':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a été refusée, car la transaction nécessite une authentification. Essayer de relancer le paiement et d'authentifier votre carte bancaire lorsque vous y serez invité. Si vous recevez ce code de refus de paiement aprés une transaction authentifiée, contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'approve_with_id':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible d’autoriser le paiement. Vous pouvez retenter le paiement. S’il ne peut toujours pas être traité, vous pouvez contacter votre banque."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'call_issuer':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'card_not_supported':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Ce type d’achat n’est pas pris en charge par cette carte bancaire. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-                            case 'card_velocity_exceeded':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le client a dépassé le solde ou la limite de crédit disponible sur sa carte bancaire. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'currency_not_supported':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La devise spécifiée n’est pas prise en charge par cette carte bancaire. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'do_not_honor':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'do_not_try_again':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'duplicate_transaction':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une transaction du même montant avec les mêmes informations de carte bancaire a été soumise tout récemment. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'expired_card':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a expiré. Merci d'utiliser une autre carte bancaire. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'fraudulent':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé car il a été identifié comme potentiellement frauduleux. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'incorrect_number':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'incorrect_cvc':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'insufficient_funds':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire ne dispose pas de fonds suffisants pour effectuer l’achat. Merci d'utiliser un autre moyen de paiement."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'incorrect_zip':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code postal est erroné. Merci de réessayer avec le bon code postal."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-
-                            case 'invalid_amount':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le montant du paiement n’est pas valide ou dépasse le montant autorisé par l’émetteur de la carte . Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'invalid_cvc':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'invalid_account':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'invalid_expiry_month':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le mois d’expiration n’est pas valide.	Merci de réessayer avec la bonne date d’expiration."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'invalid_expiry_year':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. L’année d’expiration n’est pas valide.	Merci de réessayer avec la bonne date d’expiration."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'invalid_number':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'issuer_not_available':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible de joindre l’émetteur de la carte, donc d’autoriser le paiement."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'lost_card':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée perdue."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'merchant_blacklist':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'new_account_information_available':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'no_action_taken':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'not_permitted':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’est pas autorisé. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'offline_pin_required':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'online_or_offline_pin_required':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'pickup_card':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'pin_try_exceeded':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le nombre de tentatives autorisées de saisie du code PIN a été dépassé."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'processing_error':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une erreur s’est produite lors du traitement de la carte bancaire. Vous pouvez retenter le paiement. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'reenter_transaction':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’a pas pu être traité par l’émetteur de la carte pour une raison inconnue. Vous pouvez retenter le paiement. "
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'restricted_card':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'revocation_of_all_authorizations':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'revocation_of_authorization':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'security_violation':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'service_not_allowed':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'stolen_card':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée volée."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'stop_payment_order':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'testmode_decline':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte utilisée est une carte de test. Utilisez une véritable carte bancaire pour effectuer le paiement"
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'transaction_not_allowed':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'try_again_later':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de retenter le paiement"
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-                            case 'withdrawal_count_limit_exceeded':
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Vous avez dépassé le solde ou la limite de crédit disponible sur votre carte bancaire. Merci d'utiliser un autre moyen de paiement"
-                                console.log(message);
-                                res.status(404).json(message);
-                                break;
-
-
-                            default:
-                                delete message.code_error;
-                                message.info = "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus."
-                                console.log(message);
-                                res.status(404).json(message);
-                        }
                     }
 
-                    /* console.log("On tombe dans l'érreur de paiement par défault en fin de méthode webhookPaiement !");
-                    res.status(404).json({
-                        message: "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité."
-                    }) */
+
+                    //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement sans devoir se reconnecter. 
+
+                    if (paymentData.type !== "sepa_debit") {
+                        sessionStore.get(paymentIntent.metadata.session, function (err, session) {
+
+                            delete session.cart,
+                                delete session.totalTTC,
+                                delete session.totalHT,
+                                delete session.totalTVA,
+                                delete session.coutTransporteur,
+                                delete session.totalStripe,
+                                delete session.idTransporteur,
+                                delete session.IdPaymentIntentStripe,
+                                delete session.clientSecret,
+                                delete session.commentaire,
+                                delete session.sendSmsWhenShipping,
+                                // j'insere cette session modifié dans REDIS !
+                                sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
+                            console.log("Panier dans le sessionStore bien supprimé");
+
+                        });
+
+                    } else {
+
+                        // Sinon je supprimme la session mis dans REDIS dans le webhookSEPA
+                        await redis.del(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`);
+                        console.log("Panier dans le REDIS bien supprimé");
+                    }
 
                 }
 
-
-                //! Je modifie la session et supprime le panier pour que l'utilisateur puisse éffectuer une autre commande / paiement sans devoir se reconnecter. 
-
-                if (paymentData.type !== "sepa_debit") {
-                    sessionStore.get(paymentIntent.metadata.session, function (err, session) {
-
-                        delete session.cart,
-                            delete session.totalTTC,
-                            delete session.totalHT,
-                            delete session.totalTVA,
-                            delete session.coutTransporteur,
-                            delete session.totalStripe,
-                            delete session.idTransporteur,
-                            delete session.IdPaymentIntentStripe,
-                            delete session.clientSecret,
-                            delete session.commentaire,
-                            delete session.sendSmsWhenShipping,
-                            // j'insere cette session modifié dans REDIS !
-                            sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
-
-                    });
-
-                } else {
-
-                    // Sinon je supprimme la session mis dans REDIS dans le webhookSEPA
-                    await redis.del(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`);
-                }
 
             });
 
@@ -1234,7 +1054,7 @@ const paiementController = {
 
     // Ce webhook est contacté par un seul type d'évenement :
     /* payment_intent.processing  => pour evoyer un mail quand le client a choisit le mode de paiement SEPA, l'avertissant d'une bonne reception de la volonté de paiement mais lui indiquant que la commande sera validé a la recpetion du paiement..
-    On log la commande en BDD avec le statut 'en attente */
+    On envoi la commande en BDD avec le statut 'en attente */
     webhookpaiementSEPA: async (req, res) => {
         try {
 
@@ -1257,8 +1077,8 @@ const paiementController = {
 
             // ce webhook s'adresse uniquement a payment_intent.processing si il provient d'un virement SEPA. 
             if (event.type === 'payment_intent.processing' && paymentData.type === "card") {
-                console.log("Couché !");
-                res.status(200).end();
+
+                return res.status(200).end();
 
             } else if (event.type === 'payment_intent.processing' && paymentData.type === "sepa_debit") {
 
@@ -1346,8 +1166,7 @@ const paiementController = {
                     //! j'envoie un email indiquant la bonne reception de la volonté de payer par virement SEPA, et l'envoi d'un prochain mail, si jamais le webhook est contacté par l'évenement 'payment_intent.succeeded' ou 'payment_intent.payment_failed'
 
                     try {
-                        //Sendgrid ou MailGun serait préférable en prod...
-                        //https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
+                     
                         const transporter = nodemailer.createTransport({
                             host: process.env.HOST,
                             port: 465,
@@ -1425,12 +1244,9 @@ const paiementController = {
 
                     try {
                         //TODO :
-                        //!ATTENTION, il va falloir garder en BDD REDIS les infos de session jusqu' a savoir si le paiement a été validé ou non... sinon comment retrouver toutes ces données nécéssaire dans le webhook succeed aprés déconnexion du user ??
-
+                        //!ATTENTION, il va falloir garder en BDD REDIS les infos de session jusqu' a savoir si le paiement a été validé ou non...
                         // clé REDIS ==>> l'id du payement intent // value ==>> toute la session !
-                        // Je peux facilement la retrouver dans le webhook principale avec l'event !
-
-                        // Car j'en aurais besoin de le webhook principal, je stock en session resultCommande et articlesBought
+                        // Je peux facilement la retrouver dans le webhook principale avec l'event.
 
                         session.resultCommande = resultCommande;
                         session.articlesBought = articlesBought;
@@ -1467,20 +1283,7 @@ const paiementController = {
 
                     });
 
-                    //TODO :
-
-                    //!Dans le webhook ne pas refaire stock, commande et ligne commande, déja insére en BDD... Mais bien mettre a jour le statut de la commande a "2" Paiement Validé !
-
-                    //! Bien pensé a faire un méthode pour UPDATE une commande si paiement validé dans le webhook principale, car une commande sera déja en BDD
-
-                    //! Si le paiement SEPA est fail, bien relacher les quantité stocké et ré-augmenter les stock !
-
-                    //! Bien supprimer la commande, et ligne commande si le paiement échoue dans le webhook principale !!
-
-                    //!ATTENTION, il va falloir garder en BDD REDIS les infos de session jusqu' a savoir si le paiement a été validé ou non... sinon comment retrouver toutes ces données nécéssaire dans le webhook secceed aprés déconnexion du user ??
-
-                    //! Dans le webhook ne pas oublier de supprimer les donnes mis dans REDIS 
-
+               
                     res.status(200).end();
 
                 });
@@ -1490,7 +1293,6 @@ const paiementController = {
                 res.status(200).end();
 
             }
-
 
 
 
@@ -1506,7 +1308,7 @@ const paiementController = {
     },
 
 
-    // Méthode pour envoyer au front la clé secréte !
+
     key: async (req, res) => {
         try {
 
@@ -1538,7 +1340,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JXXWHLNa9FFzz1X1zatAKJX_secret_GDU9L1VOzYHbGSJwRaOP8Xfmt",
+                client_secret: "pi_3JY1I0LNa9FFzz1X1v3PZ5de_secret_i1SmC8JuHduKnYYjall3mQgR3",
             });
 
 
@@ -1583,7 +1385,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JXmeLLNa9FFzz1X0WBkSNai_secret_VqSdoE5DyJobQSBWyVGOBkQ3F",
+                client_secret: "pi_3JY1c0LNa9FFzz1X0OoyUO8W_secret_454AqpHOAaLLLg4H8SSylFWuF",
             });
 
 
@@ -1597,190 +1399,7 @@ const paiementController = {
         }
     },
 
-    /* CB ==>>
-    
-    paymentData ==>>  {
-  id: 'pm_1JXMNSLNa9FFzz1Xf8wyL6ng',
-  object: 'payment_method',
-  billing_details: {
-    address: {
-      city: null,
-      country: null,
-      line1: null,
-      line2: null,
-      postal_code: '22455',
-      state: null
-    },
-    email: null,
-    name: null,
-    phone: null
-  },
-  card: {
-    brand: 'visa',
-    checks: {
-      address_line1_check: null,
-      address_postal_code_check: 'pass',
-      cvc_check: 'pass'
-    },
-    country: 'US',
-    exp_month: 4,
-    exp_year: 2028,
-    fingerprint: 'MJ2hgGyLYNMgwNms',
-    funding: 'credit',
-    generated_from: null,
-    last4: '4242',
-    networks: { available: [Array], preferred: null },
-    three_d_secure_usage: { supported: true },
-    wallet: null
-  },
-  created: 1631090610,
-  customer: 'cus_KBZRDbUs9zuRHy',
-  livemode: false,
-  metadata: {},
-  type: 'card'
-
-
-SEPA ==>> 
-
-paymentData ==>>  {
-  id: 'pm_1JXMTiLNa9FFzz1XHUHSPF3d',
-  object: 'payment_method',
-  billing_details: {
-    address: {
-      city: null,
-      country: null,
-      line1: null,
-      line2: null,
-      postal_code: null,
-      state: null
-    },
-    email: 'romain@boudet.me',
-    name: 'Leo Pape',
-    phone: null
-  },
-  created: 1631090998,
-  customer: 'cus_KBZRDbUs9zuRHy',
-  livemode: false,
-  metadata: {},
-  sepa_debit: {
-    bank_code: '19043',
-    branch_code: '',
-    country: 'AT',
-    fingerprint: 'MEj7qZUAsj92eT5l',
-    generated_from: { charge: null, setup_attempt: null },
-    last4: '3201'
-  },
-  type: 'sepa_debit'
-}
-
-
-
-CB ==>> 
-
-  event ==>>  {
-  id: 'evt_3JXMLoLNa9FFzz1X0j5wcMqX',
-  object: 'event',
-  api_version: '2020-08-27',
-  created: 1631090611,
-  data: {
-    object: {
-      id: 'pi_3JXMLoLNa9FFzz1X0MvOoG1Q',
-      object: 'payment_intent',
-      amount: 11220,
-      amount_capturable: 0,
-      amount_received: 11220,
-      application: null,
-      application_fee_amount: null,
-      canceled_at: null,
-      cancellation_reason: null,
-      capture_method: 'automatic',
-      charges: [Object],
-      client_secret: 'pi_3JXMLoLNa9FFzz1X0MvOoG1Q_secret_3rtZxjzTQcZCsNKyAJBOjuhSR',
-      confirmation_method: 'automatic',
-      created: 1631090508,
-      currency: 'eur',
-      customer: 'cus_KBZRDbUs9zuRHy',
-      description: null,
-      invoice: null,
-      last_payment_error: null,
-      livemode: false,
-      metadata: [Object],
-      next_action: null,
-      on_behalf_of: null,
-      payment_method: 'pm_1JXMNSLNa9FFzz1Xf8wyL6ng',
-      payment_method_options: [Object],
-      payment_method_types: [Array],
-      receipt_email: 'romain@boudet.me',
-      review: null,
-      setup_future_usage: 'on_session',
-      shipping: null,
-      source: null,
-      statement_descriptor: 'Madagascar Shop',
-      statement_descriptor_suffix: null,
-      status: 'succeeded',
-      transfer_data: null,
-      transfer_group: null
-    }
-  },
-  livemode: false,
-  pending_webhooks: 3,
-  request: { id: 'req_XjOG0ao9YiWc96', idempotency_key: null },
-  type: 'payment_intent.succeeded'
-}
-
-SEPA ==>> 
-
-event ==>>  {
-  id: 'evt_3JXMT7LNa9FFzz1X0NMdktuu',
-  object: 'event',
-  api_version: '2020-08-27',
-  created: 1631091003,
-  data: {
-    object: {
-      id: 'pi_3JXMT7LNa9FFzz1X0lF75iCE',
-      object: 'payment_intent',
-      amount: 8855,
-      amount_capturable: 0,
-      amount_received: 8855,
-      application: null,
-      application_fee_amount: null,
-      canceled_at: null,
-      cancellation_reason: null,
-      capture_method: 'automatic',
-      charges: [Object],
-      client_secret: 'pi_3JXMT7LNa9FFzz1X0lF75iCE_secret_TD3085PoW6I8TnOYS3YnRKOBH',
-      confirmation_method: 'automatic',
-      created: 1631090961,
-      currency: 'eur',
-      customer: 'cus_KBZRDbUs9zuRHy',
-      description: null,
-      invoice: null,
-      last_payment_error: null,
-      livemode: false,
-      metadata: [Object],
-      next_action: null,
-      on_behalf_of: null,
-      payment_method: 'pm_1JXMTiLNa9FFzz1XHUHSPF3d',
-      payment_method_options: [Object],
-      payment_method_types: [Array],
-      receipt_email: 'romain@boudet.me',
-      review: null,
-      setup_future_usage: 'off_session',
-      shipping: null,
-      source: null,
-      statement_descriptor: 'Madagascar Shop',
-      statement_descriptor_suffix: null,
-      status: 'succeeded',
-      transfer_data: null,
-      transfer_group: null
-    }
-  },
-  livemode: false,
-  pending_webhooks: 3,
-  request: { id: null, idempotency_key: null },
-  type: 'payment_intent.succeeded'
-}
-}*/
+   
 
     balanceStripe: async (req, res) => {
         try {
@@ -1810,8 +1429,6 @@ event ==>>  {
             res.status(500).json(error.message);
         }
     },
-
-
 
 
     getOne: async (req, res) => {

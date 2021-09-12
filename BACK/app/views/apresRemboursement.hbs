@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+
+<style>
+    p{
+    border-top:1px solid #000;
+    padding: 2rem;
+    }
+    h3 {
+        border-top: 1px solid rgb(138, 128, 128);
+        padding: 0.5rem;
+        color: blueviolet;
+    }
+</style>
+
+
+<body>
+
+    <h3>Bonjour <span> {{prenom}}, </span> </h3> <br>
+    <p>
+        Suite a votre demande, nous vous confirmons le remboursement pour un montant de {{montant}}€ de votre commande référence n°{{refCommande}} réalisé le {{dateAchat}} sur le site {{shopNom}}. <br>
+        <br>
+        {{#compare  moyenPaiement "==" "card"}}
+        Le moyen de paiement que vous avez utilisé pour votre commande (carte bancaire {{moyenPaiementDetail}} finissant par {{derniersChiffres}}) vous sera recrédité dans 5 a 10 jours ouvrables au plus tard.<br>
+        {{else}}
+        {{/compare}}
+        {{#compare  moyenPaiement "==" "sepa_debit"}}
+        Le moyen de paiement que vous avez utilisé pour votre commande (virement SEPA avec le code banque {{moyenPaiementDetail}}) vous sera recrédité dans 5 a 10 jours ouvrables au plus tard.<br>
+        {{else}}
+        {{/compare}}
+        <br>
+        Nous espérons vous revoir bientôt.</p>
+        <br>
+</body>
+
+</html>
+
+{{!-- pour la syntaxe et les opérateur de conditions =>  https://www.npmjs.com/package/handlebars-helpers --}}

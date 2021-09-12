@@ -123,6 +123,34 @@ class Commande {
         return rows.map((id) => new Commande(id));
     }
 
+
+     /**
+     * Méthode chargé d'aller chercher les informations relatives à une référence comande passé en paramétre
+     * @param commande - une référence d'une commande
+     * @returns - les informations d'une commande demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+      static async findByRefCommande(commande) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            "SELECT commande.*, paiement.reference as Ref_paiement, paiement.montant, paiement.payment_intent, statut_commande.statut, statut_commande.id as status_id FROM mada.commande JOIN mada.paiement ON paiement.id_commande = commande.id JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Expédiée');",
+            [commande]
+        );
+
+        if (!rows[0]) {
+            null;
+        }
+
+        consol.model(
+            `la commande avec la référence : ${commande} et avec un statut compatible avec un remboursement a été demandé en BDD !`
+        );
+
+        return new Commande(rows[0]);
+    }
     /**
      * Méthode chargé d'aller insérer les informations relatives à une commande passé en paramétre
      * @param reference - la reférence d'une commande

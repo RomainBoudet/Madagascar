@@ -131,7 +131,7 @@ class Client {
     );
 
     if (!rows[0]) {
-      throw new Error("Aucun client avec cet id");
+     return null;
     }
 
     consol.model(
@@ -161,7 +161,7 @@ class Client {
 
     if (!rows[0]) {
       consol.model("Aucun client avec cet email");
-      return null
+      return null;
 
     } else {
       consol.model(

@@ -447,6 +447,9 @@ const fakeData = async () => {
         }, {
             nom: 'Expédiée',
             description: "La commande a remis au transporteur. Vous avez dû recevoir un email contenant le numéro de tracking vous permettant de suivre l'acheminement de votre colis. Ce numéro de tracking est également accessible dans votre compte client dans la rubrique Mes commandes / Onglet Expéditions"
+        },{
+            nom: 'Remboursée',
+            description: "La commande a été remboursé. Vous avez dû recevoir un email confirmant ce remboursement"
         }]
 
         for (let index = 1; index <= volume * 5; index++) {
@@ -505,7 +508,12 @@ const fakeData = async () => {
 
                 ref: `PAIEMENT/${uuid()} `,
                 methode: faker.finance.transactionDescription(),
+                intent: `pi_test${uuid()}`,
                 montant: faker.finance.amount(),
+                moyenPaiement:'card',
+                moyenPaiementDetail: 'visa',
+                origine:'US',
+                derniersChiffres: null,
                 id_client: index,
                 id_commande: index,
 
@@ -1332,11 +1340,11 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${paiements.length} paiements`);
         console.time(`Import de ${paiements.length} paiements`);
-        const paiementsInsert = "INSERT INTO mada.paiement (reference, methode, montant, id_commande) VALUES ($1, $2, $3, $4);";
+        const paiementsInsert = "INSERT INTO mada.paiement (reference, methode, payment_intent, moyen_paiement, moyen_paiement_detail, origine, derniers_chiffres, montant, id_commande) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);";
 
         for (const paiement of paiements) {
             consol.seed(`Import du paiement ref ${paiement.ref} et l'id commande ${paiement.id_commande}`);
-            await db.query(paiementsInsert, [paiement.ref, paiement.methode, paiement.montant, paiement.id_commande]);
+            await db.query(paiementsInsert, [paiement.ref, paiement.methode, paiement.intent, paiement.moyenPaiement, paiement.moyenPaiementDetail, paiement.origine, paiement.derniersChiffres, paiement.montant, paiement.id_commande]);
         }
 
         consol.seed(`Fin de l'import de ${paiements.length} paiements`);
@@ -1405,8 +1413,7 @@ const fakeData = async () => {
 
 
         //! ADRESSE
-        //FLAG                                                                                                                                                          
-
+                                                                                                                                    
         consol.seed(`Début de l'import de ${adresses.length *3} adresses`);
         console.time(`Import de ${adresses.length *3} adresses`);
         const adressesInsertEnvoieTrue = "INSERT INTO mada.adresse (titre, prenom, nom_famille, ligne1, code_postal, ville, pays, telephone, envoie, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, TRUE, now(), $9);";

@@ -52,7 +52,6 @@ function addWeekdays(date, days) {
         // On décrémente "days" seulement si on est un jour de la semaine. Et seulement si c'est pas un jour férié !
         if ((date.isoWeekday() !== 6 && date.isoWeekday() !== 7) && hd.isHoliday(date) === false) {
             days -= 1;
-            console.log(hd.isHoliday(date));
         }
         
     }

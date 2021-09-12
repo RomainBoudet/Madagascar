@@ -7,6 +7,7 @@ const Transporteur = require('../models/transporteur');
 const Shop = require('../models/shop');
 const Twillio = require('../models/twillio');
 const Stock = require('../models/stock');
+const Client = require('../models/client');
 const AdminPhone = require('../models/adminPhone');
 const AdminVerifEmail = require('../models/adminVerifEmail');
 
@@ -54,6 +55,9 @@ const path = require('path');
 const nodemailer = require('nodemailer');
 const hbs = require('nodemailer-express-handlebars');
 const countrynames = require('countrynames');
+/* const {
+    Client
+} = require('pg'); */
 var helpers = require('handlebars-helpers')();
 
 
@@ -105,6 +109,12 @@ const paiementController = {
     //STRIPE processus complet = https://stripe.com/docs/connect/collect-then-transfer-guide?platform=web 
     // comprendre les différent type de paiement sur STRIP : https://stripe.com/docs/payments/payment-intents/migration/charges 
     // API PaymentIntent a privilégier sur API Charge !
+
+    //! Mesure de protection a mettre en place contre les testeurs de CB :
+    //! reCAPTCHA de Google (https://developers.google.com/recaptcha/intro)
+    //! Limiter le nombre de nouveaux clients pouvant être créés par une même adresse IP par jour. => API rateLimiter !
+    //! Limiter le nombre de cartes pouvant être associées à un seul client
+
     paiementCB: async (req, res) => {
         try {
 
@@ -398,6 +408,10 @@ const paiementController = {
             const paymentIntent = event.data.object;
             const paymentData = event.data.object.charges.data[0].payment_method_details;
 
+            console.log("paymentIntent ==>> ", paymentIntent);
+            console.log("paymentData ==>> ", paymentData);
+            console.log("event ==>> ", event);
+
             // Ici req.session ne vaut rien car c'est stripe qui contact ce endpoint. Je récupére donc la session pour savoir ce que le client vient de commander.
             // avec mes metadata passé a la création du payment intent
             sessionStore.get(paymentIntent.metadata.session, async function (err, theSession) {
@@ -523,8 +537,15 @@ const paiementController = {
 
                         let referencePaiement;
                         let methode;
+                        let moyenPaiementDet;
+                        let origine;
+
+                        //paymentIntent.id
 
                         try {
+
+                            const dataPaiement = {};
+
 
                             if (paymentData.type === "card") {
 
@@ -532,20 +553,35 @@ const paiementController = {
 
                                 methode = `moyen_de_paiement:${paymentData.type}/_marque:_${paymentData.card.brand}/_type_de_carte:_${paymentData.card.funding}/_pays_origine:_${paymentData.card.country}/_mois_expiration:_${paymentData.card.exp_month}/_annee_expiration:_${paymentData.card.exp_year}/_4_derniers_chiffres:_${paymentData.card.last4}`;
 
+                                moyenPaiementDet = `${paymentData.card.brand} ${paymentData.card.funding}`;
+
+                                origine = countrynames.getName(paymentData.card.country);
+
+                                dataPaiement.derniersChiffres = paymentData.card.last4;
+
 
                             } else if (paymentData.type === "sepa_debit") {
 
                                 referencePaiement = `${paymentData.sepa_debit.bank_code}.${paymentData.sepa_debit.last4}.${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
 
                                 methode = `moyen_de_paiement:${paymentData.type}/_code_banque:_${paymentData.sepa_debit.bank_code}/_pays_origine:_${paymentData.sepa_debit.country}/_4_derniers_chiffres:_${paymentData.sepa_debit.last4}`;
+
+                                moyenPaiementDet = paymentData.sepa_debit.bank_code;
+
+                                origine = countrynames.getName(paymentData.sepa_debit.country);
+
                             }
 
-                            const dataPaiement = {};
 
                             dataPaiement.reference = referencePaiement;
                             dataPaiement.methode = methode;
                             dataPaiement.montant = session.totalTTC;
                             dataPaiement.idCommande = resultCommande.id;
+                            dataPaiement.paymentIntent = paymentIntent.id;
+                            dataPaiement.moyenPaiement = paymentData.type;
+                            dataPaiement.moyenPaiementDetail = moyenPaiementDet;
+                            dataPaiement.origine = origine;
+
 
                             const newPaiement = new Paiement(dataPaiement);
                             await newPaiement.save();
@@ -625,19 +661,19 @@ const paiementController = {
                             if (Number(session.idTransporteur) === 3) {
                                 contexte.delai = transporteurData.estimeArriveNumber // ici une string et non un number...
                             } else {
-                               // contexte.delai = capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber, 'day')))
+                                // contexte.delai = capitalize(formatLongSansHeure(dayjs().add(transporteurData.estimeArriveNumber, 'day')))
                                 contexte.delai = capitalize(addWeekdays(Date.now(), transporteurData.estimeArriveNumber));
                             }
 
-                    
+
                             let subject;
                             if (paymentData.type === "card") {
                                 contexte.marqueCB = paymentData.card.brand;
                                 contexte.pays = countrynames.getName(paymentData.card.country);
                                 subject = `Votre commande sur le site d'artisanat Malgache ${shop.nom} ✅ `;
                             } else if (paymentData.type === "sepa_debit") {
-                                contexte.dateAchat =`${formatLong(resultCommande.dateAchat)}`,
-                                contexte.codeBanque = paymentData.sepa_debit.bank_code;
+                                contexte.dateAchat = `${formatLong(resultCommande.dateAchat)}`,
+                                    contexte.codeBanque = paymentData.sepa_debit.bank_code;
                                 contexte.pays = countrynames.getName(paymentData.sepa_debit.country);
                                 subject = `Votre commande a été validé sur le site d'artisanat Malgache ${shop.nom} ✅ `;
 
@@ -847,14 +883,13 @@ const paiementController = {
                     }
 
                     // TODO 
+
+                    //https://stripe.com/docs/refunds 
                     // écrire une facture !
 
-                    // Géré les jours de délai pour inclure les dimanche, (pas de livraison, reporté au jour suivant...)
 
                     return res.status(200).end();
-                }
-
-                else {
+                } else {
 
                     //! TRAITEMENT DES ÉRREURS 
 
@@ -1170,7 +1205,7 @@ const paiementController = {
                     //! j'envoie un email indiquant la bonne reception de la volonté de payer par virement SEPA, et l'envoi d'un prochain mail, si jamais le webhook est contacté par l'évenement 'payment_intent.succeeded' ou 'payment_intent.payment_failed'
 
                     try {
-                     
+
                         const transporter = nodemailer.createTransport({
                             host: process.env.HOST,
                             port: 465,
@@ -1287,7 +1322,7 @@ const paiementController = {
 
                     });
 
-               
+
                     res.status(200).end();
 
                 });
@@ -1344,7 +1379,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JYDHdLNa9FFzz1X0jexLbnB_secret_jAxxgJtTaNzEN7fxv4aYA3tSf",
+                client_secret: "pi_3JYhKqLNa9FFzz1X1FvQJwRQ_secret_mFs9ZNfOkQrgMjtuPUFHMBvpF",
             });
 
 
@@ -1357,6 +1392,10 @@ const paiementController = {
             console.trace(error);
         }
     },
+
+    // IBAN test => https://stripe.com/docs/testing#sepa-direct-debit 
+    //AT611904300234573201 (Le statut du PaymentIntent passe de processing à succeeded.)
+    //AT321904300235473204	Le statut du PaymentIntent passe de processing à succeeded après 3 minutes.
 
     keySEPA: async (req, res) => {
         try {
@@ -1389,7 +1428,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JY1c0LNa9FFzz1X0OoyUO8W_secret_454AqpHOAaLLLg4H8SSylFWuF",
+                client_secret: "pi_3JYhTrLNa9FFzz1X0HpviUWj_secret_IkJSMu9voWvfBLjPYDjQzv4tG",
             });
 
 
@@ -1403,13 +1442,19 @@ const paiementController = {
         }
     },
 
-   
+
 
     balanceStripe: async (req, res) => {
         try {
 
+
+            if (req.session.user.privilege === 'Client') {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
             stripe.balance.retrieve(function (err, balance) {
-                // asynchronously called
                 console.log(balance.available[0].amount);
                 res.status(200).json(balance);
 
@@ -1422,6 +1467,245 @@ const paiementController = {
             res.status(500).end();
         }
     },
+
+    refund: async (req, res) => {
+        try {
+            // attent reference de commande = "commande", un montant en euro = "montant" et soit un idClient ="idClient" ou un email = "email"; (On peut prendre les deux dans l'API pour plus de souplesse !)
+
+            //verification du role admin pour un double sécu 
+            if (req.session.user.privilege === 'Client') {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
+            // Je vérifis que le numéro de commande existe en BDD, qu'il y ait un paiement pour cette commande et que son statut n'est pas "en attente ou "annulée" ou "Remboursée"
+            let refCommandeOk;
+
+            try {
+                refCommandeOk = await Commande.findByRefCommande(req.body.commande);
+            } catch (error) {
+                console.log("Erreur dans le try catch de récupération de la commande dans la méthode refund du PaiementController !", error);
+                return res.status(500).end();
+            }
+
+            if (refCommandeOk === null || refCommandeOk.reference === undefined) {
+                console.log("Aucun paiement pour cette référence de commande ou elle n'as de statut compatible avec un remboursement !");
+                return res.status(200).json({
+                    message: "Aucune commande avec cette référence ou commande sans paiement ou avec un statut de commande imcompatible, merci de vérifier son orthographe."
+                });
+            }
+
+            let idClient;
+
+            // si on reçoit un req.body.quelquechose :
+            if (req.body.email) {
+
+                if (!validator.isEmail(req.body.email)) {
+                    console.log("le format du mail ne convient pas au validator")
+                    return res.status(403).json(
+                        'le format de l\'email est incorrect'
+                    );
+
+                }
+                /// je vais retrouver l'id client correspondant
+                let emailOk;
+                try {
+                    emailOk = await Client.findByEmail(req.body.email)
+                } catch (error) {
+                    console.log("Erreur dans le try catch de récupération de l'email dans la méthode refund du PaiementController !", error);
+                    return res.status(500).end();
+                }
+
+
+                if (emailOk === null) {
+                    console.log("Cet email n'est pas présent en BDD !");
+                    return res.status(200).json({
+                        message: "Cet email n'est pas présent en BDD !"
+                    })
+                } else {
+                    idClient = emailOk.id
+                }
+
+            } else if (req.body.idClient) {
+                // je recherche l'id Client correspondant et existe
+                let idOk;
+                try {
+                    idOk = await Client.findOne(req.body.idClient);
+                } catch (error) {
+                    console.log("Erreur dans le try catch de récupération de l'idClient dans la méthode refund du PaiementController !", error);
+                    return res.status(500).end();
+                }
+
+                if (idOk === null) {
+                    console.log("Cet id client n'est pas présent en BDD !");
+                    return res.status(200).json({
+                        message: "Cet id client n'est pas présent en BDD !"
+                    })
+                } else {
+                    idClient = idOk.id
+                }
+            }
+
+
+            // j'extrait l'id Client de la ref de la commande et je compare l'id récupéré avec l'id en ref commande
+            //Format d'une commande : idClient.total a payer en centime, date d'achat en format DDMMYYYYHHmmss.id d'un article acheté.la quantité de cet article.id d'un article acheté.la quantité de cet article
+            const idClientFromRefCommande = req.body.commande.split('.', 1);
+            if (Number(idClientFromRefCommande) !== Number(idClient)) {
+
+                console.log("idClient en provenance de la référence de la commande n'est pas le même que l'idClient fournit ou en provenance du mail.");
+                return res.status(200).json({
+                    message: "Le client renseigné n'a pas effectué cette commande, vous n'êtes pas autoriser a le rembourser !"
+                })
+
+            }
+
+            // je vérifit que le montant demandé rembourser est égal ou inférieur au montant de la commande
+            if (Number(req.body.montant) > Number(refCommandeOk.montant)) {
+                console.log("Il n'est pas possible d'effectuer un remboursement supérieur au montant de la commande !");
+                return res.status(200).json({
+                    message: `Il n'est pas possible d'effectuer un remboursement supérieur au montant de la commande (${refCommandeOk.montant}) !`
+                })
+
+            }
+            console.log("refCommandeOk ==>> ", refCommandeOk);
+            // si tout matche, je lance TRIPE !
+            let refund;
+            try {
+                refund = await stripe.refunds.create({
+                    amount: req.body.montant * 100, // toujours en cents STRIPE...
+                    payment_intent: refCommandeOk.payment_intent,
+                });
+            } catch (error) {
+                console.log("Erreur dans le try catch STRIPE de création du remboursement dans la méthode refund du PaiementController !", error);
+                return res.status(500).end();
+            }
+
+            // j'update le statut de la commande a rembourséé !
+            try {
+                const updateStatus = new Commande({
+                    idCommandeStatut: 7, // id = 7 => statut "Remboursée"
+                    id: refCommandeOk.id
+                })
+                //et je redéfinis resultCommande une fois bien mis a jour, pour que les données soient a jours !
+                await updateStatus.updateStatutCommande();
+                console.log("Remboursement bien éfféctué, commande mise a jour ");
+
+            } catch (error) {
+                console.log("Erreur dans le try catch d'update du statut de la commande dans la méthode refund du PaiementController !", error);
+                return res.status(500).end();
+            }
+
+            // J'envoie un mail confirmant le remboursement 
+
+            /* refCommandeOk ==>>>>  Commande {
+  id: 501,
+  reference: '101.8250.11092021221526.121.1.71.1',
+  dateAchat: 2021-09-11T20:15:26.920Z,
+  commentaire: "Sur un plateau d'argent impérativement !",
+  sendSmsShipping: false,
+  updatedDate: 2021-09-11T20:15:32.515Z,
+  idCommandeStatut: 3,
+  idClient: 101,
+  ref_paiement: '19043.3201.101.8250.11092021221532.121.1.71.1',
+  montant: '70.50',
+  payment_intent: 'pi_3JYcbNLNa9FFzz1X0yMziy1n',
+  statut: 'Paiement validé',
+  status_id: 3 */
+
+            try {
+
+                const transporter = nodemailer.createTransport({
+                    host: process.env.HOST,
+                    port: 465,
+                    secure: true, // true for 465, false for other ports
+                    auth: {
+                        user: process.env.EMAIL,
+                        pass: process.env.PASSWORD_EMAIL,
+                    },
+                });
+
+                // Config pour les templates et le moteur handlebars lié a Nodemailer
+                const options = {
+                    viewEngine: {
+                        extName: ".hbs",
+                        partialsDir: path.resolve(__dirname, "./views"),
+                        defaultLayout: false
+                    },
+                    extName: ".hbs",
+                    viewPath: path.resolve(__dirname, "../views"),
+                };
+
+                transporter.use('compile', hbs(options));
+
+                // je récupére les infos du client pour l'envoi du mail.
+                const theClient = await Client.findOne(refCommandeOk.idClient);
+                console.log("theClient ==>> ", theClient);
+                const thePaiement = await Paiement.findByIdCommande(refCommandeOk.id);
+                const shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement...
+
+                // car estimeArriveNumber (le délai) peut être une string ou un number...:/
+
+                console.log("thePaiement ==> ", thePaiement);
+
+                const contexte = {
+                    nom: theClient.nomFamille,
+                    prenom: theClient.prenom,
+                    email: theClient.email,
+                    refCommande: refCommandeOk.reference,
+                    statutCommande: refCommandeOk.statut,
+                    dateAchat: formatLongSansHeure(refCommandeOk.dateAchat),
+                    montant: req.body.montant,
+                    shopNom: shop.nom,
+                    derniersChiffres: thePaiement.derniersChiffres,
+                    moyenPaiement: thePaiement.moyenPaiement,
+                    moyenPaiementDetail: thePaiement.moyenPaiementDetail,
+                }
+
+                // l'envoie d'email définit par l'object "transporter"
+                const info = await transporter.sendMail({
+                    from: process.env.EMAIL, //l'envoyeur
+                    to: theClient.email,
+                    subject: `Votre remboursement sur le site d'artisanat Malgache ${shop.nom} a bien été éffectué ✅ `, // le sujet du mail
+                    text: `Bonjour ${theClient.prenom} ${theClient.nomFamille}, nous vous confirmons le remboursement de votre commande n°${refCommandeOk.reference} effectué sur le site ${shop.nom}. La somme de ${req.body.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`,
+                    /* attachement:[
+                        {filename: 'picture.JPG', path: './picture.JPG'}
+                    ] */
+                    template: 'apresRemboursement',
+                    context: contexte,
+
+                });
+                console.log(`Un email de confirmation de remboursement à bien été envoyé a ${theClient.prenom} ${theClient.nomFamille} via l'adresse email: ${theClient.email} : ${info.response}`);
+
+
+            } catch (error) {
+                console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés remboursement dans la methode refund du paiementController : ${error.message}`);
+                console.trace(error);
+                res.status(500).end();
+            }
+
+            res.status(200).end();
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode refund du paiementController :',
+                error);
+            res.status(500).end();
+        }
+    },
+
+
+    webhookRefund: async (req, res) => {
+        try {
+            const paiements = await Paiement.findAll();
+
+            res.status(200).json(paiements);
+        } catch (error) {
+            console.trace('Erreur dans la méthode webhookrefund du paiementController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
     getAll: async (req, res) => {
         try {
             const paiements = await Paiement.findAll();

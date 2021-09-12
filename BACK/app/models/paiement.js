@@ -8,12 +8,33 @@ class Paiement {
     methode;
     datePaiement;
     montant;
+    paymentIntent;
+    moyenPaiement;
+    moyenPaiementDetail; //code banque si SEPA et marque de la carte et type(débit/crédit) si CB
+    origine; //pays
+    derniersChiffres; //4 derniers chiffre de la CB
     updatedDate;
     idCommande;
 
 
     set date_paiement(val) {
         this.datePaiement = val;
+    }
+
+    set payment_intent(val) {
+        this.paymentIntent = val;
+    }
+
+    set moyen_paiement(val) {
+        this.moyenPaiement = val;
+    }
+
+    set moyen_paiement_detail(val) {
+        this.moyenPaiementDetail = val;
+    }
+
+    set derniers_chiffres(val) {
+        this.derniersChiffres = val;
     }
 
     set updated_date(val) {
@@ -111,7 +132,7 @@ class Paiement {
             `la paiement avec l'idCommande : ${idCommande} a été demandé en BDD !`
         );
 
-        return rows.map((id) => new Paiement(id));
+        return new Paiement(rows[0]);
     }
 
     /**
@@ -128,8 +149,8 @@ class Paiement {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.paiement (reference, methode, montant, id_commande) VALUES ($1, $2, $3, $4) RETURNING *;`,
-            [this.reference, this.methode, this.montant, this.idCommande]
+            `INSERT INTO mada.paiement (reference, methode, payment_intent, moyen_paiement, moyen_paiement_detail, origine, derniers_chiffres, montant, id_commande) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;`,
+            [this.reference, this.methode, this.paymentIntent, this.moyenPaiement, this.moyenPaiementDetail, this.origine, this.derniersChiffres, this.montant, this.idCommande]
         );
 
         this.id = rows[0].id;
@@ -155,8 +176,8 @@ class Paiement {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.paiement SET reference = $1, methode = $2, montant = $3, updated_date=now(), id_commande = $4  WHERE id = $5 RETURNING *;`,
-            [this.reference, this.methode, this.montant, this.idCommande, this.id]
+            `UPDATE mada.paiement SET reference = $1, methode = $2, payment_intent = $3, moyen_paiement = $4, moyen_paiement_detail = $5, origine = $6, derniers_chiffres = $7, montant = $8, updated_date=now(), id_commande = $9  WHERE id = $10 RETURNING *;`,
+            [this.reference, this.methode, this.paymentIntent, this.moyenPaiement, this.moyenPaiementDetail, this.origine, this.derniersChiffres, this.montant, this.idCommande, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(

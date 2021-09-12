@@ -1393,7 +1393,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JYhTrLNa9FFzz1X0HpviUWj_secret_IkJSMu9voWvfBLjPYDjQzv4tG",
+                client_secret: "pi_3JYkxbLNa9FFzz1X1RAFvhSs_secret_6901yMjk0k0n9SKBzGlXofKP3",
             });
 
 
@@ -1580,49 +1580,8 @@ const paiementController = {
                 return res.status(400).json(`WebhookRefundFail erreur de la récupération de l'event: ${err.message}`);
 
             }
-            //const metadata = event.data.object.metadata;
+            const metadata = event.data.object.metadata;
 
-            const metadata = {
-                refCommande: "101.4280.12092021031053.68.2",
-                idClient:'101',
-                idCommande: '502',
-                montant: 10,
-            }
-
-            //console.log("event.data.object.metadata ==>>", event.data.previous_attributes.metadata);
-
-
-            //console.log("event ===>> ", event);
-
-            /* event ===>>  {
-              created: 1326853478,
-              livemode: false,
-              id: 'evt_00000000000000',
-              type: 'charge.refund.updated',
-              object: 'event',
-              request: null,
-              pending_webhooks: 1,
-              api_version: '2020-08-27',
-              data: {
-                object: {
-                  id: 're_00000000000000',
-                  object: 'refund',
-                  amount: 5000,
-                  balance_transaction: 'txn_00000000000000',
-                  charge: 'ch_00000000000000',
-                  created: 1631407920,
-                  currency: 'eur',
-                  metadata: {},
-                  payment_intent: 'pi_00000000000000',
-                  reason: null,
-                  receipt_number: null,
-                  source_transfer_reversal: null,
-                  status: 'succeeded',
-                  transfer_reversal: null
-                },
-                previous_attributes: { metadata: [Object] }
-              }
-            } */
            
             let theClient;
             let thePaiement;
@@ -1652,12 +1611,6 @@ const paiementController = {
                 console.trace(error);
                 res.status(500).end();
             }
-
-            console.log(" theClient  => ",  theClient);
-            console.log(" thePaiement  => ",  thePaiement);
-            console.log(" adminsMail  => ", adminsMail);
-
-
 
             if (event.data.object.status === " failed") {
 
@@ -1728,7 +1681,6 @@ const paiementController = {
                 try {
 
                     transporter.use('compile', hbs(options));
-                    console.log(" refCommandeOk succeeded  => ",  refCommandeOk);
 
                     const contexte = {
                         nom: theClient.nomFamille,

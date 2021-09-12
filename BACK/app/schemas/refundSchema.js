@@ -35,7 +35,7 @@ const refundSchema = Joi.object({
 
     commande: Joi.string()
         .required()
-        //.regex(/^[0-9\.]{1,}$/)
+        .regex(/^[0-9\.]*$/)
         .messages({
             'any.required': `Le champs de votre référence commande ne peut être vide !`,
             'string.empty': `Le champs de votre référence commande ne peut être vide !`,
@@ -43,6 +43,7 @@ const refundSchema = Joi.object({
         }),
 
         montant: Joi.number()
+        .positive()
         .required()
 
 

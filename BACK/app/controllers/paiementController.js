@@ -11,8 +11,6 @@ const Client = require('../models/client');
 const AdminPhone = require('../models/adminPhone');
 const AdminVerifEmail = require('../models/adminVerifEmail');
 
-
-
 //Nécéssaire pour retrouver les donnée de session dans la méthode du webhook avec le cookie de session !
 const redisSession = require('redis');
 const session = require('express-session');
@@ -58,12 +56,9 @@ const path = require('path');
 const nodemailer = require('nodemailer');
 const hbs = require('nodemailer-express-handlebars');
 const countrynames = require('countrynames');
-/* const {
-    Client
-} = require('pg'); */
 var helpers = require('handlebars-helpers')();
 
-//Config MAIL a sortid du controller ...
+//Config MAIL a sortir du controller ...
 //Sendgrid ou MailGun serait préférable en prod...
 //https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
 const transporter = nodemailer.createTransport({
@@ -1344,7 +1339,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JYib4LNa9FFzz1X1A72ijx0_secret_DdKAbnfFrbvjb5hznYjfwsBdV",
+                client_secret: "pi_3JYzmOLNa9FFzz1X1LUee2dZ_secret_kHiimZOCdB7u57EdsEuWmZVnR",
             });
 
 

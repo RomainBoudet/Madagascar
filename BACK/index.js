@@ -55,7 +55,7 @@ app.use(logger);
 
 
 // le parser JSON qui récupère le payload quand il y en a un et le transforme en objet JS disponible sous request.body
-// Je récupére un rawBody sur les deux routes du webhook de STRIPE pour verifier la signature STRIPE
+// Je récupére un rawBody sur les les routes du webhook de STRIPE pour verifier la signature STRIPE
 app.use(express.json({
     verify: (req, _, buf) => {
         const url = req.originalUrl;
@@ -73,7 +73,6 @@ app.use(express.json({
         }
     }
 }));
-/// ==>> j'ai besoin du raw body pour le webhook de STRIPE ! 
 
 //cookie parser, qui me permet d'avoir accés a req.cookies dans mes MW auth, admin, en transformant mes cookies en un bel objet  
 app.use(cookieParser(process.env.SECRET));

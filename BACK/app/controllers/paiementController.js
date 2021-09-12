@@ -48,6 +48,9 @@ const validator = require('validator');
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 const endpointSecret = process.env.SECRETENDPOINT;
 const endpointSecretSEPA = process.env.SECRETENDPOINTSEPA;
+const endpointSecretrefund = process.env.SECRETENDPOINTREFUND;
+const endpointSecretrefundUpdate = process.env.SECRETENDPOINTREFUNDUPDATE;
+
 
 const redis = require('../services/redis');
 
@@ -59,6 +62,30 @@ const countrynames = require('countrynames');
     Client
 } = require('pg'); */
 var helpers = require('handlebars-helpers')();
+
+//Config MAIL a sortid du controller ...
+//Sendgrid ou MailGun serait préférable en prod...
+//https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
+const transporter = nodemailer.createTransport({
+    host: process.env.HOST,
+    port: 465,
+    secure: true, // true for 465, false for other ports
+    auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD_EMAIL,
+    },
+});
+
+// Config pour les templates et le moteur handlebars lié a Nodemailer
+const options = {
+    viewEngine: {
+        extName: ".hbs",
+        partialsDir: path.resolve(__dirname, "./views"),
+        defaultLayout: false
+    },
+    extName: ".hbs",
+    viewPath: path.resolve(__dirname, "../views"),
+};
 
 
 
@@ -594,7 +621,6 @@ const paiementController = {
 
 
                         //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produits récemment achetés.
-                        let transporter;
                         let transporteurData;
                         let statutCommande;
                         let contexte;
@@ -602,28 +628,7 @@ const paiementController = {
 
 
                         try {
-                            //Sendgrid ou MailGun serait préférable en prod...
-                            //https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
-                            transporter = nodemailer.createTransport({
-                                host: process.env.HOST,
-                                port: 465,
-                                secure: true, // true for 465, false for other ports
-                                auth: {
-                                    user: process.env.EMAIL,
-                                    pass: process.env.PASSWORD_EMAIL,
-                                },
-                            });
 
-                            // Config pour les templates et le moteur handlebars lié a Nodemailer
-                            const options = {
-                                viewEngine: {
-                                    extName: ".hbs",
-                                    partialsDir: path.resolve(__dirname, "./views"),
-                                    defaultLayout: false
-                                },
-                                extName: ".hbs",
-                                viewPath: path.resolve(__dirname, "../views"),
-                            };
 
                             transporter.use('compile', hbs(options));
 
@@ -951,26 +956,6 @@ const paiementController = {
 
                         try {
 
-                            transporter = nodemailer.createTransport({
-                                host: process.env.HOST,
-                                port: 465,
-                                secure: true, // true for 465, false for other ports
-                                auth: {
-                                    user: process.env.EMAIL,
-                                    pass: process.env.PASSWORD_EMAIL,
-                                },
-                            });
-
-                            // Config pour les templates et le moteur handlebars lié a Nodemailer
-                            const options = {
-                                viewEngine: {
-                                    extName: ".hbs",
-                                    partialsDir: path.resolve(__dirname, "./views"),
-                                    defaultLayout: false
-                                },
-                                extName: ".hbs",
-                                viewPath: path.resolve(__dirname, "../views"),
-                            };
 
                             transporter.use('compile', hbs(options));
 
@@ -1206,26 +1191,6 @@ const paiementController = {
 
                     try {
 
-                        const transporter = nodemailer.createTransport({
-                            host: process.env.HOST,
-                            port: 465,
-                            secure: true, // true for 465, false for other ports
-                            auth: {
-                                user: process.env.EMAIL,
-                                pass: process.env.PASSWORD_EMAIL,
-                            },
-                        });
-
-                        // Config pour les templates et le moteur handlebars lié a Nodemailer
-                        const options = {
-                            viewEngine: {
-                                extName: ".hbs",
-                                partialsDir: path.resolve(__dirname, "./views"),
-                                defaultLayout: false
-                            },
-                            extName: ".hbs",
-                            viewPath: path.resolve(__dirname, "../views"),
-                        };
 
                         transporter.use('compile', hbs(options));
 
@@ -1379,7 +1344,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JYhKqLNa9FFzz1X1FvQJwRQ_secret_mFs9ZNfOkQrgMjtuPUFHMBvpF",
+                client_secret: "pi_3JYib4LNa9FFzz1X1A72ijx0_secret_DdKAbnfFrbvjb5hznYjfwsBdV",
             });
 
 
@@ -1568,18 +1533,292 @@ const paiementController = {
                 })
 
             }
-            console.log("refCommandeOk ==>> ", refCommandeOk);
-            // si tout matche, je lance TRIPE !
+            // si tout matche, je lance STRIPE !
             let refund;
             try {
                 refund = await stripe.refunds.create({
                     amount: req.body.montant * 100, // toujours en cents STRIPE...
                     payment_intent: refCommandeOk.payment_intent,
+                    metadata: {
+                        montant: req.body.montant,
+                        idClient,
+                        refCommande: refCommandeOk.reference,
+                        idCommande: refCommandeOk.id,
+
+                    },
                 });
+
+                console.log("Fond bien remboursé ;)");
+
             } catch (error) {
                 console.log("Erreur dans le try catch STRIPE de création du remboursement dans la méthode refund du PaiementController !", error);
                 return res.status(500).end();
             }
+
+
+            return res.status(200).end();
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode refund du paiementController :',
+                error);
+            res.status(500).end();
+        }
+    },
+
+    // retour de l'evnt charge.refund.updated signifiant qu'un remboursement a échoué !
+
+    webhookRefundUpdate: async (req, res) => {
+        try {
+            //je verifis la signature STRIPE et je récupére la situation du paiement.
+            const sig = req.headers['stripe-signature'];
+
+            let event;
+
+            try {
+                event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecretrefundUpdate);
+            } catch (err) {
+                return res.status(400).json(`WebhookRefundFail erreur de la récupération de l'event: ${err.message}`);
+
+            }
+            //const metadata = event.data.object.metadata;
+
+            const metadata = {
+                refCommande: "101.4280.12092021031053.68.2",
+                idClient:'101',
+                idCommande: '502',
+                montant: 10,
+            }
+
+            //console.log("event.data.object.metadata ==>>", event.data.previous_attributes.metadata);
+
+
+            //console.log("event ===>> ", event);
+
+            /* event ===>>  {
+              created: 1326853478,
+              livemode: false,
+              id: 'evt_00000000000000',
+              type: 'charge.refund.updated',
+              object: 'event',
+              request: null,
+              pending_webhooks: 1,
+              api_version: '2020-08-27',
+              data: {
+                object: {
+                  id: 're_00000000000000',
+                  object: 'refund',
+                  amount: 5000,
+                  balance_transaction: 'txn_00000000000000',
+                  charge: 'ch_00000000000000',
+                  created: 1631407920,
+                  currency: 'eur',
+                  metadata: {},
+                  payment_intent: 'pi_00000000000000',
+                  reason: null,
+                  receipt_number: null,
+                  source_transfer_reversal: null,
+                  status: 'succeeded',
+                  transfer_reversal: null
+                },
+                previous_attributes: { metadata: [Object] }
+              }
+            } */
+           
+            let theClient;
+            let thePaiement;
+            let shop;
+            let refCommandeOk;
+            let adminsMail;
+            try {
+                refCommandeOk = await Commande.findOne(metadata.idCommande);
+            } catch (error) {
+                console.log("Erreur dans le try catch de récupération de la commande dans la méthode webhookrefundFAIL du PaiementController !", error);
+                return res.status(500).end();
+            }
+
+            console.log(" refCommandeOk  => ",  refCommandeOk);
+
+            // je récupére les infos du client pour l'envoi du mail.
+            try {
+                //TODO 
+                //faire une vue pour ces type d'infos reliées ?
+                adminsMail = await AdminVerifEmail.findAllAdminEmailTrue();
+                theClient = await Client.findOne(metadata.idClient);
+                thePaiement = await Paiement.findByIdCommande(metadata.idCommande);
+                shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement...
+
+            } catch (error) {
+                console.log(`Erreur dans la méthode de recherche d'information (client / paiement / shop) aprés remboursement dans la methode webhookRefundFAIL du paiementController : ${error.message}`);
+                console.trace(error);
+                res.status(500).end();
+            }
+
+            console.log(" theClient  => ",  theClient);
+            console.log(" thePaiement  => ",  thePaiement);
+            console.log(" adminsMail  => ", adminsMail);
+
+
+
+            if (event.data.object.status === " failed") {
+
+                try {
+
+                    transporter.use('compile', hbs(options));
+
+                    const contexte = {
+                        nom: theClient.nomFamille,
+                        prenom: theClient.prenom,
+                        email: theClient.email,
+                        refCommande: refCommandeOk.reference,
+                        statutCommande: refCommandeOk.idCommandeStatut,
+                        dateAchat: formatLong(refCommandeOk.dateAchat),
+                        montant: metadata.montant,
+                        derniersChiffres: thePaiement.derniersChiffres,
+                        moyenPaiement: thePaiement.moyenPaiement,
+                        moyenPaiementDetail: thePaiement.moyenPaiementDetail,
+                        methode:thePaiement.methode,
+                        montantPaiement: thePaiement.montant,
+                    }
+
+                    // l'envoie d'email définit par l'object "transporter"
+                    if (adminsMail !== null) {
+
+                        for (const admin of adminsMail) {
+
+                            //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
+                            contexte.adminPrenom = admin.prenom;
+
+                            const info2 = await transporter.sendMail({
+                                from: process.env.EMAIL, //l'envoyeur
+                                to: admin.email,
+                                subject: `Erreur de remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${theClient.prenom} ${theClient.nomFamille} (${theClient.email}) ❌ `, // le sujet du mail
+                                text: `Bonjour cher Administrateur, Une érreur de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`,
+                                template: 'erreurRemboursement',
+                                context: contexte,
+
+                            });
+                            console.log(`Un email d'information d'une érreur de remboursement à bien été envoyé a ${admin.email} : ${info2.response}`);
+                        }
+                    }
+
+                     //Envoie d'email sur le mail présent dans la table "Shop".
+                     const info = await transporter.sendMail({
+                        from: process.env.EMAIL, //l'envoyeur
+                        to: shop.emailContact,
+                        subject: `Erreur de remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${theClient.prenom} ${theClient.nomFamille} (${theClient.email}) ❌ `, // le sujet du mail
+                        text: `Bonjour cher Administrateur, Une érreur de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`,
+                        template: 'erreurRemboursement',
+                        context: contexte,
+
+                    });
+                    console.log(`Un email d'information d'une érreur de remboursement à bien été envoyé a ${shop.emailContact} : ${info.response}`);
+
+                } catch (error) {
+                    console.log(`Erreur dans la méthode d'envoie d'un mail aux admins aprés und érreur de remboursement dans la methode webhookRefundFAIL du paiementController : ${error.message}`);
+                    console.trace(error);
+                    res.status(500).end();
+                }
+
+
+            }
+
+            if (event.data.object.status === "succeeded") {
+
+               
+                try {
+
+                    transporter.use('compile', hbs(options));
+                    console.log(" refCommandeOk succeeded  => ",  refCommandeOk);
+
+                    const contexte = {
+                        nom: theClient.nomFamille,
+                        prenom: theClient.prenom,
+                        email: theClient.email,
+                        refCommande: refCommandeOk.reference,
+                        statutCommande: refCommandeOk.idCommandeStatut,
+                        dateAchat: formatLong(refCommandeOk.dateAchat),
+                        montant: metadata.montant,
+                        derniersChiffres: thePaiement.derniersChiffres,
+                        moyenPaiement: thePaiement.moyenPaiement,
+                        moyenPaiementDetail: thePaiement.moyenPaiementDetail,
+                        methode:thePaiement.methode,
+                        montantPaiement: thePaiement.montant,
+                    }
+
+                    // l'envoie d'email définit par l'object "transporter"
+                    if (adminsMail !== null) {
+
+                        for (const admin of adminsMail) {
+
+                            //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
+                            contexte.adminPrenom = admin.prenom;
+
+                            const info2 = await transporter.sendMail({
+                                from: process.env.EMAIL, //l'envoyeur
+                                to: admin.email,
+                                subject: `Mise a jour des données d'un remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${theClient.prenom} ${theClient.nomFamille} (${theClient.email})  ✅ `, // le sujet du mail
+                                text: `Bonjour cher Administrateur, une mise a jour des données de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`,
+                                template: 'updateRemboursement',
+                                context: contexte,
+
+                            });
+                            console.log(`Un email d'information d'une mise a jour de remboursement à bien été envoyé a ${admin.email} : ${info2.response}`);
+                        }
+                    }
+
+                     //Envoie d'email sur le mail présent dans la table "Shop".
+                     const info = await transporter.sendMail({
+                        from: process.env.EMAIL, //l'envoyeur
+                        to: shop.emailContact,
+                        subject: `Mise a jour des données d'un remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${theClient.prenom} ${theClient.nomFamille} (${theClient.email})  ✅ `, // le sujet du mail
+                        text: `Bonjour cher Administrateur, une mise a jour des données de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`,
+                        template: 'updateRemboursement',
+                        context: contexte,
+
+                    });
+                    console.log(`Un email d'information d'une mise a jour de remboursement à bien été envoyé a ${shop.emailContact} : ${info.response}`);
+
+                } catch (error) {
+                    console.log(`Erreur dans la méthode d'envoie d'un mail aux admins aprés und  mise a jour des données de remboursement dans la methode webhookRefundFAIL du paiementController : ${error.message}`);
+                    console.trace(error);
+                    res.status(500).end();
+                }
+
+
+            }
+
+            return res.status(200).end();
+        } catch (error) {
+            console.trace('Erreur dans la méthode webhookrefundUpdate du paiementController :',
+                error);
+            res.status(500).end();
+        }
+    },
+
+    webhookRefund: async (req, res) => {
+
+        try {
+            //je verifis la signature STRIPE et je récupére la situation du refund.
+            const sig = req.headers['stripe-signature'];
+
+            let event;
+
+            try {
+                event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecretrefund);
+            } catch (err) {
+                return res.status(400).json(`WebhookRefund erreur de la récupération de l'event: ${err.message}`);
+
+            }
+            const metadata = event.data.object.refunds.data[0].metadata;
+
+            let refCommandeOk;
+            try {
+                refCommandeOk = await Commande.findByRefCommande(metadata.refCommande);
+            } catch (error) {
+                console.log("Erreur dans le try catch de récupération de la commande dans la méthode refund du PaiementController !", error);
+                return res.status(500).end();
+            }
+
 
             // j'update le statut de la commande a rembourséé !
             try {
@@ -1587,66 +1826,37 @@ const paiementController = {
                     idCommandeStatut: 7, // id = 7 => statut "Remboursée"
                     id: refCommandeOk.id
                 })
-                //et je redéfinis resultCommande une fois bien mis a jour, pour que les données soient a jours !
                 await updateStatus.updateStatutCommande();
                 console.log("Remboursement bien éfféctué, commande mise a jour ");
 
             } catch (error) {
-                console.log("Erreur dans le try catch d'update du statut de la commande dans la méthode refund du PaiementController !", error);
+                console.log("Erreur dans le try catch d'update du statut de la commande dans la méthode weghookRefund du PaiementController !", error);
                 return res.status(500).end();
             }
 
             // J'envoie un mail confirmant le remboursement 
-
-            /* refCommandeOk ==>>>>  Commande {
-  id: 501,
-  reference: '101.8250.11092021221526.121.1.71.1',
-  dateAchat: 2021-09-11T20:15:26.920Z,
-  commentaire: "Sur un plateau d'argent impérativement !",
-  sendSmsShipping: false,
-  updatedDate: 2021-09-11T20:15:32.515Z,
-  idCommandeStatut: 3,
-  idClient: 101,
-  ref_paiement: '19043.3201.101.8250.11092021221532.121.1.71.1',
-  montant: '70.50',
-  payment_intent: 'pi_3JYcbNLNa9FFzz1X0yMziy1n',
-  statut: 'Paiement validé',
-  status_id: 3 */
-
             try {
-
-                const transporter = nodemailer.createTransport({
-                    host: process.env.HOST,
-                    port: 465,
-                    secure: true, // true for 465, false for other ports
-                    auth: {
-                        user: process.env.EMAIL,
-                        pass: process.env.PASSWORD_EMAIL,
-                    },
-                });
-
-                // Config pour les templates et le moteur handlebars lié a Nodemailer
-                const options = {
-                    viewEngine: {
-                        extName: ".hbs",
-                        partialsDir: path.resolve(__dirname, "./views"),
-                        defaultLayout: false
-                    },
-                    extName: ".hbs",
-                    viewPath: path.resolve(__dirname, "../views"),
-                };
 
                 transporter.use('compile', hbs(options));
 
                 // je récupére les infos du client pour l'envoi du mail.
-                const theClient = await Client.findOne(refCommandeOk.idClient);
-                console.log("theClient ==>> ", theClient);
-                const thePaiement = await Paiement.findByIdCommande(refCommandeOk.id);
-                const shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement...
+                let theClient;
+                let thePaiement;
+                let shop;
 
-                // car estimeArriveNumber (le délai) peut être une string ou un number...:/
+                try {
+                    //TODO 
+                    //faire une vue pour ces type d'infos reliées ?
+                    theClient = await Client.findOne(metadata.idClient);
+                    thePaiement = await Paiement.findByIdCommande(metadata.idCommande);
+                    shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement...
 
-                console.log("thePaiement ==> ", thePaiement);
+                } catch (error) {
+                    console.log(`Erreur dans la méthode de recherche d'information (client / paiement / shop) aprés remboursement dans la methode webhookRefund du paiementController : ${error.message}`);
+                    console.trace(error);
+                    res.status(500).end();
+                }
+
 
                 const contexte = {
                     nom: theClient.nomFamille,
@@ -1655,7 +1865,7 @@ const paiementController = {
                     refCommande: refCommandeOk.reference,
                     statutCommande: refCommandeOk.statut,
                     dateAchat: formatLongSansHeure(refCommandeOk.dateAchat),
-                    montant: req.body.montant,
+                    montant: metadata.montant,
                     shopNom: shop.nom,
                     derniersChiffres: thePaiement.derniersChiffres,
                     moyenPaiement: thePaiement.moyenPaiement,
@@ -1667,7 +1877,7 @@ const paiementController = {
                     from: process.env.EMAIL, //l'envoyeur
                     to: theClient.email,
                     subject: `Votre remboursement sur le site d'artisanat Malgache ${shop.nom} a bien été éffectué ✅ `, // le sujet du mail
-                    text: `Bonjour ${theClient.prenom} ${theClient.nomFamille}, nous vous confirmons le remboursement de votre commande n°${refCommandeOk.reference} effectué sur le site ${shop.nom}. La somme de ${req.body.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`,
+                    text: `Bonjour ${theClient.prenom} ${theClient.nomFamille}, nous vous confirmons le remboursement de votre commande n°${metadata.refCommande} effectué sur le site ${shop.nom}. La somme de ${metadata.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`,
                     /* attachement:[
                         {filename: 'picture.JPG', path: './picture.JPG'}
                     ] */
@@ -1679,30 +1889,19 @@ const paiementController = {
 
 
             } catch (error) {
-                console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés remboursement dans la methode refund du paiementController : ${error.message}`);
+                console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés remboursement dans la methode webhookRefund du paiementController : ${error.message}`);
                 console.trace(error);
                 res.status(500).end();
             }
 
-            res.status(200).end();
 
-        } catch (error) {
-            console.trace('Erreur dans la méthode refund du paiementController :',
-                error);
-            res.status(500).end();
-        }
-    },
+            return res.status(200).end();
 
 
-    webhookRefund: async (req, res) => {
-        try {
-            const paiements = await Paiement.findAll();
-
-            res.status(200).json(paiements);
         } catch (error) {
             console.trace('Erreur dans la méthode webhookrefund du paiementController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

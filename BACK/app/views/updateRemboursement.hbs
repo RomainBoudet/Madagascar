@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+
+<style>
+    p {
+        border-top: 1px solid #000;
+        padding: 2rem;
+    }
+
+    h3 {
+        border-top: 1px solid rgb(138, 128, 128);
+        padding: 0.5rem;
+        color: blueviolet;
+    }
+     h4 {
+        border-top: 1px solid rgb(71, 20, 20);
+        padding: 0.1rem;
+    }
+</style>
+
+
+<body>
+
+     <h3>Bonjour
+        {{#if adminPrenom}}
+        {{adminPrenom}} <br>
+        {{else}}
+        cher Administrateur !<br>
+        {{/if}}
+    </h3>
+    <p>
+        STRIPE a mis a jour des informations dans le Dashboard (interface de STRIPE sur internet) lié au remboursement de la commande n° {{refCommande}},
+        faite par le client {{prenom}} {{nomFamille}} ({{email}}). Il faudrait aller voir dans l'interface de STRIPE
+        pour connaitre les détails de ce qui a été mis a jour.<br>
+        Il est probable que ce soit l'arrivé d'un numéro ARN (numéro unique attribué à une transaction par carte bancaire dans le tunnel de paiement) fournit par la banque.
+        <br>
+        Quelques données supplémentaire sur la commande : <br>
+        <li>Commande id = n°{{refCommande}}</li>
+        <li>Statut de la commande = {{statutCommande}} </li><br>
+        (RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée, 7 = Remboursée) <br>
+        <br>
+        <li>Référence de la commande =  {{refCommande}}</li> <br>
+        (RAPPEL du format d'une référence de commmande : idClient.total a payer en centime, date d'achat en format DDMMYYYYHHmmss.id d'un article acheté.la quantité de cet article.id d'un article acheté.la quantité de cet article) <br>
+        <br>
+        <li>Date d'achat = {{dateAchat}}</li>
+        <li>Données liées au paiement = {{methode}} </li>
+        <li> Montant du remboursement = {{montant}}€</li>
+        <li>Montant du paiement effectué par le client = {{montantPaiement}}€</li>  
+  </p>
+  <br>
+ <h4>Quelques information supplémentaire sur les remboursements, extraites de STRIPE (https://stripe.com/docs/refunds) : </h4> 
+  <br>
+  <p>Traçage d’un remboursement <br>
+Après l’émission d’un remboursement, Stripe transmet la demande à la banque ou à l’émetteur de la carte du client. En fonction de sa banque, votre client voit le remboursement crédité sur son compte dans un délai de 5 à 10 jours ouvrés. <br>
+<br>
+Un client peut vous contacter, car il ne voit pas le remboursement. Diverses raisons peuvent expliquer ce problème : <br>
+
+Les remboursements émis peu après le paiement d’origine se présentent sous la forme d’une annulation et non pas d’un remboursement. Dans ce cas, le paiement d’origine disparaît tout simplement du relevé du client, aucun crédit n’est émis. <br>
+Un remboursement peut échouer si la banque ou l’émetteur de la carte du client n’a pas pu le traiter correctement, par exemple si le compte bancaire a été fermé ou que la carte présente un problème. La banque nous renvoie alors les fonds, que nous recréditons sur le solde de votre compte Stripe. Ce processus peut prendre jusqu’à 30 jours à compter de l’émission du remboursement. <br>
+Si le client vous interroge au sujet d’un remboursement, vous pouvez lui communiquer le numéro de référence de l’acquéreur (ARN) correspondant. Le numéro ARN est un numéro unique attribué à une transaction par carte bancaire dans le tunnel de paiement que le client peut transmettre sa banque pour obtenir plus d’informations sur la date de la disponibilité du remboursement. Ce numéro permet également de rassurer le client en lui montrant que le remboursement a bien été émis. <br>
+ <br>
+Les numéros ARN présentent les spécificités suivantes : <br>
+ <br>
+Ils ne sont pris en charge que pour les transactions impliquant des cartes Visa et Mastercard. <br>
+1 à 3 jours ouvrés sont nécessaires pour recevoir le numéro ARN des partenaires bancaires en aval une fois le remboursement émis.
+Aucun numéro ARN n’est disponible dans le cas d’une annulation, car le paiement d’origine n’est pas traité. <br>
+Lorsqu’un numéro ARN est disponible, Stripe le présente dans le Dashboard, sur la page des détails du paiement remboursé. <br>
+</p>
+  
+</body>
+
+</html>
+
+{{!-- pour la syntaxe et les opérateur de conditions =>  https://www.npmjs.com/package/handlebars-helpers --}}

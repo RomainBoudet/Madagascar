@@ -327,7 +327,25 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  */
    router.post('/admin/refund', clean, admin, validateBody(refundSchema), paiementController.refund);
 
+/**
+ * Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement
+ * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
+ *  @route POST /webhookRefundUpdate
+ * @group utilisateur
+ * @summary  Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement
+ * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement
+ */
+ router.post('/webhookRefundUpdate', paiementController.webhookRefundUpdate);
 
+ /**
+ * Prend en charge le webhook STRIPE apres un remboursement
+ * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
+ *  @route POST /webhookRefund
+ * @group utilisateur
+ * @summary  Prend en charge le webhook STRIPE apres un remboursement
+ * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres une tentative paiement SEPA
+ */
+  router.post('/webhookRefund', paiementController.webhookRefund);
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 

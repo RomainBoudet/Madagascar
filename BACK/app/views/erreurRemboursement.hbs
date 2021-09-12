@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+
+<style>
+    p {
+        border-top: 1px solid #000;
+        padding: 2rem;
+    }
+
+    h3 {
+        border-top: 1px solid rgb(138, 128, 128);
+        padding: 0.5rem;
+        color: blueviolet;
+    }
+     h4 {
+        border-top: 1px solid rgb(71, 20, 20);
+        padding: 0.1rem;
+    }
+</style>
+
+
+<body>
+
+     <h3>Bonjour
+        {{#if adminPrenom}}
+        {{adminPrenom}} <br>
+        {{else}}
+        cher Administrateur !<br>
+        {{/if}}
+    </h3>
+    <p>
+
+        Il semblerait que STRIPE n'ait pas put effectuer un remboursement demandé, lié a la commande n° {{refCommande}},
+        faite par le client {{prenom}} {{nomFamille}} ({{email}}). Il faudrait aller voir dans l'interface de STRIPE
+        pour connaitre les raisons de ce refus et recontacter le client pour trouver une solution et un moyen de le
+        rembourser via un autre moyen.<br>
+        <br>
+        Quelques données supplémentaire sur la commande : <br>
+        <li>Commande id = n°{{refCommande}}</li>
+        <li>Statut de la commande = {{ statutCommande}} </li><br>
+        (RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée, 7 = Remboursée) <br>
+        <li>Référence de la commande =  {{refCommande}}</li>
+        (RAPPEL du format d'une référence de commmande : idClient.total a payer en centime, date d'achat en format DDMMYYYYHHmmss.id d'un article acheté.la quantité de cet article.id d'un article acheté.la quantité de cet article) <br>
+
+        <li>Date d'achat = {{dateAchat}}</li>
+        <li>Données liées au paiement = {{methode}} </li>
+        <li> Montant du remboursement = {{montant}}€</li>
+        <li>Montant du paiement effectué par le client = {{montantPaiement}}€</li>  
+  </p>
+  <br>
+  </p>
+</body>
+
+</html>
+
+{{!-- pour la syntaxe et les opérateur de conditions =>  https://www.npmjs.com/package/handlebars-helpers --}}

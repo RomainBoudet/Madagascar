@@ -65,6 +65,7 @@ const choixLivraisonSchema = require('./schemas/choixLivraisonSchema');
 const smsChoiceSchema = require('./schemas/smsChoiceSchema');
 const emailChoiceSchema = require('./schemas/emailChoiceShema');
 const refundSchema = require('./schemas/refundSchema');
+const refundClientSchema = require('./schemas/refundClientSchema');
 
 
 
@@ -326,6 +327,16 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @returns {JSON} 200 -  Demander un remboursement sur un paiement de la part d'un Admin
  */
    router.post('/admin/refund', clean, admin, validateBody(refundSchema), paiementController.refund);
+
+   /**
+ * Demander un remboursement sur un paiement de la part d'un client
+ * route qui attend : "commande" ou "idCommande" // "email" ou "idClient"
+ * @route POST /client/refund
+ * @group Administrateur
+ * @summary  Demander un remboursement sur un paiement de la part d'un Admin
+ * @returns {JSON} 200 -  Demander un remboursement sur un paiement de la part d'un Admin
+ */
+    router.post('/client/refund', clean, client, validateBody(refundClientSchema), paiementController.refundClient);
 
 /**
  * Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement

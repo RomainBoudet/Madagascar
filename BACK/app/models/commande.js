@@ -21,6 +21,10 @@ class Commande {
         this.updatedDate = val;
     }
 
+    set created_date(val) {
+        this.createdDate = val;
+    }
+
     set send_sms_shipping(val) {
         this.sendSmsShipping = val;
     }
@@ -31,6 +35,42 @@ class Commande {
 
     set id_client(val) {
         this.idClient = val;
+    }
+
+    set nom_famille(val) {
+        this.nomFamille = val;
+    }
+
+    set id_privilege(val) {
+        this.idPrivilege = val;
+    }
+
+    set ref_paiement(val) {
+        this.refPaiement = val;
+    }
+    set payment_intent(val) {
+        this.paymentIntent = val;
+    }
+
+    set moyen_paiement(val) {
+        this.moyenPaiement = val;
+    }
+
+    set moyen_paiement_detail(val) {
+        this.moyenPaiementDetail = val;
+    }
+
+    set derniers_chiffres(val) {
+        this.derniersChiffres = val;
+    }
+
+
+    set date_paiement(val) {
+        this.datePaiement = val;
+    }
+
+    set status_id (val) {
+        this.statusId = val;
     }
 
 
@@ -54,8 +94,8 @@ class Commande {
             rows
         } = await db.query('SELECT * FROM mada.commande ORDER BY commande.id ASC');
 
-        if (!rows[0]) {
-            null;
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
         }
         consol.model(
             `les informations des ${rows.length} commandes ont été demandées !`
@@ -82,8 +122,8 @@ class Commande {
             [id]
         );
 
-        if (!rows[0]) {
-            null;
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
         }
 
         consol.model(
@@ -112,8 +152,8 @@ class Commande {
             [idClient]
         );
 
-        if (!rows[0]) {
-            null;
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
         }
 
         consol.model(
@@ -124,32 +164,59 @@ class Commande {
     }
 
 
-     /**
+    /**
      * Méthode chargé d'aller chercher les informations relatives à une référence comande passé en paramétre
      * @param commande - une référence d'une commande
      * @returns - les informations d'une commande demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-      static async findByRefCommande(commande) {
+    static async findByRefCommande(commande) {
 
 
         const {
             rows,
         } = await db.query(
-            "SELECT commande.*, paiement.reference as Ref_paiement, paiement.montant, paiement.payment_intent, statut_commande.statut, statut_commande.id as status_id FROM mada.commande JOIN mada.paiement ON paiement.id_commande = commande.id JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Expédiée');",
+            "SELECT commande.*, client.*, paiement.reference as Ref_paiement, paiement.montant, paiement.methode, paiement.payment_intent, paiement.moyen_paiement, paiement.moyen_paiement_detail, paiement.origine, paiement.derniers_chiffres, paiement.date_paiement, statut_commande.statut, statut_commande.id as status_id FROM mada.commande JOIN mada.client ON client.id = commande.id_client JOIN mada.paiement ON paiement.id_commande = commande.id JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Expédiée');",
             [commande]
         );
 
-        if (!rows[0]) {
-            null;
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
         }
-
         consol.model(
             `la commande avec la référence : ${commande} et avec un statut compatible avec un remboursement a été demandé en BDD !`
         );
 
         return new Commande(rows[0]);
+    }
+
+     /**
+     * Méthode chargé d'aller chercher les informations relatives à une référence comande passé en paramétre
+     * ne renvoit une commande que si sont statut est "Paiement Validé"
+     * @param commande - une référence d'une commande
+     * @returns - les informations d'une commande demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+      static async findByRefCommandeForClient(commande) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            "SELECT commande.*, produit.nom, produit.prix_HT, client.*, adresse.prenom as prenom_adresse, adresse.nom_Famille as nom_adresse, adresse.ligne1, adresse.ligne2, adresse.ligne3, adresse.code_postal, adresse.ville, adresse.pays, adresse.telephone, paiement.reference as Ref_paiement, ligne_commande.quantite_commande, paiement.montant, paiement.methode,  paiement.payment_intent, paiement.moyen_paiement, paiement.moyen_paiement_detail, paiement.origine, paiement.derniers_chiffres, paiement.date_paiement, statut_commande.statut, statut_commande.id as status_id FROM mada.commande  JOIN mada.ligne_commande ON ligne_commande.id_commande = commande.id JOIN mada.produit ON ligne_commande.id_produit = produit.id JOIN mada.client ON client.id = commande.id_client JOIN mada.adresse ON adresse.id_client = client.id AND adresse.envoie = true JOIN mada.paiement ON paiement.id_commande = commande.id JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference =  $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
+            [commande]
+        );
+
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
+        }
+        consol.model(
+            `la commande avec la référence : ${commande} et avec un statut compatible avec un remboursement a été demandé en BDD !`
+        );
+
+        return rows.map((Commandes) => new Commande(Commandes));
     }
     /**
      * Méthode chargé d'aller insérer les informations relatives à une commande passé en paramétre
@@ -175,17 +242,13 @@ class Commande {
             query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, commentaire, send_sms_shipping) VALUES ($1, now(), $2, $3, $4, $5) RETURNING *;";
             data.push(this.commentaire);
             data.push(this.sendSmsShipping);
-        }
-       else if (this.commentaire) {
+        } else if (this.commentaire) {
             query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, commentaire) VALUES ($1, now(), $2, $3, $4) RETURNING *;";
             data.push(this.commentaire);
-        } 
-        else if (this.sendSmsShipping) {
+        } else if (this.sendSmsShipping) {
             query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, send_sms_shipping) VALUES ($1, now(), $2, $3, $4) RETURNING *;";
             data.push(this.sendSmsShipping);
-        } 
-        
-        else {
+        } else {
             //sinon, je fais sans... commentaire aura la valeur null dans la BDD et le sendSmsWhenShipping aura la valeur FALSE.
             query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client) VALUES ($1, now(), $2, $3) RETURNING *;"
         }
@@ -238,7 +301,7 @@ class Commande {
      * @returns - les informations du commande mis à jour
      * @async - une méthode asynchrone
      */
-     async updateStatutCommande() {
+    async updateStatutCommande() {
         const {
             rows,
         } = await db.query(

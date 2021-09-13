@@ -480,6 +480,7 @@ const fakeData = async () => {
         }, (_, i) => i + 1);
 
         const commandes = [];
+        const transporteur = [1,2,3,4];
 
         for (let index = 1; index <= volume * 5; index++) {
             const commande = {
@@ -487,6 +488,7 @@ const fakeData = async () => {
                 ref: `COMMANDE/${uuid()} `, // une ref UNIQUE
                 commentaire: faker.lorem.words(),
                 id_commandeStatut: statutCommandePossible[Math.floor(Math.random() * statutCommandePossible.length)],
+                idTransporteur: transporteur[Math.floor(Math.random() * transporteur.length)],// valeur dans tableau random entre 1 et 4
 
             };
             commandes.push(commande);
@@ -1318,17 +1320,32 @@ const fakeData = async () => {
         consol.seed(`Fin de l'import de ${statutCommandes.length} statutCommandes`);
         console.timeEnd(`Import de ${statutCommandes.length} statutCommandes`);
 
+        //! TRANPORTEUR 
+
+        consol.seed(`Début de l'import de ${transporteurs.length} transporteurs`);
+        console.time(`Import de ${transporteurs.length} transporteurs`);
+        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, estime_arrive_number, logo) VALUES ($1, $2, $3, $4, $5, $6);";
+
+        for (const transporteur of transporteurs) {
+
+            consol.seed(`Import du livraison pour le client id ${transporteur.nom_transporteur}`);
+            await db.query(transporteursInsert, [transporteur.nom_transporteur, transporteur.description, transporteur.frais_expedition, transporteur.estime_arrive, transporteur.estime_arrive_number, transporteur.logo]);
+        }
+
+        consol.seed(`Fin de l'import de ${transporteurs.length} transporteurs`);
+        console.timeEnd(`Import de ${transporteurs.length} transporteurs`);
+
 
         //! COMMANDE
 
 
         consol.seed(`Début de l'import de ${commandes.length} commandes`);
         console.time(`Import de ${commandes.length} commandes`);
-        const commandesInsert = "INSERT INTO mada.commande (reference, commentaire, id_commandeStatut, id_client) VALUES ($1, $2, $3, $4);";
+        const commandesInsert = "INSERT INTO mada.commande (reference, commentaire, id_commandeStatut, id_client, id_transporteur) VALUES ($1, $2, $3, $4, $5);";
 
         for (const commande of commandes) {
             consol.seed(`Import de la commande pour l'ID client ${commande.idClient} et l'id commande statut : ${commande.id_commandeStatut}`);
-            await db.query(commandesInsert, [commande.ref, commande.commentaire, commande.id_commandeStatut, commande.idClient, ]);
+            await db.query(commandesInsert, [commande.ref, commande.commentaire, commande.id_commandeStatut, commande.idClient, commande.idTransporteur]);
         }
 
         consol.seed(`Fin de l'import de ${commandes.length} commandes`);
@@ -1350,22 +1367,7 @@ const fakeData = async () => {
         consol.seed(`Fin de l'import de ${paiements.length} paiements`);
         console.timeEnd(`Import de ${paiements.length} paiements`);
 
-        //! TRANPORTEUR 
-
-
-
-        consol.seed(`Début de l'import de ${transporteurs.length} transporteurs`);
-        console.time(`Import de ${transporteurs.length} transporteurs`);
-        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, estime_arrive_number, logo) VALUES ($1, $2, $3, $4, $5, $6);";
-
-        for (const transporteur of transporteurs) {
-
-            consol.seed(`Import du livraison pour le client id ${transporteur.nom_transporteur}`);
-            await db.query(transporteursInsert, [transporteur.nom_transporteur, transporteur.description, transporteur.frais_expedition, transporteur.estime_arrive, transporteur.estime_arrive_number, transporteur.logo]);
-        }
-
-        consol.seed(`Fin de l'import de ${transporteurs.length} transporteurs`);
-        console.timeEnd(`Import de ${transporteurs.length} transporteurs`);
+        
 
 
         //! LIVRAISON

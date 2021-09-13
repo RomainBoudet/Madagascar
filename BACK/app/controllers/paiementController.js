@@ -494,6 +494,7 @@ const paiementController = {
                                 //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
                                 dataCommande.idCommandeStatut = 3;
                                 dataCommande.idClient = session.user.idClient;
+                                dataCommande.idTransporteur = session.idTransporteur;
 
                                 if (session.commentaire && session.commentaire !== '') {
                                     dataCommande.commentaire = session.commentaire
@@ -1142,6 +1143,8 @@ const paiementController = {
                         //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
                         dataCommande.idCommandeStatut = 1; // payment non validé... "En attente"
                         dataCommande.idClient = session.user.idClient;
+                        dataCommande.idTransporteur = session.idTransporteur;
+
 
                         if (session.commentaire && session.commentaire !== '') {
                             dataCommande.commentaire = session.commentaire
@@ -1388,7 +1391,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JZ1hVLNa9FFzz1X0eiVIG3n_secret_ESeVz8cohShg2GAlWYWxuCsaJ",
+                client_secret: "pi_3JZCyILNa9FFzz1X1M2AULTl_secret_rWsW3US3vpnf9z2m1SepUoa9O",
             });
 
 
@@ -1963,7 +1966,6 @@ articlesCommande ==>>  Small Granite Shirt (x1) / Sleek Concrete Pants (x1) / In
                         res.status(500).end();
                     }
 
-                    console.log("on passe ?");
 
                     const contexte = {
                         nom: refCommandeOk[0].nomFamille,
@@ -1978,6 +1980,9 @@ articlesCommande ==>>  Small Granite Shirt (x1) / Sleek Concrete Pants (x1) / In
                         moyenPaiementDetail: refCommandeOk[0].moyenPaiementDetail,
                         methode: refCommandeOk[0].methode,
                         montantPaiement: refCommandeOk[0].montant,
+                        adresse: await adresseEnvoieFormat(refCommandeOk[0].idClient),
+                        status:refCommandeOk[0].statut,
+                        sms:refCommandeOk[0].sendSmsShipping,
                     }
 
                     // l'envoie d'email définit par l'object "transporter"
@@ -1996,12 +2001,12 @@ articlesCommande ==>>  Small Granite Shirt (x1) / Sleek Concrete Pants (x1) / In
                                 from: process.env.EMAIL, //l'envoyeur
                                 to: admin.email,
                                 subject: ` ⚠️ ATTENTION ! ANNULATION COMMANDE pour la reference n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}) ❌ `, // le sujet du mail
-                                text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}) !`,
-                                template: 'anulationCommande',
+                                text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}), produits concernés : ${articlesCommande}.`,
+                                template: 'annulationCommande',
                                 context: contexte,
 
                             });
-                            console.log(`Un email d'information d'une érreur de remboursement à bien été envoyé a ${admin.email} : ${info2.response}`);
+                            console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${admin.email} : ${info2.response}`);
                         }
                     }
 
@@ -2010,12 +2015,12 @@ articlesCommande ==>>  Small Granite Shirt (x1) / Sleek Concrete Pants (x1) / In
                         from: process.env.EMAIL, //l'envoyeur
                         to: shop.emailContact,
                         subject: ` ⚠️ ATTENTION ! ANNULATION COMMANDE pour la reference n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}) ❌ `, // le sujet du mail
-                        text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}) !`,
-                        template: 'anulationCommande',
+                        text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}), produits concernés : ${articlesCommande}.`,
+                        template: 'annulationCommande',
                         context: contexte,
 
                     });
-                    console.log(`Un email d'information d'une érreur de remboursement à bien été envoyé a ${shop.emailContact} : ${info.response}`);
+                    console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${shop.emailContact} : ${info.response}`);
 
                 } catch (error) {
                     console.log(`Erreur dans la méthode d'envoie d'un mail au admins  dans la methode RefundClient du paiementController : ${error.message}`);

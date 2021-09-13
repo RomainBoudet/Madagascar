@@ -334,6 +334,26 @@ CREATE TABLE statut_commande(
 );
 
 ------------------------------------------------------------
+-- Table: transporteur
+------------------------------------------------------------
+
+CREATE TABLE transporteur(
+	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	nom				    text_valid UNIQUE NOT NULL,
+	description			text_valid NOT NULL,
+	frais_expedition    posreal  NOT NULL,
+	estime_arrive       text_valid,
+	estime_arrive_number text_valid, -- en jour, aprés la date de la commande... ne peut être un integer car si choix du marché => string : "Prochain marché"
+	logo				text_valid NOT NULL,
+	created_date        timestamptz NOT NULL DEFAULT now(),
+	updated_date        timestamptz,
+	
+	CHECK (created_date < updated_date)
+
+
+);
+
+------------------------------------------------------------
 -- Table: commande
 ------------------------------------------------------------
 CREATE TABLE commande(
@@ -346,7 +366,8 @@ CREATE TABLE commande(
 	CHECK (date_achat < updated_date),
 
 	id_commandeStatut   INT  NOT NULL REFERENCES statut_commande(id) ON DELETE CASCADE,
-	id_client   	    INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE
+	id_client   	    INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
+	id_transporteur		INT  NOT NULL REFERENCES transporteur(id) ON DELETE CASCADE
 
 
 );
@@ -373,25 +394,7 @@ CREATE TABLE paiement(
 );
 
 
-------------------------------------------------------------
--- Table: transporteur
-------------------------------------------------------------
 
-CREATE TABLE transporteur(
-	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	nom				    text_valid UNIQUE NOT NULL,
-	description			text_valid NOT NULL,
-	frais_expedition    posreal  NOT NULL,
-	estime_arrive       text_valid,
-	estime_arrive_number text_valid, -- en jour, aprés la date de la commande... ne peut être un integer car si choix du marché => string : "Prochain marché"
-	logo				text_valid NOT NULL,
-	created_date        timestamptz NOT NULL DEFAULT now(),
-	updated_date        timestamptz,
-	
-	CHECK (created_date < updated_date)
-
-
-);
 
 
 

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<style>
+    p {
+        border-top: 1px solid rgb(170, 66, 66);
+        padding: 1rem;
+    }
+
+    h2 {
+        color: blueviolet;
+    }
+
+    h3 {
+        border-top: 1px solid rgb(138, 128, 128);
+        padding: 0.5rem;
+    }
+
+    h4 {
+        border-top: 1px solid rgb(71, 20, 20);
+        padding: 0.1rem;
+    }
+</style>
+
+<body>
+
+    <h2>Bonjour
+        {{#if adminPrenom}}
+        {{adminPrenom}} <br>
+        {{else}}
+        cher Administrateur !<br>
+        {{/if}}
+    </h2>
+    </h3>
+    <h3>  ⚠️ ANNULATION de commande ❌ !  </h3> <br>
+    <p>
+        ATTENTION, une commande validée et payée n'est plus a préparer, ni a envoyer, le client ayant choisit d'annuler sa commande.
+        Le remboursement du client a déja été effectué automatiquement puisque le statut de sa commande était compatible: {{statut}}. <br>
+        Elle est désormais passé au statut "Remboursée". <br>
+        <br>
+        Information complémentaires sur la commande annulée : <br>
+        <br>
+        <h4>Commande N°{{refCommande}} <br></h4>
+        Prenom du client : {{prenom}} <br>
+        Nom de famille du client : {{nom}} <br>
+        Email du client : {{email}} <br>
+        Statut de la commande : {{statut}} <br>
+        date d'achat : {{dataAchat}} <br>
+        {{#if commentaire}} {{else}} {{/if}} <br>
+        <br>
+        Information complémentaire sur la livraison annulée : <br>
+        <br>
+        Transporteur: {{}} 
+        adresse d'envoie: {{adresse}}.
+        Le client a-t-il choisi l'envoie d'un sms lorsque le colis sera expédié : {{#compare sms "==" 'true'}} Oui ! {{else}} non. {{#/compare}}
+
+
+        {{#compare idTransporteur "==" 3}}
+        Un retrait sur un marché a été choisi, la commande ne devra pas être expédié.<br>
+        {{else}}
+        La commande est a expédié à : {{adresse}} <br>
+        {{/compare}}
+        {{#if commentaire}}
+        Commentaire du client : "{{commentaire}}" <br>
+        {{else}}
+        {{/if}}
+        {{#compare sendSmsWhenShipping "==" 'true'}}
+        Le client a souhaité l'envoie d'un sms quand la commande sera envoyé. <br>
+        {{else}}
+        Le client n'a pas souhaité l'envoie d'un sms quand la commande sera envoyé. <br>
+        {{/compare}}
+        Montant total de la commande : {{montant}}€ <br>
+        {{#if marqueCB}}
+        Moyen de paiement selectionné : {{paiementType}} {{marqueCB}}, , origine : {{pays}} <br>
+        {{else}}
+        {{/if}}
+        {{#if codeBanque }}
+        Moyen de paiement selectionné : {{paiementType}}, code banque : {{codeBanque}} <br>
+        {{else}}
+        {{/if}}
+        (Adresse Internet Protocol : {{ip}})  <br>
+
+        
+        Produit commandés et quantité :
+        {{#each dataArticles}}
+        <li>{{this.produit}}, TVA : {{this.tva}}, {{#if this.reduction}} réduction : {{this.reduction}}, {{else}}
+            {{/if}} prix HT (avec réduction si
+            existante) : {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, stock restant:
+            {{minus this.stock this.quantite}} <a href="{{this.image}}">image du
+                produit</a>✅</li>
+        {{/each}}
+        <br>
+    </p>
+
+</body>
+
+</html>
+
+{{!-- pour la syntaxe et les opérateur de conditions =>  https://www.npmjs.com/package/handlebars-helpers --}}

@@ -11,6 +11,7 @@ class Commande {
     updatedDate;
     idCommandeStatut;
     idClient;
+    idTransporteur;
 
 
     set date_achat(val) {
@@ -71,6 +72,10 @@ class Commande {
 
     set status_id (val) {
         this.statusId = val;
+    }
+
+    set id_transporteur(val) {
+        this.idTransporteur = val;
     }
 
 
@@ -236,21 +241,22 @@ class Commande {
             this.reference,
             this.idCommandeStatut,
             this.idClient,
+            this.idTransporteur,
         ];
         // si j'ai le commentaire et/ou le sendSmsWhenShipping, je l'insére.. 
         if (this.commentaire && this.sendSmsShipping) {
-            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, commentaire, send_sms_shipping) VALUES ($1, now(), $2, $3, $4, $5) RETURNING *;";
+            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, id_transporteur, commentaire, send_sms_shipping) VALUES ($1, now(), $2, $3, $4, $5, $6) RETURNING *;";
             data.push(this.commentaire);
             data.push(this.sendSmsShipping);
         } else if (this.commentaire) {
-            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, commentaire) VALUES ($1, now(), $2, $3, $4) RETURNING *;";
+            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, id_transporteur, commentaire) VALUES ($1, now(), $2, $3, $4, $5) RETURNING *;";
             data.push(this.commentaire);
         } else if (this.sendSmsShipping) {
-            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, send_sms_shipping) VALUES ($1, now(), $2, $3, $4) RETURNING *;";
+            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, id_transporteur, send_sms_shipping) VALUES ($1, now(), $2, $3, $4, $5) RETURNING *;";
             data.push(this.sendSmsShipping);
         } else {
             //sinon, je fais sans... commentaire aura la valeur null dans la BDD et le sendSmsWhenShipping aura la valeur FALSE.
-            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client) VALUES ($1, now(), $2, $3) RETURNING *;"
+            query = "INSERT INTO mada.commande (reference, date_achat, id_commandeStatut, id_client, id_transporteur) VALUES ($1, now(), $2, $3, $4) RETURNING *;"
         }
 
         const {
@@ -283,8 +289,8 @@ class Commande {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.commande SET reference = $1, commentaire = $2, updated_date=now(), id_commandeStatut = $3, id_client = $4  WHERE id = $5 RETURNING *;`,
-            [this.reference, this.commentaire, this.idCommandeStatut, this.idClient, this.id]
+            `UPDATE mada.commande SET reference = $1, commentaire = $2, updated_date=now(), id_commandeStatut = $3, id_client = $4, id_transporteur = $5  WHERE id = $6 RETURNING *;`,
+            [this.reference, this.commentaire, this.idCommandeStatut, this.idClient, this.idTransporteur, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(

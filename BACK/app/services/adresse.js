@@ -4,10 +4,15 @@ const Adresse = require('../models/adresse');
 
 
 const adresseEnvoieFormat = async (idClient) => {
-
-    const adresseData = await Adresse.findByEnvoiTrue(idClient);
-
     let adresse;
+    let adresseData;
+    try {
+        adresseData = await Adresse.findByEnvoiTrue(idClient);
+    } catch (error) {
+        console.log(`Erreur dans le service Adresse, function adresseEnvoieFormat  : ${error.message}`);
+        console.trace(error);
+        res.status(500).end();
+    }
 
     if (adresseData.ligne2 !== null && adresseData.ligne3 !== null) {
         // adresse avec ligne 1 , 2, 3
@@ -30,10 +35,18 @@ const adresseEnvoieFormat = async (idClient) => {
 }
 
 const adresseEnvoieFormatHTML = async (idClient) => {
-
-    const adresseData = await Adresse.findByEnvoiTrue(idClient);
-
     let adresse;
+    let adresseData;
+
+    try {
+        adresseData = await Adresse.findByEnvoiTrue(idClient);
+
+    } catch (error) {
+        console.log(`Erreur dans le service Adresse, function dresseEnvoieFormatHTML : ${error.message}`);
+        console.trace(error);
+        res.status(500).end();
+    }
+
 
     if (adresseData.ligne2 !== null && adresseData.ligne3 !== null) {
         // adresse avec ligne 1 , 2, 3

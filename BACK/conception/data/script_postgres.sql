@@ -333,16 +333,12 @@ CREATE TABLE statut_commande(
 	description        text_length NOT NULL
 );
 
-------------------------------------------------------------
--- Table: transporteur
-------------------------------------------------------------
-
 CREATE TABLE transporteur(
 	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom				    text_valid UNIQUE NOT NULL,
 	description			text_valid NOT NULL,
 	frais_expedition    posreal  NOT NULL,
-	estime_arrive       text_valid,
+	estime_arrive       text_valid, -- du texte !
 	estime_arrive_number text_valid, -- en jour, aprés la date de la commande... ne peut être un integer car si choix du marché => string : "Prochain marché"
 	logo				text_valid NOT NULL,
 	created_date        timestamptz NOT NULL DEFAULT now(),
@@ -352,6 +348,8 @@ CREATE TABLE transporteur(
 
 
 );
+
+
 
 ------------------------------------------------------------
 -- Table: commande

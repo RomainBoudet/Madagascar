@@ -37,6 +37,10 @@ const {
 } = require('../services/date');
 
 const {
+    arrondi
+} = require('../services/arrondi');
+
+const {
     adresseEnvoieFormatHTML,
     adresseEnvoieFormat
 } = require('../services/adresse');
@@ -1342,7 +1346,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JZ1a9LNa9FFzz1X1dbu7J1d_secret_7eEo9iDfJLvFpPw44sTZnWjfM",
+                client_secret: "pi_3JZO8HLNa9FFzz1X1avEP75I_secret_RVslQI25F6ETeBr9ixhJhTgQh",
             });
 
 
@@ -1868,29 +1872,39 @@ const paiementController = {
             const articles = [];
             refCommandeOk.map(article => (`${articles.push(article.nom +' (x' + article.quantite_commande +')')}`));
             articlesCommande = articles.join(' / ');
+            for (const item of refCommandeOk) {
+                item.prixHTAAvecReduc = parseFloat(arrondi(item.prix_ht * (1 - item.reduction)))
+            }
 
 
-            //console.log("refCommandeOk ==>> ", refCommandeOk);
-            console.log("articles ==>> ", articles);
-            console.log("articlesCommande ==>> ", articlesCommande);
+
+
+            console.log("refCommandeOk ==>> ", refCommandeOk);
+            //console.log("articles ==>> ", articles);
+            //console.log("articlesCommande ==>> ", articlesCommande);
 
             /* refCommandeOk ==>>  [
-  Commande {
+ Commande {
     id: 101,
-    reference: '101.30480.13092021010358.127.1.101.1.79.1',
-    dateAchat: 2021-09-12T23:03:58.820Z,
-    commentaire: null,
-    sendSmsShipping: false,
+    reference: '101.39510.13092021130536.127.1.101.2.79.4',
+    dateAchat: 2021-09-13T11:05:36.249Z,
+    commentaire: "Sur un plateau d'argent impérativement !",
+    sendSmsShipping: true,
     updatedDate: null,
     idCommandeStatut: 3,
     idClient: 101,
-    nom: 'Incredible Concrete Chicken',
-    prix_ht: '89.00',
+    idTransporteur: 4,
+    nom: 'Gorgeous Plastic Shoes',
+    prix_ht: '57.00',
+    image_mini: 'http://placeimg.com/640/480',
+    reduction: '0.31',
+    tva: '0.05',
+    stock: 5,
     prenom: 'Pierre',
     nomFamille: 'Achat',
     email: 'achat@r-boudet.fr',
-    password: '$2b$10$fj1PdyoltxhhK8So6Rr8iuAbdZQCgGzGyYnVgEfETdQwRtNv6V82S',
-    createdDate: 2021-09-12T05:09:52.459Z,
+    password: '$2b$10$0/vZ77oMJ4.qAre9fL68D.I/QGU/Gn72Aui7uakAtPZ/hCxEy3FKm',
+    createdDate: 2021-09-13T11:04:14.619Z,
     idPrivilege: 1,
     prenom_adresse: 'Pierre',
     nom_adresse: 'Achat',
@@ -1901,16 +1915,17 @@ const paiementController = {
     ville: 'Saint cast',
     pays: 'FRANCE',
     telephone: '+33603720612',
-    refPaiement: '19043.3201.101.30480.13092021010400.127.1.101.1.79.1',
+    transporteur: 'La poste Collisimmo',
+    refPaiement: '19043.3201.101.39510.13092021130538.127.1.101.2.79.4',
     quantite_commande: 1,
-    montant: '292.80',
+    montant: '383.10',
     methode: 'moyen_de_paiement:sepa_debit/_code_banque:_19043/_pays_origine:_AT/_4_derniers_chiffres:_3201',
-    paymentIntent: 'pi_3JZ1hVLNa9FFzz1X0eiVIG3n',
+    paymentIntent: 'pi_3JZCyILNa9FFzz1X1M2AULTl',
     moyenPaiement: 'sepa_debit',
     moyenPaiementDetail: '19043',
     origine: 'AUSTRIA',
     derniersChiffres: null,
-    datePaiement: 2021-09-12T23:04:00.093Z,
+    datePaiement: 2021-09-13T11:05:38.084Z,
     statut: 'Paiement validé',
     statusId: 3
   }
@@ -1932,8 +1947,6 @@ const paiementController = {
                 });
             }
 
-
-
             if (Number(refCommandeOk[0].idCommandeStatut) === 3 || Number(refCommandeOk[0].idCommandeStatut) === 4) {
 
                 // Une annulation automatique n'est possible que si la commande a la statut "Paiement validé" ou "En cour de préparation"
@@ -1948,13 +1961,6 @@ const paiementController = {
                     transporter.use('compile', hbs(options));
 
                     // je récupére les infos du shop et des admins pour l'envoi du mail.
-
-                    /* articles ==>>  [
-  'Small Granite Shirt (x1)',
-  'Sleek Concrete Pants (x1)',
-  'Incredible Concrete Chicken (x1)'
-]
-articlesCommande ==>>  Small Granite Shirt (x1) / Sleek Concrete Pants (x1) / Incredible Concrete Chicken (x1) */
 
                     try {
 
@@ -1979,19 +1985,26 @@ articlesCommande ==>>  Small Granite Shirt (x1) / Sleek Concrete Pants (x1) / In
                         moyenPaiement: refCommandeOk[0].moyenPaiement,
                         moyenPaiementDetail: refCommandeOk[0].moyenPaiementDetail,
                         methode: refCommandeOk[0].methode,
-                        montantPaiement: refCommandeOk[0].montant,
+                        origine: refCommandeOk[0].origine,
                         adresse: await adresseEnvoieFormat(refCommandeOk[0].idClient),
-                        status:refCommandeOk[0].statut,
-                        sms:refCommandeOk[0].sendSmsShipping,
+                        status: refCommandeOk[0].statut,
+                        sms: refCommandeOk[0].sendSmsShipping,
+                        commentaire: refCommandeOk[0].commentaire,
+                        trasporteur: refCommandeOk[0].transporteur,
+                        ip: req.ip,
+                        article: refCommandeOk,
                     }
 
                     // l'envoie d'email définit par l'object "transporter"
                     if (adminsMail !== null) {
-//TODO                         
-//! mail a finr et envoyé 
-//! template a faire et gestion de la suite (si statut Pret pour expédition et envoyer message si déja envoyé pour diriger vers procedure retour produit)
-//! lancé un remboursement STRIPE
-//! L'update des stock devrais se faire dans le webhook du refund ! a vérifier ! 
+                        //TODO                         
+                        //! vérifier req.session.user.id avec l'id user dans le numéro de commande !
+                        //! faire toutes les vérif avant envoie mail !
+                        //! mail a finr et envoyé 
+                        //! template a faire et gestion de la suite (si statut Pret pour expédition et envoyer message si déja envoyé pour diriger vers procedure retour produit)
+                        //! lancé un remboursement STRIPE
+                        //! L'update des stock devrais se faire dans le webhook du refund ! a vérifier ! 
+                        //! passé la commande au statut remboursé dans le webhook
                         for (const admin of adminsMail) {
 
                             //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
@@ -2029,7 +2042,7 @@ articlesCommande ==>>  Small Granite Shirt (x1) / Sleek Concrete Pants (x1) / In
                 }
 
 
-
+                stop
                 console.log("La commande n'a pas un statut compatible avec une annulation automatique, une notification a été envoyé au préparateur de la commande. Si le colis n'a pas encore été envoyé, cette commande sera annulé et vous recevrez un mail de confirmation concernant le remboursement.");
 
                 return res.status(200).json({
@@ -2038,8 +2051,9 @@ articlesCommande ==>>  Small Granite Shirt (x1) / Sleek Concrete Pants (x1) / In
 
             }
 
+            // console.log("on est au bout ");
 
-            return res.end();
+            // return res.end();
 
 
             let idClient;

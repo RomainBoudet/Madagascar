@@ -42,58 +42,56 @@
     <h3>  ⚠️ ANNULATION de commande ❌ !  </h3> <br>
     <p>
         ATTENTION, une commande validée et payée n'est plus a préparer, ni a envoyer, le client ayant choisit d'annuler sa commande.
-        Le remboursement du client a déja été effectué automatiquement puisque le statut de sa commande était compatible: {{statut}}. <br>
+        Le remboursement du client a déja été effectué automatiquement puisque le statut de sa commande était compatible => "{{status}}"". <br>
         Elle est désormais passé au statut "Remboursée". <br>
         <br>
         Information complémentaires sur la commande annulée : <br>
         <br>
-        <h4>Commande N°{{refCommande}} <br></h4>
+        Commande N°{{refCommande}} <br>
         Prenom du client : {{prenom}} <br>
         Nom de famille du client : {{nom}} <br>
         Email du client : {{email}} <br>
-        Statut de la commande : {{statut}} <br>
-        date d'achat : {{dataAchat}} <br>
-        {{#if commentaire}} {{else}} {{/if}} <br>
-        <br>
-        Information complémentaire sur la livraison annulée : <br>
-        <br>
-        Transporteur: {{}} 
-        adresse d'envoie: {{adresse}}.
-        Le client a-t-il choisi l'envoie d'un sms lorsque le colis sera expédié : {{#compare sms "==" 'true'}} Oui ! {{else}} non. {{#/compare}}
-
-
-        {{#compare idTransporteur "==" 3}}
-        Un retrait sur un marché a été choisi, la commande ne devra pas être expédié.<br>
-        {{else}}
-        La commande est a expédié à : {{adresse}} <br>
-        {{/compare}}
-        {{#if commentaire}}
+        Statut de la commande : {{status}} <br>
+        date d'achat : {{dateAchat}} <br>
+         {{#if commentaire}}
         Commentaire du client : "{{commentaire}}" <br>
         {{else}}
         {{/if}}
+        <br>
+        Information complémentaire sur la livraison annulée : <br>
+        <br>
+        Transporteur: {{transporteur}} <br>
+        adresse d'envoie: {{adresse}} <br>
+        Le client a-t-il choisi l'envoie d'un sms lorsque le colis sera expédié : {{#compare sms "==" 'true'}} Oui ! {{else}} non. {{/compare}} <br>
+        {{#compare idTransporteur "==" 3}}
+        Un retrait sur un marché a été choisi, la commande ne devra pas être expédié.<br>
+        {{else}}
+        Commande devant être expédié à : {{adresse}} <br>
+        {{/compare}}
         {{#compare sendSmsWhenShipping "==" 'true'}}
         Le client a souhaité l'envoie d'un sms quand la commande sera envoyé. <br>
         {{else}}
         Le client n'a pas souhaité l'envoie d'un sms quand la commande sera envoyé. <br>
         {{/compare}}
         Montant total de la commande : {{montant}}€ <br>
-        {{#if marqueCB}}
-        Moyen de paiement selectionné : {{paiementType}} {{marqueCB}}, , origine : {{pays}} <br>
+        {{#compare moyenPaiement "==" "card"}}
+        Moyen de paiement selectionné : {{moyenPaiement}} {{moyenPaiementDetail}}, derniers chiffres : {{derniersChiffres}} , origine : {{origine}} <br>
         {{else}}
-        {{/if}}
-        {{#if codeBanque }}
-        Moyen de paiement selectionné : {{paiementType}}, code banque : {{codeBanque}} <br>
+        {{/compare}}
+        {{#compare moyenPaiement "==" "sepa_debit" }}
+        Moyen de paiement selectionné : {{moyenPaiement}}, code banque : {{moyenPaiementDetail}} <br>
         {{else}}
-        {{/if}}
+        {{/compare}}
         (Adresse Internet Protocol : {{ip}})  <br>
 
         
         Produit commandés et quantité :
-        {{#each dataArticles}}
-        <li>{{this.produit}}, TVA : {{this.tva}}, {{#if this.reduction}} réduction : {{this.reduction}}, {{else}}
-            {{/if}} prix HT (avec réduction si
-            existante) : {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, stock restant:
-            {{minus this.stock this.quantite}} <a href="{{this.image}}">image du
+        {{#each article}}
+        <li>{{this.nom}}, identifiant du produit : N°{{this.id_produit}}, TVA : {{this.tva}}, {{#if this.reduction}} réduction : {{this.reduction}}, prix HT avec réduction 
+         : {{ this.prixHTAAvecReduc}}€, {{else}}
+            {{/if}}
+            prix HT : {{this.prix_ht}}€, quantité: {{this.quantite_commande}}, stock restant:
+            {{plus this.stock this.quantite_commande}} <a href="{{this.image_mini}}">image du
                 produit</a>✅</li>
         {{/each}}
         <br>

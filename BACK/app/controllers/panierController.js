@@ -1,9 +1,7 @@
 const Panier = require('../models/panier');
 const LignePanier = require('../models/lignePanier');
 const Produit = require('../models/produit');
-const {
-    arrondi
-} = require('../services/arrondi');
+
 
 /**
  * Une méthode qui va servir a intéragir avec le model Panier pour les intéractions avec la BDD 
@@ -14,6 +12,13 @@ const {
  * @param {Express.Response} res - l'objet représentant la réponse
  * @return {JSON}  - une donnée en format json
  */
+
+//NOTE 
+// Pout ignition V8, on passe tous les prix en entiers (centimes), pour qu'ignition utilise SMI 
+// Si nombre a virgule ou entier de plus de 32 bits, ignition le passe en HeapNumber, archi lent !! 
+
+
+
 const panierController = {
 
     getPanier: async (req, res) => {
@@ -26,12 +31,12 @@ const panierController = {
 
             // let totalHT = 0;
             // let totalTTC = 0;
-            let coutTransporteur = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
+            let coutTransporteur = 915; // prix d'un Collisimo pour la France jusqu'a deux kilos. En cents.
 
             if (cart) {
 
                 //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier. Si la réduction est de 0, cette valeur sera identique au prix...
-                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi(article.prix * (1 - article.reduction))));
+                cart.map(article => article.prixHTAvecReduc = parseInt(article.prix * (1 - article.reduction)));
 
                 totalHT1 = cart.reduce(
                     (accumulator, item) => {
@@ -52,9 +57,9 @@ const panierController = {
                     }, 0
                 );
                 // pour que mes valeur dans le json soit bien des chiffre ne dépassant pas deux chiffres aprés la virgule.
-                const totalHT = Number(arrondi(totalHT1));
-                const totalTTC = Number(arrondi(totalTTC1));
-                const totalTVA = Number(arrondi(totalTVA1));
+                const totalHT = parseInt(totalHT1);
+                const totalTTC = parseInt(totalTTC1);
+                const totalTVA = parseInt(totalTVA1);
 
                 //NOTE
                 //UPDATE
@@ -62,14 +67,14 @@ const panierController = {
                 // la bonne maniére de reduire a 2 chiffre apres la virgule ==> (Math.round(number * 100)/100).toFixed(2);
 
                 //Je les stock en session au cas ou j'en ai besoin plus tard.
-                req.session.totalHT = totalHT;
-                req.session.totalTTC = totalTTC;
+                req.session.totalHT = totalHT; 
+                req.session.totalTTC = totalTTC;// cents partout !
                 req.session.totalTVA = totalTVA;
                 req.session.coutTransporteur = coutTransporteur;
 
 
                 //! ATTENTION avec le .toFixed()  ==>> 0.1 + 0.2 === 0.3 returning false car Les nombres à virgule flottante ne peuvent pas représenter toutes les décimales avec précision en binaire
-                req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteur * 100); // je convertit en centimes et Entier pour STRIPE
+                req.session.totalStripe = totalTTC + coutTransporteur; // TOUS en centimes !
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,
@@ -141,7 +146,7 @@ const panierController = {
                 monArticle.quantite = 1;
                 monArticle.tva = parseFloat(monArticle.tva);
                 reduction = parseFloat(reduction); // pas vraiment utile, il sort de Postgres casté en Float...
-                monArticle.prix = parseFloat(monArticle.prix);
+                monArticle.prix = parseInt(monArticle.prix);
 
                 console.log("monArticle.stock =>", monArticle.stock);
                 console.log("monArticle.quantite =>", monArticle.quantite);
@@ -171,13 +176,13 @@ const panierController = {
 
             //let totalHT = 0;
             //let totalTTC = 0;
-            let coutTransporteur = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
+            let coutTransporteur = 915; // prix d'un Collisimo pour la France jusqu'a deux kilos. En cents.
 
             if (cart) {
 
                 //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier.
                 // Si la réduction est de 0, cette valeur sera identique au prix...
-                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi(article.prix * (1 - reduction))));
+                cart.map(article => article.prixHTAvecReduc = parseInt(article.prix * (1 - reduction)));
 
                 totalHT1 = cart.reduce(
                     (accumulator, item) => {
@@ -198,9 +203,9 @@ const panierController = {
                     }, 0
                 );
                 // pour que mes valeur dans le json soit bien des chiffres ne dépassant pas deux chiffres aprés la virgule.
-                const totalHT = Number(arrondi(totalHT1));
-                const totalTTC = Number(arrondi(totalTTC1));
-                const totalTVA = Number(arrondi(totalTVA1));
+                const totalHT = Number(totalHT1);
+                const totalTTC = Number(totalTTC1);
+                const totalTVA = Number(totalTVA1);
 
                 //Je les stock en session au cas ou j'en ai besoin plus tard.
                 req.session.totalHT = totalHT;
@@ -210,7 +215,7 @@ const panierController = {
 
 
                 //! ATTENTION avec le .toFixed()  ==>> 0.1 + 0.2 === 0.3 returning false car Les nombres à virgule flottante ne peuvent pas représenter toutes les décimales avec précision en binaire
-                req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteur * 100); // je convertit en centimes et Entier pour STRIPE
+                req.session.totalStripe = totalTTC + coutTransporteur ; 
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,
@@ -267,12 +272,12 @@ const panierController = {
 
             //let totalHT = 0;
             //let totalTTC = 0;
-            let coutTransporteur = 9.15; // prix d'un Collisimo pour la France jusqu'a deux kilos.
+            let coutTransporteur = 915; // prix d'un Collisimo pour la France jusqu'a deux kilos.
 
             if (cart) {
 
                 //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier. Si la réduction est de 0, cette valeur sera identique au prix...
-                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi(article.prix * (1 - article.reduction))));
+                cart.map(article => article.prixHTAvecReduc = parseInt(article.prix * (1 - article.reduction)));
 
                 totalHT1 = cart.reduce(
                     (accumulator, item) => {
@@ -293,9 +298,9 @@ const panierController = {
                     }, 0
                 );
                 // pour que mes valeur dans le json soit bien des chiffres ne dépassant pas deux chiffres aprés la virgule.
-                const totalHT = Number(arrondi(totalHT1));
-                const totalTTC = Number(arrondi(totalTTC1));
-                const totalTVA = Number(arrondi(totalTVA1));
+                const totalHT = Number(totalHT1);
+                const totalTTC = Number(totalTTC1);
+                const totalTVA = Number(totalTVA1);
 
                 //Je les stock en session au cas ou j'en ai besoin plus tard.
                 req.session.totalHT = totalHT;
@@ -305,7 +310,7 @@ const panierController = {
 
 
                 //! ATTENTION avec le .toFixed()  ==>> 0.1 + 0.2 === 0.3 returning false car Les nombres à virgule flottante ne peuvent pas représenter toutes les décimales avec précision en binaire
-                req.session.totalStripe = parseInt(totalTTC * 100) + parseInt(coutTransporteur * 100); // je convertit en centimes et Entier pour STRIPE
+                req.session.totalStripe = totalTTC + coutTransporteur; // je convertit en centimes et Entier pour STRIPE
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,

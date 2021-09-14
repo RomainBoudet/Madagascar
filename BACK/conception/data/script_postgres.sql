@@ -27,10 +27,8 @@ SET search_path TO mada;
 
 CREATE DOMAIN posint AS INT CHECK (VALUE >= 0); -- un domaine permettant de créer un type de donnée nombre entier ne pouvant être négatif
 CREATE DOMAIN posintsup AS INT check (VALUE > 0); -- un domaine permettant de créer un type de donnée nombre entier strictement positif
-CREATE DOMAIN posreal AS DECIMAL(6,2) CHECK (VALUE >= 00.00); -- un domaine permettant de créer un type de donnée nombre réel, 2 chiffre aprés la virgule (précision de 6 et une échelle de 2 selon la nomanclature postgres), positif ou égal a zéro
 CREATE DOMAIN posrealpourc AS DECIMAL(3,2) CHECK (VALUE > 0.00) CHECK (VALUE < 1.00); -- un domaine permettant de créer un type de donnée nombre réel, 2 chiffre aprés la virgule (précision de 6 et une échelle de 2 selon la nomanclature postgres), positif ou égal a zéro
 
-CREATE DOMAIN posrealsup AS DECIMAL(6,2) CHECK (VALUE > 00.00);
 
 
 -- ~	Matches regular expression, case sensitive
@@ -239,7 +237,7 @@ CREATE TABLE admin_phone(
 ------------------------------------------------------------
 CREATE TABLE panier(
 	id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	total         posreal  NOT NULL DEFAULT 00.00,
+	total         posint  NOT NULL DEFAULT 00.00,
 	created_date   timestamptz NOT NULL DEFAULT now(),
 	updated_date   timestamptz,
 	CHECK (created_date < updated_date),
@@ -270,7 +268,7 @@ CREATE TABLE produit(
 	id             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom            text_valid NOT NULL,
 	description    text_length NOT NULL,
-	prix_HT        posrealsup  NOT NULL,
+	prix_HT        posint  NOT NULL,
 	image_mini	   text_valid NOT NULL,
 	created_date   timestamptz NOT NULL DEFAULT now(),
 	updated_date   timestamptz,
@@ -337,7 +335,7 @@ CREATE TABLE transporteur(
 	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom				    text_valid UNIQUE NOT NULL,
 	description			text_valid NOT NULL,
-	frais_expedition    posreal  NOT NULL,
+	frais_expedition    posint  NOT NULL,
 	estime_arrive       text_valid, -- du texte !
 	estime_arrive_number text_valid, -- en jour, aprés la date de la commande... ne peut être un integer car si choix du marché => string : "Prochain marché"
 	logo				text_valid NOT NULL,
@@ -385,7 +383,7 @@ CREATE TABLE paiement(
 	origine				  text_valid NOT NULL,
 	derniers_chiffres	  text_valid,
 	date_paiement         timestamptz NOT NULL DEFAULT now(),
-	montant               posrealsup  NOT NULL,
+	montant               posint NOT NULL,
 	updated_date           timestamptz,
 	CHECK (date_paiement < updated_date),	
 	id_commande           INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
@@ -462,9 +460,9 @@ CREATE TABLE facture(
 	id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	reference          text_valid UNIQUE NOT NULL,
 	date_facturation   timestamptz NOT NULL DEFAULT now(),
-	montant_HT         posrealsup  NOT NULL,
-	montant_TTC        posrealsup  NOT NULL,
-	montant_TVA        posrealsup  NOT NULL,
+	montant_HT         posint  NOT NULL,
+	montant_TTC        posint  NOT NULL,
+	montant_TVA        posrealpourc  NOT NULL,
 	updated_date        timestamptz ,
 	CHECK (date_facturation < updated_date),
 
@@ -532,7 +530,7 @@ CREATE TABLE livraison(
 	reference			text_valid UNIQUE NOT NULL,
 	numero_suivi       text_valid,
 	URL_suivi          text_valid,
-	poid               posrealsup  NOT NULL DEFAULT 2, -- en KG
+	poid               posint  NOT NULL DEFAULT 2, -- en gramme
 	created_date        timestamptz NOT NULL DEFAULT now(),
 	updated_date        timestamptz,
 	

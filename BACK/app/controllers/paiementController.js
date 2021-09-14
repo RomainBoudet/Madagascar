@@ -434,9 +434,9 @@ const paiementController = {
             const paymentIntent = event.data.object;
             const paymentData = event.data.object.charges.data[0].payment_method_details;
 
-            console.log("paymentIntent ==>> ", paymentIntent);
-            console.log("paymentData ==>> ", paymentData);
-            console.log("event ==>> ", event);
+           // console.log("paymentIntent ==>> ", paymentIntent);
+           // console.log("paymentData ==>> ", paymentData);
+           // console.log("event ==>> ", event);
 
             // Ici req.session ne vaut rien car c'est stripe qui contact ce endpoint. Je récupére donc la session pour savoir ce que le client vient de commander.
             // avec mes metadata passé a la création du payment intent
@@ -602,16 +602,17 @@ const paiementController = {
 
                             dataPaiement.reference = referencePaiement;
                             dataPaiement.methode = methode;
-                            dataPaiement.montant = session.totalTTC;
+                            dataPaiement.montant = session.totalStripe; // le montant TTC + le prix du transport...
                             dataPaiement.idCommande = resultCommande.id;
                             dataPaiement.paymentIntent = paymentIntent.id;
                             dataPaiement.moyenPaiement = paymentData.type;
                             dataPaiement.moyenPaiementDetail = moyenPaiementDet;
                             dataPaiement.origine = origine;
 
-
+                            console.log("dataPaiement ==>> ", dataPaiement);
                             const newPaiement = new Paiement(dataPaiement);
                             await newPaiement.save();
+                            console.log("newPaiement ==>> ", newPaiement);
 
                         } catch (error) {
                             console.log(`Erreur dans la méthode d'insertion du paiement dans la methode Webhook du paiementController : ${error.message}`);
@@ -660,6 +661,9 @@ const paiementController = {
                                 sendSmsWhenShipping: session.sendSmsWhenShipping,
                                 paiementType: paymentData.type,
                                 ip: req.ip,
+                                dateAchatSecret: formatLong(resultCommande.dateAchat),
+                                dateAchat: formatLong(resultCommande.dateAchat),
+
 
                             }
 
@@ -673,7 +677,7 @@ const paiementController = {
 
                             let subject;
                             if (paymentData.type === "card") {
-                                contexte.marqueCB = paymentData.card.brand;
+                                contexte.marqueCB = moyenPaiementDet;
                                 contexte.pays = countrynames.getName(paymentData.card.country);
                                 subject = `Votre commande sur le site d'artisanat Malgache ${shop.nom} ✅ `;
                             } else if (paymentData.type === "sepa_debit") {
@@ -776,15 +780,7 @@ const paiementController = {
                                 session.cart.map(article => (`${articles2.push(article.produit+"x"+article.quantite+"/"+article.taille+"/"+article.couleur)}`));
                                 articlesachat = articles2.join('.');
 
-                                if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
-                                        strictMode: true
-                                    }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
-                                        strictMode: true
-                                    }))) {
-                                    return res.status(404).json({
-                                        message: 'Votre numéro de téléphone ne correspond pas au format souhaité !'
-                                    })
-                                }
+
                                 //J'indique juste la présence ou non de commentaire, a lire par mail...
                                 let comment;
                                 if (resultCommande.commentaire) {
@@ -864,7 +860,11 @@ const paiementController = {
 
                     if (paymentData.type !== "sepa_debit") {
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
-
+                            
+                            //# ignition_en_PLS
+                            // V8 ignition déteste les delete objet pour des raisons de cache inline.. ça reste a optimiser...
+                            // je passe les propriétés en undefined ou re-création d'objet qui n'a pas les propriétés que l'on ne veut pas ! Toujours plus rapide qu'un delete.
+                            //Limiter l'invalidation du cache !
                             delete session.cart,
                                 delete session.totalTTC,
                                 delete session.totalHT,
@@ -888,8 +888,6 @@ const paiementController = {
                     }
 
                     // TODO 
-
-                    //https://stripe.com/docs/refunds 
                     // écrire une facture !
 
 
@@ -1249,8 +1247,6 @@ const paiementController = {
                     }
 
                     try {
-                        //TODO :
-                        //!ATTENTION, il va falloir garder en BDD REDIS les infos de session jusqu' a savoir si le paiement a été validé ou non...
                         // clé REDIS ==>> l'id du payement intent // value ==>> toute la session !
                         // Je peux facilement la retrouver dans le webhook principale avec l'event.
 
@@ -1346,7 +1342,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JZO8HLNa9FFzz1X1avEP75I_secret_RVslQI25F6ETeBr9ixhJhTgQh",
+                client_secret: "pi_3JZd7GLNa9FFzz1X1BMRQgpy_secret_AiEhBILheEOpYaLniWCioEaZ8",
             });
 
 
@@ -1437,7 +1433,7 @@ const paiementController = {
 
     refund: async (req, res) => {
         try {
-            // attent reference de commande = "commande", un montant en euro = "montant" et soit un idClient ="idClient" ou un email = "email"; (On peut prendre les deux dans l'API pour plus de souplesse !)
+            // attent reference de commande = "commande", un montant en euro (et non en centimes, il est multilié par 100 apres !) = "montant" et soit un idClient ="idClient" ou un email = "email"; (On peut prendre les deux dans l'API pour plus de souplesse !)
 
             //verification du role admin pour un double sécu 
             if (req.session.user.privilege === 'Client') {
@@ -1537,16 +1533,16 @@ const paiementController = {
 
             }
             // si tout matche, je lance STRIPE !
-            let refund;
             try {
-                refund = await stripe.refunds.create({
+                await stripe.refunds.create({
                     amount: req.body.montant * 100, // toujours en cents STRIPE...
                     payment_intent: refCommandeOk.paymentIntent,
                     metadata: {
-                        montant: req.body.montant,
+                        montant: req.body.montant, //(donc en euro, pas en cents)
                         idClient,
                         refCommande: refCommandeOk.reference,
                         idCommande: refCommandeOk.id,
+                        refundFromClient: false,
 
                     },
                 });
@@ -1623,7 +1619,7 @@ const paiementController = {
                         refCommande: refCommandeOk.reference,
                         statutCommande: refCommandeOk.idCommandeStatut,
                         dateAchat: formatLong(refCommandeOk.dateAchat),
-                        montant: metadata.montant,
+                        montant: metadata.montant, // il a été passé en euros a la création des matadatas, on l'envoie tel quel.
                         derniersChiffres: refCommandeOk.derniersChiffres,
                         moyenPaiement: refCommandeOk.moyenPaiement,
                         moyenPaiementDetail: refCommandeOk.moyenPaiementDetail,
@@ -1763,18 +1759,22 @@ const paiementController = {
 
             let refCommandeOk;
             try {
-                refCommandeOk = await Commande.findByRefCommande(metadata.refCommande);
+                refCommandeOk = await Commande.findByRefCommandeForClient(metadata.refCommande);
             } catch (error) {
-                console.log("Erreur dans le try catch de récupération de la commande dans la méthode refund du PaiementController !", error);
+                console.log("Erreur dans le try catch de récupération de la commande dans la méthode webhookRefund du PaiementController !", error);
                 return res.status(500).end();
             }
 
+            //FLAG
+            //TODO
+            //! gérer si le retour du webHook est négatif avec une érreur !
 
-            // j'update le statut de la commande a rembourséé !
+
+            // j'update le statut de la commande a "rembourséé" !
             try {
                 const updateStatus = new Commande({
                     idCommandeStatut: 7, // id = 7 => statut "Remboursée"
-                    id: refCommandeOk.id
+                    id: refCommandeOk[0].id
                 })
                 await updateStatus.updateStatutCommande();
                 console.log("Remboursement bien éfféctué, commande mise a jour ");
@@ -1784,62 +1784,264 @@ const paiementController = {
                 return res.status(500).end();
             }
 
-            // J'envoie un mail confirmant le remboursement 
+            // je met a jour les stocks suite au produits remboursé !!
+            // Si les produit ont été remboursés, ils sont soit toujours dans l'entrepot, soit ils sont issue d'un retour de produit et dans tous les cas d'un point de vue informatique ils sont sortis des stock
+            //, je recomtabilise donc leur stock dans la BDD.  
+            //! ici, pour ne pas multiplier les appel a la BDD, je met a jour les stock et j'update le statut de la commande APRES avoir fait mon appel pour retrouver la commande "findByRefCommandeForClient". Ce qui signifit que les infos de l'objet refCommandeOK sont faux pour l'update et les stock, puisqu'il sont updater dans la foulée. Il faudra veiller a remettre ces infos a jour pour l'envoie des mail / SMS : calcul des stock en additionnant les quantité commandé et nouveau statut de la commande "Remboursée" en dur. 
             try {
+                for (const item of refCommandeOk) {
+                    console.log(`On met a jour les stock pour l'item ${item.nom}`);
+                    const updateProduit = await Stock.findOne(item.id_produit);
+                    updateProduit.quantite += item.quantite_commande; //( updateProduit.quantite = updateProduit.quantite - item.quantite)
+                    await updateProduit.update();
+                    console.log("stock bien mis a jour suite a un remboursement");
 
-                transporter.use('compile', hbs(options));
-
-                // je récupére les infos du client pour l'envoi du mail.
-                let shop;
-
-                try {
-
-                    shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement...
-
-                } catch (error) {
-                    console.log(`Erreur dans la méthode de recherche d'information (shop) aprés remboursement dans la methode webhookRefund du paiementController : ${error.message}`);
-                    console.trace(error);
-                    res.status(500).end();
                 }
-
-
-                const contexte = {
-                    nom: refCommandeOk.nomFamille,
-                    prenom: refCommandeOk.prenom,
-                    email: refCommandeOk.email,
-                    refCommande: refCommandeOk.reference,
-                    statutCommande: refCommandeOk.statut,
-                    dateAchat: formatLongSansHeure(refCommandeOk.dateAchat),
-                    montant: metadata.montant,
-                    shopNom: shop.nom,
-                    derniersChiffres: refCommandeOk.derniersChiffres,
-                    moyenPaiement: refCommandeOk.moyenPaiement,
-                    moyenPaiementDetail: refCommandeOk.moyenPaiementDetail,
-                }
-
-                // l'envoie d'email définit par l'object "transporter"
-                const info = await transporter.sendMail({
-                    from: process.env.EMAIL, //l'envoyeur
-                    to: refCommandeOk.email,
-                    subject: `Votre remboursement sur le site d'artisanat Malgache ${shop.nom} a bien été éffectué ✅ `, // le sujet du mail
-                    text: `Bonjour ${refCommandeOk.prenom} ${refCommandeOk.nomFamille}, nous vous confirmons le remboursement de votre commande n°${metadata.refCommande} effectué sur le site ${shop.nom}. La somme de ${metadata.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`,
-                    /* attachement:[
-                        {filename: 'picture.JPG', path: './picture.JPG'}
-                    ] */
-                    template: 'apresRemboursement',
-                    context: contexte,
-
-                });
-                console.log(`Un email de confirmation de remboursement à bien été envoyé a ${refCommandeOk.prenom} ${refCommandeOk.nomFamille} via l'adresse email: ${refCommandeOk.email} : ${info.response}`);
-
-
             } catch (error) {
-                console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés remboursement dans la methode webhookRefund du paiementController : ${error.message}`);
+                console.log(`Erreur lors de la mise a jour des stock dans la methode webhookRefund du paiementController : ${error.message}`);
                 console.trace(error);
                 res.status(500).end();
             }
 
 
+
+            let shop;
+            try {
+
+                shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement...
+
+            } catch (error) {
+                console.log(`Erreur dans la méthode de recherche d'information (shop) aprés remboursement dans la methode webhookRefund du paiementController : ${error.message}`);
+                console.trace(error);
+                res.status(500).end();
+            }
+
+            //Je mutualise la config pour les mails
+            transporter.use('compile', hbs(options));
+            //Les articles en type string pour la version "text" des emails (et non dans la template.)
+            const articles = [];
+            refCommandeOk.map(article => (`${articles.push(article.nom +' (x' + article.quantite_commande +')')}`));
+            const articlesCommande = articles.join(' / ');
+            // j'insére dans chaque objet du tableau refCommandeOk, une clé prixHTAAvecReduc et sa valeur, que j'utiliserait dans les mails..
+            for (const item of refCommandeOk) {
+                item.prixHTAAvecReduc = parseFloat(arrondi(item.prix_ht * (1 - item.reduction)))
+            }
+
+
+            if (metadata.refundFromClient === "true") {
+
+                // ici la demande d'annulation et de remboursement de commande provient du client ! L'admin va l'apprendre soit par mail soit pas SMS !!
+
+                let adminsMail;
+                const adresse = await adresseEnvoieFormat(refCommandeOk[0].idClient);
+                // Je previens les admins de cette annulation de commande ! 
+                // je récupére les infos des admins pour l'envoi du mail.
+                try {
+
+
+                    try {
+                        adminsMail = await AdminVerifEmail.findAllAdminEmailTrue();
+                    } catch (error) {
+                        console.log(`Erreur dans la méthode de recherche d'information (Admins) dans la methode webhookRefund du paiementController : ${error.message}`);
+                        console.trace(error);
+                        res.status(500).end();
+                    }
+
+                    const contexte = {
+                        nom: refCommandeOk[0].nomFamille,
+                        prenom: refCommandeOk[0].prenom,
+                        email: refCommandeOk[0].email,
+                        refCommande: refCommandeOk[0].reference,
+                        statutCommande: refCommandeOk[0].idCommandeStatut,
+                        dateAchat: formatLong(refCommandeOk[0].dateAchat),
+                        montant: refCommandeOk[0].montant /100, //conversion centimes => euros
+                        derniersChiffres: refCommandeOk[0].derniersChiffres,
+                        moyenPaiement: refCommandeOk[0].moyenPaiement,
+                        moyenPaiementDetail: refCommandeOk[0].moyenPaiementDetail,
+                        methode: refCommandeOk[0].methode,
+                        origine: refCommandeOk[0].origine,
+                        adresse,
+                        idClient: refCommandeOk[0].idClient,
+                        status: refCommandeOk[0].statut,
+                        sms: refCommandeOk[0].sendSmsShipping,
+                        commentaire: refCommandeOk[0].commentaire,
+                        trasporteur: refCommandeOk[0].transporteur,
+                        ip: req.ip,
+                        article: refCommandeOk,
+                    }
+
+                    // l'envoie d'email définit par l'object "transporter"
+                    if (adminsMail !== null) {
+
+
+                        for (const admin of adminsMail) {
+
+                            //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
+                            contexte.adminPrenom = admin.prenom;
+
+                            const info2 = await transporter.sendMail({
+                                from: process.env.EMAIL, //l'envoyeur
+                                to: admin.email,
+                                subject: ` ⚠️ ATTENTION ! ANNULATION COMMANDE pour la reference n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé !) ❌ `, // le sujet du mail
+                                text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé !), produits concernés : ${articlesCommande}.`,
+                                template: 'annulationCommande',
+                                context: contexte,
+
+                            });
+                            console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${admin.email} : ${info2.response}`);
+                        }
+                    }
+
+                    //Envoie d'email sur le mail présent dans la table "Shop".
+                    const info = await transporter.sendMail({
+                        from: process.env.EMAIL, //l'envoyeur
+                        to: shop.emailContact,
+                        subject: ` ⚠️ ATTENTION ! ANNULATION COMMANDE pour la reference n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé !) ❌ `, // le sujet du mail
+                        text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé ), produits concernés : ${articlesCommande}.`,
+                        template: 'annulationCommande',
+                        context: contexte,
+
+                    });
+                    console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${shop.emailContact} : ${info.response}`);
+
+                } catch (error) {
+                    console.log(`Erreur dans la méthode d'envoie d'un mail au admins dans la methode webhookRefund du paiementController : ${error.message}`);
+                    console.trace(error);
+                    res.status(500).end();
+                }
+
+                // J'envoie un SMS aux admins si ils ont souhaité recevoir des sms sur leur numéro
+                try {
+                    const smsChoice = await AdminPhone.findAllSmsNewCommande();
+
+                    // On ne lance des sms que si un des admin au moins, a choisi d'en recevoir a chaque commande...
+                    if (smsChoice !== null) {
+                        const dataTwillio = await Twillio.findFirst();
+                        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+
+                        const articles = [];
+                        refCommandeOk.map(article => (`${articles2.push(article.nom+"x"+article.quantite_commande)}`));
+                        articlesachat = articles.join('.');
+
+
+                        if (Number(refCommandeOk.idTransporteur) === 3) {
+
+                            for (const admin of smsChoice) {
+
+                                twilio.messages.create({
+                                        body: `  ❌ ANNULATION COMMANDE ⚠️ ! Commande annulé et déja remboursé au client => Ref commande N°${refCommandeOk[0].reference}/ d'un montant de${refCommandeOk[0].montant}€/ contenant : ${articlesachat}.Cette comande N'EST PLUS à livrer via :${refCommandeOk[0].transporteur}.`,
+                                        from: dataTwillio.twillioNumber,
+                                        to: admin.adminTelephone,
+
+                                    })
+                                    .then(message => console.log(`SMS bien envoyé au ${admin.adminTelephone} (${message.sid}) !`));
+                            }
+
+                        } else {
+
+                            for (const admin of smsChoice) {
+
+                                twilio.messages.create({
+                                        body: `  ❌ ANNULATION COMMANDE ⚠️ ! Commande annulé et déja remboursé au client => Ref commande N°${refCommandeOk[0].reference}/ d'un montant de${refCommandeOk[0].montant}€/ contenant : ${articlesachat}.Cette comande N'EST PLUS à envoyer via :${refCommandeOk[0].transporteur} a : ${adresse}.`,
+                                        from: dataTwillio.twillioNumber,
+                                        to: admin.adminTelephone,
+
+                                    })
+                                    .then(message => console.log(`SMS bien envoyé au ${admin.adminTelephone} (${message.sid}) !`));
+                            }
+
+                        }
+
+
+
+                    }
+                } catch (error) {
+                    console.log(`Erreur dans la méthode d'envoie d'un ou plusieur SMS a l'admin aprés nouvelle commande dans la methode Webhook du paiementController : ${error.message}`);
+                    console.trace(error);
+                    res.status(500).end();
+                }
+
+                // je confirme l'anulation de commande par un petit mail au client !
+                try {
+
+                    const contexte = {
+                        nom: refCommandeOk[0].nomFamille,
+                        prenom: refCommandeOk[0].prenom,
+                        email: refCommandeOk[0].email,
+                        refCommande: refCommandeOk[0].reference,
+                        statutCommande: refCommandeOk[0].statut,
+                        dateAchat: formatLongSansHeure(refCommandeOk[0].dateAchat),
+                        montant: metadata.montant,
+                        shopNom: shop.nom,
+                        derniersChiffres: refCommandeOk[0].derniersChiffres,
+                        moyenPaiement: refCommandeOk[0].moyenPaiement,
+                        moyenPaiementDetail: refCommandeOk[0].moyenPaiementDetail,
+                    }
+
+                    // l'envoie d'email définit par l'object "transporter"
+                    const info = await transporter.sendMail({
+                        from: process.env.EMAIL, //l'envoyeur
+                        to: refCommandeOk[0].email,
+                        subject: `Votre remboursement sur le site d'artisanat Malgache ${shop.nom} a bien été éffectué ✅ `, // le sujet du mail
+                        text: `Bonjour ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille}, nous vous confirmons le remboursement de votre commande n°${refCommandeOk[0].reference} effectué sur le site ${shop.nom}. La somme de ${metadata.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`,
+                        template: 'apresRemboursement',
+                        context: contexte,
+
+                    });
+                    console.log(`Un email de confirmation de remboursement à bien été envoyé a ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} via l'adresse email: ${refCommandeOk[0].email} : ${info.response}`);
+
+
+                } catch (error) {
+                    console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés remboursement dans la methode webhookRefund du paiementController : ${error.message}`);
+                    console.trace(error);
+                    res.status(500).end();
+                }
+
+
+            } else if (metadata.refundFromClient === "false") {
+                // ici la demande d'annulation et de remboursement de commande provient de l'admin ! donc pas beson de l'avertir...
+                // J'envoie un mail confirmant le remboursement au client
+                try {
+
+                    transporter.use('compile', hbs(options));
+
+                    const contexte = {
+                        nom: refCommandeOk[0].nomFamille,
+                        prenom: refCommandeOk[0].prenom,
+                        email: refCommandeOk[0].email,
+                        refCommande: refCommandeOk[0].reference,
+                        statutCommande: refCommandeOk[0].statut,
+                        dateAchat: formatLongSansHeure(refCommandeOk[0].dateAchat),
+                        montant: metadata.montant,
+                        shopNom: shop.nom,
+                        derniersChiffres: refCommandeOk[0].derniersChiffres,
+                        moyenPaiement: refCommandeOk[0].moyenPaiement,
+                        moyenPaiementDetail: refCommandeOk[0].moyenPaiementDetail,
+                    }
+
+                    // l'envoie d'email définit par l'object "transporter"
+                    const info = await transporter.sendMail({
+                        from: process.env.EMAIL, //l'envoyeur
+                        to: refCommandeOk[0].email,
+                        subject: `Votre remboursement sur le site d'artisanat Malgache ${shop.nom} a bien été éffectué ✅ `, // le sujet du mail
+                        text: `Bonjour ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille}, nous vous confirmons le remboursement de votre commande n°${metadata.refCommande} effectué sur le site ${shop.nom}. La somme de ${metadata.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`,
+                        /* attachement:[
+                            {filename: 'picture.JPG', path: './picture.JPG'}
+                        ] */
+                        template: 'apresRemboursement',
+                        context: contexte,
+
+                    });
+                    console.log(`Un email de confirmation de remboursement à bien été envoyé a ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} via l'adresse email: ${refCommandeOk[0].email} : ${info.response}`);
+
+
+                } catch (error) {
+                    console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés remboursement dans la methode webhookRefund du paiementController : ${error.message}`);
+                    console.trace(error);
+                    res.status(500).end();
+                }
+
+            }
             return res.status(200).end();
 
 
@@ -1853,125 +2055,99 @@ const paiementController = {
 
 
     refundClient: async (req, res) => {
+        //FLAG
+        //!ATTENTION, ici le remboursement est de 100% : dons le vendeur perd des sous via STRIPE a chaque remboursement ! (https://stripe.com/fr/pricing)
+        // soit 1.4% + 25 cents par commande annulé pour les carte européennes. Et 2.9% + 025 cents pour les carte non européennes.
+        // Si la commande annulé est de 100€, payée avec une carte européenne, le vendeur perd : 1.4€ + 0.25€ soit : 1,65€
         try {
-            // attent reference de commande = "commande", un montant en euro = "montant" et soit un idClient ="idClient" ou un email = "email"; (On peut prendre les deux dans l'API pour plus de souplesse !)
-
-
+            // attent reference de commande = "commande",
             // Je vérifis que le numéro de commande existe en BDD, qu'il y ait un paiement pour cette commande et que son statut n'est pas "en attente ou "annulée" ou "Remboursée"
-            let refCommandeOk;
-            let articlesCommande;
 
+            const idClientFromCommande = req.body.commande.split('.', 1);
+            if (Number(idClientFromCommande) !== Number(req.session.user.idClient)) {
+
+                console.log("idClient en provenance de la référence de la commande n'est pas le même que l'idClient fournit dans la session.");
+                return res.status(200).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            }
+
+
+            let refCommandeOk;
             try {
-                //! le retour est un tableau d'objet contenant pour chaque objet un produit, une ligne de commande avec toutes ses données !
+                // le retour est un tableau d'objet contenant pour chaque objet un produit, une ligne de commande avec toutes ses données !
                 refCommandeOk = await Commande.findByRefCommandeForClient(req.body.commande);
             } catch (error) {
-                console.log("Erreur dans le try catch de récupération de la commande dans la méthode refund du PaiementController !", error);
+                console.log("Erreur dans le try catch de récupération de la commande dans la méthode refundClientdu PaiementController !", error);
                 return res.status(500).end();
             }
 
-            const articles = [];
-            refCommandeOk.map(article => (`${articles.push(article.nom +' (x' + article.quantite_commande +')')}`));
-            articlesCommande = articles.join(' / ');
-            for (const item of refCommandeOk) {
-                item.prixHTAAvecReduc = parseFloat(arrondi(item.prix_ht * (1 - item.reduction)))
-            }
-
-
-
-
             console.log("refCommandeOk ==>> ", refCommandeOk);
-            //console.log("articles ==>> ", articles);
-            //console.log("articlesCommande ==>> ", articlesCommande);
 
-            /* refCommandeOk ==>>  [
- Commande {
-    id: 101,
-    reference: '101.39510.13092021130536.127.1.101.2.79.4',
-    dateAchat: 2021-09-13T11:05:36.249Z,
-    commentaire: "Sur un plateau d'argent impérativement !",
-    sendSmsShipping: true,
-    updatedDate: null,
-    idCommandeStatut: 3,
-    idClient: 101,
-    idTransporteur: 4,
-    nom: 'Gorgeous Plastic Shoes',
-    prix_ht: '57.00',
-    image_mini: 'http://placeimg.com/640/480',
-    reduction: '0.31',
-    tva: '0.05',
-    stock: 5,
-    prenom: 'Pierre',
-    nomFamille: 'Achat',
-    email: 'achat@r-boudet.fr',
-    password: '$2b$10$0/vZ77oMJ4.qAre9fL68D.I/QGU/Gn72Aui7uakAtPZ/hCxEy3FKm',
-    createdDate: 2021-09-13T11:04:14.619Z,
-    idPrivilege: 1,
-    prenom_adresse: 'Pierre',
-    nom_adresse: 'Achat',
-    ligne1: '35 rue du Moulin bily',
-    ligne2: null,
-    ligne3: null,
-    code_postal: '22380',
-    ville: 'Saint cast',
-    pays: 'FRANCE',
-    telephone: '+33603720612',
-    transporteur: 'La poste Collisimmo',
-    refPaiement: '19043.3201.101.39510.13092021130538.127.1.101.2.79.4',
-    quantite_commande: 1,
-    montant: '383.10',
-    methode: 'moyen_de_paiement:sepa_debit/_code_banque:_19043/_pays_origine:_AT/_4_derniers_chiffres:_3201',
-    paymentIntent: 'pi_3JZCyILNa9FFzz1X1M2AULTl',
-    moyenPaiement: 'sepa_debit',
-    moyenPaiementDetail: '19043',
-    origine: 'AUSTRIA',
-    derniersChiffres: null,
-    datePaiement: 2021-09-13T11:05:38.084Z,
-    statut: 'Paiement validé',
-    statusId: 3
-  }
-  Commande {
-  }
-] */
-
-            //verification que la personne qui a passé la commande est bien celle qui veut l'annuler.
-            if (req.session.user.privilege === 'Client' && req.session.user.idClient !== refCommandeOk[0].idClient) {
-                return res.status(403).json({
-                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
-                })
-            };
-
-            if (refCommandeOk[0] === null) {
+            if (refCommandeOk === null) {
                 console.log("Aucun paiement pour cette référence de commande ou elle n'a pas de paiement ... !");
                 return res.status(200).json({
-                    message: "Aucune commande avec cette référence ou commande sans paiement, merci de vérifier l'orthographe de la référence de la commande."
+                    message: "Aucune commande n'est compatible avec un remboursement, merci de vérifier l'orthographe de la référence de la commande."
                 });
             }
 
+
+            //console.log("refCommandeOk dans le refund Client ==>> ", refCommandeOk);
+
+
+            //FLAG
+            //! envoie SMS et mail a l'admin dans le webhook ! La commande est déja remboursée, LE PREPARATEUR NE DOIT PAS ENVOYER LA COMMANDE !
             if (Number(refCommandeOk[0].idCommandeStatut) === 3 || Number(refCommandeOk[0].idCommandeStatut) === 4) {
 
                 // Une annulation automatique n'est possible que si la commande a la statut "Paiement validé" ou "En cour de préparation"
                 // j'envoie un mail / SMS au admin pour demander une anulation d'envoie de la commande !! 
-                let shop;
+                console.log("refCommandeOk[0].montant *100 Montant a rembourser par STRIPE ==>> ", refCommandeOk[0].montant * 100);
+                try {
+                    await stripe.refunds.create({
+                        amount: refCommandeOk[0].montant * 100, // toujours en cents STRIPE...
+                        payment_intent: refCommandeOk[0].paymentIntent,
+                        metadata: {
+                            montant: refCommandeOk[0].montant / 100, // metadata en euros
+                            idClient: refCommandeOk[0].idClient,
+                            refCommande: refCommandeOk[0].reference,
+                            idCommande: refCommandeOk[0].id,
+                            refundFromClient: true,
+
+                        },
+                    });
+
+                    console.log(`commande n°${refCommandeOk[0].reference} bien remboursé pour un montant de ${refCommandeOk[0].montant}€. `);
+
+                } catch (error) {
+                    console.log("Erreur dans le try catch STRIPE de création du remboursement dans la méthode refundClient du PaiementController !", error);
+                    return res.status(500).end();
+                }
+
+                return res.status(200).json({
+                    message: "Remboursement bien effectué"
+                }).end();
+
+                //FLAG
+                //sinon si la commande a le statut "Pret pour expedition" : ici pas de remboursement automatique, demande d'annulation d'envoie simplement
+            } else if (Number(refCommandeOk[0].idCommandeStatut) === 5) {
+
+                console.log("La commande n'a pas un statut compatible avec une annulation automatique, une notification a été envoyé au préparateur de la commande. Si le colis n'a pas encore été envoyé, cette commande sera annulé et vous recevrez un mail de confirmation concernant le remboursement.");
+
+
                 let adminsMail;
-
-                //! Je previens les admins de ces annulation de commande ! 
-
+                const adresse = await adresseEnvoieFormat(refCommandeOk[0].idClient);
+                // Je previens les admins de cette annulation de commande ! 
+                // je récupére les infos des admins pour l'envoi du mail.
                 try {
 
-                    transporter.use('compile', hbs(options));
-
-                    // je récupére les infos du shop et des admins pour l'envoi du mail.
 
                     try {
-
                         adminsMail = await AdminVerifEmail.findAllAdminEmailTrue();
-                        shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement..
                     } catch (error) {
-                        console.log(`Erreur dans la méthode de recherche d'information (Admins / shop) dans la methode refundClient du paiementController : ${error.message}`);
+                        console.log(`Erreur dans la méthode de recherche d'information (Admins) dans la methode refundClient du paiementController : ${error.message}`);
                         console.trace(error);
                         res.status(500).end();
                     }
-
 
                     const contexte = {
                         nom: refCommandeOk[0].nomFamille,
@@ -1980,13 +2156,14 @@ const paiementController = {
                         refCommande: refCommandeOk[0].reference,
                         statutCommande: refCommandeOk[0].idCommandeStatut,
                         dateAchat: formatLong(refCommandeOk[0].dateAchat),
-                        montant: refCommandeOk[0].montant,
+                        montant: refCommandeOk[0].montant /100,
                         derniersChiffres: refCommandeOk[0].derniersChiffres,
                         moyenPaiement: refCommandeOk[0].moyenPaiement,
                         moyenPaiementDetail: refCommandeOk[0].moyenPaiementDetail,
                         methode: refCommandeOk[0].methode,
                         origine: refCommandeOk[0].origine,
-                        adresse: await adresseEnvoieFormat(refCommandeOk[0].idClient),
+                        adresse,
+                        idClient: refCommandeOk[0].idClient,
                         status: refCommandeOk[0].statut,
                         sms: refCommandeOk[0].sendSmsShipping,
                         commentaire: refCommandeOk[0].commentaire,
@@ -1997,14 +2174,7 @@ const paiementController = {
 
                     // l'envoie d'email définit par l'object "transporter"
                     if (adminsMail !== null) {
-                        //TODO                         
-                        //! vérifier req.session.user.id avec l'id user dans le numéro de commande !
-                        //! faire toutes les vérif avant envoie mail !
-                        //! mail a finr et envoyé 
-                        //! template a faire et gestion de la suite (si statut Pret pour expédition et envoyer message si déja envoyé pour diriger vers procedure retour produit)
-                        //! lancé un remboursement STRIPE
-                        //! L'update des stock devrais se faire dans le webhook du refund ! a vérifier ! 
-                        //! passé la commande au statut remboursé dans le webhook
+
                         for (const admin of adminsMail) {
 
                             //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
@@ -2013,9 +2183,9 @@ const paiementController = {
                             const info2 = await transporter.sendMail({
                                 from: process.env.EMAIL, //l'envoyeur
                                 to: admin.email,
-                                subject: ` ⚠️ ATTENTION ! ANNULATION COMMANDE pour la reference n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}) ❌ `, // le sujet du mail
-                                text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}), produits concernés : ${articlesCommande}.`,
-                                template: 'annulationCommande',
+                                subject: ` ⚠️ ATTENTION ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !) ❌ `, // le sujet du mail
+                                text: `URGENT ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !}), produits concernés : ${articlesCommande}.`,
+                                template: 'annulationCommandeStatutPret',
                                 context: contexte,
 
                             });
@@ -2027,129 +2197,85 @@ const paiementController = {
                     const info = await transporter.sendMail({
                         from: process.env.EMAIL, //l'envoyeur
                         to: shop.emailContact,
-                        subject: ` ⚠️ ATTENTION ! ANNULATION COMMANDE pour la reference n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}) ❌ `, // le sujet du mail
-                        text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (${refCommandeOk[0].email}), produits concernés : ${articlesCommande}.`,
-                        template: 'annulationCommande',
+                        subject: ` ⚠️ ATTENTION ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !) ❌ `, // le sujet du mail
+                        text: `URGENT ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !), produits concernés : ${articlesCommande}.`,
+                        template: 'annulationCommandeStatutPret',
                         context: contexte,
 
                     });
                     console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${shop.emailContact} : ${info.response}`);
 
                 } catch (error) {
-                    console.log(`Erreur dans la méthode d'envoie d'un mail au admins  dans la methode RefundClient du paiementController : ${error.message}`);
+                    console.log(`Erreur dans la méthode d'envoie d'un mail au admins pour annulation envoie si possible dans la methode refundClient du paiementController : ${error.message}`);
+                    console.trace(error);
+                    res.status(500).end();
+                }
+
+                // J'envoie un SMS aux admins si ils ont souhaité recevoir des sms sur leur numéro
+                try {
+                    const smsChoice = await AdminPhone.findAllSmsNewCommande();
+
+                    // On ne lance des sms que si un des admin au moins, a choisi d'en recevoir a chaque commande...
+                    if (smsChoice !== null) {
+                        const dataTwillio = await Twillio.findFirst();
+                        const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+
+                        const articles = [];
+                        refCommandeOk.map(article => (`${articles2.push(article.nom+"x"+article.quantite_commande)}`));
+                        articlesachat = articles.join('.');
+
+
+                        if (Number(refCommandeOk.idTransporteur) === 3) {
+
+                            for (const admin of smsChoice) {
+
+                                twilio.messages.create({
+                                        body: `  ❌ DEMANDE ANNULATION COMMANDE ⚠️ ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° N°${refCommandeOk[0].reference}/ d'un montant de${refCommandeOk[0].montant}€/ contenant : ${articlesachat}.Cette commande N'EST PLUS à livrer via :${refCommandeOk[0].transporteur}. Penser a rembourser manuellement le client de cette commande si l'envoie a pu être empecher.`,
+                                        from: dataTwillio.twillioNumber,
+                                        to: admin.adminTelephone,
+
+                                    })
+                                    .then(message => console.log(`SMS bien envoyé au ${admin.adminTelephone} (${message.sid}) !`));
+                            }
+
+                        } else {
+
+                            for (const admin of smsChoice) {
+
+                                twilio.messages.create({
+                                        body: `  ❌ ANNULATION COMMANDE ⚠️ ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE N°${refCommandeOk[0].reference}/ contenant : ${articlesachat}.Cette comande N'EST PLUS à envoyer via :${refCommandeOk[0].transporteur} a : ${adresse}.`,
+                                        from: dataTwillio.twillioNumber,
+                                        to: admin.adminTelephone,
+
+                                    })
+                                    .then(message => console.log(`SMS bien envoyé au ${admin.adminTelephone} (${message.sid}) !`));
+
+                            }
+
+                        }
+
+
+
+                    }
+                } catch (error) {
+                    console.log(`Erreur dans la méthode d'envoie d'un ou plusieur SMS a l'admin aprés demande annulation si possible envoie dans la methode refundClient du paiementController : ${error.message}`);
                     console.trace(error);
                     res.status(500).end();
                 }
 
 
-                stop
-                console.log("La commande n'a pas un statut compatible avec une annulation automatique, une notification a été envoyé au préparateur de la commande. Si le colis n'a pas encore été envoyé, cette commande sera annulé et vous recevrez un mail de confirmation concernant le remboursement.");
-
                 return res.status(200).json({
-                    message: "La commande n'a pas un statut compatible avec une annulation automatique, une notification a été envoyé au préparateur de la commande. Si le colis n'a pas encore été envoyé, cette commande sera annulé et vous recevrez un mail de confirmation concernant le remboursement. Dans le cas contraire vous devrez effectuer un retour de produit avant de recevoir votre rembourdement."
+                    message: "La commande n'a pas un statut compatible avec une annulation automatique, une notification a été envoyé au préparateur de la commande. Si le colis n'a pas encore été envoyé, cette commande sera annulé et vous recevrez un mail de confirmation concernant le remboursement. Dans le cas contraire vous devrez effectuer un retour de produit aprés reception de la commande, avant de recevoir votre rembourdement."
+                })
+
+                //FLAG
+                // ici le dernier statut : "Expedié", il n'est pas traité ici.
+            } else {
+                return res.status(200).json({
+                    message: `La commande n'a pas un statut compatible avec une annulation automatique. Votre commande a le statut ${refCommandeOk[0].statut}. Aprés reception de votre commande, merci de lancer une procédure de retour.`
                 })
 
             }
-
-            // console.log("on est au bout ");
-
-            // return res.end();
-
-
-            let idClient;
-
-            // si on reçoit un req.body.quelquechose :
-            if (req.body.email) {
-
-                if (!validator.isEmail(req.body.email)) {
-                    console.log("le format du mail ne convient pas au validator")
-                    return res.status(403).json(
-                        'le format de l\'email est incorrect'
-                    );
-
-                }
-                /// je vais retrouver l'id client correspondant
-                let emailOk;
-                try {
-                    emailOk = await Client.findByEmail(req.body.email)
-                } catch (error) {
-                    console.log("Erreur dans le try catch de récupération de l'email dans la méthode refund du PaiementController !", error);
-                    return res.status(500).end();
-                }
-
-
-                if (emailOk === null) {
-                    console.log("Cet email n'est pas présent en BDD !");
-                    return res.status(200).json({
-                        message: "Cet email n'est pas présent en BDD !"
-                    })
-                } else {
-                    idClient = emailOk.id
-                }
-
-            } else if (req.body.idClient) {
-                // je recherche l'id Client correspondant et existe
-                let idOk;
-                try {
-                    idOk = await Client.findOne(req.body.idClient);
-                } catch (error) {
-                    console.log("Erreur dans le try catch de récupération de l'idClient dans la méthode refund du PaiementController !", error);
-                    return res.status(500).end();
-                }
-
-                if (idOk === null) {
-                    console.log("Cet id client n'est pas présent en BDD !");
-                    return res.status(200).json({
-                        message: "Cet id client n'est pas présent en BDD !"
-                    })
-                } else {
-                    idClient = idOk.id
-                }
-            }
-
-
-            // j'extrait l'id Client de la ref de la commande et je compare l'id récupéré avec l'id en ref commande
-            //Format d'une commande : idClient.total a payer en centime, date d'achat en format DDMMYYYYHHmmss.id d'un article acheté.la quantité de cet article.id d'un article acheté.la quantité de cet article
-            const idClientFromRefCommande = req.body.commande.split('.', 1);
-            if (Number(idClientFromRefCommande) !== Number(idClient)) {
-
-                console.log("idClient en provenance de la référence de la commande n'est pas le même que l'idClient fournit ou en provenance du mail.");
-                return res.status(200).json({
-                    message: "Le client renseigné n'a pas effectué cette commande, vous n'êtes pas autoriser a le rembourser !"
-                })
-
-            }
-
-            // je vérifit que le montant demandé rembourser est égal ou inférieur au montant de la commande
-            if (Number(req.body.montant) > Number(refCommandeOk.montant)) {
-                console.log("Il n'est pas possible d'effectuer un remboursement supérieur au montant de la commande !");
-                return res.status(200).json({
-                    message: `Il n'est pas possible d'effectuer un remboursement supérieur au montant de la commande (${refCommandeOk.montant}) !`
-                })
-
-            }
-            // si tout matche, je lance STRIPE !
-            let refund;
-            try {
-                refund = await stripe.refunds.create({
-                    amount: req.body.montant * 100, // toujours en cents STRIPE...
-                    payment_intent: refCommandeOk.payment_intent,
-                    metadata: {
-                        montant: req.body.montant,
-                        idClient,
-                        refCommande: refCommandeOk.reference,
-                        idCommande: refCommandeOk.id,
-
-                    },
-                });
-
-                console.log("Fond bien remboursé ;)");
-
-            } catch (error) {
-                console.log("Erreur dans le try catch STRIPE de création du remboursement dans la méthode refund du PaiementController !", error);
-                return res.status(500).end();
-            }
-
 
             return res.status(200).end();
 

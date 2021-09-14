@@ -12,7 +12,7 @@ const SsCatImage = require('../models/ssCatImage');
 const CategorieImage = require('../models/categorieImage');
 
 
-
+const {arrondi} = require ('../services/arrondi');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Produit pour les intéractions avec la BDD
@@ -28,14 +28,15 @@ const produitController = {
 
     getAll: async (req, res) => {
         try {
-            
+
             const produits = await Produit.findAll();
 
-            produits.map(produit => produit.prixHTAvecReduc = parseFloat((produit.prix * (1 - produit.reduction)).toFixed(2)));
+            console.log(produits);
+            produits.map(produit => produit.prixHTAvecReduc = arrondi((produit.prixht/100) * (1 - produit.reduction)));
             produits.map(produit => produit.tva = parseFloat(produit.tva));
             produits.map(produit => produit.reduction = parseFloat(produit.reduction));
-            produits.map(produit => produit.prix = parseFloat(produit.prix));
-            produits.map(produit => produit.prixTTC = parseFloat((produit.prixHTAvecReduc * (parseFloat(produit.tva) + 1)).toFixed(2)));
+            produits.map(produit => produit.prix = produit.prixht / 100);
+            produits.map(produit => produit.prixTTC = arrondi(produit.prixHTAvecReduc * ((produit.tva) + 1)));
 
             res.status(200).json(produits);
         } catch (error) {
@@ -48,18 +49,14 @@ const produitController = {
     getOne: async (req, res) => {
         try {
 
-            /* function financial(x) {
-                return Number.parseFloat(x).toFixed(2);
-              } /*/ // ne fonctionne pas...(?) le chiffre sort en string..
-
 
             const produit = await Produit.findOnePlus(req.params.id);
-
+            console.log(produit);
             produit.tva = parseFloat(produit.tva);
             produit.reduction = parseFloat(produit.reduction);
-            produit.prix = parseFloat(produit.prix);
-            produit.prixHTAvecReduc = parseFloat((produit.prix * (1 - produit.reduction)).toFixed(2));
-            produit.prixTTC = parseFloat((produit.prixHTAvecReduc * (parseFloat(produit.tva) + 1)).toFixed(2));
+            produit.prix = produit.prixht / 100;
+            produit.prixHTAvecReduc = arrondi((produit.prixht/100) * (1 - produit.reduction));
+            produit.prixTTC = arrondi(produit.prixHTAvecReduc * ((produit.tva) + 1));
 
             console.log(`les données compléte du produit id ${produit.id} avec le nom ${produit.produit} ont bien été retourné au Front !`);
             res.status(200).json(produit);
@@ -78,11 +75,12 @@ const produitController = {
         try {
             const produits = await Produit.findByCategorieId(req.params.id);
 
-            produits.map(produit => produit.prixHTAvecReduc = parseFloat((produit.prix * (1 - produit.reduction)).toFixed(2)));
+
+            produits.map(produit => produit.prixHTAvecReduc = arrondi((produit.prixht/100) * (1 - produit.reduction)));
             produits.map(produit => produit.tva = parseFloat(produit.tva));
             produits.map(produit => produit.reduction = parseFloat(produit.reduction));
-            produits.map(produit => produit.prix = parseFloat(produit.prix));
-            produits.map(produit => produit.prixTTC = parseFloat((produit.prixHTAvecReduc * (parseFloat(produit.tva) + 1)).toFixed(2)));
+            produits.map(produit => produit.prix = produit.prixht / 100);
+            produits.map(produit => produit.prixTTC = arrondi(produit.prixHTAvecReduc * ((produit.tva) + 1)));
 
             res.status(200).json(produits);
         } catch (error) {
@@ -134,7 +132,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateProduit = await Produit.findOne(id);
@@ -298,7 +298,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateProduit = await Caracteristique.findOne(id);
@@ -457,7 +459,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateProduit = await Stock.findOne(id);
@@ -587,7 +591,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateProduit = await Fournisseur.findOne(id);
@@ -698,7 +704,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateClient = await Fournie.findOne(id);
@@ -806,7 +814,9 @@ const produitController = {
 
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
             const updateProduit = await Reduction.findOne(id);
 
@@ -932,7 +942,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateProduit = await Tva.findOne(id);
@@ -1072,7 +1084,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateProduit = await Image.findOne(id);
@@ -1221,7 +1235,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateProduit = await Categorie.findOne(id);
@@ -1345,7 +1361,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateSousCategorie = await SousCategorie.findOne(id);
@@ -1485,7 +1503,9 @@ const produitController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateProduit = await SsCatImage.findOne(id);
@@ -1636,9 +1656,11 @@ const produitController = {
             const {
                 id
             } = req.params;
-            
+
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
 
             const updateProduit = await CategorieImage.findOne(id);

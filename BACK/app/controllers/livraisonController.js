@@ -50,21 +50,21 @@ const livraisonController = {
 
             console.log("transporteur ==> ", transporteurData);
 
-            req.session.coutTransporteur = arrondi(transporteurData.fraisExpedition);
+            req.session.coutTransporteur = transporteurData.fraisExpedition;
 
             // Je remet a jour le total dans le panier.
 
-            req.session.totalStripe = parseInt(req.session.totalTTC * 100) + parseInt(req.session.coutTransporteur * 100);
+            req.session.totalStripe = req.session.totalTTC  + req.session.coutTransporteur;
 
             console.log("req.session a la sortie du choix du transporteur ==> ", req.session);
 
             const message = "Le choix du transporteur a bien été pris en compte."
 
-            const totalHT = req.session.totalHT;
-            const totalTTC = req.session.totalTTC;
-            const totalTVA = req.session.totalTVA;
+            const totalHT = req.session.totalHT /100;
+            const totalTTC = req.session.totalTTC /100;
+            const totalTVA = req.session.totalTVA /100;
             const transporteur = transporteurData.nom;
-            const coutTransporteur = req.session.coutTransporteur;
+            const coutTransporteur = req.session.coutTransporteur /100;
             const totalTTCAvecTransport = (req.session.totalStripe) / 100; // je le reconvertis pour le rendre lisible en euro
             const commentaire = req.session.commentaire;
             const sendSmsWhenShipping = req.session.sendSmsWhenShipping;

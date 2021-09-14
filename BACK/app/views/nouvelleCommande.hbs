@@ -48,6 +48,7 @@
         Nombre de commande déja effectué par ce client : {{commandeLenght}} <br>
         Statut de la commande : {{statutCommande}} <br>
         Mode de livraison choisi : {{nomTransporteur}}<br>
+        Date de la commande : {{dateAchat}} <br>
         Délai de livraison estimé : {{delai}} <br>
 
         {{#compare idTransporteur "==" 3}}
@@ -66,7 +67,7 @@
         {{/compare}}
         Montant total de la commande : {{montant}}€ <br>
         {{#if marqueCB}}
-        Moyen de paiement selectionné : {{paiementType}} {{marqueCB}}, , origine : {{pays}} <br>
+        Moyen de paiement selectionné : {{paiementType}} {{marqueCB}}, origine : {{pays}} <br>
         {{else}}
         {{/if}}
         {{#if codeBanque }}

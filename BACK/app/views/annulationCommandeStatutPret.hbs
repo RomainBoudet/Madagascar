@@ -39,13 +39,13 @@
         {{/if}}
     </h2>
     </h3>
-    <h3>  ⚠️ ANNULATION de commande ❌ !  </h3> <br>
+    <h3>  ⚠️ ANNULATION de commande demandée ❌ !  </h3> <br>
     <p>
-        ATTENTION, une commande validée et payée n'est plus a préparer, ni a envoyer, le client ayant choisit d'annuler sa commande.
-        Le remboursement du client a déja été effectué automatiquement puisque le statut de sa commande était compatible => "{{status}}"". <br>
-        Elle est désormais passé au statut "Remboursée". <br>
+        ATTENTION, une commande validée et payée n'est plus a envoyer si possible (client non remboursé), le client ayant choisit d'annuler sa commande.
+        Le remboursement du client n'a PAS déja effectué automatiquement puisque le statut de sa commande n'était pas compatible => "{{status}}"". <br>
+        Si cet envoie n'a effectivement pas lieu, c'est a toi de le rembourser manuellement via la méthode de remboursement d'un client en indiquant la référence de commande et l'identifiant client ou son mail..<br>
         <br>
-        Information complémentaires sur la commande annulée : <br>
+        Information complémentaires sur la commande que le client souhaiterais annuler : <br>
         <br>
         Commande N°{{refCommande}} <br>
         Prenom du client : {{prenom}} <br>
@@ -59,7 +59,7 @@
         {{else}}
         {{/if}}
         <br>
-        Information complémentaire sur la livraison annulée : <br>
+        Information complémentaire sur la livraison que le client souhaiterais annuler : <br>
         <br>
         Transporteur: {{transporteur}} <br>
         adresse d'envoie: {{adresse}} <br>

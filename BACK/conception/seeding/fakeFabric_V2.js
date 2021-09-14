@@ -293,7 +293,7 @@ const fakeData = async () => {
         for (let index = 1; index <= volume * 3; index++) {
             const basquetProduct = {
 
-                total: faker.commerce.price(),
+                total: Math.floor(faker.commerce.price() *100),
                 //quantity: Math.floor(Math.random() * (5 - 1 + 1)) + 1, // un random entre 1 et 5.
                 dateAdded: faker.date.past(),
                 //dateRemoved: faker.date.past(),
@@ -325,7 +325,7 @@ const fakeData = async () => {
 
                 name: faker.commerce.productName(),
                 description: faker.commerce.productDescription(),
-                price: faker.commerce.price(10, 100),
+                price: Math.floor(faker.commerce.price(10, 100) *100 ),
                 color: colors[Math.floor(Math.random() * colors.length)], //faker.internet.color => hex
                 size: sizes[Math.floor(Math.random() * sizes.length)],
                 quantity: Math.floor(Math.random() * (10 - 1 + 1)) + 1, // un random entre 1 et 10\u{002A}\u{FE0F}\u{20E3}
@@ -511,7 +511,7 @@ const fakeData = async () => {
                 ref: `PAIEMENT/${uuid()} `,
                 methode: faker.finance.transactionDescription(),
                 intent: `pi_test${uuid()}`,
-                montant: faker.finance.amount(),
+                montant: Math.floor(faker.finance.amount()*100),
                 moyenPaiement:'card',
                 moyenPaiementDetail: 'visa',
                 origine:'US',
@@ -535,24 +535,24 @@ const fakeData = async () => {
         const nbTranporteur = [1, 2, 3, 4];
         const transporteurs = [{
 
-                frais_expedition: 7.20,
+                frais_expedition: Math.floor(7.20 *100),
                 logo: faker.image.business(),
                 nom_transporteur: "DPD",
                 description: "DPD en point relai pickup",
                 estime_arrive: "Expédié sous 24 à 48h",
                 estime_arrive_number: 2,
-                poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+                poid: Math.floor((Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
 
             }, {
-                frais_expedition: 14.00,
+                frais_expedition: Math.floor(14.00 *100),
                 logo: faker.image.business(),
                 nom_transporteur: "TNT",
                 estime_arrive: "Livraison le lendemain pour toute commande avant 12h00",
                 estime_arrive_number: 1,
                 description: "Express à domicile pour une livraison à domicile en france métropolitaine. livraison en mains propres et contre signature dès le lendemain de l'expédition de votre commande (1).(1) avant 13 heures ou en début d'après-midi en zone rurale.",
-                poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+                poid: Math.floor((Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
             },
@@ -563,17 +563,17 @@ const fakeData = async () => {
                 estime_arrive: "Durant le prochain marché. Nous contacter pour connaitre la date",
                 estime_arrive_number: 'Prochain marché',
                 description: "Une livraison de la main a la main, sur notre stand",
-                poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+                poid: Math.floor((Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
             }, {
-                frais_expedition: 12.00,
+                frais_expedition: Math.floor(12.00*100),
                 logo: faker.image.business(),
                 nom_transporteur: "La poste Collisimmo",
                 estime_arrive: "Livraison dans les 48h a 72h",
                 estime_arrive_number: 3,
                 description: "Le service colis de La Poste",
-                poid: (Math.random() * 15 - 1 + 1).toFixed(2), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+                poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
                 numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
                 URL_suivi: faker.internet.url(),
             }
@@ -621,19 +621,19 @@ const fakeData = async () => {
         const randomMontants4 = [];
         for (let index = 1; index <= volume * 6; index++) {
 
-            randomMontants1.push(faker.commerce.price());
+            randomMontants1.push(Math.floor(faker.commerce.price()));
         }
         for (let index = 1; index <= volume * 6; index++) {
 
-            randomMontants2.push(faker.commerce.price());
+            randomMontants2.push(Math.floor(faker.commerce.price()));
         }
         for (let index = 1; index <= volume * 6; index++) {
 
-            randomMontants3.push(faker.commerce.price());
+            randomMontants3.push(Math.floor(faker.commerce.price()));
         }
         for (let index = 1; index <= volume * 6; index++) {
 
-            randomMontants4.push(faker.commerce.price());
+            randomMontants4.push(Math.floor(faker.commerce.price()));
         }
 
 
@@ -642,8 +642,8 @@ const fakeData = async () => {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/ ${uuid()}`,
-                montant_HT: randomMontants1[index],
-                montant_TTC: (parseInt(randomMontants1[index]) + (parseInt(randomMontants1[index]) * 0.2)).toFixed(2),
+                montant_HT: Math.floor(randomMontants1[index] *100),
+                montant_TTC: Math.floor((parseInt(randomMontants1[index]) + (parseInt(randomMontants1[index]) * 0.2)).toFixed(2) *100),
                 montant_TVA: 0.2,
                 id_paiement: index,
 
@@ -655,8 +655,8 @@ const fakeData = async () => {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${uuid()} `,
-                montant_HT: randomMontants2[index],
-                montant_TTC: (parseInt(randomMontants2[index]) + (parseInt(randomMontants2[index]) * 0.2)).toFixed(2),
+                montant_HT: Math.floor(randomMontants2[index] *100),
+                montant_TTC: Math.floor((parseInt(randomMontants2[index]) + (parseInt(randomMontants2[index]) * 0.2)).toFixed(2)*100),
                 montant_TVA: 0.2,
                 id_paiement: index,
 
@@ -668,8 +668,8 @@ const fakeData = async () => {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${uuid()} `,
-                montant_HT: randomMontants3[index],
-                montant_TTC: (parseInt(randomMontants3[index]) + (parseInt(randomMontants3[index]) * 0.2)).toFixed(2),
+                montant_HT: Math.floor(randomMontants3[index]*100),
+                montant_TTC: Math.floor((parseInt(randomMontants3[index]) + (parseInt(randomMontants3[index]) * 0.2)).toFixed(2)*100),
                 montant_TVA: 0.2,
                 id_paiement: index,
 
@@ -681,8 +681,8 @@ const fakeData = async () => {
             const facture = {
                 id_client: arrayNumberVolume[Math.floor(Math.random() * arrayNumberVolume.length)],
                 ref: `FACTURE/${uuid()} `,
-                montant_HT: randomMontants4[index],
-                montant_TTC: (parseInt(randomMontants4[index]) + (parseInt(randomMontants4[index]) * 0.2)).toFixed(2),
+                montant_HT: Math.floor(randomMontants4[index]*100),
+                montant_TTC: Math.floor((parseInt(randomMontants4[index]) + (parseInt(randomMontants4[index]) * 0.2)).toFixed(2)*100),
                 montant_TVA: 0.2,
                 id_paiement: index,
 
@@ -1652,14 +1652,17 @@ const fakeData = async () => {
 
 
         //! Mise en place d'un client avec des droits admin.
+        // Avec son numéro de tel vérifié et ok pour recevoir des sms !
 
         consol.seed("Mise en place d'un admin dans la BDD");
-        //npm startawait db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE2}', email='${process.env.EMAILTEST2}', prenom='${process.env.MYFIRST2}', nom_famille='${process.env.MYLAST2}' WHERE id = ${process.env.ID2}; `);
+        //await db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE2}', email='${process.env.EMAILTEST2}', prenom='${process.env.MYFIRST2}', nom_famille='${process.env.MYLAST2}' WHERE id = ${process.env.ID2}; `);
 
         await db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE}', email='${process.env.EMAILTEST}', prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}' WHERE id = ${process.env.ID}; `);
-        await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('false', ${process.env.ID});`);
-        //await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
-        //await db.query(`UPDATE mada.client_adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`)
+        await db.query(`INSERT INTO mada.admin_verif_email (verif_email, id_client) VALUES ('true', ${process.env.ID});`);
+        await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
+        
+        await db.query(`UPDATE mada.admin_phone SET sms_new_commande = true WHERE admin_telephone = '${process.env.MYPHONE}';`);
+
         await db.query(`UPDATE mada.adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`);
         //await db.query(`UPDATE mada.adresse SET prenom='${process.env.MYFIRST2}', nom_famille='${process.env.MYLAST2}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID2}';`);
 
@@ -1682,8 +1685,8 @@ const fakeData = async () => {
 
         const infoErreur = ["Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a été refusée, car la transaction nécessite une authentification. Essayer de relancer le paiement et d'authentifier votre carte bancaire lorsque vous y serez invité. Si vous recevez ce code de refus de paiement aprés une transaction authentifiée, contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible d’autoriser le paiement. Vous pouvez retenter le paiement. S’il ne peut toujours pas être traité, vous pouvez contacter votre banque.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Ce type d’achat n’est pas pris en charge par cette carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Vous avez dépassé le solde ou la limite de crédit disponible sur sa carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La devise spécifiée n’est pas prise en charge par cette carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une transaction du même montant avec les mêmes informations de carte bancaire a été soumise tout récemment. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a expiré. Merci d'utiliser une autre carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé car il a été identifié comme potentiellement frauduleux. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire ne dispose pas de fonds suffisants pour effectuer l’achat. Merci d'utiliser un autre moyen de paiement.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code postal est erroné. Merci de réessayer avec le bon code postal.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le montant du paiement n’est pas valide ou dépasse le montant autorisé par l’émetteur de la carte . Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le mois d’expiration n’est pas valide. Merci de réessayer avec la bonne date d’expiration.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. L’année d’expiration n’est pas valide. Merci de réessayer avec la bonne date d’expiration.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible de joindre l’émetteur de la carte, donc d’autoriser le paiement.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée perdue.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’est pas autorisé. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le nombre de tentatives autorisées de saisie du code PIN a été dépassé.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une erreur s’est produite lors du traitement de la carte bancaire. Vous pouvez retenter le paiement. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’a pas pu être traité par l’émetteur de la carte pour une raison inconnue. Vous pouvez retenter le paiement. ", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée volée.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte utilisée est une carte de test. Utilisez une véritable carte bancaire pour effectuer le paiement", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de retenter le paiement", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Vous avez dépassé le solde ou la limite de crédit disponible sur votre carte bancaire. Merci d'utiliser un autre moyen de paiement", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC." ];
 
-        console.log("arraycodeErreur.lehgth ==>> ", arraycodeErreur.length);
-        console.log("infoErreur.length ==>> ", infoErreur.length);
+        //console.log("arraycodeErreur.lehgth ==>> ", arraycodeErreur.length);
+        //console.log("infoErreur.length ==>> ", infoErreur.length);
 
         let i = 0;
         for (const item of arraycodeErreur) {

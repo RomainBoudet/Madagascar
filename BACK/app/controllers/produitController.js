@@ -31,12 +31,10 @@ const produitController = {
 
             const produits = await Produit.findAll();
 
-            console.log(produits);
-            produits.map(produit => produit.prixHTAvecReduc = arrondi((produit.prixht/100) * (1 - produit.reduction)));
-            produits.map(produit => produit.tva = parseFloat(produit.tva));
-            produits.map(produit => produit.reduction = parseFloat(produit.reduction));
-            produits.map(produit => produit.prix = produit.prixht / 100);
+            produits.map(produit => produit.prixHTAvecReduc = arrondi((produit.prixHT/100) * (1 - produit.reduction)));
             produits.map(produit => produit.prixTTC = arrondi(produit.prixHTAvecReduc * ((produit.tva) + 1)));
+            produits.map(produit => produit.prixHT = produit.prixHT / 100);
+
 
             res.status(200).json(produits);
         } catch (error) {
@@ -51,12 +49,11 @@ const produitController = {
 
 
             const produit = await Produit.findOnePlus(req.params.id);
-            console.log(produit);
-            produit.tva = parseFloat(produit.tva);
-            produit.reduction = parseFloat(produit.reduction);
-            produit.prix = produit.prixht / 100;
-            produit.prixHTAvecReduc = arrondi((produit.prixht/100) * (1 - produit.reduction));
+            
+            produit.prixHTAvecReduc = arrondi((produit.prixHT/100) * (1 - produit.reduction));
             produit.prixTTC = arrondi(produit.prixHTAvecReduc * ((produit.tva) + 1));
+            produit.prixHT = produit.prixHT / 100;
+
 
             console.log(`les données compléte du produit id ${produit.id} avec le nom ${produit.produit} ont bien été retourné au Front !`);
             res.status(200).json(produit);

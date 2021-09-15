@@ -702,9 +702,11 @@ ORDER BY client.id ASC;
 
 CREATE VIEW mada.view_produit AS 
 SELECT
-produit.nom as produit,
-CAST (produit.prix_HT as FLOAT) as prix,
-produit.image_mini as image,
+produit.nom as nom,
+produit.description,
+produit.created_date,
+CAST (produit.prix_HT as FLOAT) as prix_HT,
+produit.image_mini,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,
 CAST (stock.quantite as INTEGER) as stock,

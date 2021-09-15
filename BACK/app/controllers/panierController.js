@@ -103,13 +103,11 @@ const panierController = {
     addArticlePanier: async (req, res) => {
         try {
 
-            console.log("req.session a l'entrée du addPanier ==> ", req.session);
-
             const articleId = parseInt(req.params.id, 10);
             // Je vérifie qu'il est en stock pour pouvoir l'ajouter au panier
             const monArticle = await Produit.findOne(articleId);
+            console.log("monArticle juste apres ==>> ", monArticle);
 
-            console.log("monArticle ==>> ", monArticle);
             if (monArticle.stock < 1) {
                 return res.json("Cet article n'est plus disponible !")
             };
@@ -149,9 +147,6 @@ const panierController = {
 
                 //const monArticle = await Produit.findOne(articleId);
                 monArticle.quantite = 1;
-
-                console.log("monArticle.stock =>", monArticle.stock);
-                console.log("monArticle.quantite =>", monArticle.quantite);
 
                 if (monArticle.quantite > monArticle.stock) {
                     return res.status(200).json("Il n'existe pas assez d'article en stock pour la quantité choisie !")

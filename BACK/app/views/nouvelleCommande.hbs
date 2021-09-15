@@ -79,9 +79,9 @@
         
         Produit commandés et quantité :
         {{#each dataArticles}}
-        <li>{{this.produit}}, TVA : {{this.tva}}, {{#if this.reduction}} réduction : {{this.reduction}}, {{else}}
+        <li>{{this.nom}}, TVA : {{this.tva}}, {{#if this.reduction}} réduction : {{this.reduction}}, {{else}}
             {{/if}} prix HT (avec réduction si
-            existante) : {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, stock restant:
+            existante) : {{divide this.prixHTAvecReduc 100}}€, quantité: {{this.quantite}}, stock restant:
             {{minus this.stock this.quantite}} <a href="{{this.image}}">image du
                 produit</a>✅</li>
         {{/each}}

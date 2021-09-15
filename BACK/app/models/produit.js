@@ -100,9 +100,11 @@ class Produit {
         );
 
 
-        if (!rows[0]) {
+        if (!rows[0] || rows[0].id === undefined) {
             null;
         }
+
+
         consol.model(
             `le produit id : ${id} a été demandé en BDD !`
         );

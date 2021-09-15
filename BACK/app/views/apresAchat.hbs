@@ -69,7 +69,7 @@
         {{/compare}}
         Vos produit commandés :
         {{#each dataArticles}}
-        <li>{{this.produit}}, {{this.prixHTAvecReduc}}€, quantité: {{this.quantite}}, <a href="{{this.image}}" >image du produit</a> ✅ </li>
+        <li>{{this.nom}}, {{divide this.prixHTAvecReduc 100}}€, quantité: {{this.quantite}}, <a href="{{this.image}}" >image du produit</a> ✅ </li>
         {{/each}}
         <br>
         Nous espérons vous revoir bientôt.</p>

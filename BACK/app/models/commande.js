@@ -198,6 +198,33 @@ class Commande {
 
      /**
      * Méthode chargé d'aller chercher les informations relatives à une référence comande passé en paramétre
+     * @param commande - une référence d'une commande
+     * @returns - les informations d'une commande demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+      static async findById(commande) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            "SELECT commande.*, client.*, paiement.reference as Ref_paiement, paiement.montant, paiement.methode, paiement.payment_intent, paiement.moyen_paiement, paiement.moyen_paiement_detail, paiement.origine, paiement.derniers_chiffres, paiement.date_paiement, statut_commande.statut, statut_commande.id as status_id FROM mada.commande JOIN mada.client ON client.id = commande.id_client JOIN mada.paiement ON paiement.id_commande = commande.id JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.id = $1 ;",
+            [commande]
+        );
+
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
+        }
+        consol.model(
+            `la commande avec la référence : ${commande} et avec un statut compatible avec un remboursement a été demandé en BDD !`
+        );
+
+        return new Commande(rows[0]);
+    }
+
+     /**
+     * Méthode chargé d'aller chercher les informations relatives à une référence comande passé en paramétre
      * ne renvoit une commande que si sont statut est "Paiement Validé"
      * @param commande - une référence d'une commande
      * @returns - les informations d'une commande demandées
@@ -259,7 +286,7 @@ class Commande {
         const {
             rows,
         } = await db.query(
-            "SELECT commande.*, produit.nom, produit.prix_HT, produit.image_mini, produit.id as id_produit, reduction.pourcentage_reduction as reduction, tva.taux as tva, stock.quantite as stock, client.*, adresse.prenom as prenom_adresse, adresse.nom_Famille as nom_adresse, adresse.ligne1, adresse.ligne2, adresse.ligne3, adresse.code_postal, adresse.ville, adresse.pays, adresse.telephone, transporteur.nom as transporteur, paiement.reference as Ref_paiement, ligne_commande.quantite_commande, paiement.montant, paiement.methode, paiement.payment_intent, paiement.moyen_paiement, paiement.moyen_paiement_detail, paiement.origine, paiement.derniers_chiffres, paiement.date_paiement, statut_commande.statut, statut_commande.id status_id FROM mada.commande JOIN mada.transporteur ON commande.id_transporteur = transporteur.id JOIN mada.ligne_commande ON ligne_commande.id_commande = commande.id JOIN mada.produit ON ligne_commande.id_produit = produit.id JOIN mada.tva ON produit.id_tva = tva.id JOIN mada.stock ON stock.id_produit = produit.id JOIN mada.reduction ON produit.id_reduction = reduction.id JOIN mada.client ON client.id = commande.id_client JOIN mada.adresse ON adresse.id_client = client.id AND adresse.envoie = true JOIN mada.paiement ON paiement.id_commande = commande.id JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
+            "SELECT commande.*, commande.id as commandeId, produit.nom, produit.prix_HT, produit.image_mini, produit.id as id_produit, reduction.pourcentage_reduction as reduction, tva.taux as tva, stock.quantite as stock, client.*, adresse.prenom as prenom_adresse, adresse.nom_Famille as nom_adresse, adresse.ligne1, adresse.ligne2, adresse.ligne3, adresse.code_postal, adresse.ville, adresse.pays, adresse.telephone, transporteur.nom as transporteur, paiement.reference as Ref_paiement, ligne_commande.quantite_commande, paiement.montant, paiement.methode, paiement.payment_intent, paiement.moyen_paiement, paiement.moyen_paiement_detail, paiement.origine, paiement.derniers_chiffres, paiement.date_paiement, statut_commande.statut, statut_commande.id status_id FROM mada.commande JOIN mada.transporteur ON commande.id_transporteur = transporteur.id JOIN mada.ligne_commande ON ligne_commande.id_commande = commande.id JOIN mada.produit ON ligne_commande.id_produit = produit.id JOIN mada.tva ON produit.id_tva = tva.id JOIN mada.stock ON stock.id_produit = produit.id JOIN mada.reduction ON produit.id_reduction = reduction.id JOIN mada.client ON client.id = commande.id_client JOIN mada.adresse ON adresse.id_client = client.id AND adresse.envoie = true JOIN mada.paiement ON paiement.id_commande = commande.id JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
             [commande]
         );
 

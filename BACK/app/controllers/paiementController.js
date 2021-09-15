@@ -2147,7 +2147,7 @@ const paiementController = {
             } else if (Number(refCommandeOk[0].idCommandeStatut) === 5) {
 
                 transporter.use('compile', hbs(options));
-                
+
                 const articles = [];
                 refCommandeOk.map(article => (`${articles.push(article.nom +' (x' + article.quantite_commande +')')}`));
                 const articlesCommande = articles.join(' / ');
@@ -2233,6 +2233,9 @@ const paiementController = {
 
                     });
                     console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${shop.emailContact} : ${info.response}`);
+
+
+                    
 
                 } catch (error) {
                     console.log(`Erreur dans la méthode d'envoie d'un mail au admins pour annulation envoie si possible dans la methode refundClient du paiementController : ${error.message}`);

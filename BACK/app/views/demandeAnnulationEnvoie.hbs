@@ -88,7 +88,7 @@
         
         Produit commandés et quantité :
         {{#each article}}
-        <li>{{this.nom}}, identifiant du produit : N°{{this.id_produit}}, TVA : {{this.tva}}, {{#if this.reduction}} réduction : {{this.reduction}},
+        <li>{{this.nom}}, identifiant du produit : N°{{this.id_produit}}, TVA : {{this.tva}}, {{#if this.reduction}} réduction : {{this.reduction}}{{else}}{{/if}},
             prix HT : {{divide this.prix_ht 100}}€, quantité: {{this.quantite_commande}}, stock restant:
             {{plus this.stock this.quantite_commande}} <a href="{{this.image_mini}}">image du
                 produit</a>✅</li>

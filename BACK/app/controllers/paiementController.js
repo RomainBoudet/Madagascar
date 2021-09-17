@@ -61,6 +61,8 @@ const nodemailer = require('nodemailer');
 const hbs = require('nodemailer-express-handlebars');
 const countrynames = require('countrynames');
 var helpers = require('handlebars-helpers')();
+const voucher = require('voucher-code-generator');
+
 
 //Config MAIL a sortir du controller ...
 //Sendgrid ou MailGun serait préférable en prod...
@@ -2317,7 +2319,44 @@ const paiementController = {
         }
     },
 
+    coupon: async (req, res) => {
+        try {
 
+            //Création de coupon qui permettent de baisser le prix du montant du coupon ! 
+            // relié a une données en BDD ou REDIS!
+            // relié a un acheteur, un montant de réduction, une période de validité, date d'utilisation, date de création, 
+            voucher.generate({
+                length: 8,
+                count: 1,
+                charset: voucher_codes.charset("alphanumeric"),
+                prefix: "REDUC",
+                //postfix: "MADA",
+                pattern: "#####-###-###",
+
+
+            });
+
+            //! Tester avec !json web Token pour stoker de l'info dans le token et vérifier sa signature
+            
+
+
+
+
+
+
+
+
+
+
+
+
+            res.status(200).json(paiements);
+        } catch (error) {
+            console.trace('Erreur dans la méthode coupon du paiementController :',
+                error);
+            res.status(500).END();
+        }
+    },
 
     getAll: async (req, res) => {
         try {
@@ -2327,7 +2366,7 @@ const paiementController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du paiementController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).END();
         }
     },
 

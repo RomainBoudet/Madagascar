@@ -15,6 +15,7 @@ const jsonwebtoken = require('jsonwebtoken');
 
 
 
+
 /**
  * Une variable d'environnement qui est présent dans le .env.back contenant la clé secréte utiisé pour générer le token
  * @param {Express.JWT_SECRET} - la clé secréte et sensible qui signe le token envoyé.

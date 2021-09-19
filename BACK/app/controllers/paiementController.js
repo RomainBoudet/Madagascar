@@ -2336,13 +2336,25 @@ const paiementController = {
 
             });
 
-            //! Tester avec !json web Token pour stoker de l'info dans le token et vérifier sa signature
-            
+            //! cycle de vie du coupon: 
 
+           //! Mise en place dans REDIS via une méthod Admin pour la création du coupon en prenant comme clé la valeut du voucher générate donné par la méthode du voucherify
 
+           
 
-
-
+            /* function coupongenerator() {
+const coupon = “”;
+const possible = “abcdefghijklmnopqrstuvwxyz0123456789”;
+for (var i = 0; i < {custom code length in here}; i++) {
+coupon += possible.charAt(Math.floor(Math.random() * possible.length));
+}
+return coupon;
+} */
+            /* function coupongenerator() {
+const coupon = “”;
+const possible = “abcdefghijklmnopqrstuvwxyz0123456789”;
+for (var i = 0; i < {custom code length in here}; i++) {
+coupon += possibl
 
 
 

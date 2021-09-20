@@ -2327,9 +2327,41 @@ const paiementController = {
             // reçois = 
             // un req.body.prefix
             // req.body.postfix
-            // req.body.montant
+            // req.body.montant en centime !
             // req.body.idClient (pas obligatoire)
-            // req.body.ttl
+            // req.body.ttl (en miliseconde)
+
+            //! je vérifis si un idClient a été passé en data:
+            if (req.body.idClient === "") {
+                req.body.idclient === null
+            }
+            if (req.body.idClient || req.body.idclient !== null) {
+
+                // si il y a un idClient, je dois vérifier qu'il existe bien en BDD
+                const client = await Client.findUnique(req.body.idClient);
+
+                if (client === null || client === undefined) {
+                    console.log("Cet idClient demandé lors de la conception du coupon, n'existe pas! ");
+                    return res.status(200).json({
+                        message: "Cet idClient n'existe pas !"
+                    })
+                } else {
+                    console.log(`l'id client a bien été trouve en BDD, il vaut : ${client}`);
+                }
+            }
+
+            // Le TTL ne doit pas exéder un an !
+            // en seconde, Max 1 an : 3600 x 1000 x 24 x 365 = max 31536000000 milisecondes
+            if (req.body.ttl > 31536000000) {
+
+                console.log("La durée de vie d'un coupon ne peut être supérieur a un an !")
+                return res.status(200).json({
+                    message: "La durée de vie d'un coupon ne peut être supérieur a un an !"
+                });
+
+            }
+
+
 
             //Création de coupon qui permettent de baisser le prix du montant du coupon ! 
             // relié a un acheteur, un montant de réduction, une période de validité, date d'utilisation, date de création, 
@@ -2342,27 +2374,28 @@ const paiementController = {
             const code = voucher.generate({
                 length: 4,
                 count: 1,
-                charset: voucher.charset("alphanumeric"),
-                prefix: "REDUC-",
-                postfix: `-${formatJMAHMSsecret(Date.now())}`,
-               // pattern: "#####-###-####",
+                charset: `${formatJMAHMSsecret(Date.now())}`,
+                prefix: "MADASHOP-",
+                postfix: `-${req.body.postfix}`,
+                // pattern: "#####-###-####",
             });
+            //`-${formatJMAHMSsecret(Date.now())}`
             console.log(code);
 
             //si il y a un idClient dans le body = value contient une clé avec comme valeur celle du req.bodyIdClient
             // si il n'y pas de idClient dans le body, la clé idClient n'existe pas. Et le coupon s'applique a tous le monde  
             const value = {
-montant : 10,
-idClient:1,
-dateEmission : formatLong(Date.now()),
-isActive : true,
+                montant: 10,
+                idClient: 1,
+                dateEmission: formatLong(Date.now()),
+                isActive: true,
 
             };
 
-console.log(value);
+            console.log(value);
 
 
-           await redis.setex(`mada/coupon:${code}`, JSON.stringify(value));
+            await redis.setex(`mada/coupon:${code}`, req.body.ttl, JSON.stringify(value));
 
             //! cycle de vie du coupon: 
             //! Mise en place dans REDIS via une méthod Admin pour la création du coupon en prenant comme clé la valeut du voucher générate donné par la méthode du voucherify
@@ -2376,7 +2409,9 @@ console.log(value);
                 return coupon;
             } */
 
-            res.status(200).json({message:"Coupon créer avec succée !"});
+            res.status(200).json({
+                message: "Coupon créer avec succée !"
+            });
         } catch (error) {
             console.trace('Erreur dans la méthode coupon du paiementController :',
                 error);

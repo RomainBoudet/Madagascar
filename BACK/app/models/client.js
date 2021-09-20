@@ -6,7 +6,7 @@ const ClientHistoConn = require('../models/clientHistoConn');
 class Client {
 
   id;
-  prenom ;
+  prenom;
   nomFamille;
   email;
   password;
@@ -68,7 +68,7 @@ class Client {
    * @static - une méthode static
    * @async - une méthode asynchrone
    */
-   static async count() {
+  static async count() {
     const {
       rows
     } = await db.query('SELECT COUNT(*) FROM mada.client');
@@ -91,13 +91,13 @@ class Client {
    * @static - une méthode static
    * @async - une méthode asynchrone
    */
-   static async findUnique(id) {
+  static async findUnique(id) {
 
 
     const {
       rows,
     } = await db.query(
-       'SELECT * FROM mada.client WHERE client.id = $1;',
+      'SELECT * FROM mada.client WHERE client.id = $1;',
       [id]
     );
 
@@ -126,12 +126,12 @@ class Client {
     const {
       rows,
     } = await db.query(
-       'SELECT client.*, admin_verif_email.verif_email as statut FROM mada.client LEFT JOIN mada.admin_verif_email ON admin_verif_email.id_client=client.id WHERE client.id = $1;',
+      'SELECT client.*, admin_verif_email.verif_email as statut FROM mada.client LEFT JOIN mada.admin_verif_email ON admin_verif_email.id_client=client.id WHERE client.id = $1;',
       [id]
     );
 
     if (!rows[0]) {
-     return null;
+      return null;
     }
 
     consol.model(
@@ -139,7 +139,7 @@ class Client {
     );
 
     return new Client(rows[0]);
-    
+
   }
 
   /**
@@ -171,7 +171,7 @@ class Client {
     return new Client(rows[0]);
   }
 
-/**
+  /**
    * Méthode chargé d'aller authentifier un client passé en paramétre et de logger la tentative de connexion en bdd
    * @param - un email d'un client
    * @param - un password d'un client
@@ -183,7 +183,7 @@ class Client {
 
     const {
       rows,
-    } = await db.query(`SELECT client.*, privilege.nom FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege WHERE client.email = $1;`,[email]);
+    } = await db.query(`SELECT client.*, privilege.nom FROM mada.client JOIN mada.privilege ON privilege.id = client.id_privilege WHERE client.email = $1;`, [email]);
     if (!rows[0]) {
       consol.model("Aucun client avec cet email en BDD");
       return null
@@ -208,7 +208,7 @@ class Client {
    * @static - une méthode static
    * @async - une méthode asynchrone
    */
-   static async authenticateWhitoutHisto(email, password) {
+  static async authenticateWhitoutHisto(email, password) {
 
     const {
       rows,
@@ -270,7 +270,7 @@ class Client {
    * @returns - les informations du client demandées
    * @async - une méthode asynchrone
    */
-   async saveAdmin() {
+  async saveAdmin() {
     const {
       rows,
     } = await db.query(
@@ -291,14 +291,14 @@ class Client {
 
 
   /**
-  * Méthode chargé d'aller mettre à jour les informations relatives à un client passé en paramétre
-  * @param prenom - le prénom d'un client
-  * @param nomFamille - le nom de famille d'un client
-  * @param email  - l'email' d'un client
-  * @param password - le password d'un client
-  * @returns - les informations du client mis à jour
-  * @async - une méthode asynchrone
-  */
+   * Méthode chargé d'aller mettre à jour les informations relatives à un client passé en paramétre
+   * @param prenom - le prénom d'un client
+   * @param nomFamille - le nom de famille d'un client
+   * @param email  - l'email' d'un client
+   * @param password - le password d'un client
+   * @returns - les informations du client mis à jour
+   * @async - une méthode asynchrone
+   */
   async update() {
     const {
       rows,
@@ -309,7 +309,7 @@ class Client {
 
     this.idPrivilege = rows[0].id_privilege;
     this.updatedDate = rows[0].updated_date;
-    
+
     consol.model(
       `le client id : ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} a été mise à jour le ${this.updatedDate} !`
     );
@@ -317,37 +317,37 @@ class Client {
   }
 
 
-/**
-  * Méthode chargé d'aller mettre à jour les informations relatives à un client passé en paramétre
-  * @param id - l'identifiant d'un client
-  * @returns - les informations du client mis à jour
-  * @async - une méthode asynchrone
-  */
- async updatePrivilege() {
-  const {
-    rows,
-  } = await db.query(
-    `UPDATE mada.client SET id_privilege = '2', updated_date = now() WHERE id = $1 RETURNING *;`,
-    [this.id]
-  );
+  /**
+   * Méthode chargé d'aller mettre à jour les informations relatives à un client passé en paramétre
+   * @param id - l'identifiant d'un client
+   * @returns - les informations du client mis à jour
+   * @async - une méthode asynchrone
+   */
+  async updatePrivilege() {
+    const {
+      rows,
+    } = await db.query(
+      `UPDATE mada.client SET id_privilege = '2', updated_date = now() WHERE id = $1 RETURNING *;`,
+      [this.id]
+    );
 
-  this.idPrivilege = rows[0].id_privilege;
-  this.updatedDate = rows[0].updated_date;
-  this.prenom = rows[0].prenom;
-  this.nomFamille = rows[0].nom_famille;
+    this.idPrivilege = rows[0].id_privilege;
+    this.updatedDate = rows[0].updated_date;
+    this.prenom = rows[0].prenom;
+    this.nomFamille = rows[0].nom_famille;
 
-  consol.model(
-    `le client id : ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} et comme nouveau privilege numéro ${this.idPrivilege} a été mise à jour le ${this.updatedDate} !`
-  );
-  return new Client(rows[0]);
-}
+    consol.model(
+      `le client id : ${this.id} avec comme nom ${this.prenom} ${this.nomFamille} et comme nouveau privilege numéro ${this.idPrivilege} a été mise à jour le ${this.updatedDate} !`
+    );
+    return new Client(rows[0]);
+  }
 
 
-/**
-  * Méthode chargé d'aller supprimer un client passé en paramétre
-  * @param id - l'id d'un article
-  * @async - une méthode asynchrone
-  */
+  /**
+   * Méthode chargé d'aller supprimer un client passé en paramétre
+   * @param id - l'id d'un article
+   * @async - une méthode asynchrone
+   */
   async delete() {
     const {
       rows
@@ -360,11 +360,11 @@ class Client {
   }
 
   /**
-  * Méthode chargé d'aller mettre a jour un mot de passe passé en paramétre
-  * @param id - l'id d'un client
-  * @param password - le password d'un client
-  * @async - une méthode asynchrone
-  */
+   * Méthode chargé d'aller mettre a jour un mot de passe passé en paramétre
+   * @param id - l'id d'un client
+   * @param password - le password d'un client
+   * @async - une méthode asynchrone
+   */
   async updatePwd() {
     const {
       rows,
@@ -379,7 +379,7 @@ class Client {
    * @static - une méthode static
    * @async - une méthode asynchrone
    */
-   static async findAllWithJoint() {
+  static async findAllWithJoint() {
     const {
       rows
     } = await db.query('SELECT client.*,  FROM mada.client ORDER BY client.id ASC');

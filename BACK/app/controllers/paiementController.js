@@ -2162,7 +2162,7 @@ const paiementController = {
                 } catch (error) {
                     console.log(`Erreur dans la méthode de recherche d'information (shop) aprés remboursement dans la methode RefundClient du paiementController : ${error.message}`);
                     console.trace(error);
-                   return res.status(500).end();
+                    return res.status(500).end();
                 }
 
                 let adminsMail;
@@ -2237,12 +2237,12 @@ const paiementController = {
                     console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${shop.emailContact} : ${info.response}`);
 
 
-                    
+
 
                 } catch (error) {
                     console.log(`Erreur dans la méthode d'envoie d'un mail au admins pour annulation envoie si possible dans la methode refundClient du paiementController : ${error.message}`);
                     console.trace(error);
-                   return res.status(500).end();
+                    return res.status(500).end();
                 }
 
                 // J'envoie un SMS aux admins si ils ont souhaité recevoir des sms sur leur numéro
@@ -2319,50 +2319,64 @@ const paiementController = {
         }
     },
 
+
+
+    // une méthode pour la création d'un coupon ! utilisé pour un admin 
     coupon: async (req, res) => {
         try {
+            // reçois = 
+            // un req.body.prefix
+            // req.body.postfix
+            // req.body.montant
+            // req.body.idClient (pas obligatoire)
+            // req.body.ttl
 
             //Création de coupon qui permettent de baisser le prix du montant du coupon ! 
-            // relié a une données en BDD ou REDIS!
             // relié a un acheteur, un montant de réduction, une période de validité, date d'utilisation, date de création, 
-            voucher.generate({
-                length: 8,
+
+            // Je crée mon code coupon qui sera ma clé dans REDIS. 
+            // Cette clé doit être unique
+            // et je dois tenir a jour un index de mes clé dans REDIS.
+
+
+            const code = voucher.generate({
+                length: 4,
                 count: 1,
-                charset: voucher_codes.charset("alphanumeric"),
-                prefix: "REDUC",
-                //postfix: "MADA",
-                pattern: "#####-###-###",
-
-
+                charset: voucher.charset("alphanumeric"),
+                prefix: "REDUC-",
+                postfix: `-${formatJMAHMSsecret(Date.now())}`,
+               // pattern: "#####-###-####",
             });
+            console.log(code);
+
+            //si il y a un idClient dans le body = value contient une clé avec comme valeur celle du req.bodyIdClient
+            // si il n'y pas de idClient dans le body, la clé idClient n'existe pas. Et le coupon s'applique a tous le monde  
+            const value = {
+montant : 10,
+idClient:1,
+dateEmission : formatLong(Date.now()),
+isActive : true,
+
+            };
+
+console.log(value);
+
+
+           await redis.setex(`mada/coupon:${code}`, JSON.stringify(value));
 
             //! cycle de vie du coupon: 
-
-           //! Mise en place dans REDIS via une méthod Admin pour la création du coupon en prenant comme clé la valeut du voucher générate donné par la méthode du voucherify
-
-           
+            //! Mise en place dans REDIS via une méthod Admin pour la création du coupon en prenant comme clé la valeut du voucher générate donné par la méthode du voucherify
 
             /* function coupongenerator() {
-const coupon = “”;
-const possible = “abcdefghijklmnopqrstuvwxyz0123456789”;
-for (var i = 0; i < {custom code length in here}; i++) {
-coupon += possible.charAt(Math.floor(Math.random() * possible.length));
-}
-return coupon;
-} */
-            /* function coupongenerator() {
-const coupon = “”;
-const possible = “abcdefghijklmnopqrstuvwxyz0123456789”;
-for (var i = 0; i < {custom code length in here}; i++) {
-coupon += possibl
+                const coupon = “”;
+                const possible = “abcdefghijklmnopqrstuvwxyz0123456789”;
+                for (var i = 0; i < {custom code length in here}; i++) {
+                coupon += possible.charAt(Math.floor(Math.random() * possible.length));
+                }
+                return coupon;
+            } */
 
-
-
-
-
-
-
-            res.status(200).json(paiements);
+            res.status(200).json({message:"Coupon créer avec succée !"});
         } catch (error) {
             console.trace('Erreur dans la méthode coupon du paiementController :',
                 error);

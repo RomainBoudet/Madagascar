@@ -358,6 +358,16 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  */
   router.post('/webhookRefund', paiementController.webhookRefund);
 
+/**
+ * Créer un coupon de reduction utilisable par un client
+ * Met dans REDIS des coupons qui seront vérifié lors du paiement. 
+ * @route POST /admin/coupon
+ * @group Administarteur
+ * @summary  Créer un coupon de reduction utilisable par un client
+ * @returns {JSON} 200 -  Un coupon utilisable apar un client !
+ */
+    router.post('/admin/coupon', admin, paiementController.coupon);
+
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 
 /**

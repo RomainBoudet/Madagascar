@@ -14,7 +14,9 @@ const redis = {
     get: promisify(client.get).bind(client), // pour obtenir un clé
     set: promisify(client.set).bind(client), // pour insérer une nouvelle clé avec une nouvelle valeur
     setex: promisify(client.setex).bind(client), // je définis une clé avec un temps d'éxpiration (en sec)
-    exists: promisify(client.exists).bind(client) // pour vérifier si une clé existe
+    exists: promisify(client.exists).bind(client), // pour vérifier si une clé existe
+    ttl: promisify(client.ttl).bind(client) // pour vérifier si une clé existe
+
 };
 
 

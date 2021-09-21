@@ -31,6 +31,8 @@ const {
 const {
     formatLong,
     formatJMAHMSsecret,
+    formatCoupon,
+    formatLongSeconde,
     dayjs,
     formatLongSansHeure,
     addWeekdays,
@@ -62,6 +64,10 @@ const hbs = require('nodemailer-express-handlebars');
 const countrynames = require('countrynames');
 var helpers = require('handlebars-helpers')();
 const voucher = require('voucher-code-generator');
+const {
+    Console
+} = require('console');
+const client = require('../middlewares/client');
 
 
 //Config MAIL a sortir du controller ...
@@ -88,8 +94,8 @@ const options = {
     viewPath: path.resolve(__dirname, "../views"),
 };
 
-
-
+// création d'un index pour retrouver des coupons dans REDIS (methode coupon ligne 2200)
+const couponIndex = new Set();
 
 
 /**
@@ -2325,81 +2331,49 @@ const paiementController = {
     coupon: async (req, res) => {
         try {
             // reçois = 
+            // un req.body.postfix
             // un req.body.prefix
-            // req.body.postfix
-            // req.body.montant en centime !
+            // req.body.montant en euros !
             // req.body.idClient (pas obligatoire)
-            // req.body.ttl (en miliseconde)
+            // req.body.ttl (en jour)
 
             //! je vérifis si un idClient a été passé en data:
             if (req.body.idClient === "") {
                 req.body.idclient === null
             }
-            if (req.body.idClient || req.body.idclient !== null) {
+            let client;
+            console.log("req.body.idClient == ", req.body.idClient);
+            if (req.body.idClient && (req.body.idclient !== null || req.body.idclient !== undefined)) {
 
                 // si il y a un idClient, je dois vérifier qu'il existe bien en BDD
-                const client = await Client.findUnique(req.body.idClient);
+                client = await Client.findUnique(Number(req.body.idClient));
 
-                if (client === null || client === undefined) {
+                if (client.id === null || client.id === undefined) {
                     console.log("Cet idClient demandé lors de la conception du coupon, n'existe pas! ");
                     return res.status(200).json({
                         message: "Cet idClient n'existe pas !"
                     })
                 } else {
-                    console.log(`l'id client a bien été trouve en BDD, il vaut : ${client}`);
+                    console.log(`l'id client a bien été trouve en BDD, il vaut : ${client.id}`);
                 }
             }
 
-            // Le TTL ne doit pas exéder un an !
-            // en seconde, Max 1 an : 3600 x 1000 x 24 x 365 = max 31536000000 milisecondes
-            if (req.body.ttl > 31536000000) {
-
-                console.log("La durée de vie d'un coupon ne peut être supérieur a un an !")
-                return res.status(200).json({
-                    message: "La durée de vie d'un coupon ne peut être supérieur a un an !"
-                });
-
-            }
-
-
-
-            //Création de coupon qui permettent de baisser le prix du montant du coupon ! 
-            // relié a un acheteur, un montant de réduction, une période de validité, date d'utilisation, date de création, 
 
             // Je crée mon code coupon qui sera ma clé dans REDIS. 
             // Cette clé doit être unique
-            // et je dois tenir a jour un index de mes clé dans REDIS.
-
 
             const code = voucher.generate({
-                length: 4,
+                length: 13,
                 count: 1,
-                charset: `${formatJMAHMSsecret(Date.now())}`,
-                prefix: "MADASHOP-",
+                charset: `${formatCoupon(Date.now())}`,
+                prefix: `${req.body.prefix}-`,
                 postfix: `-${req.body.postfix}`,
                 // pattern: "#####-###-####",
             });
-            //`-${formatJMAHMSsecret(Date.now())}`
+
             console.log(code);
 
-            //si il y a un idClient dans le body = value contient une clé avec comme valeur celle du req.bodyIdClient
-            // si il n'y pas de idClient dans le body, la clé idClient n'existe pas. Et le coupon s'applique a tous le monde  
-            const value = {
-                montant: 10,
-                idClient: 1,
-                dateEmission: formatLong(Date.now()),
-                isActive: true,
-
-            };
-
-            console.log(value);
-
-
-            await redis.setex(`mada/coupon:${code}`, req.body.ttl, JSON.stringify(value));
-
-            //! cycle de vie du coupon: 
-            //! Mise en place dans REDIS via une méthod Admin pour la création du coupon en prenant comme clé la valeut du voucher générate donné par la méthode du voucherify
-
+            //alternative sinon a voucher :
             /* function coupongenerator() {
                 const coupon = “”;
                 const possible = “abcdefghijklmnopqrstuvwxyz0123456789”;
@@ -2409,8 +2383,50 @@ const paiementController = {
                 return coupon;
             } */
 
+            //si il y a un idClient dans le body = value contient une clé avec comme valeur celle du req.bodyIdClient
+            // si il n'y pas de idClient dans le body, la clé idClient n'existe pas. Et le coupon s'applique a tous le monde 
+
+            const montant = req.body.montant * 100; // convertir les euros en centimes 
+
+            let value;
+            if (client === null || client === undefined) {
+                value = {
+                    montant,
+                    dateEmission: capitalize(formatLongSeconde(Date.now())),
+                    isActive: true,
+                };
+
+            } else {
+                value = {
+                    montant,
+                    idClient: client.id,
+                    nameClient: `${client.prenom} ${client.nomFamille}`,
+                    emailClient: client.email,
+                    dateEmission: capitalize(formatLongSeconde(Date.now())),
+                    isActive: true,
+                };
+            }
+
+            const ttl = req.body.ttl * 24 * 3600; // convertir les TTL donnée en jour en seconde 
+            // Le TTL ne doit pas exéder un an ! On ne devrait jamais rentrer dans ce if étant donné de le Shéma Joi filtre en amont..
+            // en seconde, Max 1 an : 3600 x 1000 x 24 x 365 = max 31536000000 milisecondes
+            if (ttl > 31536000000) {
+                console.log("La durée de vie d'un coupon ne peut être supérieur a un an !")
+                return res.status(200).json({
+                    message: "La durée de vie d'un coupon ne peut être supérieur a un an !"
+                });
+            }
+
+
+            // si je veux plus tard supprimmer un coupon je dois contruire un index des clés et ajouter chaque clé (code coupon) aprés sa construction. Il est initialiser en amont de l'objet paiementController.
+            couponIndex.add(`mada/coupon:${code}`);
+
+            await redis.setex(`mada/coupon:${code}`, ttl, JSON.stringify(value));
+            //! par souci de facilité de comprehension, a chaque redémarrage de Nodemon, le set de couponIndex est éffacé et les valeut dans REDIS le sont également, grace a la configuration du fichier nodemon.json a la racine
+
+
             res.status(200).json({
-                message: "Coupon créer avec succée !"
+                coupon: `${code}`
             });
         } catch (error) {
             console.trace('Erreur dans la méthode coupon du paiementController :',
@@ -2418,6 +2434,87 @@ const paiementController = {
             res.status(500).END();
         }
     },
+
+    couponList: async (req, res) => {
+        try {
+
+            //  Je teste toutes les clés dans l'index et vérfift qu'il reste du temps ttl.
+            // si le code erreur est égale a : The command returns -2 if the key does not exist. //The command returns -1 if the key exists but has no associated expire.
+            // donc si le retour de REDIS vaut -2, la clé n'existe plus !
+
+            //mon set pour mettre les clés existantes non expiré
+            const couponIndexTrue = new Set();
+            for (const item of couponIndex) {
+
+                // je test si la clé est expiré ou non dans REDIS 
+                // si pas expiré je push dans un nouveau tableau
+                const isExpire = await redis.ttl(item);
+                if (isExpire !== -2) {
+                    couponIndexTrue.add(item);
+                }
+                //sinon je garde la valeur du temps restant pour l'afficher dans le front
+            }
+
+            const allCoupons = [];
+            let index = 0;
+            //je récupére toutes les valeurs des clé existantes et je les envoie au front !
+            for (const item of couponIndexTrue) {
+                const valueCoupon = await redis.get(item).then(JSON.parse);
+                allCoupons.push(valueCoupon);
+
+                const theTTL = await redis.ttl(item); // on obtient un ttl en seconde
+
+                allCoupons[index].valide = capitalize(formatLong(dayjs().add(Number(theTTL), 'second'))); // date d'expiration !
+
+                index++;
+            }
+
+            /* for (const item of allCoupons) {
+                console.log("item dans la boucle des coupons, dans allCoupons, apref verif expiration == ", item);
+                const theTTL = await redis.ttl(item); // on obtient un ttl en seconde
+                item.ttl = theTTL / (3600 * 24) // temps restant en jour !
+            } */
+
+            console.log("allCoupons = ", allCoupons);
+
+            res.status(200).json(allCoupons);
+        } catch (error) {
+            console.trace('Erreur dans la méthode couponList du paiementController :',
+                error);
+            res.status(500).END();
+        }
+    },
+
+    delCoupon: async (req, res) => {
+        try {
+            // reçois en body un code a supprimer ! (req.body.coupon)
+
+            if (await redis.exists(`mada/coupon:${req.body.coupon}`)) {
+                // on la sort du registre et on la parse en json puis on la renvoie
+                await redis.del(`mada/coupon:${req.body.coupon}`);
+                console.log(`La clé mada/coupon:${req.body.coupon} a bien été éffacée !`);
+                // et on répond directement à l'utilisateur
+                return res.status(200).json({message:`Le coupon ${req.body.coupon} a bien été éffacée !`});
+
+            } else {
+
+                console.log("Ce coupon n'existe pas ou n'est plus valable !");
+                return res.status(200).json({
+                    message: "Ce coupon n'existe pas ou n'est plus valable !"
+                });
+            }
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode delCoupon du paiementController :',
+                error);
+            res.status(500).END();
+        }
+    },
+
+
+
+
+
 
     getAll: async (req, res) => {
         try {

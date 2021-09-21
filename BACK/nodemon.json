@@ -1,6 +1,6 @@
 {
     "events": {
-        "restart": "redis-cli --scan --pattern 'mada:*' | xargs redis-cli DEL"
+        "restart": "redis-cli --scan --pattern 'mada:*' | xargs redis-cli DEL && redis-cli --scan --pattern 'mada/coupon:*' | xargs redis-cli DEL "
 
     }
 

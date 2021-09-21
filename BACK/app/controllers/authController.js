@@ -26,11 +26,12 @@ const authController = {
 
         try {
 
-              if(request.session.user !== undefined && request.signedCookies.xsrfToken === request.headers['x-xsrf-token'] ){
-                
-              return response.status(200).json({message: "Vous vous êtes déja authentifié et vos informations de connection sont toujours valide."});
-
-            }  
+            if (request.session.user !== undefined && request.signedCookies.xsrfToken!== undefined && request.signedCookies.xsrfToken === request.headers['x-xsrf-token']) {
+                return response.status(200).json({
+                    message: "Vous vous êtes déja authentifié et vos informations de connection sont toujours valide.",
+                    token: `${request.headers['x-xsrf-token']}`,
+                });
+            }
 
             const {
                 email,
@@ -137,9 +138,9 @@ const authController = {
     deconnexion: async (req, res) => {
         try {
 
-            
 
-            console.log("req.session a l'entrée de la déconnexion ==> ",req.session);
+
+            console.log("req.session a l'entrée de la déconnexion ==> ", req.session);
 
             //je change a false la valeur du headers
             //res.append('x-xsrf-token', 'false');

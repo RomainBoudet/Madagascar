@@ -66,6 +66,8 @@ const smsChoiceSchema = require('./schemas/smsChoiceSchema');
 const emailChoiceSchema = require('./schemas/emailChoiceShema');
 const refundSchema = require('./schemas/refundSchema');
 const refundClientSchema = require('./schemas/refundClientSchema');
+const couponSchema = require('./schemas/couponSchema');
+
 
 
 
@@ -237,7 +239,7 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @param {utilisateur.Model} utilisateur.body.required
  * @returns {JSON} 200 - Renvoie un cookie avec le nom 'cookieAccepted' et la valeur 'true'
  */
- router.post('/setcookie', clean, authController.cookie);
+router.post('/setcookie', clean, authController.cookie);
 
 /**
  * Prend en charge l'acceptation des Conditions Générale de Ventes
@@ -246,9 +248,9 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  L'acceptation des Conditions Générale de Ventes est stocké en session
  * @returns {JSON} 200 - L'acceptation des Conditions Générale de Ventes est stocké en session
  */
- router.get('/cgv', paiementController.cgv);
+router.get('/cgv', paiementController.cgv);
 
- //! PAIEMENT -----------------------------------------------------------------------------------------------------------------------------------------
+//! PAIEMENT -----------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  * Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client valide le panier, avant de choisir son mode paiement mais apres avoir choisit son transporteur.
@@ -257,34 +259,34 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  Prend en charge le paiement via STRIPE
  * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
  */
- router.get('/user/paiementCB', client, paiementController.paiementCB);
+router.get('/user/paiementCB', client, paiementController.paiementCB);
 
- /**
+/**
  * Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client valide le panier, avant de choisir son mode paiement mais apres avoir choisit son transporteur.
  *  @route GET /user/paiementSEPA
  * @group utilisateur
  * @summary  Prend en charge le paiement via STRIPE
  * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
  */
-  router.get('/user/paiementSEPA', client, paiementController.paiementSEPA);
+router.get('/user/paiementSEPA', client, paiementController.paiementSEPA);
 
- /**
+/**
  * Permet de récupérer la clé client secret nécéssaire a STRIPE pour une paiement CB, nécéssaire pour le front.
  *  @route GET /user/paiementkey
  * @group utilisateur
  * @summary  Permet de récupérer la clé client secret nécéssaire a STRIPE *** nécéssite d'être authentifié et d'avoir tenté d'effectuer un paiement.
  * @returns {JSON} 200 -  Renvoie la valeur de payementIntent.client_secret
  */
-  router.get('/user/paiementkey', paiementController.key);
+router.get('/user/paiementkey', paiementController.key);
 
-   /**
+/**
  * Permet de récupérer la clé client secret nécéssaire a STRIPE pour un paiement SEPA, nécéssaire pour le front.
  *  @route GET /user/paiementkeySEPA
  * @group utilisateur
  * @summary  Permet de récupérer la clé client secret nécéssaire a STRIPE *** nécéssite d'être authentifié et d'avoir tenté d'effectuer un paiement.
  * @returns {JSON} 200 -  Renvoie la valeur de payementIntent.client_secret
  */
-    router.get('/user/paiementkeySEPA', paiementController.keySEPA);
+router.get('/user/paiementkeySEPA', paiementController.keySEPA);
 
 
 // router.get('/insertCookieForWebhookTest', paiementController.insertCookieForWebhookTest);
@@ -297,9 +299,9 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  Prend en charge le webhook STRIPE apres un paiement validé CB et SEPA
  * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres un paiement validé CB et SEPA
  */
- router.post('/webhookpaiement', paiementController.webhookpaiement);
+router.post('/webhookpaiement', paiementController.webhookpaiement);
 
- /**
+/**
  * Prend en charge le webhook STRIPE apres une tentative paiement SEPA
  * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
  *  @route POST /webhookpaiementSEPA
@@ -307,16 +309,16 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  Prend en charge le webhook STRIPE apres un paiement
  * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres une tentative paiement SEPA
  */
-  router.post('/webhookpaiementSEPA', paiementController.webhookpaiementSEPA);
+router.post('/webhookpaiementSEPA', paiementController.webhookpaiementSEPA);
 
- /**
+/**
  * Connaitre la balance STRIPE du compte
  * @route GET /balanceStripe
  * @group utilisateur
  * @summary  Connaitre la balance STRIPE du compte
  * @returns {JSON} 200 -  Connaitre la balance STRIPE du compte
  */
-  router.get('/balanceStripe', admin, paiementController.balanceStripe);
+router.get('/balanceStripe', admin, paiementController.balanceStripe);
 
 /**
  * Demander un remboursement sur un paiement de la part d'un Admin
@@ -326,9 +328,9 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  Demander un remboursement sur un paiement de la part d'un Admin
  * @returns {JSON} 200 -  Demander un remboursement sur un paiement de la part d'un Admin
  */
-   router.post('/admin/refund', clean, admin, validateBody(refundSchema), paiementController.refund);
+router.post('/admin/refund', clean, admin, validateBody(refundSchema), paiementController.refund);
 
-   /**
+/**
  * Demander un remboursement sur un paiement de la part d'un client
  * route qui attend : "commande" ou "idCommande" // "email" ou "idClient"
  * @route POST /client/refund
@@ -336,7 +338,7 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  Demander un remboursement sur un paiement de la part d'un Admin
  * @returns {JSON} 200 -  Demander un remboursement sur un paiement de la part d'un Admin
  */
-    router.post('/client/refund', clean, client, validateBody(refundClientSchema), paiementController.refundClient);
+router.post('/client/refund', clean, client, validateBody(refundClientSchema), paiementController.refundClient);
 
 /**
  * Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement
@@ -346,9 +348,9 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement
  * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement
  */
- router.post('/webhookRefundUpdate', paiementController.webhookRefundUpdate);
+router.post('/webhookRefundUpdate', paiementController.webhookRefundUpdate);
 
- /**
+/**
  * Prend en charge le webhook STRIPE apres un remboursement
  * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
  *  @route POST /webhookRefund
@@ -356,7 +358,7 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @summary  Prend en charge le webhook STRIPE apres un remboursement
  * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres une tentative paiement SEPA
  */
-  router.post('/webhookRefund', paiementController.webhookRefund);
+router.post('/webhookRefund', paiementController.webhookRefund);
 
 /**
  * Créer un coupon de reduction utilisable par un client
@@ -364,9 +366,28 @@ router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resen
  * @route POST /admin/coupon
  * @group Administarteur
  * @summary  Créer un coupon de reduction utilisable par un client
- * @returns {JSON} 200 -  Un coupon utilisable apar un client !
+ * @returns {JSON} 200 -  Un coupon utilisable par un client !
  */
-    router.post('/admin/coupon', admin, paiementController.coupon);
+router.post('/admin/coupon', admin, validateBody(couponSchema), paiementController.coupon);
+
+/**
+ * Affiche la liste des coupons non expiré
+ * @route GET /admin/couponList
+ * @group Administrateur
+ * @summary  Affiche la liste des coupons non expiré
+ * @returns {JSON} 200 -  Affiche la liste des coupons non expiré
+ */
+router.get('/admin/couponList', admin, paiementController.couponList);
+
+
+/**
+ * Supprime un coupon passé en paramétre
+ * @route DELETE /admin/coupon
+ * @group Administrateur
+ * @summary  Supprime un coupon passé en paramétre
+ * @returns {JSON} 200 -  Supprime un coupon passé en paramétre
+ */
+router.delete('/admin/coupon', admin, paiementController.delCoupon);
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 
@@ -428,7 +449,7 @@ router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminCont
  * @summary Permet d'insérer en BDD le choix de l'admin en matiére d'envoie de sms a chaque commande reçu
  * @param {Administrateur.Model} Administrateur.body.required
  */
- router.post('/admin/smsChoice', admin, clean, validateBody(smsChoiceSchema), adminController.smsChoice);
+router.post('/admin/smsChoice', admin, clean, validateBody(smsChoiceSchema), adminController.smsChoice);
 
 /**
  * Reçoie un true ou false pour pouvoir choisir l'envoie de email a l'admin a chaque commande, ou non. Nécéssite d'avoir vérifié son email avant.
@@ -437,7 +458,7 @@ router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminCont
  * @summary Permet d'insérer en BDD le choix de l'admin en matiére d'envoie d'email a chaque commande reçu
  * @param {Administrateur.Model} Administrateur.body.required
  */
- router.post('/admin/emailChoice', admin, clean, validateBody(emailChoiceSchema), adminController.emailChoice);
+router.post('/admin/emailChoice', admin, clean, validateBody(emailChoiceSchema), adminController.emailChoice);
 
 
 /**
@@ -475,17 +496,17 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Supprime un client en BDD selon son id    *** nécéssite un mot de passe
  * @returns {JSON} 200 - Supprime un client en BDD
  */
- router.delete('/admin/user/:id(\\d+)', admin, validateBody(passwordSchema), clientController.deleteById);
+router.delete('/admin/user/:id(\\d+)', admin, validateBody(passwordSchema), clientController.deleteById);
 
 
- /**
+/**
  * Supprime un client selon son email
  * @route DELETE /admin/user
  * @group Administrateur
  * @summary Supprime un client en BDD selon son email    *** nécéssite un mot de passe et l'email a supprimer
  * @returns {JSON} 200 - Supprime un client en BDD
  */
-  router.delete('/admin/user', admin, validateBody(userLoginSchema), clientController.deleteByEmail);
+router.delete('/admin/user', admin, validateBody(userLoginSchema), clientController.deleteByEmail);
 
 //! ADRESSE DES CLIENT -----------------------------------
 
@@ -496,7 +517,7 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Renvoie toutes les adresses des clients en BDD
  * @returns {JSON} 200 -Renvoie la liste des adresses en BDD.
  */
- router.get('/admin/user/adresses', admin, adresseController.getAllAdresse);
+router.get('/admin/user/adresses', admin, adresseController.getAllAdresse);
 
 /**
  * Renvoie les adresses d'un client selon son idClient
@@ -505,7 +526,7 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Renvoie toutes les adresse d'un client en BDD
  * @returns {JSON} 200 -Renvoie toutes les adresse d'un client en BDD
  */
- router.get('/client/adresses/:id(\\d+)', client, adresseController.getAdresseByIdClient);
+router.get('/client/adresses/:id(\\d+)', client, adresseController.getAdresseByIdClient);
 
 /**
  * Renvoie une seule adresse d'un client selon son client_adresse.id
@@ -514,7 +535,7 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Renvoie une seule adresse d'un client selon son client_adresse.id
  * @returns {JSON} 200 - Renvoie une seule adresse d'un client selon son client_adresse.id
  */
- router.get('/client/adresse/:id(\\d+)', client, adresseController.getOneAdresse);
+router.get('/client/adresse/:id(\\d+)', client, adresseController.getOneAdresse);
 
 /**
  * Renvoie la derniére adresse saisi d'un client selon son idClient
@@ -523,27 +544,27 @@ router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
  * @summary Renvoie la derniére adresse saisi d'un client selon son idClient
  * @returns {JSON} 200 - Renvoie la derniére adresse saisi d'un client selon son idClient
  */
- router.get('/client/adresselast/:id(\\d+)', client, adresseController. getLastAdresseByIdClient);
+router.get('/client/adresselast/:id(\\d+)', client, adresseController.getLastAdresseByIdClient);
 
 
 
- /**
+/**
  * Une route pour insérer une adresse
  * @route POST /client/adresse/new
  * @group utilisateur
  * @summary Insére une nouvelle adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse insérée
  */
-router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePostSchema), adresseController.newAdresse);
+router.post('/client/adresse/new', cleanPassword, client, validateBody(adressePostSchema), adresseController.newAdresse);
 
- /**
+/**
  * Une route pour mettre a jour une adresse
  * @route PATCH /client/adresse/:id
  * @group utilisateur
  * @summary Met a jour une adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
-  router.patch('/client/adresse/:id(\\d+)', cleanPassword, client, validateBody(adresseSchema), adresseController.updateAdresse);
+router.patch('/client/adresse/:id(\\d+)', cleanPassword, client, validateBody(adresseSchema), adresseController.updateAdresse);
 
 /**
  * Une route pour supprimer une adresse
@@ -552,7 +573,7 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary Supprime une adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
- router.delete('/client/adresse/:id(\\d+)', client, validateBody(passwordSchema), adresseController.delete);
+router.delete('/client/adresse/:id(\\d+)', client, validateBody(passwordSchema), adresseController.delete);
 
 
 /**
@@ -563,9 +584,9 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary Supprime des adresses d'un même client ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
- router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema), adresseController.deleteByIdClient);
+router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema), adresseController.deleteByIdClient);
 
- 
+
 //! ROUTE TRANSPORTEUR ---------------------
 
 /**
@@ -575,7 +596,7 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary Permet de déterminer le choix du transporteur fait par le client et de laisser un commentaire en session
  * @returns {JSON} 200 - Le choix du transporteur fait par le client et permet de laisser un commentaire en session  
  */
- router.post('/client/livraisonChoix', clean, validateBody(choixLivraisonSchema), livraisonController.choixLivraison);
+router.post('/client/livraisonChoix', clean, validateBody(choixLivraisonSchema), livraisonController.choixLivraison);
 
 
 /**
@@ -585,7 +606,7 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary  Renvoie tous les transporteurs en BDD
  * @returns {JSON} 200 - Renvoie tous les transporteurs en BDD
  */
- router.get('/user/transporteurs', client, livraisonController.getAllTransporteur);
+router.get('/user/transporteurs', client, livraisonController.getAllTransporteur);
 
 /**
  * Une route pour insérer un transporteur
@@ -594,7 +615,7 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary Insére un nouveau transporteur 
  * @returns {JSON} 200 - Les données du nouveau transporteur inséré
  */
- router.post('/admin/transporteur/new', clean, admin, validateBody(transporteurPostSchema), livraisonController.newTransporteur);
+router.post('/admin/transporteur/new', clean, admin, validateBody(transporteurPostSchema), livraisonController.newTransporteur);
 
 /**
  * Une route pour mettre a jour un transporteur
@@ -603,17 +624,17 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary Met a jour un nouveau transporteur 
  * @returns {JSON} 200 - Les données du nouveau transporteur mis a jour
  */
- router.patch('/admin/transporteurs/:id(\\d+)', clean, admin, validateBody(transporteurSchema), livraisonController.updateTransporteur);
+router.patch('/admin/transporteurs/:id(\\d+)', clean, admin, validateBody(transporteurSchema), livraisonController.updateTransporteur);
 
 
- /**
+/**
  * Une route pour supprimer un un transporteur
  * @route DELETE /admin/transporteur/:id
  * @group Administrateur
  * @summary Supprime un transporteur
  * @returns {JSON} 200 - Les données du transporteur supprimé
  */
-  router.delete('/admin/transporteur/:id(\\d+)', admin, livraisonController.deleteTransporteur);
+router.delete('/admin/transporteur/:id(\\d+)', admin, livraisonController.deleteTransporteur);
 
 //! ROUTE LIVRAISONS ----------------------------
 
@@ -626,7 +647,7 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary  Renvoie toutes les livraisons en BDD
  * @returns {JSON} 200 - Renvoie tous les livraisons en BDD
  */
- router.get('/admin/livraisons', admin, livraisonController.getAllLivraison);
+router.get('/admin/livraisons', admin, livraisonController.getAllLivraison);
 
 /**
  * Renvoie toutes les livraisons pour un client 
@@ -635,8 +656,8 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary  Renvoie toutes les livraisons d'un client en BDD
  * @returns {JSON} 200 - Renvoie toutes les livraisons d'un client en BDD
  */
- router.get('/user/livraisons/:id(\\d+)', client, livraisonController.getByIdClient);
-  
+router.get('/user/livraisons/:id(\\d+)', client, livraisonController.getByIdClient);
+
 
 /**
  * Renvoie toutes les produit commandé / livré en BDD
@@ -645,18 +666,18 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary  Renvoie toutes les livraisons en BDD
  * @returns {JSON} 200 - Renvoie tous les livraisons en BDD
  */
- router.get('/admin/produitcommande', admin, livraisonController.getAllLigneCommande);
+router.get('/admin/produitcommande', admin, livraisonController.getAllLigneCommande);
 
 
- /**
+/**
  * Renvoie toutes les produit commandé / livré pour un client en particulier
  * @route GET /user/produitLivre
  * @group utilisateur
  * @summary  Renvoie toutes les livraisons d'un client en BDD
  * @returns {JSON} 200 - Renvoie tous les livraisons d'un client en BDD
  */
-  router.get('/user/produitcommande/:id(\\d+)', client, livraisonController.getAllLivraisonByIdClient);
-  
+router.get('/user/produitcommande/:id(\\d+)', client, livraisonController.getAllLivraisonByIdClient);
+
 
 /**
  * Renvoie tous les produits commandés / livré pour une commande particuliére
@@ -665,8 +686,8 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary  Renvoie toutes les livraisons d'un client en BDD
  * @returns {JSON} 200 - Renvoie tous les livraisons d'un client en BDD
  */
-    router.get('/user/produitLivreByCommande/:id(\\d+)', client, livraisonController.getByIdCommande);
-  
+router.get('/user/produitLivreByCommande/:id(\\d+)', client, livraisonController.getByIdCommande);
+
 
 /**
  * Une route pour insérer une nouvelle livraison
@@ -675,7 +696,7 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary Insére une nouvelle livraison 
  * @returns {JSON} 200 - Les données de la nouvelle livraison insérée
  */
- router.post('/admin/livraison/new', clean, admin, validateBody(livraisonPostSchema), livraisonController.new);
+router.post('/admin/livraison/new', clean, admin, validateBody(livraisonPostSchema), livraisonController.new);
 
 /**
  * Une route pour mettre a jour une livraison
@@ -684,16 +705,16 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary Met a jour une nouvelle livraison 
  * @returns {JSON} 200 - Les données d'une nouvelle livraison mise a jour
  */
- router.patch('/admin/livraison/:id(\\d+)', clean, admin, validateBody(livraisonSchema), livraisonController.update);
+router.patch('/admin/livraison/:id(\\d+)', clean, admin, validateBody(livraisonSchema), livraisonController.update);
 
- /**
+/**
  * Une route pour supprimer une livraison
  * @route DELETE /admin/livraison/:id
  * @group Administrateur
  * @summary Supprime une livraison
  * @returns {JSON} 200 - Les données de la livraison supprimée
  */
-  router.delete('/admin/livraison/:id(\\d+)', admin, livraisonController.delete);
+router.delete('/admin/livraison/:id(\\d+)', admin, livraisonController.delete);
 
 
 /**
@@ -703,21 +724,21 @@ router.post('/client/adresse/new',cleanPassword, client, validateBody(adressePos
  * @summary Met a jour la nouvelle adresse de livraison 
  * @returns {JSON} 200 - Les données d'une adresse de livraison mise a jour
  */
- router.patch('/user/choixAdresseEnvoi/:id(\\d+)', clean, client, adresseController.setAdresseEnvoiTrue);
+router.patch('/user/choixAdresseEnvoi/:id(\\d+)', clean, client, adresseController.setAdresseEnvoiTrue);
 
 
- /**
+/**
  * Une route pour modifier le choix de l'adresse de facturation. Enléve la valeur TRUE de la précédente adresse et la met a une autre adresse
  * @route PATCH /user/choixAdresseFacturation/:id
  * @group utilisateur
  * @summary Met a jour la nouvelle adresse de facturation 
  * @returns {JSON} 200 - Les données d'une adresse de facturation mise a jour
  */
-  router.patch('/user/choixAdresseFacturation/:id(\\d+)', clean, client, adresseController.setAdresseFacturationTrue);
+router.patch('/user/choixAdresseFacturation/:id(\\d+)', clean, client, adresseController.setAdresseFacturationTrue);
 
 
 
-  //! ROUTES DEVELOPPEUR ----------------
+//! ROUTES DEVELOPPEUR ----------------
 
 /**
  * Faire appel a la méthode smsBalance envoi un sms avec la balance du compte Twilio. 
@@ -1942,7 +1963,7 @@ router.get('/dev/HistoConnByIdClient/:id(\\d+)', dev, clientHistoController.getH
  * @param {produit.Model} req.params - L'id du client
  * @returns {JSON} 200 - Affiche la derniere connexion valide d'un utilisateur 
  */
- router.get('/user/lastconn/:id(\\d+)', client, clientHistoController.getLastHistoConn);
+router.get('/user/lastconn/:id(\\d+)', client, clientHistoController.getLastHistoConn);
 
 
 /**

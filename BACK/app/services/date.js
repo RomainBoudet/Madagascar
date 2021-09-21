@@ -20,6 +20,11 @@ const formatLong = (date) => {
     return date;
 }
 
+const formatLongSeconde = (date) => {
+    date = dayjs(date).format('dddd D MMMM YYYY à H:mm:ss');
+    return date;
+}
+
 const formatLongSansHeure = (date) => {
     date = dayjs(date).format('dddd D MMMM YYYY');
     return date;
@@ -37,6 +42,11 @@ const formatJMAHMS = (date) => {
 
 const formatJMAHMSsecret = (date) => {
     date = dayjs(date).format('DDMMYYYYHHmmss');
+    return date;
+}
+
+const formatCoupon = (date) => {
+    date = dayjs(date).format('DDMMHHmmssSSS');
     return date;
 }
 
@@ -64,10 +74,12 @@ function addWeekdays(date, days) {
 module.exports = {
     dayjs,
     addWeekdays,
+    formatLongSeconde,
     formatJMA,
     formatLong,
     formatForBack,
     formatJMAHMS,
     formatJMAHMSsecret,
+    formatCoupon,
     formatLongSansHeure
 };

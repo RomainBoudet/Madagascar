@@ -5,8 +5,11 @@ const redis = require('./redis');
 
 //L'objet Set (Ensemble en français) permet de stocker des valeurs uniques, 
 //Une valeur donnée ne peut apparaître qu'une seule fois par Set
-
+// mémoire qui manque a REDIS pour reetenir toutes clés clés utilisées par REDIS.
 const keysIndex = new Set();
+// pourquoi pas client.keys('*'); parce que c'est lent ! et pour un SGBD le plus rapide du monde, bof...
+// Et trés lent si le nombre de clé augmente, car REDIS ne tient pas de registre de clé. Parcout toute sa mémoire a la recherche de clé sinon.
+//Index utile pour flusher en cas d'écriture ! On pourra boucler sur cet index !
 
 consol.redis("Redis On");
 consol.forget('Ne pas préter attention au message : "ERR wrong number of arguments for del command" 😉 ');

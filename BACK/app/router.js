@@ -67,6 +67,8 @@ const emailChoiceSchema = require('./schemas/emailChoiceShema');
 const refundSchema = require('./schemas/refundSchema');
 const refundClientSchema = require('./schemas/refundClientSchema');
 const couponSchema = require('./schemas/couponSchema');
+const delCouponSchema = require('./schemas/delCouponSchema');
+
 
 
 
@@ -387,7 +389,7 @@ router.get('/admin/couponList', admin, paiementController.couponList);
  * @summary  Supprime un coupon passé en paramétre
  * @returns {JSON} 200 -  Supprime un coupon passé en paramétre
  */
-router.delete('/admin/coupon', admin, paiementController.delCoupon);
+router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementController.delCoupon);
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 

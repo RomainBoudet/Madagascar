@@ -214,6 +214,14 @@ const panierController = {
 
 
                 req.session.totalStripe = totalTTC + coutTransporteur;
+
+                //! si dans la session, un coupon existe, on applique sa valeur, sinon on ignore
+                // on applique la valeur, dans le addPanier, GetPanier et le delPanier !
+
+                //! Et en parallele on crée une methode comme CGV qui insére la valeur du montant du coupon en session apres avoir vérifié la validité du coupon et qu'il soit bien actif ! Quand l'utilisateur souhaite utiliser un coupon de reduction il fait appel a cette méthode et le nouveau montant est renvoyer, bien mis a jour !
+
+
+
                 // On renvoit les infos calculés au front !
                 res.status(200).json({
                     totalHT,

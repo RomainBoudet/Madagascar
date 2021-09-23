@@ -2,6 +2,8 @@ const Panier = require('../models/panier');
 const LignePanier = require('../models/lignePanier');
 const Produit = require('../models/produit');
 
+const redis = require('../services/redis');
+
 const {
     arrondi
 } = require('../services/arrondi');
@@ -23,6 +25,150 @@ const {
 
 
 const panierController = {
+
+    //! Et en parallele on crée une methode comme CGV qui insére la valeur du montant du coupon en session apres avoir vérifié la validité du coupon et qu'il soit bien actif !
+
+    //!Quand l'utilisateur souhaite utiliser un coupon de reduction il fait appel a cette méthode et le nouveau montant est renvoyer, bien mis a jour !
+
+    // reçois un req.body.coupon comprenant le coupon a insérer dans le panier pour une mise a jour du panier et de son montant totalstripe !
+
+    insertCoupon: async (req, res) => {
+        try {
+            // on vérifit que l'utilisateur est connecté
+            if (req.session.user === undefined || req.session.user === null) {
+                console.log("Vous devez être connecté pour pouvoir utiliser un coupon. Merci de vous connecter et de réessayer.")
+                return res.status(200).json("Vous devez être connecté pour pouvoir utiliser un coupon. Merci de vous connecter et de réessayer.")
+            }
+
+            //On verifit si le coupon inséré existe
+
+
+            if ((await redis.exists(`mada/coupon:${req.body.coupon}`)) === 0) {
+
+                //ici la clé n'existe pas !
+
+                console.log("Ce coupon n'existe pas ou n'est plus valable !");
+                return res.status(200).json({
+                    message: "Ce coupon n'existe pas ou n'est plus valable !"
+                });
+
+            }
+
+            //on vérifit si le coupon existant est valide
+            const existCoupon = await redis.get(`mada/coupon:${req.body.coupon}`).then(JSON.parse);
+            console.log("existCoupon == ", existCoupon);
+            if (existCoupon.isActive == "false") {
+                console.log("Ce coupon existe mais n'est pas valide... ");
+                return res.status(200).json({
+                    message: "Ce coupon existe mais n'est pas valide..."
+                });
+            }
+
+
+            // on vérifit si le coupon existant et valide concerne notre utilisateur, ou tous les utilisateurs !
+            if (existCoupon.idClient !== null && existCoupon.idClient !== undefined) {
+
+                //ici le coupon est destiné a un client particulier et n'est pas échangeable entre clients !!
+                if (existCoupon.idClient !== req.session.user.idClient) {
+                    console.log("Ce coupon existe mais ne vous est pas destiné... ");
+                    return res.status(200).json({
+                        message: "Ce coupon existe mais ne vous est pas destiné..."
+                    });
+                }
+
+            }
+            //si la propriété idClient de l'objet n'existe pas alors, le coupon est valable pour tous les clients !
+
+            //! j'applique la réduction du coupon et je renvoie toutes les données mise a jour 
+
+            //! a finir !
+            const cart = req.session.cart;
+
+            //let totalHT = 0;
+            //let totalTTC = 0;
+            let coutTransporteur = 915; // prix d'un Collisimo pour la France jusqu'a deux kilos. En cents.
+
+            if (cart) {
+
+                //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier.
+                // Si la réduction est de 0, cette valeur sera identique au prix...
+                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi((article.prixHT) * (1 - reduction))));
+                //cart.map(article => article.prixHT = article.prixHT );
+
+                totalHT1 = cart.reduce(
+                    (accumulator, item) => {
+
+                        return (accumulator || 0) + (item.prixHTAvecReduc * item.quantite)
+                    }, 0
+                );
+
+                totalTTC1 = cart.reduce(
+                    (accumulator, item) => {
+                        return ((accumulator || 0) + ((item.prixHTAvecReduc * ((item.tva) + 1)) * item.quantite))
+                    }, 0
+                );
+
+                totalTVA1 = cart.reduce(
+                    (accumulator, item) => {
+                        return (accumulator || 0) + ((item.prixHTAvecReduc * (item.tva)) * item.quantite)
+                    }, 0
+                );
+
+                // pour que mes valeur dans le json soit bien des chiffres ne dépassant pas deux chiffres aprés la virgule.
+                const totalHT = Math.round(arrondi(totalHT1));
+                const totalTTC = Math.round(arrondi(totalTTC1));
+                const totalTVA = Math.round(arrondi(totalTVA1));
+
+                //Je les stock en session au cas ou j'en ai besoin plus tard.
+                req.session.totalHT = totalHT;
+                req.session.totalTTC = totalTTC;
+                req.session.totalTVA = totalTVA;
+                req.session.coutTransporteur = coutTransporteur;
+
+
+                req.session.totalStripe = totalTTC + coutTransporteur;
+
+                //! si dans la session, un coupon existe, on applique sa valeur, sinon on ignore
+                // on applique la valeur, dans le addPanier, GetPanier et le delPanier !
+
+
+
+
+
+                // On renvoit les infos calculés au front !
+                res.status(200).json({
+                    totalHT,
+                    totalTTC,
+                    totalTVA,
+                    coutTransporteur,
+                    cart,
+                });
+
+                console.log("req.session a la sortie du insertCoupon ==> ", req.session);
+
+
+            }
+
+
+
+            //! je dois modifier toutes les methode de representation du panier pour prendre en cempte un possible coupon dans dans la session !
+            //! si utilisation du coupon, au retour de la méthode webhook si utilisation d'un coupon, je dois supprimer ce coupon dans redis et l'indexCoupon
+
+
+            //! je dois aussi crée une méthode pour l'utilisateur lui permettant de ne plus utiliser ce coupon si il le souhaite.
+
+
+            return res.status(200).json(" Coupon valide et panier bien mis a jour avec les données du coupon !")
+
+
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode insertCoupon du panierController :',
+                error);
+            res.status(500).end();
+        }
+
+    },
 
     getPanier: async (req, res) => {
 
@@ -218,7 +364,7 @@ const panierController = {
                 //! si dans la session, un coupon existe, on applique sa valeur, sinon on ignore
                 // on applique la valeur, dans le addPanier, GetPanier et le delPanier !
 
-                //! Et en parallele on crée une methode comme CGV qui insére la valeur du montant du coupon en session apres avoir vérifié la validité du coupon et qu'il soit bien actif ! Quand l'utilisateur souhaite utiliser un coupon de reduction il fait appel a cette méthode et le nouveau montant est renvoyer, bien mis a jour !
+
 
 
 
@@ -286,7 +432,7 @@ const panierController = {
             } else {
                 reduction = 0;
             }
-            
+
             const cart = req.session.cart;
 
             //let totalHT = 0;

@@ -112,7 +112,7 @@ const paiementController = {
 
     cgv: async (req, res) => {
         try {
-            console.log("req.session a lentrée des cgv ==> ", req.session);
+            console.log("req.session a l'entrée des cgv ==> ", req.session);
 
             //le user a accecepté les CGV
             // je vérifie si req.session.user.cookie existe déja et si sa valeur est déja 'true'
@@ -2331,6 +2331,7 @@ const paiementController = {
     coupon: async (req, res) => {
         try {
             // reçois = 
+            // req.body.isActive
             // un req.body.postfix
             // un req.body.prefix
             // req.body.montant en euros !
@@ -2391,19 +2392,21 @@ const paiementController = {
             let value;
             if (client === null || client === undefined) {
                 value = {
+                    coupon:code[0],
                     montant,
                     dateEmission: capitalize(formatLongSeconde(Date.now())),
-                    isActive: true,
+                    isActive: req.body.isActive,
                 };
 
             } else {
                 value = {
+                    coupon:code[0],
                     montant,
                     idClient: client.id,
                     nameClient: `${client.prenom} ${client.nomFamille}`,
                     emailClient: client.email,
                     dateEmission: capitalize(formatLongSeconde(Date.now())),
-                    isActive: true,
+                    isActive: req.body.isActive,
                 };
             }
 
@@ -2490,11 +2493,16 @@ const paiementController = {
             // reçois en body un code a supprimer ! (req.body.coupon)
 
             if (await redis.exists(`mada/coupon:${req.body.coupon}`)) {
-                // on la sort du registre et on la parse en json puis on la renvoie
+                //on l'a supprime de REDIS
                 await redis.del(`mada/coupon:${req.body.coupon}`);
+                // on l'a supprime de notre index
+                couponIndex.delete(`mada/coupon:${req.body.coupon}`);
+
                 console.log(`La clé mada/coupon:${req.body.coupon} a bien été éffacée !`);
                 // et on répond directement à l'utilisateur
-                return res.status(200).json({message:`Le coupon ${req.body.coupon} a bien été éffacée !`});
+                return res.status(200).json({
+                    message: `Le coupon ${req.body.coupon} a bien été éffacée !`
+                });
 
             } else {
 
@@ -2510,8 +2518,6 @@ const paiementController = {
             res.status(500).END();
         }
     },
-
-
 
 
 

@@ -391,6 +391,18 @@ router.get('/admin/couponList', admin, paiementController.couponList);
  */
 router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementController.delCoupon);
 
+/**
+ * Utilise un coupon passé en paramétre et met a jour le panier
+ * @route POST /user/coupon
+ * @group utilisateur
+ * @summary  Met a jour le panier d'un utilisateur avec le montant du panier déduit du montant du coupon 
+ * @returns {JSON} 200 - Met a jour le panier d'un utilisateur avec le montant du panier déduit du montant du coupon 
+ */
+ router.post('/user/coupon', client, validateBody(delCouponSchema), panierController.insertCoupon);
+
+
+
+
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 
 /**

@@ -202,6 +202,14 @@ const paiementController = {
             req.session.cart.map(article => (`${articles.push(article.produit+' / ' + 'idArticle = ' + article.id + ' /' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
             articlesBought = articles.join(', ');
 
+            // si présence d'un coupon dans la session :
+            let coupon;
+            if (req.session.coupon) {
+                coupon = req.session.coupon.coupon;
+            } else {
+                coupon = false;
+            }
+
 
             //Je vérifie si le client est déja venu tenter de payer sa commande
             if (req.session.IdPaymentIntentStripe) {
@@ -243,6 +251,7 @@ const paiementController = {
                         session: req.sessionID,
                         amount: req.session.totalStripe,
                         ip: req.ip,
+                        coupon,
                     },
 
 
@@ -332,6 +341,13 @@ const paiementController = {
             const articles = [];
             req.session.cart.map(article => (`${articles.push(article.produit+' / ' + 'idArticle = ' + article.id + ' /' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
             articlesBought = articles.join(', ');
+            // si présence d'un coupon dans la session :
+            let coupon;
+            if (req.session.coupon) {
+                coupon = req.session.coupon.coupon;
+            } else {
+                coupon = false;
+            }
 
 
             //Je vérifie si le client est déja venu tenter de payer sa commande
@@ -375,6 +391,7 @@ const paiementController = {
                         session: req.sessionID,
                         amount: req.session.totalStripe,
                         ip: req.ip,
+                        coupon,
                     },
 
 
@@ -865,8 +882,36 @@ const paiementController = {
                         res.status(500).end();
                     }
 
+                    //si dans le panier un coupon a été utilisé, on supprime ce coupon, pour qu'il ne soit valable qu'une seule fois !
+                    // la supression lors d'un paiement sepa se fait dans le webhook process_intenting, on ne veut pas que le coupon reste exploitable durant toute la phase de d'attente de validation de paiement sepa !
+                    if (session.coupon && paymentData.type === "card") {
+                        try {
+                            //petite précaution, je vérifis qu'entre temps le coupon ne s'est pas invalidé avec le TTL...
+                            if (await redis.exists(`mada/coupon:${session.coupon.coupon}`)) {
+                                //si il existe dans REDIS, je le supprime de REDIS et de l'index.
+                                await redis.del(`mada/coupon:${session.coupon.coupon}`);
+                                couponIndex.delete(`mada/coupon:${session.coupon.coupon}`);
+
+                                console.log("suppression du coupon dans REDIS bien effectué !");
+                            } else {
+                                //si il n'existe plus dans REDIS, je le supprime de l'index uniquement.
+                                couponIndex.delete(`mada/coupon:${session.coupon.coupon}`);
+                                console.log("Un paiement par coupon a bien été éffectué mais le coupon a déja expiré..");
+                            }
+
+
+
+                        } catch (error) {
+                            console.log(`Erreur dans la partie payment_intent.succeeded du WebhookPaiement, pour éffacer le coupon REDIS dans le paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
+                        }
+                    }
+
+
                     if (paymentData.type !== "sepa_debit") {
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
+                            
 
                             //# ignition_en_PLS
                             // V8 ignition déteste les delete objet pour des raisons de cache inline.. ça reste a optimiser...
@@ -893,6 +938,8 @@ const paiementController = {
                         // Sinon je supprimme la session mis dans REDIS dans le webhookSEPA
                         await redis.del(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`);
                     }
+
+
 
                     // TODO 
                     // écrire une facture !
@@ -1052,6 +1099,7 @@ const paiementController = {
                                 delete session.clientSecret,
                                 delete session.commentaire,
                                 delete session.sendSmsWhenShipping,
+                                delete session.coupon,
                                 // j'insere cette session modifié dans REDIS !
                                 sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {})
                             console.log("Panier dans le sessionStore bien supprimé");
@@ -1084,6 +1132,7 @@ const paiementController = {
     // Ce webhook est contacté par un seul type d'évenement :
     /* payment_intent.processing  => pour evoyer un mail quand le client a choisit le mode de paiement SEPA, l'avertissant d'une bonne reception de la volonté de paiement mais lui indiquant que la commande sera validé a la recpetion du paiement..
     On envoi la commande en BDD avec le statut 'en attente */
+    // la suite du paiement une fois que le paiement est validé, repasse par le webhook paiement !
     webhookpaiementSEPA: async (req, res) => {
         try {
 
@@ -1115,6 +1164,30 @@ const paiementController = {
                 // Ici req.session ne vaut rien car c'est stripe qui contact ce endpoint. Je récupére donc la session pour savoir ce que le client vient de commander.
                 // avec mes metadata passé a la création du payment intent
                 sessionStore.get(paymentIntent.metadata.session, async function (err, session) {
+
+                    //! je supprime le coupon si un coupon a été utilisé dans le panier
+
+                    if (session.coupon) {
+                        try {
+                            //petite précaution, je vérifis qu'entre temps le coupon ne s'est pas invalidé avec le TTL...
+                            if (await redis.exists(`mada/coupon:${session.coupon.coupon}`)) {
+                                //si il existe dans REDIS, je le supprime de REDIS et de l'index.
+                                await redis.del(`mada/coupon:${session.coupon.coupon}`);
+                                couponIndex.delete(`mada/coupon:${session.coupon.coupon}`);
+
+                                console.log("suppression du coupon dans REDIS bien effectué !");
+                            } else {
+                                //si il n'existe plus dans REDIS, je le supprime de l'index uniquement.
+                                couponIndex.delete(`mada/coupon:${session.coupon.coupon}`);
+                                console.log("Un paiement par coupon a bien été éffectué mais le coupon a déja expiré..");
+                            }
+
+                        } catch (error) {
+                            console.log(`Erreur dans la partie payment_intent.processing du webhookPaiementSEPA, pour éffacer le coupon REDIS dans le paiementController : ${error.message}`);
+                            console.trace(error);
+                            res.status(500).end();
+                        }
+                    }
 
 
                     //! je met a jour les stocks suite au produits commandé !!
@@ -1284,6 +1357,7 @@ const paiementController = {
                             delete session.sendSmsWhenShipping,
                             delete session.resultCommande,
                             delete session.articlesBought,
+                            delete session.coupon,
 
                             // j'insere cette session modifié dans REDIS !
                             sessionStore.set(paymentIntent.metadata.session, session, function (err, session) {
@@ -2391,7 +2465,7 @@ const paiementController = {
             let value;
             if (client === null || client === undefined) {
                 value = {
-                    coupon:code[0],
+                    coupon: code[0],
                     montant,
                     dateEmission: capitalize(formatLongSeconde(Date.now())),
                     isActive: req.body.isActive,
@@ -2399,7 +2473,7 @@ const paiementController = {
 
             } else {
                 value = {
-                    coupon:code[0],
+                    coupon: code[0],
                     montant,
                     idClient: client.id,
                     nameClient: `${client.prenom} ${client.nomFamille}`,

@@ -400,7 +400,14 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
  */
  router.post('/user/coupon', client, validateBody(delCouponSchema), panierController.insertCoupon);
 
-
+/**
+ * Supprime la valeur d'un coupon passé par un utilisateur et met a jour le panier
+ * @route GET /user/cancelCoupon
+ * @group utilisateur
+ * @summary  Supprime la valeur d'un coupon passé par un utilisateur et met a jour le panier
+ * @returns {JSON} 200 - Supprime la valeur d'un coupon passé par un utilisateur et met a jour le panier 
+ */
+ router.get('/user/cancelCoupon', client, panierController.cancelCoupon);
 
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------

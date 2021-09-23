@@ -26,10 +26,6 @@ const {
 
 const panierController = {
 
-    //! Et en parallele on crée une methode comme CGV qui insére la valeur du montant du coupon en session apres avoir vérifié la validité du coupon et qu'il soit bien actif !
-
-    //!Quand l'utilisateur souhaite utiliser un coupon de reduction il fait appel a cette méthode et le nouveau montant est renvoyer, bien mis a jour !
-
     // reçois un req.body.coupon comprenant le coupon a insérer dans le panier pour une mise a jour du panier et de son montant totalstripe !
 
     insertCoupon: async (req, res) => {
@@ -78,92 +74,193 @@ const panierController = {
 
             }
             //si la propriété idClient de l'objet n'existe pas alors, le coupon est valable pour tous les clients !
+            //on l'insére en session!
+            req.session.coupon = existCoupon;
 
             //! j'applique la réduction du coupon et je renvoie toutes les données mise a jour 
 
-            //! a finir !
-            const cart = req.session.cart;
+            //! cette suite sera a mutualisé entre get add, et delPanier !!
 
-            //let totalHT = 0;
-            //let totalTTC = 0;
-            let coutTransporteur = 915; // prix d'un Collisimo pour la France jusqu'a deux kilos. En cents.
+            const cart = req.session.cart;
 
             if (cart) {
 
-                //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier.
-                // Si la réduction est de 0, cette valeur sera identique au prix...
-                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi((article.prixHT) * (1 - reduction))));
-                //cart.map(article => article.prixHT = article.prixHT );
-
-                totalHT1 = cart.reduce(
-                    (accumulator, item) => {
-
-                        return (accumulator || 0) + (item.prixHTAvecReduc * item.quantite)
-                    }, 0
-                );
-
-                totalTTC1 = cart.reduce(
-                    (accumulator, item) => {
-                        return ((accumulator || 0) + ((item.prixHTAvecReduc * ((item.tva) + 1)) * item.quantite))
-                    }, 0
-                );
-
-                totalTVA1 = cart.reduce(
-                    (accumulator, item) => {
-                        return (accumulator || 0) + ((item.prixHTAvecReduc * (item.tva)) * item.quantite)
-                    }, 0
-                );
-
-                // pour que mes valeur dans le json soit bien des chiffres ne dépassant pas deux chiffres aprés la virgule.
-                const totalHT = Math.round(arrondi(totalHT1));
-                const totalTTC = Math.round(arrondi(totalTTC1));
-                const totalTVA = Math.round(arrondi(totalTVA1));
-
-                //Je les stock en session au cas ou j'en ai besoin plus tard.
-                req.session.totalHT = totalHT;
-                req.session.totalTTC = totalTTC;
-                req.session.totalTVA = totalTVA;
-                req.session.coutTransporteur = coutTransporteur;
+                const totalHT = req.session.totalHT;
+                const totalTTC = req.session.totalTTC;
+                const totalTVA = req.session.totalTVA;
 
 
-                req.session.totalStripe = totalTTC + coutTransporteur;
+                // si dans la session, un coupon existe, on applique sa valeur, sinon on ignore
+                if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                    req.session.totalStripe = (totalTTC + req.session.coutTransporteur) - req.session.coupon.montant
 
-                //! si dans la session, un coupon existe, on applique sa valeur, sinon on ignore
-                // on applique la valeur, dans le addPanier, GetPanier et le delPanier !
+                } else {
+                    req.session.totalStripe = totalTTC + req.session.coutTransporteur;
+
+                }
+
+                // si dans la session, un transporteur existe, ou un coupon de reduction existe, on applique sa valeur, sinon on ignore
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
+
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = (totalTTC + req.session.coutTransporteur) - req.session.coupon.montant
+
+                    } else {
+                        req.session.totalStripe = totalTTC + req.session.coutTransporteur;
+
+                    }
 
 
+                } else {
 
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = totalTTC - req.session.coupon.montant
 
+                    } else {
+                        req.session.totalStripe = totalTTC;
 
-                // On renvoit les infos calculés au front !
-                res.status(200).json({
-                    totalHT,
-                    totalTTC,
-                    totalTVA,
-                    coutTransporteur,
-                    cart,
-                });
+                    }
+
+                }
+
+                const totalAPayer = req.session.totalStripe;
 
                 console.log("req.session a la sortie du insertCoupon ==> ", req.session);
+
+
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
+                    const coutTransporteur = req.session.coutTransporteur;
+                    // On renvoit les infos calculés au front avec les cout du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        coutTransporteur,
+                        cart,
+                        totalAPayer,
+                    });
+
+                } else {
+                    // On renvoit les infos calculés au front, sans les cout du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        cart,
+                        totalAPayer,
+                    });
+                }
+
 
 
             }
 
 
 
-            //! je dois modifier toutes les methode de representation du panier pour prendre en cempte un possible coupon dans dans la session !
             //! si utilisation du coupon, au retour de la méthode webhook si utilisation d'un coupon, je dois supprimer ce coupon dans redis et l'indexCoupon
 
 
-            //! je dois aussi crée une méthode pour l'utilisateur lui permettant de ne plus utiliser ce coupon si il le souhaite.
-
-
-            return res.status(200).json(" Coupon valide et panier bien mis a jour avec les données du coupon !")
+            return res.status(200).json("Votre panier est vide !")
 
 
         } catch (error) {
             console.trace(
                 'Erreur dans la méthode insertCoupon du panierController :',
+                error);
+            res.status(500).end();
+        }
+
+    },
+
+    cancelCoupon: async (req, res) => {
+        try {
+            // on vérifit que l'utilisateur est connecté
+            if (req.session.user === undefined || req.session.user === null) {
+                console.log("Vous devez être connecté pour pouvoir éffacer un coupon. Merci de vous connecter et de réessayer.");
+                return res.status(200).json("Vous devez être connecté pour pouvoir éffacer un coupon. Merci de vous connecter et de réessayer.");
+            }
+
+
+            //! cette suite sera a mutualisé entre get add, et delPanier !!
+
+            const cart = req.session.cart;
+
+
+            if (cart) {
+
+                const totalHT = req.session.totalHT;
+                const totalTTC = req.session.totalTTC;
+                const totalTVA = req.session.totalTVA;
+
+
+                // si dans la session, un transporteur existe, ou un coupon de reduction existe, on applique sa valeur, sinon on ignore
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
+
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = totalTTC + req.session.coutTransporteur;
+                        delete req.session.coupon;
+                        console.log("Un coupon de réduction a bien été annulé.");
+
+                    } else {
+                        req.session.totalStripe = totalTTC + req.session.coutTransporteur;
+                        console.log("Aucun coupon de réduction n'est présent.");
+                    }
+
+
+                } else {
+
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = totalTTC + req.session.coupon.montant;
+                        delete req.session.coupon;
+                        console.log("Un coupon de réduction a bien été annulé.");
+
+                    } else {
+                        req.session.totalStripe = totalTTC;
+                        console.log("Aucun coupon de réduction n'est présent.");
+                    }
+
+                }
+
+                const totalAPayer = req.session.totalStripe;
+
+                console.log("req.session a la sortie du cancelCoupon ==> ", req.session);
+
+
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
+                    const coutTransporteur = req.session.coutTransporteur;
+                    // On renvoit les infos calculés au front avec les cout du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        coutTransporteur,
+                        cart,
+                        totalAPayer,
+                    });
+
+                } else {
+                    // On renvoit les infos calculés au front, sans les cout du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        cart,
+                        totalAPayer,
+                    });
+                }
+
+
+
+            }
+
+            //! si utilisation du coupon, au retour de la méthode webhook si utilisation d'un coupon, je dois supprimer ce coupon dans redis et l'indexCoupon
+
+            return res.status(200).json("Votre panier est vide !")
+
+
+        } catch (error) {
+            console.trace(
+                'Erreur dans la méthode cancelCoupon du panierController :',
                 error);
             res.status(500).end();
         }
@@ -178,63 +275,71 @@ const panierController = {
 
             const cart = req.session.cart;
 
-            // let totalHT = 0;
-            // let totalTTC = 0;
-            let coutTransporteur = 915; // prix d'un Collisimo pour la France jusqu'a deux kilos. En cents.
 
             if (cart) {
 
-                //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier.
-                // Si la réduction est de 0, cette valeur sera identique au prix...
-                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi((article.prixHT) * (1 - reduction))));
-                //cart.map(article => article.prixHT = article.prixHT );
-
-                totalHT1 = cart.reduce(
-                    (accumulator, item) => {
-
-                        return (accumulator || 0) + (item.prixHTAvecReduc * item.quantite)
-                    }, 0
-                );
-
-                totalTTC1 = cart.reduce(
-                    (accumulator, item) => {
-                        return ((accumulator || 0) + ((item.prixHTAvecReduc * ((item.tva) + 1)) * item.quantite))
-                    }, 0
-                );
-
-                totalTVA1 = cart.reduce(
-                    (accumulator, item) => {
-                        return (accumulator || 0) + ((item.prixHTAvecReduc * (item.tva)) * item.quantite)
-                    }, 0
-                );
-
-                // pour que mes valeur dans le json soit bien des chiffres ne dépassant pas deux chiffres aprés la virgule.
-                const totalHT = Math.round(arrondi(totalHT1));
-                const totalTTC = Math.round(arrondi(totalTTC1));
-                const totalTVA = Math.round(arrondi(totalTVA1));
-
-                //Je les stock en session au cas ou j'en ai besoin plus tard.
-                req.session.totalHT = totalHT;
-                req.session.totalTTC = totalTTC;
-                req.session.totalTVA = totalTVA;
-                req.session.coutTransporteur = coutTransporteur;
+                const totalHT = req.session.totalHT;
+                const totalTTC = req.session.totalTTC;
+                const totalTVA = req.session.totalTVA;
 
 
-                req.session.totalStripe = totalTTC + coutTransporteur;
-                // On renvoit les infos calculés au front !
-                res.status(200).json({
-                    totalHT,
-                    totalTTC,
-                    totalTVA,
-                    coutTransporteur,
-                    cart,
-                });
+                // si dans la session, un transporteur existe, ou un coupon de reduction existe, on applique sa valeur, sinon on ignore
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
+
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = (totalTTC + req.session.coutTransporteur) - req.session.coupon.montant
+
+                    } else {
+                        req.session.totalStripe = totalTTC + req.session.coutTransporteur;
+
+                    }
+
+
+                } else {
+
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = totalTTC - req.session.coupon.montant
+
+                    } else {
+                        req.session.totalStripe = totalTTC;
+
+                    }
+
+                }
+
+                const totalAPayer = req.session.totalStripe;
 
                 console.log("req.session a la sortie du getPanier ==> ", req.session);
 
 
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
+                    const coutTransporteur = req.session.coutTransporteur;
+                    // On renvoit les infos calculés au front avec les cout du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        coutTransporteur,
+                        cart,
+                        totalAPayer,
+                    });
+
+                } else {
+                    // On renvoit les infos calculés au front, sans les cout du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        cart,
+                        totalAPayer,
+                    });
+                }
+
+
+
+
             } else {
-                res.status(200).json('Votre panier est vide');
+                return res.status(200).json('Votre panier est vide');
             }
 
         } catch (error) {
@@ -317,9 +422,6 @@ const panierController = {
 
             const cart = req.session.cart;
 
-            //let totalHT = 0;
-            //let totalTTC = 0;
-            let coutTransporteur = 915; // prix d'un Collisimo pour la France jusqu'a deux kilos. En cents.
 
             if (cart) {
 
@@ -356,31 +458,61 @@ const panierController = {
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
-                req.session.coutTransporteur = coutTransporteur;
 
 
-                req.session.totalStripe = totalTTC + coutTransporteur;
+                // si dans la session, un transporteur existe, ou un coupon de reduction existe, on applique sa valeur, sinon on ignore
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
 
-                //! si dans la session, un coupon existe, on applique sa valeur, sinon on ignore
-                // on applique la valeur, dans le addPanier, GetPanier et le delPanier !
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = (totalTTC + req.session.coutTransporteur) - req.session.coupon.montant
+
+                    } else {
+                        req.session.totalStripe = totalTTC + req.session.coutTransporteur;
+
+                    }
 
 
+                } else {
 
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = totalTTC - req.session.coupon.montant
 
+                    } else {
+                        req.session.totalStripe = totalTTC;
 
-                // On renvoit les infos calculés au front !
-                res.status(200).json({
-                    totalHT,
-                    totalTTC,
-                    totalTVA,
-                    coutTransporteur,
-                    cart,
-                });
+                    }
+
+                }
+                const totalAPayer = req.session.totalStripe;
 
                 console.log("req.session a la sortie du addPanier ==> ", req.session);
 
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
+                    const coutTransporteur = req.session.coutTransporteur;
+                    // On renvoit les infos calculés au front avec les couts du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        coutTransporteur,
+                        cart,
+                        totalAPayer,
+                    });
+
+                } else {
+                    // On renvoit les infos calculés au front, sans les couts du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        cart,
+                        totalAPayer,
+                    });
+                }
 
             }
+            return res.status(200).json('Votre panier est vide');
+
 
 
         } catch (error) {
@@ -419,27 +551,26 @@ const panierController = {
 
             //! On renvoit tout ce que contient carte en mettant a jour les données du panier et les totaux.
 
-            let reduction;
-
-            if (monArticle.reduction === null) {
-
-                reduction = 0;
-
-            } else if (monArticle.reduction > 0) {
-
-                reduction = monArticle.reduction
-
-            } else {
-                reduction = 0;
-            }
 
             const cart = req.session.cart;
 
-            //let totalHT = 0;
-            //let totalTTC = 0;
-            let coutTransporteur = 915; // prix d'un Collisimo pour la France jusqu'a deux kilos.
+
 
             if (cart) {
+
+                let reduction;
+
+                if (monArticle.reduction === null) {
+
+                    reduction = 0;
+
+                } else if (monArticle.reduction > 0) {
+
+                    reduction = monArticle.reduction
+
+                } else {
+                    reduction = 0;
+                }
 
                 //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier.
                 // Si la réduction est de 0, cette valeur sera identique au prix...
@@ -474,23 +605,69 @@ const panierController = {
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
-                req.session.coutTransporteur = coutTransporteur;
 
 
-                req.session.totalStripe = totalTTC + coutTransporteur;
-                // On renvoit les infos calculés au front !
-                res.status(200).json({
-                    totalHT,
-                    totalTTC,
-                    totalTVA,
-                    coutTransporteur,
-                    cart,
-                });
+                // si dans la session, un transporteur existe, ou un coupon de reduction existe, on applique sa valeur, sinon on ignore
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
+
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = (totalTTC + req.session.coutTransporteur) - req.session.coupon.montant
+
+                    } else {
+                        req.session.totalStripe = totalTTC + req.session.coutTransporteur;
+
+                    }
+
+
+                } else {
+
+                    if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                        req.session.totalStripe = totalTTC - req.session.coupon.montant
+
+                    } else {
+                        req.session.totalStripe = totalTTC;
+
+                    }
+
+                }
+
+                const totalAPayer = req.session.totalStripe;
 
                 console.log("req.session a la sortie du delPanier ==> ", req.session);
 
 
+                if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
+                    const coutTransporteur = req.session.coutTransporteur;
+                    // On renvoit les infos calculés au front avec les cout du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        coutTransporteur,
+                        cart,
+                        totalAPayer,
+                    });
+
+                } else {
+                    // On renvoit les infos calculés au front, sans les cout du transport !
+                    return res.status(200).json({
+                        totalHT,
+                        totalTTC,
+                        totalTVA,
+                        cart,
+                        totalAPayer,
+                    });
+                }
+
+
+
+
             }
+
+            return res.status(200).json('Votre panier est vide');
+
+
+
 
         } catch (error) {
             console.trace('Erreur dans la méthode delArticlePanier du panierController :',

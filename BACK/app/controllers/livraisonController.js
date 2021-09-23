@@ -54,7 +54,15 @@ const livraisonController = {
 
             // Je remet a jour le total dans le panier.
 
-            req.session.totalStripe = req.session.totalTTC  + req.session.coutTransporteur;
+             // si dans la session, un coupon existe, on applique sa valeur, sinon on ignore
+             if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                req.session.totalStripe = (req.session.totalTTC  + req.session.coutTransporteur) - req.session.coupon.montant
+
+            } else {
+                req.session.totalStripe = req.session.totalTTC  + req.session.coutTransporteur;
+
+            }
+
 
             console.log("req.session a la sortie du choix du transporteur ==> ", req.session);
 

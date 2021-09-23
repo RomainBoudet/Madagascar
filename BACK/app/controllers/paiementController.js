@@ -179,7 +179,6 @@ const paiementController = {
                 })
             }
 
-
             // Avoir choisi un transporteur 
 
             if (req.session.idTransporteur === undefined) {

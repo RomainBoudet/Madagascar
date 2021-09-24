@@ -15,6 +15,32 @@ const ProduitRetour = require('../models/produitRetour');
 const commandeController = {
 
 
+    //! une méthode permettant de changer le statut d'une commande afin de suivre l'evolution d'une commande pour le client !
+
+
+    updateStatut: async (req, res) => {
+        try {
+            // recois en body une commande et le statut que l'on voudrais lui attribuer ! 
+            // recois ca par sms et par mail !?
+
+
+
+
+
+
+
+
+
+            const commandes = await Commande.findAll();
+
+            res.status(200).json(commandes);
+        } catch (error) {
+            console.trace('Erreur dans la méthode  updateStatut du commandeController :',
+                error);
+            res.status(500).end();
+        }
+    },
+
     getAll: async (req, res) => {
         try {
             const commandes = await Commande.findAll();
@@ -94,7 +120,7 @@ const commandeController = {
 
     getByIdClient: async (req, res) => {
         try {
-            
+
             const commande = await Commande.findByIdClient(req.params.id);
             res.json(commande);
 
@@ -106,7 +132,7 @@ const commandeController = {
     },
     getLigneCommandeByIdCommande: async (req, res) => {
         try {
-            
+
             const commande = await LigneCommande.findByIdCommande(req.params.id);
             res.json(commande);
 
@@ -126,16 +152,16 @@ const commandeController = {
         try {
 
             const data = {};
-        
+
             data.reference = req.body.reference;
             data.commentaire = req.body.commentaire;
             data.idCommandeStatut = req.body.idCommandeStatut;
             data.idClient = req.body.idClient;
 
-       
+
 
             const newCommande = new Commande(data);
-            
+
             await newCommande.save();
             res.json(newCommande);
         } catch (error) {
@@ -147,13 +173,13 @@ const commandeController = {
         try {
 
             const data = {};
-        
+
             data.quantiteCommande = req.body.quantiteCommande;
             data.idProduit = req.body.idProduit;
             data.idCommande = req.body.idCommande;
-            
+
             const newCommande = new LigneCommande(data);
-            
+
             await newCommande.save();
             res.json(newCommande);
         } catch (error) {
@@ -165,13 +191,13 @@ const commandeController = {
         try {
 
             const data = {};
-        
+
             data.statut = req.body.statut;
             data.description = req.body.description;
-          
+
 
             const newCommande = new StatutCommande(data);
-            
+
             await newCommande.save();
             res.json(newCommande);
         } catch (error) {
@@ -188,9 +214,11 @@ const commandeController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
-            
+
             const updateCommande = await Commande.findOne(id);
 
 
@@ -198,7 +226,7 @@ const commandeController = {
             const commentaire = req.body.commentaire;
             const idCommandeStatut = req.body.idCommandeStatut;
             const idClient = req.body.idClient;
-        
+
 
             let message = {};
 
@@ -233,8 +261,8 @@ const commandeController = {
                 message.idClient = 'Votre idClient n\'a pas changé';
             }
 
-             await updateCommande.update();
-            
+            await updateCommande.update();
+
             res.json(message);
 
         } catch (error) {
@@ -250,16 +278,18 @@ const commandeController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
-            
+
             const updateCommande = await LigneCommande.findOne(id);
 
 
             const quantiteCommande = req.body.quantiteCommande;
             const idProduit = req.body.idProduit;
             const idCommande = req.body.idCommande;
-        
+
 
             let message = {};
 
@@ -288,8 +318,8 @@ const commandeController = {
 
 
 
-             await updateCommande.update();
-            
+            await updateCommande.update();
+
             res.json(message);
 
         } catch (error) {
@@ -306,15 +336,17 @@ const commandeController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
-            
+
             const updateCommande = await StatutCommande.findOne(id);
 
 
             const statut = req.body.statut;
             const description = req.body.description;
-        
+
 
             let message = {};
 
@@ -334,8 +366,8 @@ const commandeController = {
             }
 
 
-             await updateCommande.update();
-            
+            await updateCommande.update();
+
             res.json(message);
 
         } catch (error) {
@@ -380,7 +412,7 @@ const commandeController = {
             res.status(500).json(error.message);
         }
     },
-    
+
     deleteStatutCommande: async (req, res) => {
 
         try {
@@ -471,14 +503,14 @@ const commandeController = {
         try {
 
             const data = {};
-        
+
             data.quantite = req.body.quantite;
             data.commentaire = req.body.commentaire;
             data.idCommandeLigne = req.body.idCommandeLigne;
-       
+
 
             const newCommande = new ProduitRetour(data);
-            
+
             await newCommande.save();
             res.json(newCommande);
         } catch (error) {
@@ -494,16 +526,18 @@ const commandeController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
-            
+
             const updateCommande = await ProduitRetour.findOne(id);
 
 
             const quantite = req.body.quantite;
             const commentaire = req.body.commentaire;
             const idCommandeLigne = req.body.idCommandeLigne;
-        
+
 
             let message = {};
 
@@ -531,8 +565,8 @@ const commandeController = {
             }
 
 
-             await updateCommande.update();
-            
+            await updateCommande.update();
+
             res.json(message);
 
         } catch (error) {
@@ -540,7 +574,7 @@ const commandeController = {
             res.status(500).json(error.message);
         }
     },
-    deleteProduitRetour : async (req, res) => {
+    deleteProduitRetour: async (req, res) => {
 
         try {
 

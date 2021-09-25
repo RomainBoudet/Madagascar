@@ -801,7 +801,7 @@ const paiementController = {
                                 const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
 
                                 const articles2 = [];
-                                session.cart.map(article => (`${articles2.push(article.produit+"x"+article.quantite+"/"+article.taille+"/"+article.couleur)}`));
+                                session.cart.map(article => (`${articles2.push(article.nom+"x"+article.quantite+"/"+article.taille+"/"+article.couleur)}`));
                                 articlesachat = articles2.join('.');
 
 
@@ -819,7 +819,7 @@ const paiementController = {
                                     for (const admin of smsChoice) {
 
                                         twilio.messages.create({
-                                                body: ` 🎉 New commande ! ${transporteurData.nom}/${comment}/${session.totalStripe/100}€/${articlesachat} `,
+                                                body: ` New commande ! ${transporteurData.nom}/${comment}/${session.totalStripe/100}€/${articlesachat} `,
                                                 from: dataTwillio.twillioNumber,
                                                 to: admin.adminTelephone,
 
@@ -833,7 +833,7 @@ const paiementController = {
                                     for (const admin of smsChoice) {
 
                                         twilio.messages.create({
-                                                body: ` 🎉 New commande ! ${transporteurData.nom}/${comment}/${await adresseEnvoieFormat(session.user.idClient)}/${session.totalStripe/100}€/${articlesachat} `,
+                                                body: `New commande ! ${transporteurData.nom}/${comment}/${await adresseEnvoieFormat(session.user.idClient)}/${session.totalStripe/100}€/${articlesachat} `,
                                                 from: dataTwillio.twillioNumber,
                                                 to: admin.adminTelephone,
 
@@ -983,7 +983,7 @@ const paiementController = {
                             res.status(500).end();
                         }
 
-                        //! Une mise a jour de la commande en "2" "Annullé" et non une supression de la commande pour gardeer une trace !
+                        //! Une mise a jour de la commande en "2" "Anullé" et non une supression de la commande pour garder une trace !
 
                         let resultCommande;
                         try {
@@ -1423,7 +1423,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JZpZXLNa9FFzz1X1nbzaOLH_secret_n7HdQQQYoYfDid3Z1n1rn9c9O",
+                client_secret: "pi_3JdbFZLNa9FFzz1X0ulV4pq5_secret_F7lcnp7zehiRSN1Z8a6g7W5fn",
             });
 
 
@@ -2025,7 +2025,7 @@ const paiementController = {
                             for (const admin of smsChoice) {
 
                                 twilio.messages.create({
-                                        body: `  ❌ ANNULATION COMMANDE ⚠️ ! Commande annulé et déja remboursé au client => Ref commande N°${refCommandeOk[0].reference}/ d'un montant de ${refCommandeOk[0].montant /100}€/ contenant : ${articlesachat}.Cette comande N'EST PLUS à livrer via :${refCommandeOk[0].transporteur}.`,
+                                        body: ` ANNULATION COMMANDE ! Commande annulé et déja remboursé au client => Ref commande N°${refCommandeOk[0].reference}/ d'un montant de ${refCommandeOk[0].montant /100}€/ contenant : ${articlesachat}.Cette comande N'EST PLUS à livrer via :${refCommandeOk[0].transporteur}.`,
                                         from: dataTwillio.twillioNumber,
                                         to: admin.adminTelephone,
 
@@ -2038,7 +2038,7 @@ const paiementController = {
                             for (const admin of smsChoice) {
 
                                 twilio.messages.create({
-                                        body: `  ❌ ANNULATION COMMANDE ⚠️ ! Commande annulé et déja remboursé au client => Ref commande N°${refCommandeOk[0].reference}/ d'un montant de ${refCommandeOk[0].montant/100}€/ contenant : ${articlesachat}.Cette comande N'EST PLUS à envoyer via :${refCommandeOk[0].transporteur} a : ${adresse}.`,
+                                        body: ` ANNULATION COMMANDE ! Commande annulé et déja remboursé au client => Ref commande N°${refCommandeOk[0].reference}/ d'un montant de ${refCommandeOk[0].montant/100}€/ contenant : ${articlesachat}.Cette comande N'EST PLUS à envoyer via :${refCommandeOk[0].transporteur} a : ${adresse}.`,
                                         from: dataTwillio.twillioNumber,
                                         to: admin.adminTelephone,
 
@@ -2343,7 +2343,7 @@ const paiementController = {
                             for (const admin of smsChoice) {
 
                                 twilio.messages.create({
-                                        body: `  ❌  ANNULATION COMMANDE ⚠️ ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° N°${refCommandeOk[0].reference}/ d'un montant de${refCommandeOk[0].montant}€/ contenant : ${articlesachat}.Cette commande N'EST PLUS à livrer via :${refCommandeOk[0].transporteur}. Penser a rembourser manuellement le client de cette commande si l'envoie a pu être empecher.`,
+                                        body: ` ANNULATION COMMANDE  ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° N°${refCommandeOk[0].reference}/ d'un montant de${refCommandeOk[0].montant}€/ contenant : ${articlesachat}.Cette commande N'EST PLUS à livrer via :${refCommandeOk[0].transporteur}. Penser a rembourser manuellement le client de cette commande si l'envoie a pu être empecher.`,
                                         from: dataTwillio.twillioNumber,
                                         to: admin.adminTelephone,
 
@@ -2356,7 +2356,7 @@ const paiementController = {
                             for (const admin of smsChoice) {
 
                                 twilio.messages.create({
-                                        body: `  ❌ ANNULATION COMMANDE ⚠️ ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE N°${refCommandeOk[0].reference}/ contenant : ${articlesachat}.Cette comande N'EST PLUS à envoyer via :${refCommandeOk[0].transporteur} a : ${adresse}.`,
+                                        body: ` ANNULATION COMMANDE  ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE N°${refCommandeOk[0].reference}/ contenant : ${articlesachat}.Cette comande N'EST PLUS à envoyer via :${refCommandeOk[0].transporteur} a : ${adresse}.`,
                                         from: dataTwillio.twillioNumber,
                                         to: admin.adminTelephone,
 

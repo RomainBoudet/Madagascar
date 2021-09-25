@@ -555,9 +555,8 @@ const panierController = {
             const cart = req.session.cart;
 
 
-
-            if (cart) {
-
+            if (cart === []) {
+                
                 let reduction;
 
                 if (monArticle.reduction === null) {

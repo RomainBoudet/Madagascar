@@ -458,6 +458,8 @@ const paiementController = {
             const paymentIntent = event.data.object;
             const paymentData = event.data.object.charges.data[0].payment_method_details;
 
+            console.log("paymentIntent = event.data.object == ", paymentIntent);
+
             // console.log("paymentIntent ==>> ", paymentIntent);
             // console.log("paymentData ==>> ", paymentData);
             // console.log("event ==>> ", event);
@@ -472,6 +474,7 @@ const paiementController = {
                 if (paymentData.type === "sepa_debit") {
 
                     session = await redis.get(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`).then(JSON.parse);
+                    console.log("session dans le webhookpaiement, dans le cas d'un paiement SEPA avec une seesion en provenance de REDIS == ", session);
 
                 };
 
@@ -1150,6 +1153,8 @@ const paiementController = {
 
             const paymentIntent = event.data.object;
 
+            console.log("paymentIntent dans le webhookPaiement SEPA== ", paymentIntent);
+
             // je récupére les infos de la CB ou du virement SEPA
             const paymentData = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
 
@@ -1472,7 +1477,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JZo6uLNa9FFzz1X0XQ1l6cA_secret_amCl9gz97URFFIHP3VASNzots",
+                client_secret: "pi_3Jdc76LNa9FFzz1X1U1MxtEt_secret_T9QsC4FJaXaKhORCOQwLTVx5k",
             });
 
 

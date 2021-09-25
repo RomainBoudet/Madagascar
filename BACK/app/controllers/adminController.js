@@ -14,6 +14,12 @@ const {
     exec
 } = require("child_process");
 const passwordSchema = require('../schemas/passwordOnlySchema');
+const {
+    capitalize
+} = require('../middlewares/sanitizer');
+
+const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
+
 
 
 //Config Twillio
@@ -67,7 +73,9 @@ const adminController = {
 
                 }
 
-                const newSmsChoice = new AdminPhone({idClient: req.session.user.idClient});
+                const newSmsChoice = new AdminPhone({
+                    idClient: req.session.user.idClient
+                });
                 const result = await newSmsChoice.updateSmsTrue();
                 console.log("req.body = true ==>> ", result);
             }
@@ -79,7 +87,9 @@ const adminController = {
                     res.status(200).end();
 
                 }
-                const newSmsChoice = new AdminPhone({idClient: req.session.user.idClient});
+                const newSmsChoice = new AdminPhone({
+                    idClient: req.session.user.idClient
+                });
                 const result = await newSmsChoice.updateSmsFalse();
                 console.log("req.body = false ==>> ", result);
 
@@ -101,7 +111,7 @@ const adminController = {
             // Je vérifis que l'admin a bien déja fait vérifié son email. Sinon je le réoriente vers une vérification...
             const EmailVerifInDb = await AdminVerifEmail.findOneTrue(req.session.user.idClient);
 
-            if (EmailVerifInDb === null ) {
+            if (EmailVerifInDb === null) {
                 return res.status(200).json({
                     message: 'Merci de faire verifier votre email avant de pouvoir recevoir des informations de commande sur celui-çi.'
                 })
@@ -117,7 +127,9 @@ const adminController = {
 
                 }
 
-                const newEmailChoice = new AdminVerifEmail({idClient: req.session.user.idClient});
+                const newEmailChoice = new AdminVerifEmail({
+                    idClient: req.session.user.idClient
+                });
                 const result = await newEmailChoice.trueEmailNewCommandeChoice();
                 console.log("result ==>> ", result);
             }
@@ -129,7 +141,9 @@ const adminController = {
                     res.status(200).end();
 
                 }
-                const newEmailChoice = new AdminVerifEmail({idClient: req.session.user.idClient});
+                const newEmailChoice = new AdminVerifEmail({
+                    idClient: req.session.user.idClient
+                });
                 const result = await newEmailChoice.falseEmailNewCommandeChoice();
                 console.log("result ==>> ", result);
 
@@ -206,7 +220,9 @@ const adminController = {
             const userInDb = await Client.findByEmail(email);
             if (userInDb.email) {
                 //il y a déjà un utilisateur avec cet email, on envoie une erreur
-                return response.json({message: 'Cet email n\'est pas disponible'});
+                return response.json({
+                    message: 'Cet email n\'est pas disponible'
+                });
             }
 
 
@@ -417,16 +433,19 @@ const adminController = {
         }
     },
 
+    //! webhook a configurer en cas d'érreur TWILIO !!
+    // https://console.twilio.com/us1/monitor/logs/debugger/webhooks-triggers?frameUrl=%2Fconsole%2Fdebugger%2Falert-triggers%3Fx-target-region%3Dus1 
+
 
 
     //https://www.twilio.com/docs/sms/tutorials/how-to-receive-and-reply-node-js
-    // pour tester via ngrok => (en ligne de commande) ngrok http https://localhost:3000 -region eu
+    // pour tester via ngrok => (en ligne de commande) ngrok http https://localhost:4000 -region eu
     // a insérer dans la console Twillio => dans l'onglet Active number, dans Messaging, A MESSAGE COMES IN Webhook, => https://4b4c0118e42b.eu.ngrok.io/v1/response
     // pas plus de 153 caractéres par envoi.... !
     smsRespond: async (req, res) => {
         const dataTwillio = await Twillio.findFirst();
         const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
-        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, 'en-GB', {
+        if (!(validator.isMobilePhone(dataTwillio.twillioNumber, process.env.TWILIO_NUMBER_COUNTRY, {
                 strictMode: true
             }) && validator.isMobilePhone(dataTwillio.devNumber, 'fr-FR', {
                 strictMode: true
@@ -434,41 +453,42 @@ const adminController = {
             return res.status(404).json('Votre numéro de téléphone ne correspond pas au format souhaité !')
         }
         try {
-            if (req.body.Body == 'Clients ?') {
+            const body = req.body.Body;
+            if (body == 'Clients ?') {
                 const clients = await Client.count()
                 twilio.messages.create({
                         body: `Il existe ${clients.count} clients enregitré en bdd le ${date}.`,
                         from: dataTwillio.twillioNumber,
                         to: dataTwillio.devNumber,
                     })
-                    .then(message => console.log(message.sid));
+                    .then(message => console.log("message bien envoyé !", message.sid));
 
                 return;
 
-            } else if (req.body.Body == 'Paiement ?') {
+            } else if (body == 'Paiement ?') {
 
                 const paiement = await Paiement.getLastPaiement()
                 twilio.messages.create({
-                        body: `Dernier paiement le ${formatLong(paiement.datePaiement)}, montant : ${paiement.montant}€.`,
+                        body: `Dernier paiement le ${capitalize(formatLong(paiement.datePaiement))}, montant : ${paiement.montant}€.`,
                         from: dataTwillio.twillioNumber,
                         to: dataTwillio.devNumber,
                     })
-                    .then(message => console.log(message.sid));
+                    .then(message => console.log("message bien envoyé !", message.sid));
 
                 return;
 
-            } else if (req.body.Body == 'ça roule ?') {
+            } else if (body == 'Ça roule ?') {
 
                 twilio.messages.create({
                         body: `Ouaip, ça roule, on s'occupe 😉`,
                         from: dataTwillio.twillioNumber,
                         to: dataTwillio.devNumber,
                     })
-                    .then(message => console.log(message.sid));
+                    .then(message => console.log("message bien envoyé !", message.sid));
 
                 return;
 
-            } else if (req.body.Body == 'Balance ?') {
+            } else if (body == 'Twilio ?') {
 
                 const balance = await twilio.balance.fetch()
                 twilio.messages.create({
@@ -476,9 +496,92 @@ const adminController = {
                         from: dataTwillio.twillioNumber,
                         to: dataTwillio.devNumber,
                     })
-                    .then(message => console.log(message.sid));
+                    .then(message => console.log("message bien envoyé !", message.sid));
 
                 return;
+
+            } else if (body == 'Stripe ?') {
+
+                stripe.balance.retrieve(function (err, balance) {
+                    const balanceStripe = balance.available[0].amount;
+                    twilio.messages.create({
+                            body: `La balance du compte Stripe est de ${balanceStripe}$.`,
+                            from: dataTwillio.twillioNumber,
+                            to: dataTwillio.devNumber,
+                        })
+                        .then(message => console.log("message bien envoyé !", message.sid));
+                });
+
+
+
+                return;
+
+            } else if (body.startsWith("update")) {
+
+                //format requis du corp du sms =  "update : 234344 : jfdjjjvf"
+
+                console.log("Coucou !!");
+
+                const commande1 = body.split(' : ');
+                const commande = commande1[1];
+
+                const regRefCommande = /^[0-9]*[.]{1,}$/; //! REGEXa retravailler !! 
+                const number = /^[0-9]*$/;
+                const string = /^[a-zA-Z]*$/;
+                if (regRefCommande.test(commande)) {
+
+                    //ici j'ai une reférence de commande !
+                    console.log("commande est une référence !  == ", commande);
+
+                };
+
+                if (number.test(commande)) {
+
+                    //ici j'ai un id de commande !
+                    console.log("commande est un id !  == ", commande);
+
+                }
+
+
+
+
+                // si présence de point dans la string, vérifer par une regex, alors ç'est une référence de commande sinon, on a un id-commande
+                // verif est ce que la commande existe !
+
+
+                const statut1 = body.split(' : ');
+                const statut = statut1[2];
+                console.log("statut  == ", statut);
+
+                if (number.test(statut)) {
+
+                    console.log("statut est un number !");
+
+                    // je convertit en nombre avec Number !
+                    // si jamais j'ai une érreur lors de la conversion, je la catch
+                    // ici j'ai un id de statut qui doit aller de 1 a 7 max !!
+                    // je vérifit qu'il est entier, de 1 a 7
+                    // je le cherche dans la BDD
+
+                }
+
+                if (string.test(statut)) {
+
+                    console.log("statut est uns string !");
+                    // on ici une string
+                    // je vérifit bien que le type de string est ok !
+                    // je la cherche dans la BDD
+                }
+
+
+                // selon le résultat du type off on recherche soit un id de statut_commande soit la valeur du statut_commande !
+                // on essai de passer au format Number si error alors on a une string !
+                // verifier que le statut de la commande existe bien, ou id compris entre 1 et 7
+
+
+
+                // retrouver le numéro de l'appelant : request.get_data() // https://stackoverflow.com/questions/53013557/how-to-get-the-incoming-callers-phone-number-in-twilio-flask-app
+
 
             } else {
 

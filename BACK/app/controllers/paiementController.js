@@ -1502,7 +1502,7 @@ const paiementController = {
 
             stripe.balance.retrieve(function (err, balance) {
                 console.log(balance.available[0].amount);
-                res.status(200).json(balance);
+               return res.status(200).json(balance);
 
             });
 

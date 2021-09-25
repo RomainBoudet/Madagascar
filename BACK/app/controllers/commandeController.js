@@ -20,9 +20,13 @@ const commandeController = {
 
     updateStatut: async (req, res) => {
         try {
+            //! parser un email : https://medium.com/@akinremiolumide96/reading-email-data-with-node-js-cdacaa174cc7 
+
+            //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée, 7 = Remboursée
+
             // recois en body une commande et le statut que l'on voudrais lui attribuer ! 
-            // recois ca par sms et par mail !?
-            //
+            // reçois ca par sms et par mail !?
+            // une API flexible qui accepte la référence de la commande ou son id ! et son nouveau statut ou son id !
 
 
 

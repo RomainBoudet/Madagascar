@@ -458,8 +458,6 @@ const paiementController = {
             const paymentIntent = event.data.object;
             const paymentData = event.data.object.charges.data[0].payment_method_details;
 
-            console.log("paymentIntent = event.data.object == ", paymentIntent);
-
             // console.log("paymentIntent ==>> ", paymentIntent);
             // console.log("paymentData ==>> ", paymentData);
             // console.log("event ==>> ", event);
@@ -474,8 +472,7 @@ const paiementController = {
                 if (paymentData.type === "sepa_debit") {
 
                     session = await redis.get(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`).then(JSON.parse);
-                    console.log("session dans le webhookpaiement, dans le cas d'un paiement SEPA avec une seesion en provenance de REDIS == ", session);
-
+                   
                 };
 
                 //Si le paiement à bien été effectué et reçu (SEPA ou CB) :
@@ -1153,7 +1150,7 @@ const paiementController = {
 
             const paymentIntent = event.data.object;
 
-            console.log("paymentIntent dans le webhookPaiement SEPA== ", paymentIntent);
+            //console.log("paymentIntent dans le webhookPaiement SEPA== ", paymentIntent);
 
             // je récupére les infos de la CB ou du virement SEPA
             const paymentData = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
@@ -1477,7 +1474,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3Jdc76LNa9FFzz1X1U1MxtEt_secret_T9QsC4FJaXaKhORCOQwLTVx5k",
+                client_secret: "pi_3Jdd7lLNa9FFzz1X01oge9zx_secret_uCtLw3KLB5BaWCtYP3kMw9pyH",
             });
 
 
@@ -2557,6 +2554,12 @@ const paiementController = {
             } */
 
             console.log("allCoupons = ", allCoupons);
+
+            if(allCoupons.length === 0){
+                console.log("Il n'existe aucun coupon !");
+               return res.status(200).json({message:"Il n'existe aucun coupon !"});
+
+            }
 
             res.status(200).json(allCoupons);
         } catch (error) {

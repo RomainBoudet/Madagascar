@@ -29,7 +29,7 @@ const commandeController = {
 
             //! parser un email : https://medium.com/@akinremiolumide96/reading-email-data-with-node-js-cdacaa174cc7 
 
-            //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée, 7 = Remboursée
+            //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cours de préparation, 5 = Prêt pour expedition, 6 = Expédiée, 7 = Remboursée
 
             //pour une API flexible on prend soit une réference de commande soit un id de commande !
 
@@ -37,8 +37,8 @@ const commandeController = {
 
             const regRefCommande = /^([0-9]*[.]{1}[0-9]*)*$/; // pour une référence de commande
             const number = /^[0-9]*$/; // pour un id de commande
-
-            const string = /^[a-zA-Z\s]*$/; // pour un statut sous forme de string
+            //const string = /^[a-zA-Z\s]*$/; // pour un statut sous forme de string
+            const unicod = /En attente|Annulée|Paiement validé|En cours de préparation|Prêt pour expédition|Expédiée|Remboursée/;
 
             let commandeInDb;
             let statutInDb;
@@ -53,8 +53,6 @@ const commandeController = {
                     })
                 }
 
-                console.log("commande est une référence !");
-
             } else if (number.test(req.body.commande)) {
 
                 commandeInDb = await Commande.findOne(req.body.commande);
@@ -65,9 +63,6 @@ const commandeController = {
                         message: "Cette identifiant de commande n'éxiste pas !"
                     })
                 }
-
-
-                console.log("commande est un id !");
 
             } else {
                 return res.status(200).json({
@@ -80,36 +75,37 @@ const commandeController = {
 
                 // ici req.body.statut est un identifiant !
                 statutInDb = await StatutCommande.findOne(req.body.statut);
-                console.log("statut est un identifiant == ", statutInDb);
 
                 if (statutInDb === null || statutInDb === undefined) {
                     res.status(200).json({
                         message: "Cette identifiant de statut n'éxiste pas !"
                     })
                 }
+                console.log("statutInDb == ", statutInDb);
 
-            } else if (string.test(statut)) {
 
+            } else if (unicod.test(req.body.statut)) {
                 //ici req.body.statut est une string !
                 statutInDb = await StatutCommande.findByName(req.body.statut);
-                console.log("statut est une string == ", statutInDb);
 
                 if (statutInDb === null || statutInDb === undefined) {
                     res.status(200).json({
                         message: "Cette identifiant de statut n'éxiste pas !"
                     })
                 }
-
+                console.log("statutInDb == ", statutInDb);
             } else {
                 return res.status(200).json({
                     message: "votre statut n'a pas le format souhaité ! il doit avoir soit le format d'un nom de statut soit celui d'un identifiant (nombre)."
                 })
             }
 
-
+            console.log("commandeInDb.id  == ",commandeInDb.id);
 
 
             //! je vérifit que le statut demandé éxiste dans les deux cas !
+
+            // je vérifit que le statut commande de mandé pour la moise a jour ne soit déja celui en place 
 
             // je vérifit que le statut demandé pour cette commande est le statut logique suivant !
 

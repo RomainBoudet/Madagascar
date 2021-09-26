@@ -410,6 +410,18 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
  router.get('/user/cancelCoupon', client, panierController.cancelCoupon);
 
 
+
+//! UPDATE COMMANDE --------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * Mise a jour du statut du statut d'une commande 
+ * @route POST /admin/updateCommande
+ * @group Administrateur
+ * @summary  Mise a jour du statut du statut d'une commande 
+ * @returns {JSON} 200 - Mise a jour du statut du statut d'une commande et renvoie le statut de la commande nouvellement mis a jour 
+ */
+ router.post('/admin/updateCommande', admin, commandeController.updateStatut);
+
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 
 /**

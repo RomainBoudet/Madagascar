@@ -525,7 +525,7 @@ const adminController = {
                 const commande1 = body.split(' : ');
                 const commande = commande1[1];
 
-                const regRefCommande = /^[0-9]*[.]{1,}$/; //! REGEXa retravailler !! 
+                const regRefCommande = /^([0-9]*[.]{1}[0-9]*)*$/;
                 const number = /^[0-9]*$/;
                 const string = /^[a-zA-Z]*$/;
                 if (regRefCommande.test(commande)) {

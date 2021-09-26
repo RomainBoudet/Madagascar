@@ -163,12 +163,19 @@ const clientController = {
 
             // FIXME
             //STRIPE me destroy le timing avec plus de 600ms.. à voir si je ne peux rien faire pour améliorer ça...
-            const custumer = await stripe.customers.create({
-                description: 'Un client MadaSHOP',
-                email: user.email,
-                name: `${user.prenom} ${user.nomFamille}`,
-                balance: 0,
-            });
+            let custumer;
+            try {
+                custumer = await stripe.customers.create({
+                    description: 'Un client MadaSHOP',
+                    email: user.email,
+                    name: `${user.prenom} ${user.nomFamille}`,
+                    balance: 0,
+                });
+            } catch (error) {
+                console.log("erreur dans le clientController, lors de la creation du client STRIPE ==>> ", error);
+
+            }
+
 
             console.log("custumer dans le clientController, creation du client STRIPE ==>> ", custumer);
 
@@ -186,7 +193,7 @@ const clientController = {
                 // je créer un objet "transporteur" réutilisable à l'aide du transport SMTP par défaut
 
                 const transporter = nodemailer.createTransport({
-                    host: 'smtp.gmail.com',
+                    host: process.env.HOST,
                     port: 465,
                     secure: true, // true for 465, false for other ports
                     auth: {
@@ -503,7 +510,9 @@ const clientController = {
             if (req.session.user.privilege === "Administrateur" && req.session.user.email !== email) {
                 console.log("vous n'avez pas les droit nécéssaire.");
 
-                return res.status(403).json({message: "Vous n'avez pas les droits nécéssaires"});
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits nécéssaires"
+                });
 
             }
 

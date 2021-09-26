@@ -20,13 +20,98 @@ const commandeController = {
 
     updateStatut: async (req, res) => {
         try {
+
+            if (req.session.user.privilege === 'Client') {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
             //! parser un email : https://medium.com/@akinremiolumide96/reading-email-data-with-node-js-cdacaa174cc7 
 
             //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée, 7 = Remboursée
 
-            // recois en body une commande et le statut que l'on voudrais lui attribuer ! 
-            // reçois ca par sms et par mail !?
-            // une API flexible qui accepte la référence de la commande ou son id ! et son nouveau statut ou son id !
+            //pour une API flexible on prend soit une réference de commande soit un id de commande !
+
+            //! je fait le tri si c'est une référence de commande ou un id de commande !
+
+            const regRefCommande = /^([0-9]*[.]{1}[0-9]*)*$/; // pour une référence de commande
+            const number = /^[0-9]*$/; // pour un id de commande
+
+            const string = /^[a-zA-Z\s]*$/; // pour un statut sous forme de string
+
+            let commandeInDb;
+            let statutInDb;
+            if (regRefCommande.test(req.body.commande)) {
+
+                commandeInDb = await Commande.findByRefCommande(req.body.commande);
+                console.log(commandeInDb);
+
+                if (commandeInDb === null || commandeInDb === undefined) {
+                    res.status(200).json({
+                        message: "Cette référence de commande n'éxiste pas !"
+                    })
+                }
+
+                console.log("commande est une référence !");
+
+            } else if (number.test(req.body.commande)) {
+
+                commandeInDb = await Commande.findOne(req.body.commande);
+                console.log(commandeInDb);
+
+                if (commandeInDb === null || commandeInDb === undefined) {
+                    res.status(200).json({
+                        message: "Cette identifiant de commande n'éxiste pas !"
+                    })
+                }
+
+
+                console.log("commande est un id !");
+
+            } else {
+                return res.status(200).json({
+                    message: "votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant."
+                })
+            }
+
+
+            if (number.test(req.body.statut)) {
+
+                // ici req.body.statut est un identifiant !
+                statutInDb = await StatutCommande.findOne(req.body.statut);
+                console.log("statut est un identifiant == ", statutInDb);
+
+                if (statutInDb === null || statutInDb === undefined) {
+                    res.status(200).json({
+                        message: "Cette identifiant de statut n'éxiste pas !"
+                    })
+                }
+
+            } else if (string.test(statut)) {
+
+                //ici req.body.statut est une string !
+                statutInDb = await StatutCommande.findByName(req.body.statut);
+                console.log("statut est une string == ", statutInDb);
+
+                if (statutInDb === null || statutInDb === undefined) {
+                    res.status(200).json({
+                        message: "Cette identifiant de statut n'éxiste pas !"
+                    })
+                }
+
+            } else {
+                return res.status(200).json({
+                    message: "votre statut n'a pas le format souhaité ! il doit avoir soit le format d'un nom de statut soit celui d'un identifiant (nombre)."
+                })
+            }
+
+
+
+
+            //! je vérifit que le statut demandé éxiste dans les deux cas !
+
+            // je vérifit que le statut demandé pour cette commande est le statut logique suivant !
 
 
 
@@ -36,9 +121,10 @@ const commandeController = {
 
 
 
-            const commandes = await Commande.findAll();
 
-            res.status(200).json(commandes);
+
+
+            res.status(200).end();
         } catch (error) {
             console.trace('Erreur dans la méthode  updateStatut du commandeController :',
                 error);

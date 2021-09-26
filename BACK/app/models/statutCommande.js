@@ -41,7 +41,7 @@ class StatutCommande {
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à un statut_commande via son id passée en paramétre
-     * @param - un id d'une statut_commande
+     * @param - un id d'un statut_commande
      * @returns - les informations d'un statut_commande demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
@@ -62,6 +62,34 @@ class StatutCommande {
 
         consol.model(
             `la statut_commande id : ${id} a été demandé en BDD !`
+        );
+
+        return new StatutCommande(rows[0]);
+    }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à un statut_commande via son nom passée en paramétre
+     * @param - un nom d'un statut_commande
+     * @returns - les informations d'un statut_commande demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findByName(statut) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT * FROM mada.statut_commande WHERE statut_commande.statut = $1;',
+            [statut]
+        );
+
+        if (!rows[0]) {
+            throw new Error("Aucun statut_commande avec ce statut");
+        }
+
+        consol.model(
+            `la statut_commande statut : ${statut} a été demandé en BDD !`
         );
 
         return new StatutCommande(rows[0]);

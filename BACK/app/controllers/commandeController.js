@@ -3,6 +3,11 @@ const StatutCommande = require('../models/statutCommande');
 const LigneCommande = require('../models/ligneCommande');
 const ProduitRetour = require('../models/produitRetour');
 
+const {
+    distance,
+    closest
+} = require('fastest-levenshtein');
+
 
 /**
  * Une méthode qui va servir a intéragir avec le model Commande pour les intéractions avec la BDD
@@ -21,103 +26,347 @@ const commandeController = {
     updateStatut: async (req, res) => {
         try {
 
+            // ici je n'autorise que certain statut a être updaté ! 
+            // les statuts : 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée,
+            // par mesure de sécurité et pour plus de liberté, j'autorise néanmoins le Developpeur a changé tout statut comme il le souhaite ! 
+
+
             if (req.session.user.privilege === 'Client') {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
             };
-
             //! parser un email : https://medium.com/@akinremiolumide96/reading-email-data-with-node-js-cdacaa174cc7 
 
-            //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cours de préparation, 5 = Prêt pour expedition, 6 = Expédiée, 7 = Remboursée
+            //RAPPEL des statuts de commande : 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée;
 
-            //pour une API flexible on prend soit une réference de commande soit un id de commande !
+            //pour une API flexible on prend soit une réference de commande soit un id de commande et soit le nom d'un statut soit sont id !
+            // et on autorise l'admin a faire 3 faute par statut, on on le corrige automatiquement ! sinon on lui propose le plus proche statut existant... Merci Levenshtein !
 
             //! je fait le tri si c'est une référence de commande ou un id de commande !
 
             const regRefCommande = /^([0-9]*[.]{1}[0-9]*)*$/; // pour une référence de commande
             const number = /^[0-9]*$/; // pour un id de commande
-            //const string = /^[a-zA-Z\s]*$/; // pour un statut sous forme de string
-            const unicod = /En attente|Annulée|Paiement validé|En cours de préparation|Prêt pour expédition|Expédiée|Remboursée/;
+            const notNumber = /[^0-9]+/; // a utiliser pour discriminer le statut de commande en format string. 
+
+
+
+            // on vérifit que la confirmation de statut est conforme au statut !
+            // sécurité supplémentaire de Joi..
+            if (req.body.statut !== req.body.confirmStatut) {
+                console.log("La confirmation de votre statut doit être identique a votre statut !");
+                return res.status(200).json({
+                    message: "La confirmation de votre statut doit être identique a votre statut !"
+                })
+            }
 
             let commandeInDb;
             let statutInDb;
-            if (regRefCommande.test(req.body.commande)) {
 
-                commandeInDb = await Commande.findByRefCommande(req.body.commande);
-                console.log(commandeInDb);
 
-                if (commandeInDb === null || commandeInDb === undefined) {
-                    res.status(200).json({
-                        message: "Cette référence de commande n'éxiste pas !"
+
+            if (req.session.user.privilege === 'Developpeur') {
+              
+                if (regRefCommande.test(req.body.commande)) {
+                    // ici commande est une référence
+                    commandeInDb = await Commande.findOneCommande(req.body.commande);
+    
+                    if (commandeInDb === null || commandeInDb === undefined) {
+                        console.log("Cette référence de commande n'éxiste pas !");
+                        return res.status(200).json({
+                            message: "Cette référence de commande n'éxiste pas !"
+                        })
+                    }
+    
+                } else if (number.test(req.body.commande)) {
+                    // ici commande est un identifiant
+                    commandeInDb = await Commande.findOne(req.body.commande);
+    
+                    if (commandeInDb === null || commandeInDb === undefined) {
+                        console.log("Cette identifiant de commande n'éxiste pas !");
+                        return res.status(200).json({
+                            message: "Cette identifiant de commande n'éxiste pas !"
+                        })
+                    }
+    
+                } else {
+                    console.log("votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant.");
+                    return res.status(200).json({
+                        message: "votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant."
+                    })
+                }
+    
+    
+                if (number.test(req.body.statut)) {
+    
+                    // ici req.body.statut est un identifiant !
+                    statutInDb = await StatutCommande.findOne(req.body.statut);
+    
+                    // Je vérifis que le statut proposé pour update existe !
+                    if (statutInDb === null || statutInDb === undefined) {
+                        console.log("Cette identifiant de statut n'éxiste pas !")
+                        return res.status(200).json({
+                            message: "Cette identifiant de statut n'éxiste pas !"
+                        })
+                    }
+                    // J'avertit l'admin si le statut qu'il souhaiterais mettre a jour est déja le statut existant !
+                    if (Number(req.body.statut) === commandeInDb.idCommandeStatut) {
+                        console.log("Le statut proposé pour cette commande est déja celui existant !")
+                        return res.status(200).json({
+                            message: "Le statut proposé pour cette commande est déja celui existant !"
+                        })
+                    }
+                    // J'avertit l'admin si sa mise a jour ne suit pas un ordre logique... si il a sauté des étapes..
+                    // simple avertissement, on ne "return" pas !
+                    if (Number(req.body.statut) !== (commandeInDb.idCommandeStatut + 1)) {
+                        console.log("Votre mise a jour de statut ne suit pas l'ordre logique... ")
+                        res.status(200).json({
+                            message: `Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de ${commandeInDb.idCommandeStatut} à ${req.body.statut}  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`
+                        })
+                    }
+    
+    
+                } else if (notNumber.test(req.body.statut)) {
+    
+                    // je construit un tableau composé de mes statut, dynamiquement !
+                    const arrayStatut = [];
+                    let allStatuts;
+                    try {
+                        allStatuts = await StatutCommande.findAll();
+                        for (const item of allStatuts) {
+                            arrayStatut.push(item.statut);
+                        }
+    
+                    } catch (error) {
+                        console.log(`erreur dans la méthode upDateSatut du CommandeController ! lors de la recherche de tous les statuts ! ${error}`);
+                        return res.statut(500).end();
+                    }
+    
+                    // Ici j'ai une string sans chiffre dans le formulaire, j'utilise la distance de Levenshtein pour réorienter une potentielle érreur de l'admin !
+                    // Je calcul toutes les distance de Levenstein entre le mot proposé et ceux de mon tableau et je prends la plus petite. 
+                    let arrayDistance = [];
+                    for (const item of arrayStatut) {
+                        const theDistance = distance(req.body.statut, item);
+                        arrayDistance.push(theDistance);
+                        //console.log("theDistance == ", theDistance);
+                    }
+    
+                    const isDistInf3 = (element) => element <= 3;
+                    const indexSmallDistance = arrayDistance.findIndex(isDistInf3);
+                    // console.log("indexSmallDistance == ", indexSmallDistance);
+    
+                    // si indexSmallDistance vaut -1 alors aucun match !!
+                    if (indexSmallDistance === -1 || indexSmallDistance === undefined) {
+    
+                        // Je prospose néanmoins a l'admin le mot le plus proche possible de sa demande !
+                        const closeWord = closest(req.body.statut, arrayStatut);
+                        console.log(`Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiqué le statut : '${closeWord}' ?`);
+                        return res.status(200).json({
+                            message: `Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiqué le statut : '${closeWord}' ?`
+                        })
+                    }
+    
+                    // ici indexSmallDistance est forcemment inférieur a 3 ou moins, on convertit le statut entrée par l'admin en statut existant le plus proche !  
+                    req.body.statut = arrayStatut[indexSmallDistance];
+    
+                    // J'avertit l'admin si le statut qu'il souhaiterais mettre a jour est déja le statut existant !
+                    if (req.body.statut === commandeInDb.statut) {
+                        console.log("Le statut proposé pour cette commande est déja celui existant !")
+                        return res.status(200).json({
+                            message: "Le statut proposé pour cette commande est déja celui existant !"
+                        })
+                    }
+    
+                    // j'avertit l'admin si ca mise a jour ne suit pas un ordre logique... si il a sauté des étapes..
+                    // simple avertissement, on ne "return" pas !
+                    const isStatut = (element) => element === req.body.statut;
+                    const indexStatut = arrayStatut.findIndex(isStatut);
+    
+                    const isStatut2 = (element) => element === commandeInDb.statut;
+                    const indexStatutCommande = arrayStatut.findIndex(isStatut2);
+    
+                    if (indexStatut !== (indexStatutCommande + 1)) {
+                        console.log("commandeInDb.statut == ", commandeInDb.statut);
+                        console.log("Votre mise a jour de statut ne suit pas l'ordre logique... ")
+                        res.status(200).json({
+                            message: `Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de '${commandeInDb.statut}' à '${req.body.statut}'  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`
+                        })
+                    }
+    
+    
+                    // je dois ici retrouver l'objet du tableau allStatuts contentant la valeur de req.body.statut dans un de ces objets
+                    statutInDb = allStatuts.find(element => element.statut === req.body.statut);
+    
+    
+                    // par défault je ne devrais jamais rentrer dans ce else, soit statut est un nombre, soit il est pas un nombre, pas de 3ieme choix !
+                } else {
+                    console.log("votre statut n'a pas le format souhaité ! il doit avoir soit le format d'un nom de statut soit celui d'un identifiant (nombre).");
+                    return res.status(200).json({
+                        message: "votre statut n'a pas le format souhaité ! il doit avoir soit le format d'un nom de statut soit celui d'un identifiant (nombre)."
                     })
                 }
 
-            } else if (number.test(req.body.commande)) {
-
-                commandeInDb = await Commande.findOne(req.body.commande);
-                console.log(commandeInDb);
-
-                if (commandeInDb === null || commandeInDb === undefined) {
-                    res.status(200).json({
-                        message: "Cette identifiant de commande n'éxiste pas !"
-                    })
-                }
 
             } else {
-                return res.status(200).json({
-                    message: "votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant."
-                })
-            }
 
+                //! Ici dans le role administrateur, toutes les commande selon leurs statuts ne peuvent être updaté !
+                //! seuls ces statuts sont autorisé a être modifiés : 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée,
 
-            if (number.test(req.body.statut)) {
-
-                // ici req.body.statut est un identifiant !
-                statutInDb = await StatutCommande.findOne(req.body.statut);
-
-                if (statutInDb === null || statutInDb === undefined) {
-                    res.status(200).json({
-                        message: "Cette identifiant de statut n'éxiste pas !"
+                if (regRefCommande.test(req.body.commande)) {
+                    // ici commande est une référence
+                    commandeInDb = await Commande.findOneCommandeLimited(req.body.commande);
+    
+                    if (commandeInDb === null || commandeInDb === undefined) {
+                        console.log("Cette référence de commande n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !");
+                        return res.status(200).json({
+                            message: "Cette référence de commande n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !"
+                        })
+                    }
+    
+                } else if (number.test(req.body.commande)) {
+                    // ici commande est un identifiant
+                    commandeInDb = await Commande.findOneLimited(req.body.commande);
+    
+                    if (commandeInDb === null || commandeInDb === undefined) {
+                        console.log("Cette référence de commande n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !");
+                        return res.status(200).json({
+                            message: "Cette référence de commande n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !"
+                        })
+                    }
+    
+                } else {
+                    console.log("votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant.");
+                    return res.status(200).json({
+                        message: "votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant."
                     })
                 }
-                console.log("statutInDb == ", statutInDb);
-
-
-            } else if (unicod.test(req.body.statut)) {
-                //ici req.body.statut est une string !
-                statutInDb = await StatutCommande.findByName(req.body.statut);
-
-                if (statutInDb === null || statutInDb === undefined) {
-                    res.status(200).json({
-                        message: "Cette identifiant de statut n'éxiste pas !"
+    
+    
+                if (number.test(req.body.statut)) {
+    
+                    // ici req.body.statut est un identifiant !
+                    statutInDb = await StatutCommande.findOneLimited(req.body.statut);
+    
+                    // Je vérifis que le statut proposé pour update existe !
+                    if (statutInDb === null || statutInDb === undefined) {
+                        console.log("votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant.")
+                        return res.status(200).json({
+                            message: "votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant."
+                        })
+                    }
+                    // J'avertit l'admin si le statut qu'il souhaiterais mettre a jour est déja le statut existant !
+                    if (Number(req.body.statut) === commandeInDb.idCommandeStatut) {
+                        console.log("Le statut proposé pour cette commande est déja celui existant !")
+                        return res.status(200).json({
+                            message: "Le statut proposé pour cette commande est déja celui existant !"
+                        })
+                    }
+                    // j'avertit l'admin si sa mise a jour ne suit pas un ordre logique... si il a sauté des étapes..
+                    // simple avertissement, on ne "return" pas !
+                    if (Number(req.body.statut) !== (commandeInDb.idCommandeStatut + 1)) {
+                        console.log("Votre mise a jour de statut ne suit pas l'ordre logique... ")
+                        res.status(200).json({
+                            message: `Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de ${commandeInDb.idCommandeStatut} à ${req.body.statut}  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`
+                        })
+                    }
+    
+    
+                } else if (notNumber.test(req.body.statut)) {
+    
+                    // je construit un tableau composé de mes statut, dynamiquement !
+                    const arrayStatut = [];
+                    let allStatuts;
+                    try {
+                        allStatuts = await StatutCommande.findAllLimited();
+                        for (const item of allStatuts) {
+                            arrayStatut.push(item.statut);
+                        }
+    
+                    } catch (error) {
+                        console.log(`erreur dans la méthode upDateSatut du CommandeController ! lors de la recherche de tous les statuts ! ${error}`);
+                        return res.statut(500).end();
+                    }
+    
+                    // Ici j'ai une string sans chiffre dans le formulaire, j'utilise la distance de Levenshtein pour réorienter une potentielle érreur de l'admin !
+                    // Je calcul toutes les distance de Levenstein entre le mot proposé et ceux de mon tableau et je prends la plus petite. 
+                    let arrayDistance = [];
+                    for (const item of arrayStatut) {
+                        const theDistance = distance(req.body.statut, item);
+                        arrayDistance.push(theDistance);
+                        //console.log("theDistance == ", theDistance);
+                    }
+    
+                    const isDistInf3 = (element) => element <= 3;
+                    const indexSmallDistance = arrayDistance.findIndex(isDistInf3);
+                    // console.log("indexSmallDistance == ", indexSmallDistance);
+    
+                    // si indexSmallDistance vaut -1 alors aucun match !!
+                    if (indexSmallDistance === -1 || indexSmallDistance === undefined) {
+    
+                        // Je prospose néanmoins a l'admin le mot le plus proche possible de sa demande !
+                        const closeWord = closest(req.body.statut, arrayStatut);
+                        console.log(`Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiqué le statut : '${closeWord}' ?`);
+                        return res.status(200).json({
+                            message: `Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiqué le statut : '${closeWord}' ?`
+                        })
+                    }
+    
+                    // ici indexSmallDistance est forcemment inférieur a 3 ou moins, on convertit le statut entrée par l'admin en statut existant le plus proche !  
+                    req.body.statut = arrayStatut[indexSmallDistance];
+    
+                    // J'avertit l'admin si le statut qu'il souhaiterais mettre a jour est déja le statut existant !
+                    if (req.body.statut === commandeInDb.statut) {
+                        console.log("Le statut proposé pour cette commande est déja celui existant !")
+                        return res.status(200).json({
+                            message: "Le statut proposé pour cette commande est déja celui existant !"
+                        })
+                    }
+    
+                    // j'avertit l'admin si ca mise a jour ne suit pas un ordre logique... si il a sauté des étapes..
+                    // simple avertissement, on ne "return" pas !
+                    const isStatut = (element) => element === req.body.statut;
+                    const indexStatut = arrayStatut.findIndex(isStatut);
+    
+                    const isStatut2 = (element) => element === commandeInDb.statut;
+                    const indexStatutCommande = arrayStatut.findIndex(isStatut2);
+    
+                    if (indexStatut !== (indexStatutCommande + 1)) {
+                        console.log("commandeInDb.statut == ", commandeInDb.statut);
+                        console.log("Votre mise a jour de statut ne suit pas l'ordre logique... ")
+                        res.status(200).json({
+                            message: `Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de '${commandeInDb.statut}' à '${req.body.statut}'  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`
+                        })
+                    }
+    
+    
+                    // je dois ici retrouver l'objet du tableau allStatuts contentant la valeur de req.body.statut dans un de ces objets
+                    statutInDb = allStatuts.find(element => element.statut === req.body.statut);
+    
+    
+                    // par défault je ne devrais jamais rentrer dans ce else, soit statut est un nombre, soit il est pas un nombre, pas de 3ieme choix !
+                } else {
+                    console.log("votre statut n'a pas le format souhaité ! il doit avoir soit le format d'un nom de statut soit celui d'un identifiant (nombre).");
+                    return res.status(200).json({
+                        message: "votre statut n'a pas le format souhaité ! il doit avoir soit le format d'un nom de statut soit celui d'un identifiant (nombre)."
                     })
                 }
-                console.log("statutInDb == ", statutInDb);
-            } else {
-                return res.status(200).json({
-                    message: "votre statut n'a pas le format souhaité ! il doit avoir soit le format d'un nom de statut soit celui d'un identifiant (nombre)."
-                })
+
+            }
+            
+
+            console.log("statutInDb  == ", statutInDb);
+            console.log("commandeInDb  == ", commandeInDb);
+          
+            // j'insére cet update en BDD !
+            const data = {
+                idCommandeStatut: statutInDb.id,
+                id: commandeInDb.id,
             }
 
-            console.log("commandeInDb.id  == ",commandeInDb.id);
+            const newUpdate = new Commande(data);
+            const updateDone = await newUpdate.updateStatutCommande();
 
-
-            //! je vérifit que le statut demandé éxiste dans les deux cas !
-
-            // je vérifit que le statut commande de mandé pour la moise a jour ne soit déja celui en place 
-
-            // je vérifit que le statut demandé pour cette commande est le statut logique suivant !
-
-
-
-
-
-
-
-
-
-
+            console.log("updateDone == ", updateDone);
 
 
             res.status(200).end();

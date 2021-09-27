@@ -29,7 +29,28 @@ class StatutCommande {
         } = await db.query('SELECT * FROM mada.statut_commande ORDER BY statut_commande.id ASC');
 
         if (!rows[0]) {
-            throw new Error("Aucun statut_commandes dans la BDD");
+            return null;
+        }
+        consol.model(
+            `les informations des ${rows.length} statut_commandes ont été demandées !`
+        );
+
+        return rows.map((statutCommande) => new StatutCommande(statutCommande));
+    }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à tous les statut_commandes
+     * @returns - tous les statut_commandes présent en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findAllLimited() {
+        const {
+            rows
+        } = await db.query("SELECT * FROM mada.statut_commande WHERE (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée') ORDER BY statut_commande.id ASC;");
+
+        if (!rows[0]) {
+            return null;
         }
         consol.model(
             `les informations des ${rows.length} statut_commandes ont été demandées !`
@@ -57,7 +78,35 @@ class StatutCommande {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun statut_commande avec cet id");
+            return null;
+        }
+
+        consol.model(
+            `la statut_commande id : ${id} a été demandé en BDD !`
+        );
+
+        return new StatutCommande(rows[0]);
+    }
+
+     /**
+     * Méthode chargé d'aller chercher les informations relatives à un statut_commande via son id passée en paramétre
+     * @param - un id d'un statut_commande
+     * @returns - les informations d'un statut_commande demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+      static async findOneLimited(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            "SELECT * FROM mada.statut_commande WHERE statut_commande.id = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
+            [id]
+        );
+
+        if (!rows[0]) {
+            return null;
         }
 
         consol.model(
@@ -85,7 +134,7 @@ class StatutCommande {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun statut_commande avec ce statut");
+            return null;
         }
 
         consol.model(

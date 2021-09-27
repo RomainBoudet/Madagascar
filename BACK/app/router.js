@@ -414,7 +414,8 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
 //! UPDATE COMMANDE --------------------------------------------------------------------------------------------------------------------------
 
 /**
- * Mise a jour du statut du statut d'une commande 
+ * Mise a jour du statut du statut d'une commande. prend en entrée req.body.comfirnStatut // req.body.statut // req.body.commande
+ * Droits différents entre Admin et Developpeur
  * @route POST /admin/updateCommande
  * @group Administrateur
  * @summary  Mise a jour du statut du statut d'une commande 
@@ -874,7 +875,7 @@ router.post('/dev/psd2Check', clean, dev, adminController.smsVerifypsd2);
  * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
  */
-router.patch('/dev/updateprivilege/:id(\\d+)', clean, dev, clean, adminController.updatePrivilege);
+router.patch('/dev/updateprivilege/:id(\\d+)', clean, dev, adminController.updatePrivilege);
 
 //! GESTION DES EMAILS VERIFIE !
 

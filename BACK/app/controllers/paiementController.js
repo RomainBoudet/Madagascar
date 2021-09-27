@@ -472,7 +472,7 @@ const paiementController = {
                 if (paymentData.type === "sepa_debit") {
 
                     session = await redis.get(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`).then(JSON.parse);
-                   
+
                 };
 
                 //Si le paiement à bien été effectué et reçu (SEPA ou CB) :
@@ -519,8 +519,9 @@ const paiementController = {
                                 const referenceCommande = `${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
 
                                 dataCommande.reference = referenceCommande;
-                                //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
-                                dataCommande.idCommandeStatut = 3;
+                                //RAPPEL des statuts de commande : 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 =Annulée;
+
+                                dataCommande.idCommandeStatut = 2;
                                 dataCommande.idClient = session.user.idClient;
                                 dataCommande.idTransporteur = session.idTransporteur;
 
@@ -574,7 +575,7 @@ const paiementController = {
                             articlesBought = session.articlesBought; //''
 
                             const updateStatus = new Commande({
-                                idCommandeStatut: 3,
+                                idCommandeStatut: 2,
                                 id: resultCommande.id
                             })
 
@@ -911,7 +912,7 @@ const paiementController = {
 
                     if (paymentData.type !== "sepa_debit") {
                         sessionStore.get(paymentIntent.metadata.session, function (err, session) {
-                            
+
 
                             //# ignition_en_PLS
                             // V8 ignition déteste les delete objet pour des raisons de cache inline.. ça reste a optimiser...
@@ -983,13 +984,14 @@ const paiementController = {
                             res.status(500).end();
                         }
 
-                        //! Une mise a jour de la commande en "2" "Anullé" et non une supression de la commande pour garder une trace !
+                        //! Une mise a jour de la commande en "2" "Annulée" et non une supression de la commande pour garder une trace !
+                        //RAPPEL des statuts de commande : 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée;
 
                         let resultCommande;
                         try {
 
                             const updateStatus = new Commande({
-                                idCommandeStatut: 2,
+                                idCommandeStatut: 7,
                                 id: session.resultCommande.id
                             })
 
@@ -1224,7 +1226,7 @@ const paiementController = {
                         const referenceCommande = `${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
 
                         dataCommande.reference = referenceCommande;
-                        //RAPPEL des statuts de commande : 1= en attente, 2 = annulée, 3 = Paiement validé, 4 = En cour de préparation, 5 = Prêt pour expedition, 6 = Expédiée
+                        //RAPPEL des statuts de commande : 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée;
                         dataCommande.idCommandeStatut = 1; // payment non validé... "En attente"
                         dataCommande.idClient = session.user.idClient;
                         dataCommande.idTransporteur = session.idTransporteur;
@@ -1425,7 +1427,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JdzbBLNa9FFzz1X1o5OYpvx_secret_fn21V7qMpPslZz6C2uLeSCQzS",
+                client_secret: "pi_3JeEIOLNa9FFzz1X0GN4qWrN_secret_JFvwCi6D0KVAQsCoefy8AbYo6",
             });
 
 
@@ -1502,7 +1504,7 @@ const paiementController = {
 
             stripe.balance.retrieve(function (err, balance) {
                 console.log(balance.available[0].amount);
-               return res.status(200).json(balance);
+                return res.status(200).json(balance);
 
             });
 
@@ -1865,10 +1867,10 @@ const paiementController = {
 
 
             // j'update le statut de la commande a "rembourséé" !
-
+            //RAPPEL des statuts de commande : 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée;
             try {
                 const updateStatus = new Commande({
-                    idCommandeStatut: 7, // id = 7 => statut "Remboursée"
+                    idCommandeStatut: 6, // id = 6 => statut "Remboursée"
                     id: refCommandeOk[0].commandeid,
                 })
                 console.log("updateStatus ==>> ", updateStatus);
@@ -2192,10 +2194,10 @@ const paiementController = {
 
             //console.log("refCommandeOk dans le refund Client ==>> ", refCommandeOk);
 
-
+            //RAPPEL des statuts de commande : 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée;
             //FLAG
             //! envoie SMS et mail a l'admin dans le webhook ! La commande est déja remboursée, LE PREPARATEUR NE DOIT PAS ENVOYER LA COMMANDE !
-            if (Number(refCommandeOk[0].idCommandeStatut) === 3 || Number(refCommandeOk[0].idCommandeStatut) === 4) {
+            if (Number(refCommandeOk[0].idCommandeStatut) === 2 || Number(refCommandeOk[0].idCommandeStatut) === 3) {
 
                 // Une annulation automatique n'est possible que si la commande a la statut "Paiement validé" ou "En cour de préparation"
                 // j'envoie un mail / SMS au admin pour demander une anulation d'envoie de la commande !! 
@@ -2227,7 +2229,7 @@ const paiementController = {
 
                 //FLAG
                 //sinon si la commande a le statut "Pret pour expedition" : ici pas de remboursement automatique, demande d'annulation d'envoie simplement
-            } else if (Number(refCommandeOk[0].idCommandeStatut) === 5) {
+            } else if (Number(refCommandeOk[0].idCommandeStatut) === 4) {
 
                 transporter.use('compile', hbs(options));
 
@@ -2555,9 +2557,11 @@ const paiementController = {
 
             console.log("allCoupons = ", allCoupons);
 
-            if(allCoupons.length === 0){
+            if (allCoupons.length === 0) {
                 console.log("Il n'existe aucun coupon !");
-               return res.status(200).json({message:"Il n'existe aucun coupon !"});
+                return res.status(200).json({
+                    message: "Il n'existe aucun coupon !"
+                });
 
             }
 

@@ -123,7 +123,7 @@ class Commande {
         const {
             rows,
         } = await db.query(
-            'SELECT * FROM mada.commande WHERE commande.id = $1;',
+            'SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.id = $1;',
             [id]
         );
 
@@ -138,7 +138,89 @@ class Commande {
         return new Commande(rows[0]);
     }
 
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à une commande via son id passée en paramétre
+     * @param - un id d'une commande
+     * @returns - les informations d'une commande demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findOneLimited(id) {
 
+
+        const {
+            rows,
+        } = await db.query(
+            "SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.id = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
+            [id]
+        );
+
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
+        }
+
+        consol.model(
+            `la commande id : ${id} a été demandé en BDD !`
+        );
+
+        return new Commande(rows[0]);
+    }
+
+     /**
+     * Méthode chargé d'aller chercher les informations relatives à une commande via sa référence passée en paramétre
+     * @param - une référence d'une commande
+     * @returns - les informations d'une commande demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+      static async findOneCommande(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            'SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1;',
+            [id]
+        );
+
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
+        }
+
+        consol.model(
+            `la commande id : ${id} a été demandé en BDD !`
+        );
+
+        return new Commande(rows[0]);
+    }
+
+ /**
+     * Méthode chargé d'aller chercher les informations relatives à une commande via sa référence passée en paramétre
+     * @param - une référence d'une commande
+     * @returns - les informations d'une commande demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+  static async findOneCommandeLimited(id) {
+
+
+    const {
+        rows,
+    } = await db.query(
+        "SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
+        [id]
+    );
+
+    if (!rows[0] || rows[0] === undefined) {
+        return null;
+    }
+
+    consol.model(
+        `la commande id : ${id} a été demandé en BDD !`
+    );
+
+    return new Commande(rows[0]);
+}
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à un idCommande passé en paramétre
@@ -182,7 +264,7 @@ class Commande {
         const {
             rows,
         } = await db.query(
-            "SELECT commande.*, client.*, paiement.reference as Ref_paiement, paiement.montant, paiement.methode, paiement.payment_intent, paiement.moyen_paiement, paiement.moyen_paiement_detail, paiement.origine, paiement.derniers_chiffres, paiement.date_paiement, statut_commande.statut, statut_commande.id as status_id FROM mada.commande JOIN mada.client ON client.id = commande.id_client JOIN mada.paiement ON paiement.id_commande = commande.id JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Expédiée');",
+            "SELECT commande.*, client.*, paiement.reference as Ref_paiement, paiement.montant, paiement.methode, paiement.payment_intent, paiement.moyen_paiement, paiement.moyen_paiement_detail, paiement.origine, paiement.derniers_chiffres, paiement.date_paiement, statut_commande.statut, statut_commande.id as status_id FROM mada.commande JOIN mada.client ON client.id = commande.id_client JOIN mada.paiement ON paiement.id_commande = commande.id JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
             [commande]
         );
 

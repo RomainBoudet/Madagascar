@@ -42,6 +42,7 @@
     "express-session": "^1.17.2",
     "express-swagger-generator": "^1.1.17",
     "faker": "^5.5.3",
+    "fastest-levenshtein": "^1.0.12",
     "fuse.js": "^6.4.6",
     "geoip-lite": "^1.4.2",
     "handlebars-helpers": "^0.10.0",

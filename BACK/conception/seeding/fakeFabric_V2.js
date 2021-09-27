@@ -429,10 +429,6 @@ const fakeData = async () => {
             description: 'Vous avez choisi le paiement par virement ? Ce statut est normal et n’évoluera qu’à partir du moment où le virement sera réalisé et les fonds reçus sur notre compte.'
 
         }, {
-            nom: 'Annulée',
-            description: "Vous avez choisi d'annuler votre commande ou avez demandé à notre service client de l'annuler ? Vous serez remboursé du montant que vous avez réglé sur le moyen de paiement utilisé.Vous n'avez pas choisi d'annuler votre commande ? Ce statut indique que le paiement en ligne n’a pas abouti (paiement rejeté, coordonnées bancaires non renseignées dans le délai imparti …) Cette commande ne sera pas préparée, vous pouvez faire une nouvelle tentative."
-
-        }, {
             nom: 'Paiement validé',
             description: 'La commande est validée et va être prise en charge par notre équipe de préparation.'
 
@@ -450,6 +446,10 @@ const fakeData = async () => {
         },{
             nom: 'Remboursée',
             description: "La commande a été remboursé. Vous avez dû recevoir un email confirmant ce remboursement"
+        },{
+            nom: 'Annulée',
+            description: "Vous avez choisi d'annuler votre commande ou avez demandé à notre service client de l'annuler ? Vous serez remboursé du montant que vous avez réglé sur le moyen de paiement utilisé.Vous n'avez pas choisi d'annuler votre commande ? Ce statut indique que le paiement en ligne n’a pas abouti (paiement rejeté, coordonnées bancaires non renseignées dans le délai imparti …) Cette commande ne sera pas préparée, vous pouvez faire une nouvelle tentative."
+
         }]
 
         for (let index = 1; index <= volume * 5; index++) {

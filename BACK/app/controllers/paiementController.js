@@ -64,10 +64,7 @@ const hbs = require('nodemailer-express-handlebars');
 const countrynames = require('countrynames');
 var helpers = require('handlebars-helpers')();
 const voucher = require('voucher-code-generator');
-const {
-    Console
-} = require('console');
-const client = require('../middlewares/client');
+
 
 
 //Config MAIL a sortir du controller ...

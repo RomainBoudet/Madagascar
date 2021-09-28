@@ -1662,6 +1662,8 @@ const fakeData = async () => {
         await db.query(`INSERT INTO mada.admin_phone (admin_telephone, id_client) VALUES ('${process.env.MYPHONE}', ${process.env.ID});`);
         
         await db.query(`UPDATE mada.admin_phone SET sms_new_commande = true WHERE admin_telephone = '${process.env.MYPHONE}';`);
+        await db.query(`UPDATE mada.admin_verif_email SET email_new_commande_choice = true WHERE id = '${process.env.ID}';`);
+
 
         await db.query(`UPDATE mada.adresse SET prenom='${process.env.MYFIRST}', nom_famille='${process.env.MYLAST}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID}';`);
         //await db.query(`UPDATE mada.adresse SET prenom='${process.env.MYFIRST2}', nom_famille='${process.env.MYLAST2}', telephone='${process.env.MYPHONE}' WHERE id_client='${process.env.ID2}';`);

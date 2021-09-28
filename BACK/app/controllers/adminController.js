@@ -520,7 +520,6 @@ const adminController = {
 
                 //format requis du corp du sms =  "update : 234344 : jfdjjjvf"
 
-                console.log("Coucou !!");
 
                 const commande1 = body.split(' : ');
                 const commande = commande1[1];

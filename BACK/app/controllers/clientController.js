@@ -490,7 +490,7 @@ const clientController = {
     },
 
 
-    resendEmailLink: async (req, res) => {
+    sendEmailLink: async (req, res) => {
 
         try {
 

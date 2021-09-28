@@ -423,6 +423,40 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
  */
  router.post('/admin/updateCommande', admin, commandeController.updateStatut);
 
+
+ /**
+ * Permet de lire les emails
+ * Route sécurisée avec Joi et MW Administrateur
+ * @route GET /admin/email
+ * @group Administrateur 
+ * @summary - Permet de lire les emails
+ * @returns {JSON} 200 - Permet de lire les emails
+ */
+router.get('/admin/email', clean, admin, commandeController.getEmail);
+
+/**
+ * Permet de démarrer le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
+ * Route sécurisée avec Joi et MW Administrateur // le mail doit avoir le subject : "update statut"
+ * @route GET /admin/StartUpdateCommandeFromEmail
+ * @group Administrateur 
+ * @summary Permet de démarrer le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
+ * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
+ * @returns {JSON} 200 - le statut d'une commande mise a jour selon le contenu d'un mail
+ */
+ router.get('/admin/startUpdateCommandeFromEmail', clean, admin, commandeController.startUpdateCommandeFromEmail);
+
+
+ /**
+ * Permet d'arréter le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
+ * Route sécurisée avec Joi et MW Administrateur
+ * @route GET /admin/stopUpdateCommandeFromEmail
+ * @group Administrateur 
+ * @summary Permet de démarrer le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
+ * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
+ * @returns {JSON} 200 - le statut d'une commande mise a jour selon le contenu d'un mail
+ */
+  router.get('/admin/stopUpdateCommandeFromEmail', clean, admin, commandeController.stopUpdateCommandeFromEmail);
+
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -439,12 +473,12 @@ router.post('/user/searchProduit', clean, validateBody(searchSchema), searchCont
 
 /**
  * Envoie un email pour que l'admin qui le souhaite puisse vérifier son email.
- * @route POST /resendEmailLink
+ * @route POST /sendEmailLink
  * @group Administrateur
  * @summary Prend un mail en entrée et renvoie un email si celui çi est présent en BDD.  Cliquer sur le lien dans l'email envoyé enmenera sur la route /verifyemail  
  * @returns {JSON} 200 - Un email a été délivré
  */
-router.post('/resendEmailLink', clean, admin, validateBody(resendEmailSchema), clientController.resendEmailLink);
+router.post('/sendEmailLink', clean, admin, validateBody(resendEmailSchema), clientController.sendEmailLink);
 
 //ETAPE 2 => Reçois userId et Token en query, vérifis ce qu'il faut et change le statut en BDD
 /**

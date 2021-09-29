@@ -29,18 +29,18 @@ transporter.use('compile', hbs(options));
 
 //! A finir pour un envoie de Mail a chaque possibilité de l'API pour la méthode startUpdateCommandeFromEmail !
 
-const sendEmail = async (argument) => {
+const sendEmail = async (email, subject, context, text) => {
 
     try {
         // l'envoie d'email définit par l'object "transporter"
         const info = await transporter.sendMail({
             from: process.env.EMAIL, //l'envoyeur
-            to: session.user.email,
-            subject: "a faire !", // le sujet du mail
-            text: argument,
+            to: email,
+            subject, // le sujet du mail
+            text,
            
-            template: 'matemplateReponse',
-            context: "a faire !",
+            template: 'reponseAPInewSatut',
+            context,
 
         });
         console.log(`Un email de réponse suite a tentative de mise a jour du statut d'une commande à bien été envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);

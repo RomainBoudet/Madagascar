@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+
+<style>
+    p{
+    border-top:1px solid #000;
+    padding: 2rem;
+    }
+    h3 {
+        border-top: 1px solid rgb(138, 128, 128);
+        padding: 0.5rem;
+        color: blueviolet;
+    }
+</style>
+
+
+<body>
+
+    <h3>Bonjour <span> {{prenom}}, </span> </h3> <br>
+    <p>
+        {{#if codeBanque}}
+        Nous vous remercions pour votre commande sur le site {{shopNom}} . Nous avons le plaisir de vous informer que votre paiement par virement SEPA que vous avez éffectué le {{dateAchat}} a été validé ! Nous vous tiendrons informé par e-mail lorsque les articles de votre
+        commande auront été expédiés.<br>
+        Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier
+        celle-ci dans Vos commandes sur votre espace personnel.<br>
+        {{else}}
+        Nous vous remercions de votre commande sur le site {{shopNom}} . Nous vous tiendrons informé par e-mail lorsque les articles de votre
+        commande auront été expédiés.<br>
+        Votre date de livraison estimée est indiquée ci-dessous. Vous pouvez suivre l’état de votre commande ou modifier
+        celle-ci dans
+        Vos commandes sur votre espace personnel.<br>
+        {{/if}}
+        <br>
+        Commande N°{{refCommande}} <br>
+        Statut de votre commande : {{statutCommande}} <br>
+        Votre mode de livraison : {{nomTransporteur}}<br>
+        Date de la commande : {{dateAchat}} <br>
+        Délai de livraison estimé : {{delai}} <br>
+
+        {{#compare idTransporteur "==" 3}}
+        Vous avez choisi un retrait sur le marché, votre commande ne sera pas expédié.<br>
+        {{else}}
+        Votre commande sera expédié à : {{adresse}} <br>
+        {{/compare}}
+        {{#if commentaire }}
+        Votre commentaire : "{{commentaire}}" <br>
+        {{else}}
+        {{/if}}
+        Montant total de votre commande : {{montant}}€ <br>
+        {{#if marqueCB }}
+        Moyen de paiement selectionné : {{paiementType}} {{marqueCB}} <br>
+        {{else}}
+        {{/if}}
+        {{#if codeBanque}}
+        Moyen de paiement selectionné : {{paiementType}}, code banque : {{codeBanque}} <br>
+        {{else}}
+        {{/if}}
+        {{#compare sendSmsWhenShipping "==" 'true'}}
+        Un sms vous sera envoyé lorsque votre commande sera remis au tranporteur. <br>
+        {{else}}
+        {{/compare}}
+        Vos produit commandés :
+        {{#each dataArticles}}
+        <li>{{this.nom}}, {{divide this.prixHTAvecReduc 100}}€, quantité: {{this.quantite}}, <a href="{{this.image}}" >image du produit</a> ✅ </li>
+        {{/each}}
+        <br>
+        Nous espérons vous revoir bientôt.</p>
+
+</body>
+
+</html>
+
+{{!-- pour la syntaxe et les opérateur de conditions =>  https://www.npmjs.com/package/handlebars-helpers --}}

@@ -414,7 +414,7 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
 //! UPDATE COMMANDE --------------------------------------------------------------------------------------------------------------------------
 
 /**
- * Mise a jour du statut du statut d'une commande. prend en entrée req.body.comfirnStatut // req.body.statut // req.body.commande
+ * Mise a jour du statut du statut d'une commande. prend en entrée req.body.comfirmStatut // req.body.statut // req.body.commande
  * Droits différents entre Admin et Developpeur
  * @route POST /admin/updateCommande
  * @group Administrateur
@@ -423,7 +423,7 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
  */
  router.post('/admin/updateCommande', admin, commandeController.updateStatut);
 
-
+//! Non util, permet de récupérer des email sur serveur Imap... 
  /**
  * Permet de lire les emails
  * Route sécurisée avec Joi et MW Administrateur
@@ -432,11 +432,11 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
  * @summary - Permet de lire les emails
  * @returns {JSON} 200 - Permet de lire les emails
  */
-router.get('/admin/email', clean, admin, commandeController.getEmail);
+//router.get('/admin/email', clean, admin, commandeController.getEmail);
 
 /**
  * Permet de démarrer le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
- * Route sécurisée avec Joi et MW Administrateur // le mail doit avoir le subject : "update statut"
+ * Route sécurisée avec Joi et MW Administrateur // le mail (admin) doit avoir le subject : "update statut" et le body : "reférence : statut ""
  * @route GET /admin/StartUpdateCommandeFromEmail
  * @group Administrateur 
  * @summary Permet de démarrer le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
@@ -445,7 +445,7 @@ router.get('/admin/email', clean, admin, commandeController.getEmail);
  */
  router.get('/admin/startUpdateCommandeFromEmail', clean, admin, commandeController.startUpdateCommandeFromEmail);
 
-
+//! Non fonctionnel, si on l'arrete, plus moyen de le démarrer si ce n'est qu'en relancant le serveur !
  /**
  * Permet d'arréter le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
  * Route sécurisée avec Joi et MW Administrateur
@@ -455,7 +455,7 @@ router.get('/admin/email', clean, admin, commandeController.getEmail);
  * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - le statut d'une commande mise a jour selon le contenu d'un mail
  */
-  router.get('/admin/stopUpdateCommandeFromEmail', clean, admin, commandeController.stopUpdateCommandeFromEmail);
+  //router.get('/admin/stopUpdateCommandeFromEmail', clean, admin, commandeController.stopUpdateCommandeFromEmail);
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
 

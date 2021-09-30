@@ -17,6 +17,12 @@ const {
     distance,
     closest
 } = require('fastest-levenshtein');
+const {
+    sendEmail
+} = require('../services/sendEmail');
+const {
+    formatLongSeconde
+} = require('../services/date');
 
 
 /**
@@ -432,6 +438,8 @@ The following message flags are valid types that do not have arguments:
 
 The following are valid types that require string value(s):
 
+search(< array >criteria, < function >callback) - (void) - Searches the currently open mailbox for messages using given criteria. criteria is a list describing what you want to find. For criteria types that require arguments, use an array instead of just the string criteria type name (e.g. ['FROM', 'foo@bar.com']). Prefix criteria types with an "!" to negate.
+
 'BCC' - Messages that contain the specified string in the BCC field.
 'CC' - Messages that contain the specified string in the CC field.
 'FROM' - Messages that contain the specified string in the FROM field.
@@ -539,6 +547,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         }
     },
 
+    // ATTENTION avec le flag markseen a true dans la classe MailListener, les nouveaux email d'érreur renvoyé a l'admin en cas d'érreur seront marqué comme lu et peu visible dans la messagerie d'email.
     startUpdateCommandeFromEmail: async (req, res) => {
         try {
 
@@ -557,7 +566,7 @@ The following are valid types that require a string parseable by JavaScript's Da
                 mailbox: "INBOX", // mailbox to monitor
                 searchFilter: ["UNSEEN"], // the search filter being used after an IDLE notification has been retrieved
                 markSeen: true, // all fetched email wil lbe marked as seen and not fetched next time
-                fetchUnreadOnStart: true, // use it only if you want to get all unread email on lib start. Default is `false`,
+                fetchUnreadOnStart: false, // use it only if you want to get all unread email on lib start. Default is `false`,
                 mailParserOptions: {
                     streamAttachments: false
                 }, // options to be passed to mailParser lib.
@@ -569,7 +578,7 @@ The following are valid types that require a string parseable by JavaScript's Da
 
             mailListener.on("mail", async function (mail, seqno, attributes) {
                 // do something with mail object including attachments
-                console.log("emailParsed ======", mail);
+                //console.log("emailParsed ======", mail);
                 const {
                     from,
                     subject,
@@ -577,7 +586,14 @@ The following are valid types that require a string parseable by JavaScript's Da
                     text
                 } = mail;
 
+                //! l'email doit avoir un sujet précis : "update statut"
+                if (subject !== "update statut") {
+                    console.log("Le sujet du mail ne convient pas !");
+                    return res.status(403).end();
+                }
+
                 const email = from[0].address;
+                const name = from[0].name;
                 console.log("email == ", email);
 
                 //! J'autorise un updtate du statut seulement si l'envoie provient d'un email d'un statut Administrateur ou Develeoppeur avec un email vérifié et qui veut recevoir des new commandes via emails !
@@ -611,11 +627,6 @@ The following are valid types that require a string parseable by JavaScript's Da
                     return res.status(403).end();
                 }
 
-                //! l'email doit avoir un sujet précis : "update statut"
-                if (subject !== "update statut") {
-                    console.log("Le sujet du mail ne convient pas !");
-                    return res.status(403).end();
-                }
 
 
                 //! Je vérifit qu'il contient bien la syntaxe choisit via une regex !
@@ -631,7 +642,14 @@ The following are valid types that require a string parseable by JavaScript's Da
                 console.log("commande == ", commande);
                 console.log("statut == ", statut);
 
-
+                // variable pour les envoie d'email !
+                const contextMail = {};
+                let textMail = '';
+                const template = 'reponseAPInewSatut';
+                contextMail.message2 = `Aucun statut de commande n'a été mis a jour suite a cette érreur ! Pour rappel, la commande peut être indiqué par son identifiant ou sa référence de commande, sans espace avant. Séparé d'un espace et du signe ":", puis du nouveau statut souhaité en renseigant soit son identifiant soit son nom.`;
+                contextMail.name = name;
+                contextMail.commande = commande;
+                let subjectMail = `❌ uptate statut : Une érreur est apparu ! ❌ `;
 
                 const regRefCommande = /^([0-9]*[.]{1}[0-9]*)*$/; // pour une référence de commande
                 const number = /^[0-9]*$/; // pour un id de commande
@@ -645,6 +663,11 @@ The following are valid types that require a string parseable by JavaScript's Da
 
                     if (commandeInDb === null || commandeInDb === undefined) {
                         console.log("Cette référence de commande n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !");
+
+                        // on prépare l'envoi d'un mail, avec 5 arguments : un email, un subject, un objet context, une string text et une template.
+                        contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant sa référence de commande via la méthode par email. La référence de commande renseigné (${commande}) n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !`;
+                        textMail = contextMail.message;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
                         return
                     }
 
@@ -653,12 +676,21 @@ The following are valid types that require a string parseable by JavaScript's Da
                     commandeInDb = await Commande.findOneLimited(commande);
 
                     if (commandeInDb === null || commandeInDb === undefined) {
-                        console.log("Cette référence de commande n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !");
+                        console.log("Cet identifiant de commande n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !");
+
+                        // on prépare l'envoi d'un mail, avec 5 arguments : un email, un subject, un objet context, une string text et une template.
+                        contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant son identifiant de commande via la méthode par email. Son identifiant de commande renseigné (${commande}) n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !`;
+                        textMail = contextMail.message;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
                         return
                     }
 
                 } else {
                     console.log("votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant.");
+                    // on prépare l'envoi d'un mail, avec 5 arguments : un email, un subject, un objet context, une string text et une template.
+                    contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant son identifiant ou sa référence de commande (${commande}) via la méthode par email. La commande renseigné n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !`;
+                    textMail = contextMail.message;
+                    sendEmail(email, subjectMail, contextMail, textMail, template);
                     return
                 }
 
@@ -671,17 +703,27 @@ The following are valid types that require a string parseable by JavaScript's Da
                     // Je vérifis que le statut proposé pour update existe !
                     if (statutInDb === null || statutInDb === undefined) {
                         console.log("votre commande n'a pas le statut souhaité !")
+                        // on prépare l'envoi d'un mail, avec 5 arguments : un email, un subject, un objet context, une string text et une template.
+                        contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant un identifiant de statut de commande via la méthode par email. L'identifiant du statut de commande renseigné (${commande}) n'éxiste pas ou son statut n'est pas compatible avec une mise a jour manuel !`;
+                        textMail = contextMail.message;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
                         return
                     }
                     // J'avertit l'admin si le statut qu'il souhaiterais mettre a jour est déja le statut existant !
                     if (Number(statut) === commandeInDb.idCommandeStatut) {
-                        console.log("Le statut proposé pour cette commande est déja celui existant !")
+                        console.log("Le statut proposé pour cette commande est déja celui existant !");
+                        // on prépare l'envoi d'un mail, avec 5 arguments : un email, un subject, un objet context, une string text et une template.
+                        contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant un identifiant de statut de commande via la méthode par email. L'identifiant du statut de commande renseigné (${statut}) pour cette commande (${commande}) est déja identique a celui existant !`;
+                        textMail = contextMail.message;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
                         return
                     }
                     // j'avertit l'admin si sa mise a jour ne suit pas un ordre logique... si il a sauté des étapes..
                     // simple avertissement, on ne "return" pas !
                     if (Number(statut) !== (commandeInDb.idCommandeStatut + 1)) {
-                        console.log(`Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de ${commandeInDb.idCommandeStatut} à ${statut}  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`)
+                        console.log(`Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de ${commandeInDb.idCommandeStatut} à ${statut}  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`);
+
+                        contextMail.message3 = `Néanmoins, vous avez tenté de mettre a jour le statut d'une commande en renseignant un identifiant de statut de commande via la méthode par email. L'identifiant du statut de commande renseigné (${statut}) pour cette commande (${commande}) ne suit pas l'ordre logique... vous êtes passé de "${commandeInDb.idCommandeStatut}" à "${statut}"  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée) !`;
                     }
 
 
@@ -698,6 +740,9 @@ The following are valid types that require a string parseable by JavaScript's Da
 
                     } catch (error) {
                         console.log(`erreur dans la méthode upDateSatut du CommandeController ! lors de la recherche de tous les statuts ! ${error}`);
+                        contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant un nom de statut de commande via la méthode par email. Une érreur est apparu lors de la recherche de tous les statuts de commande existant en base de donnée.`;
+                        textMail = contextMail.message;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
                         return res.statut(500).end();
                     }
 
@@ -717,16 +762,23 @@ The following are valid types that require a string parseable by JavaScript's Da
                     // si indexSmallDistance vaut -1 alors aucun match !!
                     if (indexSmallDistance === -1 || indexSmallDistance === undefined) {
 
-                        // Je prospose néanmoins a l'admin le mot le plus proche possible de sa demande !
+                        // Je prospose néanmoins a l'admin le mot le plus proche possible de sa demande (dans une certaine mesure de 8) !
 
                         if (indexSmallDistance < 8) {
 
                             const closeWord = closest(statut, arrayStatut);
                             console.log(`Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiqué le statut : '${closeWord}' ?`);
-                            return
+                            contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant un nom de statut de commande via la méthode par email. Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiqué le statut : '${closeWord}' ?`;
+                            textMail = contextMail.message;
+                            sendEmail(email, subjectMail, contextMail, textMail, template);
+                            return;
                         } else {
 
                             console.log(`Aucun statut existant ne correspond a votre demande de statut...`);
+                            contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant un nom de statut de commande via la méthode par email. Aucun statut existant ne correspond a votre demande de statut...`;
+                            textMail = contextMail.message;
+                            sendEmail(email, subjectMail, contextMail, textMail, template);
+                            return;
                         }
 
                     }
@@ -736,8 +788,11 @@ The following are valid types that require a string parseable by JavaScript's Da
 
                     // J'avertit l'admin si le statut qu'il souhaiterais mettre a jour est déja le statut existant !
                     if (statut === commandeInDb.statut) {
-                        console.log("Le statut proposé pour cette commande est déja celui existant !")
-                        return
+                        console.log("Le statut proposé pour cette commande est déja celui existant !");
+                        contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant un nomde statut de commande via la méthode par email. Le nom de commande renseigné (${statut}) pour cette commande (${commande}) est déja identique a celui existant !`;
+                        textMail = contextMail.message;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
+                        return;
                     }
 
                     // j'avertit l'admin si ca mise a jour ne suit pas un ordre logique... si il a sauté des étapes..
@@ -749,23 +804,19 @@ The following are valid types that require a string parseable by JavaScript's Da
                     const indexStatutCommande = arrayStatut.findIndex(isStatut2);
 
                     if (indexStatut !== (indexStatutCommande + 1)) {
-                        console.log("commandeInDb.statut == ", commandeInDb.statut);
-                        console.log(`Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de '${commandeInDb.statut}' à '${statut}'  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`)
+                        //console.log("commandeInDb.statut == ", commandeInDb.statut);
+                        console.log(`Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de '${commandeInDb.statut}' à '${statut}'  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`);
+
+                        contextMail.message3 = `Néanmoins, vous avez tenté de mettre a jour le statut d'une commande en renseignant un nom de statut de commande via la méthode par email. Le nom du statut de commande renseigné (${statut}) pour cette commande (${commande}) ne suit pas l'ordre logique... vous êtes passé de "${commandeInDb.statut}" à "${statut}"  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée) !`;
 
                     }
 
-
                     // je dois ici retrouver l'objet du tableau allStatuts contentant la valeur de req.body.statut dans un de ces objets
                     statutInDb = allStatuts.find(element => element.statut === statut);
-
-
-
-
                 }
 
                 //console.log("statutInDb  == ", statutInDb);
                 //console.log("commandeInDb  == ", commandeInDb);
-
                 // j'insére cet update en BDD !
                 const data = {
                     idCommandeStatut: statutInDb.id,
@@ -775,15 +826,17 @@ The following are valid types that require a string parseable by JavaScript's Da
                 const newUpdate = new Commande(data);
                 const updateDone = await newUpdate.updateStatutCommande();
 
+                contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez mis a jour le statut d'une commande en renseignant un nom de statut de commande via la méthode par email. Ce changement de statut a été validé avec succées ! La commande "${commande}" a bien été mis a jour en passant au statut "${statut}".`;
+                textMail = contextMail.message;
+                contextMail.message2 = "";
+                subjectMail = ` 🎉 uptate statut : Changement de statut effectué avec succées pour la commande (${commande}) !`;
+
+                sendEmail(email, subjectMail, contextMail, textMail, template);
+
                 console.log("updateDone == ", updateDone);
 
 
                 res.status(200).end();
-
-
-
-
-
 
 
             });

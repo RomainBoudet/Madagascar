@@ -1,4 +1,9 @@
 const nodemailer = require('nodemailer');
+const path = require('path');
+const hbs = require('nodemailer-express-handlebars');
+var helpers = require('handlebars-helpers')();
+
+
 
 //Config MAIL a sortir du controller ...
 //Sendgrid ou MailGun serait préférable en prod...
@@ -29,21 +34,20 @@ transporter.use('compile', hbs(options));
 
 //! A finir pour un envoie de Mail a chaque possibilité de l'API pour la méthode startUpdateCommandeFromEmail !
 
-const sendEmail = async (email, subject, context, text) => {
+const sendEmail = async (email, subject, context, text, template) => {
 
     try {
         // l'envoie d'email définit par l'object "transporter"
         const info = await transporter.sendMail({
             from: process.env.EMAIL, //l'envoyeur
-            to: email,
+            to: email, // le receveur du mail.
             subject, // le sujet du mail
-            text,
-           
-            template: 'reponseAPInewSatut',
-            context,
+            text, // une variante en texte si pas de html
+            template, // une vue hbs
+            context, // l'objet que je passe a ma vue, contenant les variables pour mon email !
 
         });
-        console.log(`Un email de réponse suite a tentative de mise a jour du statut d'une commande à bien été envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);
+        console.log(`Un email de réponse suite a tentative de mise a jour du statut d'une commande à bien été envoyé a ${email} : ${info.response}`);
     } catch (error) {
         console.trace("erreur dans le service sendEmail", error);
         res.statut(500).end();

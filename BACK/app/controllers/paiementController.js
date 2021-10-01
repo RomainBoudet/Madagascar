@@ -47,6 +47,10 @@ const {
     adresseEnvoieFormat
 } = require('../services/adresse');
 
+const {
+    sendEmail
+} = require('../services/sendEmail');
+
 const validator = require('validator');
 
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
@@ -58,38 +62,9 @@ const endpointSecretrefundUpdate = process.env.SECRETENDPOINTREFUNDUPDATE;
 
 const redis = require('../services/redis');
 
-const path = require('path');
-const nodemailer = require('nodemailer');
-const hbs = require('nodemailer-express-handlebars');
 const countrynames = require('countrynames');
-var helpers = require('handlebars-helpers')();
 const voucher = require('voucher-code-generator');
 
-
-
-//Config MAIL a sortir du controller ...
-//Sendgrid ou MailGun serait préférable en prod...
-//https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
-const transporter = nodemailer.createTransport({
-    host: process.env.HOST,
-    port: 465,
-    secure: true, // true for 465, false for other ports
-    auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASSWORD_EMAIL,
-    },
-});
-
-// Config pour les templates et le moteur handlebars lié a Nodemailer
-const options = {
-    viewEngine: {
-        extName: ".hbs",
-        partialsDir: path.resolve(__dirname, "./views"),
-        defaultLayout: false
-    },
-    extName: ".hbs",
-    viewPath: path.resolve(__dirname, "../views"),
-};
 
 // création d'un index pour retrouver des coupons dans REDIS (methode coupon ligne 2200)
 const couponIndex = new Set();
@@ -646,14 +621,13 @@ const paiementController = {
                         //! Envoyer un mail au client lui résumant le paiment bien validé, statut de sa commande et lui rappelant ses produits récemment achetés.
                         let transporteurData;
                         let statutCommande;
-                        let contexte;
+                        let contexte = {};
                         let shop;
 
+                        // on prépare l'envoi d'un mail, avec 5 arguments : un email, un subject, un objet context, une string text et une template.
 
                         try {
 
-
-                            transporter.use('compile', hbs(options));
 
                             // je récupére les infos du transporteur choisi pour insérer les infos dans le mail.
                             transporteurData = await Transporteur.findOne(session.idTransporteur);
@@ -710,21 +684,11 @@ const paiementController = {
 
                             }
 
-
-                            // l'envoie d'email définit par l'object "transporter"
-                            const info = await transporter.sendMail({
-                                from: process.env.EMAIL, //l'envoyeur
-                                to: session.user.email,
-                                subject, // le sujet du mail
-                                text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande sur le site d'artisanat Malgache ${shop.nom} .`,
-                                /* attachement:[
-                                    {filename: 'picture.JPG', path: './picture.JPG'}
-                                ] */
-                                template: 'apresAchat',
-                                context: contexte,
-
-                            });
-                            console.log(`Un email de confirmation d'achat à bien envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);
+                            // on prépare l'envoi d'un mail, avec 5 arguments : un email, un subject, un objet context, une string text et une template.
+                            const emailSend = session.user.email;
+                            const text = `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande sur le site d'artisanat Malgache ${shop.nom} .`;
+                            const template = 'apresAchat';
+                            sendEmail(emailSend, subject, contexte, text, template);
 
 
                         } catch (error) {
@@ -742,6 +706,9 @@ const paiementController = {
                             // Je rajoute une clé pour des mails avec le nom de la boutique présent dans la table shop.
 
                             // si j'ai des admin qui on vérifié leur email et qui souhaite recevoir les nouvelles commande sur leur mail !
+                            const subject = `Une nouvelle commande sur le site internet !! 🎉 `; // le sujet du mail
+                            const text = `Bonjour cher Administrateur, tu as reçu une nouvelle commande !`;
+                            const template = 'nouvelleCommande';
                             if (adminsMail !== null) {
 
                                 for (const admin of adminsMail) {
@@ -749,38 +716,16 @@ const paiementController = {
                                     //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
                                     contexte.adminPrenom = admin.prenom;
 
-                                    const info2 = await transporter.sendMail({
-                                        from: process.env.EMAIL, //l'envoyeur
-                                        to: admin.email,
-                                        subject: `Une nouvelle commande sur le site internet !! 🎉 `, // le sujet du mail
-                                        text: `Bonjour cher Administrateur, tu as reçu une nouvelle commande !`,
-                                        /* attachement:[
-                                            {filename: 'picture.JPG', path: './picture.JPG'}
-                                        ] */
-                                        template: 'nouvelleCommande',
-                                        context: contexte,
+                                    const emailSend = admin.email;
+                                    sendEmail(emailSend, subject, contexte, text, template);
 
-                                    });
-                                    console.log(`Un email d'information d'une nouvelle commande à bien envoyé a ${admin.email} : ${info2.response}`);
                                 }
                             }
 
                             delete contexte.adminPrenom; // plus d'admin prenom ici, dans le mail on prendra la valeur pas défault : "cher Administrateur !".
 
-                            //Envoie d'email sur le mail présent dans la table "Shop".
-                            const info2 = await transporter.sendMail({
-                                from: process.env.EMAIL, //l'envoyeur
-                                to: shop.emailContact,
-                                subject: `Une nouvelle commande sur le site internet !! 🎉 `, // le sujet du mail
-                                text: `Bonjour cher Administrateur, tu as reçu une nouvelle commande !`,
-                                /* attachement:[
-                                    {filename: 'picture.JPG', path: './picture.JPG'}
-                                ] */
-                                template: 'nouvelleCommande',
-                                context: contexte,
-
-                            });
-                            console.log(`Un email d'information d'une nouvelle commande à bien envoyé a ${shop.emailContact} : ${info2.response}`);
+                            const emailSend = shop.emailContact;
+                            sendEmail(emailSend, subject, contexte, text, template);
 
                         } catch (error) {
                             console.log(`Erreur dans la méthode d'envoie d'un mail a l'admin aprés nouvelle commande dans la methode Webhook du paiementController : ${error.message}`);
@@ -823,7 +768,7 @@ const paiementController = {
 
                                             })
                                             .then(message => console.log(message.sid));
-                                        console.log("SMS bien envoyé !")
+                                        console.log(`SMS bien envoyé a ${admin.adminTelephone} depuis ${dataTwillio.twillioNumber} !`)
                                     }
 
                                 } else {
@@ -837,8 +782,8 @@ const paiementController = {
 
                                             })
                                             .then(message => console.log(message.sid));
-                                        console.log("SMS bien envoyé !")
-                                    }
+                                            console.log(`SMS bien envoyé a ${admin.adminTelephone} depuis ${dataTwillio.twillioNumber} !`)
+                                        }
                                 }
 
                             }
@@ -1007,9 +952,6 @@ const paiementController = {
 
                         try {
 
-
-                            transporter.use('compile', hbs(options));
-
                             // je récupére les infos du transporteur choisi pour insérer les infos dans le mail.
                             transporteurData = await Transporteur.findOne(session.idTransporteur);
                             statutCommande = await StatutCommande.findOne(resultCommande.idCommandeStatut);
@@ -1037,21 +979,11 @@ const paiementController = {
 
                             }
 
-                            // l'envoie d'email définit par l'object "transporter"
-                            const info = await transporter.sendMail({
-                                from: process.env.EMAIL, //l'envoyeur
-                                to: session.user.email,
-                                subject: `Votre commande n'as pas pu être validé sur le site d'artisanat Malgache ${shop.nom} ❌`, // le sujet du mail
-                                text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, Votre paiement sur le site d'artisanat Malgache ${shop.nom} n'as pas pu être validé suite a votre paiement par virement SEPA.`,
-                                /* attachement:[
-                                    {filename: 'picture.JPG', path: './picture.JPG'}
-                                ] */
-                                template: 'echecApresAchat',
-                                context: contexte,
-
-                            });
-                            console.log(`Un email d'information d'échec de paiement SEPA à bien envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);
-
+                            const emailSend = session.user.email;
+                            const subject = `Votre commande n'as pas pu être validé sur le site d'artisanat Malgache ${shop.nom} ❌`; // le sujet du mail
+                            const text = `Bonjour ${session.user.prenom} ${session.user.nomFamille}, Votre paiement sur le site d'artisanat Malgache ${shop.nom} n'as pas pu être validé suite a votre paiement par virement SEPA.`;
+                            const template = 'echecApresAchat';
+                            sendEmail(emailSend, subject, contexte, text, template);
 
                         } catch (error) {
                             console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés achat dans la methode Webhook du paiementController : ${error.message}`);
@@ -1272,9 +1204,6 @@ const paiementController = {
 
                     try {
 
-
-                        transporter.use('compile', hbs(options));
-
                         // je récupére les infos du transporteur choisi pour insérer les infos dans le mail.
                         const transporteurData = await Transporteur.findOne(session.idTransporteur);
                         const statutCommande = await StatutCommande.findOne(resultCommande.idCommandeStatut);
@@ -1305,21 +1234,11 @@ const paiementController = {
                             codeBanque: paymentData.sepa_debit.bank_code,
                         }
 
-                        // l'envoie d'email définit par l'object "transporter"
-                        const info = await transporter.sendMail({
-                            from: process.env.EMAIL, //l'envoyeur
-                            to: session.user.email,
-                            subject: `Votre commande en attente sur le site d'artisanat Malgache ${shop.nom} ✅ `, // le sujet du mail
-                            text: `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande sur le site d'artisanat Malgache ${shop.nom} .`,
-                            /* attachement:[
-                                {filename: 'picture.JPG', path: './picture.JPG'}
-                            ] */
-                            template: 'apresIntentionPayementSEPA',
-                            context: contexte,
-
-                        });
-                        console.log(`Un email de confirmation d'achat à bien envoyé a ${session.user.prenom} ${session.user.nomFamille} via l'adresse email: ${session.user.email} : ${info.response}`);
-
+                        const emailSend = session.user.email;
+                        const subject = `Votre commande en attente sur le site d'artisanat Malgache ${shop.nom} ✅ `; // le sujet du mail
+                        const text = `Bonjour ${session.user.prenom} ${session.user.nomFamille}, nous vous remercions de votre commande sur le site d'artisanat Malgache ${shop.nom} .`;
+                        const template = 'apresIntentionPayementSEPA';
+                        sendEmail(emailSend, subject, contexte, text, template);
 
                     } catch (error) {
                         console.log(`Erreur dans la méthode d'envoie d'un mail au client aprés achat dans la methode WebhookSEPA du paiementController : ${error.message}`);
@@ -1420,11 +1339,11 @@ const paiementController = {
 
             //TODO 
             //!contenu a commenté aprés test 
-            console.log(`on a bien délivré la clé au front, a insérer en dure dans la méthode key, en mode test (car req.session n'existe pas)  : ${req.session.clientSecret}`);
+            console.log(`on a bien délivré la clé au front, a insérer en dure dans la méthode key : ${req.session.clientSecret}`);
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JeEIOLNa9FFzz1X0GN4qWrN_secret_JFvwCi6D0KVAQsCoefy8AbYo6",
+                client_secret: "pi_3JfjrULNa9FFzz1X03rMZNOD_secret_Rh9dae85ii9xefX7QnsQiCIjH",
             });
 
 
@@ -1699,8 +1618,6 @@ const paiementController = {
 
                 try {
 
-                    transporter.use('compile', hbs(options));
-
                     console.log()
 
                     const contexte = {
@@ -1718,7 +1635,11 @@ const paiementController = {
                         montantPaiement: refCommandeOk.montant,
                     }
 
-                    // l'envoie d'email définit par l'object "transporter"
+                    const subject = `Erreur de remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${refCommandeOk.prenom} ${refCommandeOk.nomFamille} (${refCommandeOk.email}) ❌ `; // le sujet du mail
+                    const text = `Bonjour cher Administrateur, Une érreur de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`;
+                    const template = 'erreurRemboursement';
+
+                    // l'envoie d'email
                     if (adminsMail !== null) {
 
                         for (const admin of adminsMail) {
@@ -1726,29 +1647,13 @@ const paiementController = {
                             //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
                             contexte.adminPrenom = admin.prenom;
 
-                            const info2 = await transporter.sendMail({
-                                from: process.env.EMAIL, //l'envoyeur
-                                to: admin.email,
-                                subject: `Erreur de remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${refCommandeOk.prenom} ${refCommandeOk.nomFamille} (${refCommandeOk.email}) ❌ `, // le sujet du mail
-                                text: `Bonjour cher Administrateur, Une érreur de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`,
-                                template: 'erreurRemboursement',
-                                context: contexte,
-
-                            });
-                            console.log(`Un email d'information d'une érreur de remboursement à bien été envoyé a ${admin.email} : ${info2.response}`);
+                            const emailSend = admin.email;
+                            sendEmail(emailSend, subject, contexte, text, template);
                         }
                     }
 
-                    //Envoie d'email sur le mail présent dans la table "Shop".
-                    const info = await transporter.sendMail({
-                        from: process.env.EMAIL, //l'envoyeur
-                        to: shop.emailContact,
-                        subject: `Erreur de remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${refCommandeOk.prenom} ${refCommandeOk.nomFamille} (${refCommandeOk.email}) ❌ `, // le sujet du mail
-                        text: `Bonjour cher Administrateur, Une érreur de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`,
-                        template: 'erreurRemboursement',
-                        context: contexte,
-
-                    });
+                    const emailSend = shop.emailContact;
+                    sendEmail(emailSend, subject, contexte, text, template);
                     console.log(`Un email d'information d'une érreur de remboursement à bien été envoyé a ${shop.emailContact} : ${info.response}`);
 
                 } catch (error) {
@@ -1764,8 +1669,6 @@ const paiementController = {
 
 
                 try {
-
-                    transporter.use('compile', hbs(options));
 
                     console.log("refCommandeOk ==>> ", refCommandeOk);
 
@@ -1784,7 +1687,11 @@ const paiementController = {
                         montantPaiement: refCommandeOk.montant,
                     }
 
-                    // l'envoie d'email définit par l'object "transporter"
+
+                    const subject = `Mise a jour des données d'un remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${refCommandeOk.prenom} ${refCommandeOk.nomFamille} (${refCommandeOk.email})  ✅ `; // le sujet du mail
+                    const text = `Bonjour cher Administrateur, une mise a jour des données de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`;
+                    const template = 'updateRemboursement';
+
                     if (adminsMail !== null) {
 
                         for (const admin of adminsMail) {
@@ -1792,30 +1699,14 @@ const paiementController = {
                             //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
                             contexte.adminPrenom = admin.prenom;
 
-                            const info2 = await transporter.sendMail({
-                                from: process.env.EMAIL, //l'envoyeur
-                                to: admin.email,
-                                subject: `Mise a jour des données d'un remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${refCommandeOk.prenom} ${refCommandeOk.nomFamille} (${refCommandeOk.email})  ✅ `, // le sujet du mail
-                                text: `Bonjour cher Administrateur, une mise a jour des données de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`,
-                                template: 'updateRemboursement',
-                                context: contexte,
+                            const emailSend = admin.email;
+                            sendEmail(emailSend, subject, contexte, text, template);
 
-                            });
-                            console.log(`Un email d'information d'une mise a jour de remboursement à bien été envoyé a ${admin.email} : ${info2.response}`);
                         }
                     }
 
-                    //Envoie d'email sur le mail présent dans la table "Shop".
-                    const info = await transporter.sendMail({
-                        from: process.env.EMAIL, //l'envoyeur
-                        to: shop.emailContact,
-                        subject: `Mise a jour des données d'un remboursement STRIPE pour la commande n° ${refCommandeOk.reference} concernant le client ${refCommandeOk.prenom} ${refCommandeOk.nomFamille} (${refCommandeOk.email})  ✅ `, // le sujet du mail
-                        text: `Bonjour cher Administrateur, une mise a jour des données de remboursement est apparu pour la commande client n° ${refCommandeOk.reference} !`,
-                        template: 'updateRemboursement',
-                        context: contexte,
-
-                    });
-                    console.log(`Un email d'information d'une mise a jour de remboursement à bien été envoyé a ${shop.emailContact} : ${info.response}`);
+                    const emailSend = shop.emailContact;
+                    sendEmail(emailSend, subject, contexte, text, template);
 
                 } catch (error) {
                     console.log(`Erreur dans la méthode d'envoie d'un mail aux admins aprés und  mise a jour des données de remboursement dans la methode webhookRefundUPDATE du paiementController : ${error.message}`);
@@ -1900,8 +1791,6 @@ const paiementController = {
                 res.status(500).end();
             }
 
-
-
             let shop;
             try {
 
@@ -1913,8 +1802,6 @@ const paiementController = {
                 res.status(500).end();
             }
 
-            //Je mutualise la config pour les mails
-            transporter.use('compile', hbs(options));
             //Les articles en type string pour la version "text" des emails (et non dans la template.)
             const articles = [];
             refCommandeOk.map(article => (`${articles.push(article.nom +' (x' + article.quantite_commande +')')}`));
@@ -1967,7 +1854,13 @@ const paiementController = {
                         article: refCommandeOk,
                     }
 
-                    // l'envoie d'email définit par l'object "transporter"
+
+
+                    const subject = ` ⚠️ ATTENTION ! ANNULATION COMMANDE pour la reference n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé !) ❌ `; // le sujet du mail
+                    const text = `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé !), produits concernés : ${articlesCommande}.`;
+                    const template = 'annulationCommande';
+
+                    // l'envoie d'email 
                     if (adminsMail !== null) {
 
 
@@ -1975,31 +1868,14 @@ const paiementController = {
 
                             //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
                             contexte.adminPrenom = admin.prenom;
+                            const emailSend = admin.email;
+                            sendEmail(emailSend, subject, contexte, text, template);
 
-                            const info2 = await transporter.sendMail({
-                                from: process.env.EMAIL, //l'envoyeur
-                                to: admin.email,
-                                subject: ` ⚠️ ATTENTION ! ANNULATION COMMANDE pour la reference n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé !) ❌ `, // le sujet du mail
-                                text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé !), produits concernés : ${articlesCommande}.`,
-                                template: 'annulationCommande',
-                                context: contexte,
-
-                            });
-                            console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${admin.email} : ${info2.response}`);
                         }
                     }
 
-                    //Envoie d'email sur le mail présent dans la table "Shop".
-                    const info = await transporter.sendMail({
-                        from: process.env.EMAIL, //l'envoyeur
-                        to: shop.emailContact,
-                        subject: ` ⚠️ ATTENTION ! ANNULATION COMMANDE pour la reference n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé !) ❌ `, // le sujet du mail
-                        text: `URGENT ! Demande ANNULATION ENVOIE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client déja remboursé ), produits concernés : ${articlesCommande}.`,
-                        template: 'annulationCommande',
-                        context: contexte,
-
-                    });
-                    console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${shop.emailContact} : ${info.response}`);
+                    const emailSend = shop.emailContact;
+                    sendEmail(emailSend, subject, contexte, text, template);
 
                 } catch (error) {
                     console.log(`Erreur dans la méthode d'envoie d'un mail au admins dans la methode webhookRefund du paiementController : ${error.message}`);
@@ -2075,16 +1951,11 @@ const paiementController = {
                         moyenPaiementDetail: refCommandeOk[0].moyenPaiementDetail,
                     }
 
-                    // l'envoie d'email définit par l'object "transporter"
-                    const info = await transporter.sendMail({
-                        from: process.env.EMAIL, //l'envoyeur
-                        to: refCommandeOk[0].email,
-                        subject: `Votre remboursement sur le site d'artisanat Malgache ${shop.nom} a bien été éffectué ✅ `, // le sujet du mail
-                        text: `Bonjour ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille}, nous vous confirmons le remboursement de votre commande n°${refCommandeOk[0].reference} effectué sur le site ${shop.nom}. La somme de ${metadata.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`,
-                        template: 'apresRemboursement',
-                        context: contexte,
-
-                    });
+                    const subject = `Votre remboursement sur le site d'artisanat Malgache ${shop.nom} a bien été éffectué ✅ `; // le sujet du mail
+                    const text = `Bonjour ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille}, nous vous confirmons le remboursement de votre commande n°${refCommandeOk[0].reference} effectué sur le site ${shop.nom}. La somme de ${metadata.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`;
+                    const template = 'apresRemboursement';
+                    const emailSend = refCommandeOk[0].email;
+                    sendEmail(emailSend, subject, contexte, text, template);
                     console.log(`Un email de confirmation de remboursement à bien été envoyé a ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} via l'adresse email: ${refCommandeOk[0].email} : ${info.response}`);
 
 
@@ -2100,8 +1971,6 @@ const paiementController = {
                 // J'envoie un mail confirmant le remboursement au client
                 try {
 
-                    transporter.use('compile', hbs(options));
-
                     const contexte = {
                         nom: refCommandeOk[0].nomFamille,
                         prenom: refCommandeOk[0].prenom,
@@ -2116,19 +1985,11 @@ const paiementController = {
                         moyenPaiementDetail: refCommandeOk[0].moyenPaiementDetail,
                     }
 
-                    // l'envoie d'email définit par l'object "transporter"
-                    const info = await transporter.sendMail({
-                        from: process.env.EMAIL, //l'envoyeur
-                        to: refCommandeOk[0].email,
-                        subject: `Votre remboursement sur le site d'artisanat Malgache ${shop.nom} a bien été éffectué ✅ `, // le sujet du mail
-                        text: `Bonjour ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille}, nous vous confirmons le remboursement de votre commande n°${metadata.refCommande} effectué sur le site ${shop.nom}. La somme de ${metadata.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`,
-                        /* attachement:[
-                            {filename: 'picture.JPG', path: './picture.JPG'}
-                        ] */
-                        template: 'apresRemboursement',
-                        context: contexte,
-
-                    });
+                    const emailSend = refCommandeOk[0].email;
+                    const subject = `Votre remboursement sur le site d'artisanat Malgache ${shop.nom} a bien été éffectué ✅ `; // le sujet du mail
+                    const text = `Bonjour ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille}, nous vous confirmons le remboursement de votre commande n°${metadata.refCommande} effectué sur le site ${shop.nom}. La somme de ${metadata.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`;
+                    const template = 'apresRemboursement';
+                    sendEmail(emailSend, subject, contexte, text, template);
                     console.log(`Un email de confirmation de remboursement à bien été envoyé a ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} via l'adresse email: ${refCommandeOk[0].email} : ${info.response}`);
 
 
@@ -2228,7 +2089,6 @@ const paiementController = {
                 //sinon si la commande a le statut "Pret pour expedition" : ici pas de remboursement automatique, demande d'annulation d'envoie simplement
             } else if (Number(refCommandeOk[0].idCommandeStatut) === 4) {
 
-                transporter.use('compile', hbs(options));
 
                 const articles = [];
                 refCommandeOk.map(article => (`${articles.push(article.nom +' (x' + article.quantite_commande +')')}`));
@@ -2283,7 +2143,11 @@ const paiementController = {
                         article: refCommandeOk,
                     }
 
-                    // l'envoie d'email définit par l'object "transporter"
+                    const subject = ` ⚠️ ATTENTION ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !) ❌ `; // le sujet du mail
+                    const text = `URGENT ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !}), produits concernés : ${articlesCommande}.`;
+                    const template = 'demandeAnnulationEnvoie';
+
+                    // l'envoie d'email
                     if (adminsMail !== null) {
 
                         for (const admin of adminsMail) {
@@ -2291,33 +2155,15 @@ const paiementController = {
                             //Ici je dois ajouter dans l'objet contexte, le prenom des admin, pour un email avec prenom personalisé !
                             contexte.adminPrenom = admin.prenom;
 
-                            const info2 = await transporter.sendMail({
-                                from: process.env.EMAIL, //l'envoyeur
-                                to: admin.email,
-                                subject: ` ⚠️ ATTENTION ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !) ❌ `, // le sujet du mail
-                                text: `URGENT ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !}), produits concernés : ${articlesCommande}.`,
-                                template: 'demandeAnnulationEnvoie',
-                                context: contexte,
-
-                            });
+                            const emailSend = admin.email;
+                            sendEmail(emailSend, subject, contexte, text, template);
                             console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${admin.email} : ${info2.response}`);
                         }
                     }
 
-                    //Envoie d'email sur le mail présent dans la table "Shop".
-                    const info = await transporter.sendMail({
-                        from: process.env.EMAIL, //l'envoyeur
-                        to: shop.emailContact,
-                        subject: ` ⚠️ ATTENTION ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference}, client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !) ❌ `, // le sujet du mail
-                        text: `URGENT ! DEMANDE ANNULATION D'ENVOIE SI POSSIBLE pour la commande n° ${refCommandeOk[0].reference} concernant le client ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} (Client non remboursé !), produits concernés : ${articlesCommande}.`,
-                        template: 'demandeAnnulationEnvoie',
-                        context: contexte,
-
-                    });
+                    const emailSend = shop.emailContact;
+                    sendEmail(emailSend, subject, contexte, text, template);
                     console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${shop.emailContact} : ${info.response}`);
-
-
-
 
                 } catch (error) {
                     console.log(`Erreur dans la méthode d'envoie d'un mail au admins pour annulation envoie si possible dans la methode refundClient du paiementController : ${error.message}`);

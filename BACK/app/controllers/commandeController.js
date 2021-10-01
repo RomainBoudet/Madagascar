@@ -23,6 +23,7 @@ const {
 const {
     formatLongSeconde
 } = require('../services/date');
+const { Client } = require('pg');
 
 
 /**
@@ -382,7 +383,45 @@ const commandeController = {
             const newUpdate = new Commande(data);
             const updateDone = await newUpdate.updateStatutCommande();
 
-            console.log("updateDone == ", updateDone);
+            //console.log("updateDone == ", updateDone);
+
+            // Si le client a souhaité recevoir un sms concernant l'envoi d'une notification quand sa commande serait envoyé, et si le statut est "envoyé", alors on envoie un SMS !
+
+            /* updateDone ==  Commande {
+  id: 501,
+  reference: '101.17360.01102021123921.53.2',
+  dateAchat: 2021-10-01T10:39:21.387Z,
+  commentaire: null,
+  sendSmsShipping: true,
+  updatedDate: 2021-10-01T11:38:36.155Z,
+  idCommandeStatut: 3,
+  idClient: 101,
+  idTransporteur: 2
+} */
+            //! a finir !!
+             
+            if (updateDone.sendSmsShipping == "true" && updateDone.idCommandeStatut == 5) {
+
+                // Je vérifit qu'il ai bien renseigné un numéro de téléphone !
+
+                try {
+                    
+                    const client = await Client.findOne(updateDone.idClient);
+
+
+
+
+                } catch (error) {
+                    console.trace('Erreur dans recherche d info du client la méthode updateStatut du commandeController :',
+                error);
+            res.status(500).end();
+                }
+
+                // Je renseigne les info twilio 
+                
+                // je récupére les infos sur la commande ! 
+
+            }
 
 
             res.status(200).end();

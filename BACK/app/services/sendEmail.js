@@ -5,7 +5,6 @@ var helpers = require('handlebars-helpers')();
 
 
 
-//Config MAIL a sortir du controller ...
 //Sendgrid ou MailGun serait préférable en prod...
 //https://medium.com/how-tos-for-coders/send-emails-from-nodejs-applications-using-nodemailer-mailgun-handlebars-the-opensource-way-bf5363604f54
 const transporter = nodemailer.createTransport({
@@ -32,8 +31,6 @@ const options = {
 transporter.use('compile', hbs(options));
 
 
-//! A finir pour un envoie de Mail a chaque possibilité de l'API pour la méthode startUpdateCommandeFromEmail !
-
 const sendEmail = async (email, subject, context, text, template) => {
 
     try {
@@ -47,7 +44,7 @@ const sendEmail = async (email, subject, context, text, template) => {
             context, // l'objet que je passe a ma vue, contenant les variables pour mon email !
 
         });
-        console.log(`Un email de réponse suite a tentative de mise a jour du statut d'une commande à bien été envoyé a ${email} : ${info.response}`);
+        console.log(`Un email à bien été envoyé a ${email} : ${info.response}`);
     } catch (error) {
         console.trace("erreur dans le service sendEmail", error);
         res.statut(500).end();

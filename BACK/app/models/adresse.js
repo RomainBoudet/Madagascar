@@ -276,7 +276,7 @@ class Adresse {
         const {
             rows,
         } = await db.query(
-            'SELECT * FROM mada.adresse WHERE adresse.id_client  = $1 and adresse.envoie = TRUE;',
+            'SELECT * FROM mada.adresse WHERE adresse.id_client = $1 and adresse.envoie = TRUE;',
             [idClient]
         );
 

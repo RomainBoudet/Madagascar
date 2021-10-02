@@ -705,7 +705,7 @@ SELECT
 produit.nom as nom,
 produit.description,
 produit.created_date,
-CAST (produit.prix_HT as FLOAT) as prix_HT,
+CAST (produit.prix_HT as INTEGER) as prix_HT,
 produit.image_mini,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,
@@ -725,7 +725,7 @@ CREATE VIEW mada.view_produit_plus AS
 SELECT
 produit.nom as produit,
 produit.description as description,
-CAST (produit.prix_HT as FLOAT) as prixHT,
+CAST (produit.prix_HT as INTEGER) as prixHT,
 produit.image_mini,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,
@@ -753,7 +753,7 @@ CREATE VIEW mada.view_categorie AS
 SELECT
 produit.nom as produit,
 produit.description as description_produit,
-CAST (produit.prix_HT as FLOAT) as prix,
+CAST (produit.prix_HT as INTEGER) as prix,
 produit.image_mini,
 caracteristique.couleur as couleur,
 caracteristique.taille as taille,
@@ -791,7 +791,7 @@ client.nom_famille,
 client.email,
 paiement.reference as paiement_ref,
 paiement.methode as paiement_methode,
-CAST (paiement.montant as FLOAT) as paiement_montant,
+CAST (paiement.montant as INTEGER) as paiement_montant,
 to_char(paiement.date_paiement, 'TMDay DD TMMonth YYYY à  HH24:MI:SS') as paiement_date
 FROM mada.paiement
 JOIN mada.commande ON commande.id = paiement.id_commande
@@ -826,10 +826,10 @@ adresse.ville,
 adresse.pays,
 adresse.telephone,
 transporteur.nom as transporteur,
-CAST (transporteur.frais_expedition as FLOAT),
+CAST (transporteur.frais_expedition as INTEGER),
 commande.reference as ref_commande,
 paiement.reference as ref_paiement,
-CAST(paiement.montant as FLOAT) as montant_paiement,
+CAST(paiement.montant as INTEGER) as montant_paiement,
 to_char(paiement.date_paiement,'TMDay DD TMMonth YYYY à  HH24:MI:SS' ) as date_paiement
 FROM
 mada.livraison
@@ -847,9 +847,9 @@ CREATE VIEW mada.view_produit_livrer AS
 SELECT 
 produit.nom,
 CAST(ligne_commande.quantite_commande as INTEGER),
-CAST (produit.prix_HT as FLOAT),
+CAST (produit.prix_HT as INTEGER),
 CAST (tva.taux as FLOAT),
-CAST (transporteur.frais_expedition as FLOAT),
+CAST (transporteur.frais_expedition as INTEGER),
 produit.image_mini,
 livraison.id as id_livraison,
 livraison.reference as ref_livraison,
@@ -880,6 +880,39 @@ JOIN mada.adresse ON client.id = adresse.id_client AND adresse.envoie = TRUE
 JOIN mada.transporteur ON livraison.id_transporteur = transporteur.id
 ORDER BY livraison.reference;
 
+CREATE VIEW mada.view_oneCommande AS
+SELECT 
+produit.nom as produit_nom,
+commande.id,
+commande.reference,
+commande.commentaire,
+commande.send_sms_shipping,
+commande.id_client,
+commande.id_commandeStatut,
+commande.id_transporteur,
+to_char(commande.date_achat,'TMDay DD TMMonth YYYY à  HH24:MI:SS' ) as date_commande,
+CAST(ligne_commande.quantite_commande as INTEGER),
+CAST (produit.prix_HT as INTEGER),
+CAST (tva.taux as FLOAT),
+client.id as idClient,
+adresse.prenom as adresse_prenom,
+adresse.nom_famille as adresse_nomFamille,
+adresse.ligne1 as adresse1,
+adresse.ligne2 as adresse2,
+adresse.ligne3 as adresse3,
+CAST (adresse.code_postal as INTEGER) as codePostal,
+adresse.ville,
+adresse.pays,
+adresse.telephone,
+transporteur.nom as transporteur
+FROM
+mada.commande 
+JOIN mada.ligne_commande ON ligne_commande.id_commande = commande.id
+JOIN mada.produit ON produit.id = ligne_commande.id_produit
+JOIN mada.tva ON tva.id = produit.id_tva
+JOIN mada.client ON client.id = commande.id_client 
+JOIN mada.adresse ON client.id = adresse.id_client AND adresse.envoie = TRUE
+JOIN mada.transporteur ON commande.id_transporteur = transporteur.id;
 
 COMMIT;
 

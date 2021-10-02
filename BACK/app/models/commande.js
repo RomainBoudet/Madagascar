@@ -70,7 +70,7 @@ class Commande {
         this.datePaiement = val;
     }
 
-    set status_id (val) {
+    set status_id(val) {
         this.statusId = val;
     }
 
@@ -104,6 +104,27 @@ class Commande {
         }
         consol.model(
             `les informations des ${rows.length} commandes ont été demandées !`
+        );
+
+        return rows.map((commande) => new Commande(commande));
+    }
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à tous les commandes
+     * @returns - tous les commandes présent en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+    static async findViewCommande(id) {
+        const {
+            rows
+        } = await db.query('SELECT * FROM mada.view_oneCommande WHERE commande.id = $1;', [id]);
+
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
+        }
+        consol.model(
+            `les produit de la commande ${id} ont été demandées !`
         );
 
         return rows.map((commande) => new Commande(commande));
@@ -145,7 +166,7 @@ class Commande {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-     static async findOneLimited(id) {
+    static async findOneLimited(id) {
 
 
         const {
@@ -166,14 +187,14 @@ class Commande {
         return new Commande(rows[0]);
     }
 
-     /**
+    /**
      * Méthode chargé d'aller chercher les informations relatives à une commande via sa référence passée en paramétre
      * @param - une référence d'une commande
      * @returns - les informations d'une commande demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-      static async findOneCommande(id) {
+    static async findOneCommande(id) {
 
 
         const {
@@ -194,33 +215,33 @@ class Commande {
         return new Commande(rows[0]);
     }
 
- /**
+    /**
      * Méthode chargé d'aller chercher les informations relatives à une commande via sa référence passée en paramétre
      * @param - une référence d'une commande
      * @returns - les informations d'une commande demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-  static async findOneCommandeLimited(id) {
+    static async findOneCommandeLimited(id) {
 
 
-    const {
-        rows,
-    } = await db.query(
-        "SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
-        [id]
-    );
+        const {
+            rows,
+        } = await db.query(
+            "SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
+            [id]
+        );
 
-    if (!rows[0] || rows[0] === undefined) {
-        return null;
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
+        }
+
+        consol.model(
+            `la commande id : ${id} a été demandé en BDD !`
+        );
+
+        return new Commande(rows[0]);
     }
-
-    consol.model(
-        `la commande id : ${id} a été demandé en BDD !`
-    );
-
-    return new Commande(rows[0]);
-}
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à un idCommande passé en paramétre
@@ -278,14 +299,14 @@ class Commande {
         return new Commande(rows[0]);
     }
 
-     /**
+    /**
      * Méthode chargé d'aller chercher les informations relatives à une référence comande passé en paramétre
      * @param commande - une référence d'une commande
      * @returns - les informations d'une commande demandées
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-      static async findById(commande) {
+    static async findById(commande) {
 
 
         const {
@@ -305,7 +326,7 @@ class Commande {
         return new Commande(rows[0]);
     }
 
-     /**
+    /**
      * Méthode chargé d'aller chercher les informations relatives à une référence comande passé en paramétre
      * ne renvoit une commande que si sont statut est "Paiement Validé"
      * @param commande - une référence d'une commande
@@ -313,58 +334,58 @@ class Commande {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
-      static async findByRefCommandeForClient(commande) {
-//valeur de l'objet en sortie du model : nommé sous la let "refCommandeOk" dans le paiementController
-/* refCommandeOk ==>>  [
- Commande {
-    id: 101,
-    reference: '101.4590.14092021010031.104.1',
-    dateAchat: 2021-09-13T23:00:31.705Z,
-    commentaire: null,
-    sendSmsShipping: false,
-    updatedDate: null,
-    idCommandeStatut: 3,
-    idClient: 101,
-    idTransporteur: 1,
-    nom: 'Awesome Metal Fish',
-    prix_ht: '38.00',
-    image_mini: 'http://placeimg.com/640/480',
-    id_produit: 104,
-    reduction: '0.03',
-    tva: '0.05',
-    stock: 9,
-    prenom: 'Pierre',
-    nomFamille: 'Achat',
-    email: 'achat@r-boudet.fr',
-    password: '$2b$10$MTPoKEam6a0We6X9VnLvo.uCsZUJYNEtzFecIAysPQPJY.W.cSzt6',
-    createdDate: 2021-09-13T21:55:05.173Z,
-    idPrivilege: 1,
-    prenom_adresse: 'Pierre',
-    nom_adresse: 'Achat',
-    ligne1: '35 rue du Moulin bily',
-    ligne2: null,
-    ligne3: null,
-    code_postal: '22380',
-    ville: 'Saint cast',
-    pays: 'FRANCE',
-    telephone: '+33603720612',
-    transporteur: 'DPD',
-    refPaiement: '420284242.101.4590.14092021010031.104.1',
-    quantite_commande: 1,
-    montant: '38.70',
-    methode: 'moyen_de_paiement:card/_marque:_visa/_type_de_carte:_credit/_pays_origine:_US/_mois_expiration:_4/_annee_expiration:_2028/_4_derniers_chiffres:_4242',
-    paymentIntent: 'pi_3JZO8HLNa9FFzz1X1avEP75I',
-    moyenPaiement: 'card',
-    moyenPaiementDetail: 'visa credit',
-    origine: 'UNITED STATES',
-    derniersChiffres: '4242',
-    datePaiement: 2021-09-13T23:00:31.708Z,
-    statut: 'Paiement validé',
-    statusId: 3
-  }
-  Commande {
-  }
-] */
+    static async findByRefCommandeForClient(commande) {
+        //valeur de l'objet en sortie du model : nommé sous la let "refCommandeOk" dans le paiementController
+        /* refCommandeOk ==>>  [
+         Commande {
+            id: 101,
+            reference: '101.4590.14092021010031.104.1',
+            dateAchat: 2021-09-13T23:00:31.705Z,
+            commentaire: null,
+            sendSmsShipping: false,
+            updatedDate: null,
+            idCommandeStatut: 3,
+            idClient: 101,
+            idTransporteur: 1,
+            nom: 'Awesome Metal Fish',
+            prix_ht: '38.00',
+            image_mini: 'http://placeimg.com/640/480',
+            id_produit: 104,
+            reduction: '0.03',
+            tva: '0.05',
+            stock: 9,
+            prenom: 'Pierre',
+            nomFamille: 'Achat',
+            email: 'achat@r-boudet.fr',
+            password: '$2b$10$MTPoKEam6a0We6X9VnLvo.uCsZUJYNEtzFecIAysPQPJY.W.cSzt6',
+            createdDate: 2021-09-13T21:55:05.173Z,
+            idPrivilege: 1,
+            prenom_adresse: 'Pierre',
+            nom_adresse: 'Achat',
+            ligne1: '35 rue du Moulin bily',
+            ligne2: null,
+            ligne3: null,
+            code_postal: '22380',
+            ville: 'Saint cast',
+            pays: 'FRANCE',
+            telephone: '+33603720612',
+            transporteur: 'DPD',
+            refPaiement: '420284242.101.4590.14092021010031.104.1',
+            quantite_commande: 1,
+            montant: '38.70',
+            methode: 'moyen_de_paiement:card/_marque:_visa/_type_de_carte:_credit/_pays_origine:_US/_mois_expiration:_4/_annee_expiration:_2028/_4_derniers_chiffres:_4242',
+            paymentIntent: 'pi_3JZO8HLNa9FFzz1X1avEP75I',
+            moyenPaiement: 'card',
+            moyenPaiementDetail: 'visa credit',
+            origine: 'UNITED STATES',
+            derniersChiffres: '4242',
+            datePaiement: 2021-09-13T23:00:31.708Z,
+            statut: 'Paiement validé',
+            statusId: 3
+          }
+          Commande {
+          }
+        ] */
         const {
             rows,
         } = await db.query(

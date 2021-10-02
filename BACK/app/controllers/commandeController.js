@@ -3,6 +3,10 @@ const StatutCommande = require('../models/statutCommande');
 const LigneCommande = require('../models/ligneCommande');
 const ProduitRetour = require('../models/produitRetour');
 const AdminVerifEmail = require('../models/adminVerifEmail');
+const Twillio = require('../models/twillio');
+const Adresse = require('../models/adresse');
+
+
 
 
 //config mail
@@ -23,7 +27,7 @@ const {
 const {
     formatLongSeconde
 } = require('../services/date');
-const { Client } = require('pg');
+
 
 
 /**
@@ -383,7 +387,7 @@ const commandeController = {
             const newUpdate = new Commande(data);
             const updateDone = await newUpdate.updateStatutCommande();
 
-            //console.log("updateDone == ", updateDone);
+            console.log("updateDone == ", updateDone);
 
             // Si le client a souhaité recevoir un sms concernant l'envoi d'une notification quand sa commande serait envoyé, et si le statut est "envoyé", alors on envoie un SMS !
 
@@ -399,27 +403,69 @@ const commandeController = {
   idTransporteur: 2
 } */
             //! a finir !!
-             
-            if (updateDone.sendSmsShipping == "true" && updateDone.idCommandeStatut == 5) {
+            console.log("updateDone.sendSmsShipping == ", updateDone.sendSmsShipping);
+            console.log("updateDone.idCommandeStatut == ", updateDone.idCommandeStatut);
+
+            if (updateDone.sendSmsShipping === true && updateDone.idCommandeStatut === 5) {
 
                 // Je vérifit qu'il ai bien renseigné un numéro de téléphone !
 
+
+                let client;
                 try {
-                    
-                    const client = await Client.findOne(updateDone.idClient);
-
-
-
+                    client = await Adresse.findByEnvoiTrue(updateDone.idClient);
+                    console.log("client == ", client);
 
                 } catch (error) {
-                    console.trace('Erreur dans recherche d info du client la méthode updateStatut du commandeController :',
-                error);
-            res.status(500).end();
+                    console.trace('Erreur dans la recherche du tel du client la méthode updateStatut du commandeController :',
+                        error);
+                    return res.status(500).end();
                 }
 
-                // Je renseigne les info twilio 
-                
+                if (client === null || client.telephone === null || client.telephone === undefined) {
+                    console.log(`Aucun numéro de téléphone ou client pour cet identifiant ! Aucun sms n'a été envoyé pour confirmation d'envoie au client identifiant ${updateDone.idClient}...`);
+                    return res.status(200).json({
+                        message: `Aucun numéro de téléphone ou client pour cet identifiant ! Aucun sms n'a été envoyé pour confirmation d'envoie au client identifiant ${updateDone.idClient}...`
+                    });
+                }
+
+                const tel = client.telephone;
+
+                // je recupére les infos de Twilio
+                let dataTwillio;
+                let twilio;
+                try {
+                    dataTwillio = await Twillio.findFirst();
+                    twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+                    console.log("dataTwillio == ", dataTwillio);
+
+                } catch (error) {
+                    console.trace('Erreur dans la recherche des infos Twilio dans la la méthode updateStatut du commandeController :',
+                        error);
+                    return res.status(500).end();
+                }
+
                 // je récupére les infos sur la commande ! 
+                let commande;
+                try {
+
+                    //! error: entrée manquante de la clause FROM pour la table « commande »
+                    commande = await Commande.findViewCommande(updateDone.id);
+                    console.log("commande == ", commande);
+                } catch (error) {
+                    console.trace('Erreur dans la recherche des infos de la commande dans la la méthode updateStatut du commandeController :',
+                        error);
+                    return res.status(500).end();
+                }
+
+                twilio.messages.create({
+                        body: ` Commande bien envoyé !`,
+                        from: dataTwillio.twillioNumber,
+                        to: tel,
+
+                    })
+                    .then(message => console.log(message.sid));
+                console.log(`SMS bien envoyé a ${tel} depuis ${dataTwillio.twillioNumber} !`)
 
             }
 

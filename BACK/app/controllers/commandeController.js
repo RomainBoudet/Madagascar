@@ -410,9 +410,10 @@ const commandeController = {
   idClient: 101,
   idTransporteur: 2
 } */
-            //! a finir !!
-            //console.log("updateDone.sendSmsShipping == ", updateDone.sendSmsShipping);
-            //console.log("updateDone.idCommandeStatut == ", updateDone.idCommandeStatut);
+            
+
+            //! Si le client, lors de la commande a fait le choix de recevoir un sms lors du passge a l'état Expédié, alors on envoie un SMS au client !
+
 
             if (updateDone.sendSmsShipping === true && updateDone.idCommandeStatut === 5) {
 
@@ -422,7 +423,7 @@ const commandeController = {
                 let client;
                 try {
                     client = await Adresse.findByEnvoiTrue(updateDone.idClient);
-                    console.log("client == ", client);
+                    //console.log("client == ", client);
 
                 } catch (error) {
                     console.trace('Erreur dans la recherche du tel du client la méthode updateStatut du commandeController :',
@@ -445,7 +446,7 @@ const commandeController = {
                 try {
                     dataTwillio = await Twillio.findFirst();
                     twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
-                    console.log("dataTwillio == ", dataTwillio);
+                    //console.log("dataTwillio == ", dataTwillio);
 
                 } catch (error) {
                     console.trace('Erreur dans la recherche des infos Twilio dans la la méthode updateStatut du commandeController :',
@@ -457,9 +458,8 @@ const commandeController = {
                 let commande;
                 try {
 
-                    //! error: entrée manquante de la clause FROM pour la table « commande »
                     commande = await Commande.findViewCommande(updateDone.id);
-                    console.log("commande == ", commande);
+                    //console.log("commande == ", commande);
                 } catch (error) {
                     console.trace('Erreur dans la recherche des infos de la commande dans la la méthode updateStatut du commandeController :',
                         error);
@@ -473,11 +473,11 @@ const commandeController = {
                 let shop;
                 try {
                     shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement..
-                    console.log("shop == ", shop);
+                    //console.log("shop == ", shop);
                 } catch (error) {
                     console.trace('Erreur dans la recherche des infos de Mada Shop dans la la méthode updateStatut du commandeController :',
-                    error);
-                return res.status(500).end();
+                        error);
+                    return res.status(500).end();
                 }
 
                 /* commande ==  [
@@ -815,6 +815,8 @@ The following are valid types that require a string parseable by JavaScript's Da
                 let textMail = '';
                 const template = 'reponseAPInewSatut';
                 contextMail.message2 = `Aucun statut de commande n'a été mis a jour suite a cette érreur ! Pour rappel, la commande peut être indiqué par son identifiant ou sa référence de commande, sans espace avant. Séparé d'un espace et du signe ":", puis du nouveau statut souhaité en renseigant soit son identifiant soit son nom.`;
+                contextMail.message3 = "";
+                contextMail.message4 = "";
                 contextMail.name = name;
                 contextMail.commande = commande;
                 let subjectMail = `❌ uptate statut : Une érreur est apparu ! ❌ `;
@@ -863,7 +865,7 @@ The following are valid types that require a string parseable by JavaScript's Da
                 }
 
 
-                if (number.test(statut)) {
+                if (number.test(Number(statut))) {
 
                     // ici statut est un identifiant !
                     statutInDb = await StatutCommande.findOneLimited(statut);
@@ -956,7 +958,7 @@ The following are valid types that require a string parseable by JavaScript's Da
 
                     // J'avertit l'admin si le statut qu'il souhaiterais mettre a jour est déja le statut existant !
                     if (statut === commandeInDb.statut) {
-                        console.log("Le statut proposé pour cette commande est déja celui existant !");
+                         console.log("Le statut proposé pour cette commande est déja celui existant !");
                         contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez tenté de mettre a jour le statut d'une commande en renseignant un nomde statut de commande via la méthode par email. Le nom de commande renseigné (${statut}) pour cette commande (${commande}) est déja identique a celui existant !`;
                         textMail = contextMail.message;
                         sendEmail(email, subjectMail, contextMail, textMail, template);
@@ -994,15 +996,188 @@ The following are valid types that require a string parseable by JavaScript's Da
                 const newUpdate = new Commande(data);
                 const updateDone = await newUpdate.updateStatutCommande();
 
+
+                console.log("updateDone == ", updateDone);
+
+
+
+
+
+                //! Si le client, lors de la commande a fait le choix de recevoir un sms lors du passge a l'état Expédié, alors on envoie un SMS au client !
+
+                if (updateDone.sendSmsShipping === true && updateDone.idCommandeStatut === 5) {
+
+                    // Je vérifit qu'il ai bien renseigné un numéro de téléphone !
+
+                    let client;
+                    try {
+                        client = await Adresse.findByEnvoiTrue(updateDone.idClient);
+                        //console.log("client == ", client);
+
+                    } catch (error) {
+                        console.trace('Erreur dans la recherche du tel du client la méthode updateStatut du commandeController :',
+                            error);
+                        contextMail.message = `Erreur dans la recherche du telephone du client la méthode updateStatut du commandeController lors de l'envoi d'un sms aprés changement du statut a "Expédié" : ${error}`;
+                        textMail = contextMail.message;
+                        contextMail.message2 = "";
+                        subjectMail = `❌ uptate statut : Envoi de sms au client confirmant l'expédition de la commande (${commande}) NON effectué !`;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
+
+                        return res.status(500).end();
+                    }
+
+                    if (client === null || client.telephone === null || client.telephone === undefined) {
+                        console.log(`Aucun numéro de téléphone ou client pour cet identifiant ! Aucun sms n'a été envoyé pour confirmation d'envoie au client identifiant ${updateDone.idClient}...`);
+
+
+                        contextMail.message = `Erreur dans la recherche du telephone du client la méthode updateStatut du commandeController lors de l'envoi d'un sms aprés changement du statut a "Expédié". La variable "client" vaut null ou ne contient pas de de numéro de téléphone ! : ${error}`;
+                        textMail = contextMail.message;
+                        contextMail.message2 = "";
+                        subjectMail = `❌ uptate statut : Envoi de sms au client confirmant l'expédition de la commande (${commande}) NON effectué !`;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
+
+                        return res.status(200).json({
+                            message: `Aucun numéro de téléphone ou client pour cet identifiant ! Aucun sms n'a été envoyé pour confirmation d'envoie au client identifiant ${updateDone.idClient}...`
+                        });
+                    }
+
+                    const tel = client.telephone;
+
+                    // je recupére les infos de Twilio
+                    let dataTwillio;
+                    let twilio;
+                    try {
+                        dataTwillio = await Twillio.findFirst();
+                        twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+                        //console.log("dataTwillio == ", dataTwillio);
+
+                    } catch (error) {
+                        console.trace('Erreur dans la recherche des infos Twilio dans la la méthode updateStatut du commandeController :',
+                            error);
+
+                        contextMail.message = `Erreur dans la recherche des donnes Twilio dans la méthode updateStatut du commandeController lors de l'envoi d'un sms aprés changement du statut a "Expédié". : ${error}`;
+                        textMail = contextMail.message;
+                        contextMail.message2 = "";
+                        subjectMail = `❌ uptate statut : Envoi de sms au client confirmant l'expédition de la commande (${commande}) NON effectué !`;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
+                        return res.status(500).end();
+                    }
+
+                    // je récupére les infos sur la commande ! 
+                    let commandeArray = [];
+                    try {
+
+                        commandeArray = await Commande.findViewCommande(updateDone.id);
+                        //console.log("commande == ", commande);
+                    } catch (error) {
+                        console.trace('Erreur dans la recherche des infos de la commande dans la la méthode updateStatut du commandeController :',
+                            error);
+                        contextMail.message = `Erreur dans la recherche des donnes de la commande dans la méthode updateStatut du commandeController lors de l'envoi d'un sms aprés changement du statut a "Expédié". : ${error}`;
+                        textMail = contextMail.message;
+                        contextMail.message2 = "";
+                        subjectMail = `❌ uptate statut : Envoi de sms au client confirmant l'expédition de la commande (${commande}) NON effectué !`;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
+                        return res.status(500).end();
+                    }
+
+                    const articles = [];
+                    commandeArray.map(article => (`${articles.push(article.produit_nom+"x"+article.quantite_commande+"/"+article.taille+"/"+article.couleur)}`));
+                    articlesachat = articles.join('.');
+
+                    let shop;
+                    try {
+                        shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement..
+                        //console.log("shop == ", shop);
+                    } catch (error) {
+                        console.trace('Erreur dans la recherche des infos de Mada Shop dans la la méthode updateStatut du commandeController :',
+                            error);
+                        contextMail.message = `Erreur dans la recherche des donnes du shop dans la méthode updateStatut du commandeController lors de l'envoi d'un sms aprés changement du statut a "Expédié". : ${error}`;
+                        textMail = contextMail.message;
+                        contextMail.message2 = "";
+                        subjectMail = `❌ uptate statut : Envoi de sms au client confirmant l'expédition de la commande (${commande}) NON effectué !`;
+                        sendEmail(email, subjectMail, contextMail, textMail, template);
+                        return res.status(500).end();
+                    }
+
+                    /* commande ==  [
+      Commande {
+        id: 502,
+        reference: '101.7280.03102021110302.40.2.123.1',
+        dateAchat: undefined,
+        commentaire: "Sur un plateau d'argent impérativement !",
+        sendSmsShipping: true,
+        updatedDate: 2021-10-03T09:16:06.903Z,
+        idCommandeStatut: 5,
+        idClient: 101,
+        idTransporteur: 1,
+        produit_nom: 'Incredible Soft Shoes',
+        couleur: 'orange',
+        taille: 'L',
+        date_commande: 'Dimanche 03 Octobre 2021 à 11:03:02',
+        quantite_commande: 2,
+        prix_ht: 4400,
+        taux: 0.2,
+        idclient: 101,
+        adresse_prenom: 'Pierre',
+        adresse_nomfamille: 'Achat',
+        adresse1: '35 rue du Moulin bily',
+        adresse2: null,
+        adresse3: null,
+        codepostal: 22380,
+        ville: 'Saint cast',
+        pays: 'FRANCE',
+        telephone: '+33603720612',
+        transporteur: 'DPD'
+      },
+      Commande {
+        id: 502,
+        reference: '101.7280.03102021110302.40.2.123.1',
+        dateAchat: undefined,
+        commentaire: "Sur un plateau d'argent impérativement !",
+        sendSmsShipping: true,
+        updatedDate: 2021-10-03T09:16:06.903Z,
+        idCommandeStatut: 5,
+        idClient: 101,
+        idTransporteur: 1,
+        produit_nom: 'Licensed Cotton Table',
+        couleur: 'noir',
+        taille: 'XS',
+        date_commande: 'Dimanche 03 Octobre 2021 à 11:03:02',
+        quantite_commande: 1,
+        prix_ht: 1100,
+        taux: 0.05,
+        idclient: 101,
+        adresse_prenom: 'Pierre',
+        adresse_nomfamille: 'Achat',
+        adresse1: '35 rue du Moulin bily',
+        adresse2: null,
+        adresse3: null,
+        codepostal: 22380,
+        ville: 'Saint cast',
+        pays: 'FRANCE',
+        telephone: '+33603720612',
+        transporteur: 'DPD'
+      }
+    ] */
+
+                    twilio.messages.create({
+                            body: ` Votre commande ${shop.nom} contenant ${articlesachat} effectué le ${formatJMA(commandeArray[0].date_achat)} a bien été envoyé via ${commandeArray[0].transporteur} ce ${formatLong(commandeArray[0].updatedDate)} !`,
+                            from: dataTwillio.twillioNumber,
+                            to: tel,
+
+                        })
+                        .then(message => console.log(message.sid),
+                        );
+                    console.log(`SMS bien envoyé a ${tel} depuis ${dataTwillio.twillioNumber} !`)
+                    contextMail.message4 = ` 🎉 SMS bien envoyé au ${tel} lors de l'envoi d'un sms aprés changement du statut a "Expédié" de la commande ${commande}.`;
+                }
+
                 contextMail.message = `Le ${formatLongSeconde(Date.now())} vous avez mis a jour le statut d'une commande en renseignant un nom de statut de commande via la méthode par email. Ce changement de statut a été validé avec succées ! La commande "${commande}" a bien été mis a jour en passant au statut "${statut}".`;
                 textMail = contextMail.message;
                 contextMail.message2 = "";
                 subjectMail = ` 🎉 uptate statut : Changement de statut effectué avec succées pour la commande (${commande}) !`;
 
                 sendEmail(email, subjectMail, contextMail, textMail, template);
-
-                console.log("updateDone == ", updateDone);
-
 
                 res.status(200).end();
 

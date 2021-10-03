@@ -5,6 +5,8 @@ const ProduitRetour = require('../models/produitRetour');
 const AdminVerifEmail = require('../models/adminVerifEmail');
 const Twillio = require('../models/twillio');
 const Adresse = require('../models/adresse');
+const Shop = require('../models/shop');
+
 
 
 
@@ -24,11 +26,17 @@ const {
 const {
     sendEmail
 } = require('../services/sendEmail');
+
 const {
-    formatLongSeconde
+    formatLong,
+    formatJMAHMSsecret,
+    formatCoupon,
+    formatLongSeconde,
+    dayjs,
+    formatLongSansHeure,
+    addWeekdays,
+    formatJMA,
 } = require('../services/date');
-
-
 
 /**
  * Une méthode qui va servir a intéragir avec le model Commande pour les intéractions avec la BDD
@@ -403,8 +411,8 @@ const commandeController = {
   idTransporteur: 2
 } */
             //! a finir !!
-            console.log("updateDone.sendSmsShipping == ", updateDone.sendSmsShipping);
-            console.log("updateDone.idCommandeStatut == ", updateDone.idCommandeStatut);
+            //console.log("updateDone.sendSmsShipping == ", updateDone.sendSmsShipping);
+            //console.log("updateDone.idCommandeStatut == ", updateDone.idCommandeStatut);
 
             if (updateDone.sendSmsShipping === true && updateDone.idCommandeStatut === 5) {
 
@@ -458,8 +466,83 @@ const commandeController = {
                     return res.status(500).end();
                 }
 
+                const articles = [];
+                commande.map(article => (`${articles.push(article.produit_nom+"x"+article.quantite_commande+"/"+article.taille+"/"+article.couleur)}`));
+                articlesachat = articles.join('.');
+
+                let shop;
+                try {
+                    shop = await Shop.findOne(1); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement..
+                    console.log("shop == ", shop);
+                } catch (error) {
+                    console.trace('Erreur dans la recherche des infos de Mada Shop dans la la méthode updateStatut du commandeController :',
+                    error);
+                return res.status(500).end();
+                }
+
+                /* commande ==  [
+  Commande {
+    id: 502,
+    reference: '101.7280.03102021110302.40.2.123.1',
+    dateAchat: undefined,
+    commentaire: "Sur un plateau d'argent impérativement !",
+    sendSmsShipping: true,
+    updatedDate: 2021-10-03T09:16:06.903Z,
+    idCommandeStatut: 5,
+    idClient: 101,
+    idTransporteur: 1,
+    produit_nom: 'Incredible Soft Shoes',
+    couleur: 'orange',
+    taille: 'L',
+    date_commande: 'Dimanche 03 Octobre 2021 à 11:03:02',
+    quantite_commande: 2,
+    prix_ht: 4400,
+    taux: 0.2,
+    idclient: 101,
+    adresse_prenom: 'Pierre',
+    adresse_nomfamille: 'Achat',
+    adresse1: '35 rue du Moulin bily',
+    adresse2: null,
+    adresse3: null,
+    codepostal: 22380,
+    ville: 'Saint cast',
+    pays: 'FRANCE',
+    telephone: '+33603720612',
+    transporteur: 'DPD'
+  },
+  Commande {
+    id: 502,
+    reference: '101.7280.03102021110302.40.2.123.1',
+    dateAchat: undefined,
+    commentaire: "Sur un plateau d'argent impérativement !",
+    sendSmsShipping: true,
+    updatedDate: 2021-10-03T09:16:06.903Z,
+    idCommandeStatut: 5,
+    idClient: 101,
+    idTransporteur: 1,
+    produit_nom: 'Licensed Cotton Table',
+    couleur: 'noir',
+    taille: 'XS',
+    date_commande: 'Dimanche 03 Octobre 2021 à 11:03:02',
+    quantite_commande: 1,
+    prix_ht: 1100,
+    taux: 0.05,
+    idclient: 101,
+    adresse_prenom: 'Pierre',
+    adresse_nomfamille: 'Achat',
+    adresse1: '35 rue du Moulin bily',
+    adresse2: null,
+    adresse3: null,
+    codepostal: 22380,
+    ville: 'Saint cast',
+    pays: 'FRANCE',
+    telephone: '+33603720612',
+    transporteur: 'DPD'
+  }
+] */
+
                 twilio.messages.create({
-                        body: ` Commande bien envoyé !`,
+                        body: ` Votre commande ${shop.nom} contenant ${articlesachat} effectué le ${formatJMA(commande[0].date_achat)} a bien été envoyé via ${commande[0].transporteur} ce ${formatLong(commande[0].updatedDate)} !`,
                         from: dataTwillio.twillioNumber,
                         to: tel,
 

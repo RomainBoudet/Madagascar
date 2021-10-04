@@ -37,7 +37,7 @@ const searchController = {
         try {
             console.time("search");
             //Je vais chercher une clé dans redis, si elle existe, je la prend, sinon je vais la chercher via postgres.
-            let produit;
+            let produits;
             const theKey = `mada:/v1/user/produits`; //! a vérifier que son nom n'ai pas changé avant déploiement...
             const dataInRedis = await redis.exists(theKey);
 

@@ -130,6 +130,27 @@ class Commande {
         return rows.map((commande) => new Commande(commande));
     }
 
+/**
+     * Méthode chargé d'aller chercher les informations relatives à une commande 
+     * @returns - une commande présente en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+ static async findCommandeFactures(id) {
+    const {
+        rows
+    } = await db.query("SELECT produit.nom as produit_nom, caracteristique.couleur, caracteristique.taille, commande.id, commande.reference, commande.updated_date, commande.commentaire, commande.send_sms_shipping, commande.id_client, commande.id_commandeStatut, commande.id_transporteur, commande.date_achat, CAST(ligne_commande.quantite_commande as INTEGER), CAST (produit.prix_HT as INTEGER), CAST (tva.taux as FLOAT), client.id as idClient, client.nom_famille as client_nom,client.prenom as client_prenom,client.email,adresse.prenom as adresse_prenom, adresse.nom_famille as adresse_nomFamille,adresse.ligne1 as adresse1, adresse.ligne2 as adresse2, adresse.ligne3 as adresse3, CAST (adresse.code_postal as INTEGER) as codePostal, adresse.ville, adresse.pays, adresse.telephone, transporteur.nom as transporteur FROM mada.commande  JOIN mada.ligne_commande ON ligne_commande.id_commande = commande.id JOIN mada.produit ON produit.id = ligne_commande.id_produit JOIN mada.tva ON tva.id = produit.id_tva JOIN mada.caracteristique ON caracteristique.id_produit = produit.id JOIN mada.client ON client.id = commande.id_client  JOIN mada.adresse ON client.id = adresse.id_client AND adresse.facturation = TRUE JOIN mada.transporteur ON commande.id_transporteur = transporteur.id WHERE commande.id = $1 ORDER BY produit.nom ASC;", [id]);
+
+    if (!rows[0] || rows[0] === undefined) {
+        return null;
+    }
+    consol.model(
+        `les produit de la commande ${id} ont été demandées !`
+    );
+
+    return rows.map((commande) => new Commande(commande));
+}
+
 
     /**
      * Méthode chargé d'aller chercher les informations relatives à une commande via son id passée en paramétre

@@ -1,4 +1,5 @@
 const Facture = require('../models/facture');
+const commandeController = require('./commandeController');
 
 
 /**
@@ -12,6 +13,38 @@ const Facture = require('../models/facture');
  */
 const factureController = {
 
+
+    facture: async (req, res) => {
+        try {
+            // Récupération des infos a passée dans la factures et je vérifit que le client qui a passé la commmande et le même en session !!
+
+            // Infos du client, de l'adresse du client, de la commande, de ligne_commande, du paiement, des produits, des cararctéristiques, 
+            try {
+                const commande = await commandeController.findCommandeFactures(req.params.id);
+                
+            } catch (error) {
+                
+            }
+            // Info de la commande 
+
+            try {
+                
+            } catch (error) {
+                
+            }
+
+
+
+
+
+
+            res.status(200).end();
+        } catch (error) {
+            console.trace('Erreur dans la méthode getAll du factureController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
 
     getAll: async (req, res) => {
         try {

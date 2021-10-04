@@ -55,6 +55,7 @@
     "nodemailer": "^6.6.3",
     "nodemailer-express-handlebars": "^4.0.0",
     "nodemon": "^2.0.7",
+    "pdfmake": "^0.2.2",
     "pg": "^8.7.1",
     "redis": "^3.1.2",
     "spdy": "^4.0.2",

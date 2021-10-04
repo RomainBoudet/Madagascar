@@ -423,6 +423,18 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
  */
  router.post('/admin/updateCommande', admin, commandeController.updateStatut);
 
+
+ //! FACTURES Création de factures aprés la commande et le paiement ---------------------------------------------------------------------------
+ /**
+ * Route pour la génération d'une facture PDF pour la commande passée dans URL !
+ * @route GET /users/facture/:id
+ * @group utilisateur
+ * @summary  Permet de générer une facture PDF pour la commande voulue 
+ * @returns {JSON} 200 - Permet de générer une facture PDF pour la commande voulue
+ */
+  router.post('/users/facture/:id(\\d+)', client, factureController.facture);
+
+
 //! Non util, permet de récupérer des email sur serveur Imap... 
  /**
  * Permet de lire les emails

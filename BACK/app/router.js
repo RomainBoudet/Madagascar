@@ -432,7 +432,7 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
  * @summary  Permet de générer une facture PDF pour la commande voulue 
  * @returns {JSON} 200 - Permet de générer une facture PDF pour la commande voulue
  */
-  router.post('/users/facture/:id(\\d+)', client, factureController.facture);
+  router.get('/users/facture/:id(\\d+)', client, factureController.facture);
 
 
 //! Non util, permet de récupérer des email sur serveur Imap... 

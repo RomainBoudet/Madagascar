@@ -1,6 +1,6 @@
+const Commande = require('../models/commande');
 const Facture = require('../models/facture');
-const commandeController = require('./commandeController');
-
+const pdfmake = require('pdfmake');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Facture pour les intéractions avec la BDD
@@ -16,24 +16,85 @@ const factureController = {
 
     facture: async (req, res) => {
         try {
-            // Récupération des infos a passée dans la factures et je vérifit que le client qui a passé la commmande et le même en session !!
 
             // Infos du client, de l'adresse du client, de la commande, de ligne_commande, du paiement, des produits, des cararctéristiques, 
-            try {
-                const commande = await commandeController.findCommandeFactures(req.params.id);
-                
-            } catch (error) {
-                
-            }
-            // Info de la commande 
+            let commande;
 
             try {
-                
+                commande = await Commande.findCommandeFactures(req.params.id);
+                console.log(commande);
             } catch (error) {
-                
+                console.trace('Erreur dans la méthode facture du factureController :',
+                    error);
+                res.status(500).end();
             }
 
+            // Je vérifit que le client qui a passé la commmande et le même en session !!
+            if (req.session.user.privilege === "Client" && commande.idClient !== req.session.user.idClient) {
 
+                console.log("Vous n'avez pas les droits pour accéder a cette ressource.");
+                return res.status(403).end();
+            }
+
+            // Maintenant je peux générer mon pdf !
+
+
+            // Define font files
+            var fonts = {
+                Roboto: {
+                    normal: 'fonts/Roboto-Regular.ttf',
+                    bold: 'fonts/Roboto-Medium.ttf',
+                    italics: 'fonts/Roboto-Italic.ttf',
+                    bolditalics: 'fonts/Roboto-MediumItalic.ttf'
+                }
+            };
+
+            var PdfPrinter = require('pdfmake');
+            var printer = new PdfPrinter(fonts);
+            var fs = require('fs');
+
+            const docDefinition = {
+                pageSize: 'A4',
+                // by default we use portrait, you can change it to landscape if you wish
+                // pageOrientation: 'landscape',
+
+                // [left, top, right, bottom] or [horizontal, vertical] or just a number for equal margins
+                pageMargins: [0, 20, 8, 30],
+                defaultStyle: {
+                    fontSize: 10
+                },
+                footer: (currentPage, pageCount) => {
+                    return {
+                        text: `Page ${currentPage}/${pageCount}`,
+                        alignment: 'right',
+                        margin: [0, 8, 8, 0],
+                        fontSize: 6
+                    };
+                },
+                content: [{
+                        text: 'Tables',
+                        style: 'header'
+                    },
+                    'Official documentation is in progress, this document is just a glimpse of what is possible with pdfmake and its layout engine.',
+                    {
+                        text: 'A simple table (no headers, no width specified, no spans, no styling)',
+                        style: 'subheader'
+                    },
+                    'The following table has nothing more than a body array',
+                    {
+                        style: 'tableExample',
+                        table: {
+                            body: [
+                                ['Column 1', 'Column 2', 'Column 3'],
+                                ['One value goes here', 'Another one here', 'OK?']
+                            ]
+                        }
+                    }
+                ]
+            }
+            const pdfDoc = printer.createPdfKitDocument(docDefinition);
+            pdfDoc.pipe(fs.createWriteStream('document.pdf'));
+            pdfDoc.end();
 
 
 
@@ -75,7 +136,7 @@ const factureController = {
 
     getByIdClient: async (req, res) => {
         try {
-            
+
             const facture = await Facture.findByIdClient(req.params.id);
             res.json(facture);
 
@@ -94,7 +155,7 @@ const factureController = {
         try {
 
             const data = {};
-        
+
             data.reference = req.body.reference;
             data.montantHT = req.body.montantHT;
             data.montantTTC = req.body.montantTTC;
@@ -119,9 +180,11 @@ const factureController = {
             } = req.params;
 
             if (Object.keys(req.body).length === 0) {
-                return res.status(200).json({message: 'Vous n\'avez envoyé aucune données à modifier.'});
+                return res.status(200).json({
+                    message: 'Vous n\'avez envoyé aucune données à modifier.'
+                });
             }
-            
+
             const updateFacture = await Facture.findOne(id);
 
 
@@ -131,7 +194,7 @@ const factureController = {
             const montantTVA = req.body.montantTVA;
             const idPaiement = req.body.idPaiement;
             const idClient = req.body.idClient;
-        
+
 
             let message = {};
 
@@ -180,8 +243,8 @@ const factureController = {
                 message.idClient = 'Votre idClient n\'a pas changé';
             }
 
-             await updateFacture.update();
-            
+            await updateFacture.update();
+
             res.json(message);
 
         } catch (error) {

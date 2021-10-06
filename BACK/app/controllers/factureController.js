@@ -37,9 +37,42 @@ const factureController = {
             }
 
             // Maintenant je peux générer mon pdf !
+            //! a intégrer !! 
 
+            function createPdfBinary(pdfDoc, callback) {
 
-            // Define font files
+                var fontDescriptors = {
+                    Roboto: {
+                        normal: path.join(__dirname, '..', 'examples', '/fonts/Roboto-Regular.ttf'),
+                        bold: path.join(__dirname, '..', 'examples', '/fonts/Roboto-Medium.ttf'),
+                        italics: path.join(__dirname, '..', 'examples', '/fonts/Roboto-Italic.ttf'),
+                        bolditalics: path.join(__dirname, '..', 'examples', '/fonts/Roboto-MediumItalic.ttf')
+                    }
+                };
+            
+                var printer = new pdfMakePrinter(fontDescriptors);
+            
+                var doc = printer.createPdfKitDocument(pdfDoc);
+            
+                var chunks = [];
+                var result;
+            
+                doc.on('data', function (chunk) {
+                    chunks.push(chunk);
+                });
+                doc.on('end', function () {
+                    result = Buffer.concat(chunks);
+                    callback('data:application/pdf;base64,' + result.toString('base64'));
+                });
+                doc.end();
+            
+            }
+
+            //https://github.com/bpampuch/pdfmake/blob/0.1/dev-playground/server.js
+            //https://www.npmjs.com/package/pdfmake
+            //http://pdfmake.org/playground.html
+
+           /*  // Define font files
             var fonts = {
                 Roboto: {
                     normal: 'fonts/Roboto-Regular.ttf',
@@ -94,7 +127,7 @@ const factureController = {
             }
             const pdfDoc = printer.createPdfKitDocument(docDefinition);
             pdfDoc.pipe(fs.createWriteStream('document.pdf'));
-            pdfDoc.end();
+            pdfDoc.end(); */
 
 
 

@@ -1,6 +1,20 @@
 const Commande = require('../models/commande');
 const Facture = require('../models/facture');
-const pdfmake = require('pdfmake');
+const fs = require('fs');
+const PdfPrinter = require('pdfmake');
+const path = require('path');
+
+const {
+    formatLong,
+    formatJMAHMSsecret,
+    formatCoupon,
+    formatLongSeconde,
+    dayjs,
+    formatLongSansHeure,
+    addWeekdays,
+} = require('../services/date');
+
+
 
 /**
  * Une méthode qui va servir a intéragir avec le model Facture pour les intéractions avec la BDD
@@ -29,6 +43,39 @@ const factureController = {
                 res.status(500).end();
             }
 
+            /* [
+  Commande {
+    id: 500,
+    reference: 'COMMANDE/0f75bcbd-b997-418d-a33b-8ef68c16bea3 ',
+    dateAchat: 2021-10-02T20:01:27.133Z,
+    commentaire: 'ratione recusandae temporibus',
+    sendSmsShipping: false,
+    updatedDate: null,
+    idCommandeStatut: 2,
+    idClient: 93,
+    idTransporteur: 2,
+    produit_nom: 'Awesome Fresh Shoes',
+    couleur: 'violet',
+    taille: 'XS',
+    quantite_commande: 2,
+    prix_ht: 4400,
+    taux: 0.05,
+    idclient: 93,
+    client_nom: 'Morin',
+    client_prenom: 'Vianney',
+    email: '93Clotaire51@gmail.com',
+    adresse_prenom: 'Vianney',
+    adresse_nomfamille: 'Morin',
+    adresse1: '37 Passage Roux de Tilsitt ',
+    adresse2: null,
+    adresse3: null,
+    codepostal: 28823,
+    ville: 'Simonview',
+    pays: 'Libye',
+    telephone: '+33596781196',
+    transporteur: 'TNT'
+  }, */
+
             // Je vérifit que le client qui a passé la commmande et le même en session !!
             if (req.session.user.privilege === "Client" && commande.idClient !== req.session.user.idClient) {
 
@@ -37,100 +84,46 @@ const factureController = {
             }
 
             // Maintenant je peux générer mon pdf !
-            //! a intégrer !! 
+            //! a intégrer !!
+            const articles = [];
+            commande.map(article => (`${articles.push(article.id_produit+"-"+article.quantite_commande)}`));
+            articlesBought = articles.join('-');
+            const referenceFacture = `${commande[0].idClient}-${commande[0].montant}-${formatJMAHMSsecret(new Date())}-${articlesBought}`;
 
-            function createPdfBinary(pdfDoc, callback) {
+            console.log("referenceFacture == ", referenceFacture);
 
-                var fontDescriptors = {
-                    Roboto: {
-                        normal: path.join(__dirname, '..', 'examples', '/fonts/Roboto-Regular.ttf'),
-                        bold: path.join(__dirname, '..', 'examples', '/fonts/Roboto-Medium.ttf'),
-                        italics: path.join(__dirname, '..', 'examples', '/fonts/Roboto-Italic.ttf'),
-                        bolditalics: path.join(__dirname, '..', 'examples', '/fonts/Roboto-MediumItalic.ttf')
-                    }
-                };
-            
-                var printer = new pdfMakePrinter(fontDescriptors);
-            
-                var doc = printer.createPdfKitDocument(pdfDoc);
-            
-                var chunks = [];
-                var result;
-            
-                doc.on('data', function (chunk) {
-                    chunks.push(chunk);
-                });
-                doc.on('end', function () {
-                    result = Buffer.concat(chunks);
-                    callback('data:application/pdf;base64,' + result.toString('base64'));
-                });
-                doc.end();
-            
-            }
-
-            //https://github.com/bpampuch/pdfmake/blob/0.1/dev-playground/server.js
-            //https://www.npmjs.com/package/pdfmake
-            //http://pdfmake.org/playground.html
-
-           /*  // Define font files
             var fonts = {
                 Roboto: {
-                    normal: 'fonts/Roboto-Regular.ttf',
-                    bold: 'fonts/Roboto-Medium.ttf',
-                    italics: 'fonts/Roboto-Italic.ttf',
-                    bolditalics: 'fonts/Roboto-MediumItalic.ttf'
+                    normal: path.join(__dirname, '..', '..', 'conception', '/fonts/Roboto-Regular.ttf'),
+                    bold: path.join(__dirname, '..', '..', 'conception', '/fonts/Roboto-Medium.ttf'),
+                    italics: path.join(__dirname, '..', '..', 'conception', '/fonts/Roboto-Italic.ttf'),
+                    bolditalics: path.join(__dirname, '..', '..', 'conception', '/fonts/Roboto-MediumItalic.ttf'),
                 }
             };
 
-            var PdfPrinter = require('pdfmake');
             var printer = new PdfPrinter(fonts);
-            var fs = require('fs');
 
-            const docDefinition = {
-                pageSize: 'A4',
-                // by default we use portrait, you can change it to landscape if you wish
-                // pageOrientation: 'landscape',
+            var docDefinition = {
 
-                // [left, top, right, bottom] or [horizontal, vertical] or just a number for equal margins
-                pageMargins: [0, 20, 8, 30],
-                defaultStyle: {
-                    fontSize: 10
-                },
-                footer: (currentPage, pageCount) => {
-                    return {
-                        text: `Page ${currentPage}/${pageCount}`,
-                        alignment: 'right',
-                        margin: [0, 8, 8, 0],
-                        fontSize: 6
-                    };
-                },
-                content: [{
-                        text: 'Tables',
-                        style: 'header'
-                    },
-                    'Official documentation is in progress, this document is just a glimpse of what is possible with pdfmake and its layout engine.',
-                    {
-                        text: 'A simple table (no headers, no width specified, no spans, no styling)',
-                        style: 'subheader'
-                    },
-                    'The following table has nothing more than a body array',
-                    {
-                        style: 'tableExample',
-                        table: {
-                            body: [
-                                ['Column 1', 'Column 2', 'Column 3'],
-                                ['One value goes here', 'Another one here', 'OK?']
-                            ]
-                        }
-                    }
+                content: [
+                    'First paragraph',
+                    'Another paragraph, this time a little bit longer to make sure, this line will be divided into at least two lines'
                 ]
+
+
+                // ...
+            };
+
+            var options = {
+                // ...
             }
-            const pdfDoc = printer.createPdfKitDocument(docDefinition);
-            pdfDoc.pipe(fs.createWriteStream('document.pdf'));
-            pdfDoc.end(); */
+
+            var pdfDoc = printer.createPdfKitDocument(docDefinition);
+            pdfDoc.pipe(fs.createWriteStream(`Factures/${referenceFacture}.pdf`));
+            pdfDoc.end();
 
 
-
+           
 
             res.status(200).end();
         } catch (error) {

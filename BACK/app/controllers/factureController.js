@@ -7,6 +7,7 @@ const path = require('path');
 const {
     formatLong,
     formatJMAHMSsecret,
+    formatJMA,
     formatCoupon,
     formatLongSeconde,
     dayjs,
@@ -54,11 +55,13 @@ const factureController = {
     idCommandeStatut: 2,
     idClient: 93,
     idTransporteur: 2,
-    produit_nom: 'Awesome Fresh Shoes',
-    couleur: 'violet',
-    taille: 'XS',
+    produit_nom: 'Unbranded Soft Shoes',
+    couleur: 'bleu',
+    taille: 'M',
+    montant: 254,
     quantite_commande: 2,
-    prix_ht: 4400,
+    id_produit: 96,
+    prix_ht: 8300,
     taux: 0.05,
     idclient: 93,
     client_nom: 'Morin',
@@ -74,7 +77,8 @@ const factureController = {
     pays: 'Libye',
     telephone: '+33596781196',
     transporteur: 'TNT'
-  }, */
+  }
+], */
 
             // Je vérifit que le client qui a passé la commmande et le même en session !!
             if (req.session.user.privilege === "Client" && commande.idClient !== req.session.user.idClient) {
@@ -86,10 +90,12 @@ const factureController = {
             // Maintenant je peux générer mon pdf !
             //! a intégrer !!
             const articles = [];
-            commande.map(article => (`${articles.push(article.id_produit+"-"+article.quantite_commande)}`));
-            articlesBought = articles.join('-');
-            const referenceFacture = `${commande[0].idClient}-${commande[0].montant}-${formatJMAHMSsecret(new Date())}-${articlesBought}`;
+            commande.map(article => (`${articles.push(article.id_produit+"/"+article.quantite_commande)}`));
+            articlesBought = articles.join('/');
+            const referenceFacture = `${commande[0].client_nom}`;
 
+            //const referenceFacture = `${commande[0].client_nom}_${formatJMA(new Date(commande[0].dateAchat))}_${articlesBought}`;
+            // une référence de facture avec le nom du client, la date d'achat, et la codification article achetés ?
             console.log("referenceFacture == ", referenceFacture);
 
             var fonts = {
@@ -123,7 +129,7 @@ const factureController = {
             pdfDoc.end();
 
 
-           
+
 
             res.status(200).end();
         } catch (error) {

@@ -40,6 +40,11 @@ const formatJMAHMS = (date) => {
     return date;
 }
 
+const formatJMAHM = (date) => {
+    date = dayjs(date).format('DD/MM/YYYY/HH:mm');
+    return date;
+}
+
 const formatJMAHMSsecret = (date) => {
     date = dayjs(date).format('DDMMYYYYHHmmss');
     return date;
@@ -78,6 +83,7 @@ module.exports = {
     formatJMA,
     formatLong,
     formatForBack,
+    formatJMAHM,
     formatJMAHMS,
     formatJMAHMSsecret,
     formatCoupon,

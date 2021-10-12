@@ -34,6 +34,10 @@ const formatJMA = (date) => {
     date = dayjs(date).format('DD/MM/YYYY');
     return date;
 }
+const formatJMATiret = (date) => {
+    date = dayjs(date).format('dddd_DD-MM-YYYY_HH-mm');
+    return date;
+}
 
 const formatJMAHMS = (date) => {
     date = dayjs(date).format('DD/MM/YYYY/HH:mm:ss');
@@ -87,5 +91,6 @@ module.exports = {
     formatJMAHMS,
     formatJMAHMSsecret,
     formatCoupon,
-    formatLongSansHeure
+    formatLongSansHeure,
+    formatJMATiret,
 };

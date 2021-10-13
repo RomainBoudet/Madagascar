@@ -186,5 +186,6 @@ module.exports = {
     adresseEnvoieFormatHTML,
     textShopFacture,
     textAdresseLivraison,
-    textAdresseFacturation
+    textAdresseFacturation,
+    facturePhone
 };

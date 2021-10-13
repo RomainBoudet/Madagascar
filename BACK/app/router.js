@@ -426,7 +426,7 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
 
  //! FACTURES Création de factures aprés la commande et le paiement ---------------------------------------------------------------------------
  /**
- * Route pour la génération d'une facture PDF pour la commande passée dans URL !
+ * Route pour la génération d'une facture PDF pour l'identifiant de commande passée dans URL !
  * @route GET /users/facture/:id
  * @group utilisateur
  * @summary  Permet de générer une facture PDF pour la commande voulue 

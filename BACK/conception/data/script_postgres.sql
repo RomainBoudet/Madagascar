@@ -337,6 +337,11 @@ CREATE TABLE statut_commande(
 	description        text_length NOT NULL
 );
 
+
+------------------------------------------------------------
+-- Table: Transporteur
+------------------------------------------------------------
+
 CREATE TABLE transporteur(
 	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom				    text_valid UNIQUE NOT NULL,

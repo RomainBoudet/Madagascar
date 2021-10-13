@@ -7,29 +7,17 @@ const PdfPrinter = require('pdfmake');
 const path = require('path');
 
 const {
-    formatLong,
-    formatJMAHMSsecret,
     formatJMA,
-    formatCoupon,
-    formatLongSeconde,
-    dayjs,
-    formatLongSansHeure,
-    addWeekdays,
-    formatJMATiret,
 } = require('../services/date');
 
 const {
-    adresseEnvoieFormatHTML,
-    adresseEnvoieFormat,
     textShopFacture,
     textAdresseLivraison,
     textAdresseFacturation,
     facturePhone
 } = require('../services/adresse');
 
-const {
-    arrondi
-} = require('../services/arrondi');
+
 
 /**
  * Une méthode qui va servir a intéragir avec le model Facture pour les intéractions avec la BDD
@@ -126,6 +114,17 @@ const factureController = {
             //console.log("totalHT == ", totalHT);
             //console.log("totalTax == ", totalTax);
             //console.log("totalTTC == ",totalTTC);
+
+            // Si retrait sur le stand, on affiche pas d'adresse de livraison !
+            let adresseLivraison;
+            if (commande[0].idTransporteur === 3) {
+
+                adresseLivraison = `Vous n'avez pas choisi \n de livraison mais un retrait \n sur le stand lors du \n prochain marché.`
+
+            } else {
+
+                adresseLivraison = await textAdresseLivraison(commande[0].idClient);
+            }
 
             const theBody = [
                 [{
@@ -370,7 +369,7 @@ const factureController = {
                                                     width: '*',
                                                 },
                                                 {
-                                                    text: `${commande[0].moyenPaiement} ${commande[0].moyenPaiementDetail}`,
+                                                    text: `${commande[0].moyenPaiement}`,
                                                     bold: false,
                                                     alignment: 'right',
                                                     width: 100,
@@ -420,7 +419,7 @@ const factureController = {
 
                             },
                             {
-                                text: await textAdresseLivraison(commande[0].idClient),
+                                text: adresseLivraison,
                                 bold: true,
                                 color: '#333333',
                                 alignment: 'left',
@@ -657,7 +656,7 @@ const factureController = {
                     //font: 'Quicksand',
                 },
 
-        
+
             };
 
             const options = {

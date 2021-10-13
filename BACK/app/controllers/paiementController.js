@@ -51,6 +51,10 @@ const {
     sendEmail
 } = require('../services/sendEmail');
 
+const {
+    facture
+} = require('../services/facture');
+
 const validator = require('validator');
 
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
@@ -159,6 +163,14 @@ const paiementController = {
                     message: "Pour  finaliser votre paiement, merci de choisir un mode de livraison parmis ceux proposé ."
                 })
             }
+
+             // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
+             const isFacturationOk = await Adresse.findByFacturationTrue(req.session.user.idClient);
+             if (!isFacturationOk || isFacturationOk ===  null || isFacturationOk === undefined) {
+                 return res.status(200).json({
+                     message: "Pour effectuer une commande, vous devez avoir enregistré une adresse de Facturation a minima'."
+                 })
+             }
 
             // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
             const isEnvoieOk = await Adresse.findByEnvoie(req.session.user.idClient);
@@ -450,10 +462,11 @@ const paiementController = {
                 //Si le paiement à bien été effectué et reçu (SEPA ou CB) :
                 if (event.type === 'payment_intent.succeeded' && event.data.object.amount_received === Number(event.data.object.metadata.amount)) {
 
+                    let resultCommande;
+
 
                     try {
 
-                        let resultCommande;
                         let articlesBought;
 
                         // Si le paiement est réalisé par SEPA les données ont déja été inséré lors de l'event payment_intent.processing
@@ -557,7 +570,7 @@ const paiementController = {
 
                         }
 
-                        //! Insérer l'info en BDD dabns la table paiement !
+                        //! Insérer l'info en BDD dans la table paiement !
 
                         let referencePaiement;
                         let methode;
@@ -569,9 +582,11 @@ const paiementController = {
                         try {
 
                             const dataPaiement = {};
-
+                            let moyenPaiement;
 
                             if (paymentData.type === "card") {
+
+                                moyenPaiement = "Carte bancaire";
 
                                 referencePaiement = `${paymentData.card.exp_month}${paymentData.card.exp_year}${paymentData.card.last4}.${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
 
@@ -585,6 +600,8 @@ const paiementController = {
 
 
                             } else if (paymentData.type === "sepa_debit") {
+
+                                moyenPaiement = "Virement Bancaire";
 
                                 referencePaiement = `${paymentData.sepa_debit.bank_code}.${paymentData.sepa_debit.last4}.${session.user.idClient}.${session.totalStripe}.${formatJMAHMSsecret(new Date())}.${articlesBought}`;
 
@@ -602,7 +619,7 @@ const paiementController = {
                             dataPaiement.montant = session.totalStripe; // le montant TTC + le prix du transport...
                             dataPaiement.idCommande = resultCommande.id;
                             dataPaiement.paymentIntent = paymentIntent.id;
-                            dataPaiement.moyenPaiement = paymentData.type;
+                            dataPaiement.moyenPaiement = moyenPaiement;
                             dataPaiement.moyenPaiementDetail = moyenPaiementDet;
                             dataPaiement.origine = origine;
 
@@ -884,10 +901,8 @@ const paiementController = {
                         await redis.del(`mada/sessionSEPA_Attente_Validation_PaymentIntentId:${paymentIntent.id}`);
                     }
 
-
-
-                    // TODO 
                     // écrire une facture !
+                    facture(resultCommande.id);
 
 
                     return res.status(200).end();
@@ -1345,7 +1360,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3Jk68iLNa9FFzz1X1H5FDXaD_secret_mhlDtAEHadfW3WgABPlGMDgVk",
+                client_secret: "pi_3JkBlvLNa9FFzz1X12oEuAKR_secret_YaqQNqbGlm2tqotDYjXw9P2j2",
             });
 
 
@@ -1394,7 +1409,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JjjbbLNa9FFzz1X0qsnzZsL_secret_1zTYRPQhLfhqcBhRDm10awLrr",
+                client_secret: "pi_3JkBpHLNa9FFzz1X0E9Exz8f_secret_CUkgPFm6BfsfGb7mSjb3HVPOy",
             });
 
 

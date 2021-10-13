@@ -1674,7 +1674,7 @@ const fakeData = async () => {
         //! Mise en place des infos propre au site (nom, phrase de biencvenue, contact..etc.)
 
         consol.seed("Mise en place des infos du site dans la BDD");
-        await db.query(`INSERT INTO mada.shop (nom, texte_intro, email_contact, telephone) VALUES('${process.env.SITE}','${process.env.TEXTEINTRO}', '${process.env.EMAILCONTACTSITE}', '${process.env.TELEPHONESITE}');`);
+        await db.query(`INSERT INTO mada.shop (nom, adresse1, code_postal, ville, pays, texte_intro, email_contact, telephone) VALUES('${process.env.SITE}', '${process.env.ADRESSE1}', '${process.env.CODEPOSTAL}', '${process.env.VILLE}', '${process.env.PAYS}','${process.env.TEXTEINTRO}', '${process.env.EMAILCONTACTSITE}', '${process.env.TELEPHONESITE}');`);
         consol.seed(`Données du site mis en place pour le site ${process.env.SITE}`);
 
         consol.seed("Mise en place des infos Twillio dans la BDD");

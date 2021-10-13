@@ -58,6 +58,12 @@ const mainController = {
       const data = {};
 
       data.nom = req.body.nom;
+      data.adresse1 = req.body.adresse1;
+      data.adresse2 = req.body.adresse2;
+      data.adresse3 = req.body.adresse3;
+      data.codePostal = req.body.codePostal;
+      data.ville = req.body.ville;
+      data.pays = req.body.pays;
       data.logo = req.body.logo;
       data.texteIntro = req.body.texteIntro;
       data.emailContact = req.body.emailContact;
@@ -86,6 +92,12 @@ const mainController = {
       const updateClient = await Shop.findOne(id);
 
       const nom = req.body.nom;
+      const adresse1 = req.body.adresse1;
+      const adresse2 = req.body.adresse2;
+      const adresse3 = req.body.adresse3;
+      const codePostal = req.body.codePostal;
+      const ville = req.body.ville;
+      const pays = req.body.pays;
       const logo = req.body.logo;
       const texteInfo = req.body.texteInfo;
       const emailContact = req.body.emailContact;
@@ -100,6 +112,45 @@ const mainController = {
         userMessage.nom = 'Votre nom de site n\'a pas changé';
       }
 
+
+      if (adresse1) {
+        updateClient.adresse1 = adresse1;
+        userMessage.adresse1 = 'Votre nouveau adresse1 a bien été enregistré ';
+      } else if (!adresse1) {
+        userMessage.adresse1 = 'Votre adresse1 n\'a pas changé';
+      }
+
+      if (adresse2) {
+        updateClient.adresse2 = adresse2;
+        userMessage.adresse2 = 'Votre nouveau adresse2 a bien été enregistré ';
+      } else if (!adresse2) {
+        userMessage.adresse2 = 'Votre adresse2 n\'a pas changé';
+      }
+
+      if (adresse3) {
+        updateClient.adresse3 = adresse3;
+        userMessage.adresse3 = 'Votre nouveau adresse3 a bien été enregistré ';
+      } else if (!adresse3) {
+        userMessage.adresse3 = 'Votre adresse3 n\'a pas changé';
+      }
+      if (codePostal) {
+        updateClient.codePostal = adresse2;
+        userMessage.codePostal = 'Votre nouveau codePostal a bien été enregistré ';
+      } else if (!codePostal) {
+        userMessage.codePostal = 'Votre codePostal n\'a pas changé';
+      }
+      if (ville) {
+        updateClient.ville = ville;
+        userMessage.ville = 'Votre nouveau ville a bien été enregistré ';
+      } else if (!ville) {
+        userMessage.ville = 'Votre ville n\'a pas changé';
+      }
+      if (pays) {
+        updateClient.pays = pays;
+        userMessage.pays = 'Votre nouveau pays a bien été enregistré ';
+      } else if (!pays) {
+        userMessage.pays = 'Votre pays n\'a pas changé';
+      }
       if (logo) {
         updateClient.logo = logo;
         userMessage.logo = 'Votre nouveau logo a bien été enregistré ';

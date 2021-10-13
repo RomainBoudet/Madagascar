@@ -6,6 +6,12 @@ class Shop {
 
     id;
     nom;
+    adresse1;
+    adresse2;
+    adresse3;
+    codePostal;
+    ville;
+    pays;
     logo;
     texteIntro;
     emailContact;
@@ -16,6 +22,9 @@ class Shop {
     }
     set email_contact(val) {
         this.emailContact = val;
+    }
+    set code_postal(val) {
+        this.codePostal = val;
     }
     
 
@@ -96,8 +105,8 @@ class Shop {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.shop (nom, logo, texte_intro, email_contact, telephone) VALUES ($1, $2, $3, $4, $5) RETURNING *;`,
-            [this.nom, this.logo, this.texteIntro, this.emailContact, this.telephone]
+            `INSERT INTO mada.shop (nom, adresse1, adresse2, adresse3, code_postal, ville, pays, logo, texte_intro, email_contact, telephone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *;`,
+            [this.nom, this.adresse1, this.adresse2, this.adresse3, this.codePostal, this.ville, this.pays, this.logo, this.texteIntro, this.emailContact, this.telephone]
         );
 
         this.id = rows[0].id;
@@ -121,7 +130,7 @@ class Shop {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.shop SET nom = $1, logo = $2, texte_intro = $3, email_contact = $4, telephone = $5 WHERE id = $6 RETURNING *;`,
+            `UPDATE mada.shop SET nom = $1, adresse1 = $2, adresse2 = $3, adresse3 = $4, code_postal = $5, ville = $6, pays = $7, logo = $8, texte_intro = $9, email_contact = $10, telephone = $11 WHERE id = $12 RETURNING *;`,
             [this.nom, this.logo, this.texteIntro, this.emailContact, this.telephone, this.id]
         );
 

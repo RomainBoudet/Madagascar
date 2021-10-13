@@ -98,6 +98,12 @@ CHECK (
 CREATE TABLE shop(
 	id  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	nom               text_valid NOT NULL DEFAULT 'Madagascar Artisanat',
+	adresse1		  text_valid NOT NULL,
+	adresse2		  text_valid,
+	adresse3		  text_valid,
+	code_postal		  postale_code_fr NOT NULL,
+	ville			  text_valid NOT NULL,
+	pays			  text_valid NOT NULL,	  
 	logo              text_valid,
 	texte_intro       text_valid NOT NULL DEFAULT 'Bienvenue sur le site XXX',
 	email_contact     email NOT NULL DEFAULT 'contact@monsite.fr',
@@ -715,7 +721,7 @@ produit.id,
 CAST (tva.taux as FLOAT) as tva
 FROM mada.produit 
 LEFT JOIN mada.tva ON produit.id_tva = tva.id
-LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id AND reduction.actif = TRUE
+LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id AND reduction.actif = TRUE AND reduction.periode_reduction::daterange @> current_date::date
 LEFT JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
 LEFT JOIN mada.stock ON stock.id_produit = produit.id;
 
@@ -739,7 +745,7 @@ produit.id
 FROM mada.produit 
 LEFT JOIN mada.categorie ON produit.id_categorie = categorie.id
 LEFT JOIN mada.tva ON produit.id_tva = tva.id
-LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id AND reduction.actif = TRUE
+LEFT JOIN mada.reduction ON produit.id_reduction = reduction.id AND reduction.actif = TRUE AND reduction.periode_reduction::daterange @> current_date::date
 LEFT JOIN mada.caracteristique ON caracteristique.id_produit = produit.id
 LEFT JOIN mada.stock ON stock.id_produit = produit.id
 LEFT JOIN mada.image ON image.id_produit = produit.id

@@ -1,5 +1,8 @@
 const Commande = require('../models/commande');
 const Facture = require('../models/facture');
+const Adresse = require('../models/adresse');
+
+
 const fs = require('fs');
 const PdfPrinter = require('pdfmake');
 const path = require('path');
@@ -16,7 +19,17 @@ const {
     formatJMATiret,
 } = require('../services/date');
 
+const {
+    adresseEnvoieFormatHTML,
+    adresseEnvoieFormat,
+    textShopFacture,
+    textAdresseLivraison,
+    textAdresseFacturation,
+} = require('../services/adresse');
 
+const {
+    arrondi
+} = require('../services/arrondi');
 
 /**
  * Une méthode qui va servir a intéragir avec le model Facture pour les intéractions avec la BDD
@@ -45,44 +58,84 @@ const factureController = {
                 res.status(500).end();
             }
 
+stop
+
             /* [
   Commande {
-    id: 500,
-    reference: 'COMMANDE/0f75bcbd-b997-418d-a33b-8ef68c16bea3 ',
-    dateAchat: 2021-10-02T20:01:27.133Z,
-    commentaire: 'ratione recusandae temporibus',
-    sendSmsShipping: false,
+    id: 501,
+    reference: '101.12930.12102021130638.104.1.114.1',
+    dateAchat: 2021-10-12T11:06:38.906Z,
+    commentaire: null,
+    sendSmsShipping: true,
     updatedDate: null,
     idCommandeStatut: 2,
-    idClient: 93,
-    idTransporteur: 2,
-    produit_nom: 'Unbranded Soft Shoes',
-    couleur: 'bleu',
-    taille: 'M',
-    montant: 254,
-    quantite_commande: 2,
-    id_produit: 96,
-    prix_ht: 8300,
+    idClient: 101,
+    idTransporteur: 4,
+    produit_nom: 'Fantastic Frozen Mouse',
+    couleur: 'vert',
+    taille: 'S',
+    montant: 12930,
+    quantite_commande: 1,
+    id_produit: 114,
+    prix_ht: 4200,
     taux: 0.05,
-    idclient: 93,
-    client_nom: 'Morin',
-    client_prenom: 'Vianney',
-    email: '93Clotaire51@gmail.com',
-    adresse_prenom: 'Vianney',
-    adresse_nomfamille: 'Morin',
-    adresse1: '37 Passage Roux de Tilsitt ',
+    reduction: null,
+    idclient: 101,
+    client_nom: 'Achat',
+    client_prenom: 'Pierre',
+    email: 'achat@r-boudet.fr',
+    adresse_prenom: 'Pierre',
+    adresse_nomfamille: 'Achat',
+    adresse1: '37 rue du Moulin en Pierre',
     adresse2: null,
     adresse3: null,
-    codepostal: 28823,
-    ville: 'Simonview',
-    pays: 'Libye',
-    telephone: '+33596781196',
-    transporteur: 'TNT'
+    codepostal: 22380,
+    ville: 'Saint cast',
+    pays: 'FRANCE',
+    telephone: '+33603720612',
+    transporteur: 'La poste Collisimmo',
+    frais_expedition: 1200
+  },
+  Commande {
+    id: 501,
+    reference: '101.12930.12102021130638.104.1.114.1',
+    dateAchat: 2021-10-12T11:06:38.906Z,
+    commentaire: null,
+    sendSmsShipping: true,
+    updatedDate: null,
+    idCommandeStatut: 2,
+    idClient: 101,
+    idTransporteur: 4,
+    produit_nom: 'Handcrafted Concrete Cheese',
+    couleur: 'violet',
+    taille: 'XS',
+    montant: 12930,
+    quantite_commande: 1,
+    id_produit: 104,
+    prix_ht: 6100,
+    taux: 0.2,
+    reduction: null,
+    idclient: 101,
+    client_nom: 'Achat',
+    client_prenom: 'Pierre',
+    email: 'achat@r-boudet.fr',
+    adresse_prenom: 'Pierre',
+    adresse_nomfamille: 'Achat',
+    adresse1: '37 rue du Moulin en Pierre',
+    adresse2: null,
+    adresse3: null,
+    codepostal: 22380,
+    ville: 'Saint cast',
+    pays: 'FRANCE',
+    telephone: '+33603720612',
+    transporteur: 'La poste Collisimmo',
+    frais_expedition: 1200,
   }
-], */
+]
+*/
 
             // Je vérifit que le client qui a passé la commmande et le même en session !!
-            if (req.session.user.privilege === "Client" && commande.idClient !== req.session.user.idClient) {
+            if (req.session.user.privilege === "Client" && commande[0].idClient !== req.session.user.idClient) {
 
                 console.log("Vous n'avez pas les droits pour accéder a cette ressource.");
                 return res.status(403).end();
@@ -108,6 +161,130 @@ const factureController = {
             });
 
 
+            //!Calcul des infos pour la facture :
+
+            // Si pas de réduction, la valeur vaut 0
+            let reduction;
+
+            if (commande.reduction === null) {
+                reduction = 0;
+            } else if (commande.reduction > 0) {
+                reduction = commande.reduction;
+            } else {
+                reduction = 0;
+            }
+            // Je n'oubli pas de réafficher les prix unitaires en comprenant de possible réductions...
+            const prixUnitaire = commande.map(article => parseFloat(arrondi((article.prix_ht) * (1 - reduction))))
+
+            //! calcul des totaux a finir
+            //! prise en compte des daterange de reduction dans application des reductions ! dans la vue view_produit qui est utilisé dans le findOne elle-même utilisé dans le panier controller, et le Commande.findCommandeFactures pour afficher les données Factures !! 
+
+            const totalProduit = (item.quantite_commande * item.prix_ht) / 100;
+            // const fraisExpedition =
+            // const totalHT =
+            // const totalTax =
+            // const totalFinal =
+
+            const theBody = [
+                [{
+                        text: 'Produit',
+                        fillColor: '#eaf2f5',
+                        border: [false, true, false, true],
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                    {
+                        text: 'Référence produit',
+                        fillColor: '#eaf2f5',
+                        border: [false, true, false, true],
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                    {
+                        text: 'Taux de taxe',
+                        border: [false, true, false, true],
+                        alignment: 'right',
+                        fillColor: '#eaf2f5',
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                    {
+                        text: 'Prix unitaire (HT)',
+                        border: [false, true, false, true],
+                        alignment: 'right',
+                        fillColor: '#eaf2f5',
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                    {
+                        text: 'Qté',
+                        border: [false, true, false, true],
+                        alignment: 'right',
+                        fillColor: '#eaf2f5',
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                    {
+                        text: 'Total (HT)',
+                        border: [false, true, false, true],
+                        alignment: 'right',
+                        fillColor: '#eaf2f5',
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                ],
+            ];
+
+            for (const item of commande) {
+
+                const itemToPush = [{
+                        text: item.produit_nom,
+                        border: [false, false, false, true],
+                        margin: [0, 5, 0, 5],
+                        alignment: 'left',
+                    },
+                    {
+                        text: item.id_produit,
+                        border: [false, false, false, true],
+                        margin: [0, 5, 0, 5],
+                        alignment: 'left',
+                    },
+
+                    {
+                        border: [false, false, false, true],
+                        text: `${item.taux*100}%`,
+                        fillColor: '#f5f5f5',
+                        alignment: 'right',
+                        margin: [0, 5, 0, 5],
+                    },
+                    {
+                        border: [false, false, false, true],
+                        text: `${item.prix_ht/100}€`,
+                        fillColor: '#f5f5f5',
+                        alignment: 'right',
+                        margin: [0, 5, 0, 5],
+                    },
+                    {
+                        border: [false, false, false, true],
+                        text: item.quantite_commande,
+                        fillColor: '#f5f5f5',
+                        alignment: 'right',
+                        margin: [0, 5, 0, 5],
+                    },
+                    {
+                        border: [false, false, false, true],
+                        text: `${(item.quantite_commande*item.prix_ht)/100}€`,
+                        fillColor: '#f5f5f5',
+                        alignment: 'right',
+                        margin: [0, 5, 0, 5],
+                    },
+                ];
+
+                theBody.push(itemToPush);
+            };
+
+            console.log("theBody == ", theBody);
+
             const fonts = {
                 Roboto: {
                     normal: path.join(__dirname, '..', '..', 'conception', '/fonts/Roboto-Regular.ttf'),
@@ -120,7 +297,7 @@ const factureController = {
             const printer = new PdfPrinter(fonts);
 
             var docDefinition = {
-
+                // Si je veux   plus tard, ajouter des headers ou footers...
                 header: {
                     columns: [{
                             text: '',
@@ -177,7 +354,7 @@ const factureController = {
                                                     alignment: 'right',
                                                 },
                                                 {
-                                                    text: '00001',
+                                                    text: `${commande[0].id}`,
                                                     bold: true,
                                                     color: '#333333',
                                                     fontSize: 12,
@@ -186,6 +363,7 @@ const factureController = {
                                                 },
                                             ],
                                         },
+
                                         {
                                             columns: [{
                                                     text: 'Date :',
@@ -196,7 +374,7 @@ const factureController = {
                                                     alignment: 'right',
                                                 },
                                                 {
-                                                    text: 'June 01, 2016',
+                                                    text: `${formatJMA(commande[0].dateAchat)}`,
                                                     bold: true,
                                                     color: '#333333',
                                                     fontSize: 12,
@@ -217,37 +395,20 @@ const factureController = {
                                                 {
                                                     text: 'PAYÉ',
                                                     bold: true,
-                                                    fontSize: 14,
+                                                    fontSize: 16,
                                                     alignment: 'right',
                                                     color: 'green',
                                                     width: 100,
                                                 },
                                             ],
                                         },
-                                        {
-                                            columns: [{
-                                                    text: 'Référence de commande :',
-                                                    color: '#aaaaab',
-                                                    bold: true,
-                                                    fontSize: 12,
-                                                    alignment: 'right',
-                                                    width: '*',
-                                                },
-                                                {
-                                                    text: '125.12556566.654.15.23',
-                                                    bold: true,
-                                                    fontSize: 10,
-                                                    alignment: 'right',
-                                                    color: 'blue',
-                                                    width: 100,
-                                                },
-                                            ],
-                                        },
+
                                     ],
                                 },
                             ],
                         ],
                     },
+                    '\n\n',
                     {
                         columns: [{
                                 text: '',
@@ -275,21 +436,24 @@ const factureController = {
                             },
                         ],
                     },
+
                     {
                         columns: [{
-                                text: 'Nom du shop \n Adresse du Shop, ligne 1. \n Adresse du shop ligne 2',
+                                text: await textShopFacture(),
+                                bold: true,
+                                color: '#333333',
+                                alignment: 'left',
+                                fontSize: 14,
+
+                            },
+                            {
+                                text: await textAdresseLivraison(commande[0].idClient),
                                 bold: true,
                                 color: '#333333',
                                 alignment: 'left',
                             },
                             {
-                                text: 'Nom du client \n adresse du client livraison ligne 1 \n Adresse du client livraison ligne 2 \n Adresse du client livraison ligne 3',
-                                bold: true,
-                                color: '#333333',
-                                alignment: 'left',
-                            },
-                            {
-                                text: 'Nom du client \n adresse du client facturation ligne 1 \n Adresse du client facturation ligne 2 \n Adresse du client facturation ligne 3',
+                                text: await textAdresseFacturation(commande[0].idClient),
                                 bold: true,
                                 color: '#333333',
                                 alignment: 'left',
@@ -299,11 +463,11 @@ const factureController = {
                     '\n\n',
                     {
                         width: '100%',
-                        alignment: 'center',
-                        text: 'Facture N° 123',
+                        alignment: 'left',
+                        text: `Facture N°${commande[0].id} / Commande référence : ${commande[0].reference}`,
                         bold: true,
                         margin: [0, 10, 0, 10],
-                        fontSize: 15,
+                        fontSize: 13,
                     },
                     {
                         layout: {
@@ -347,72 +511,8 @@ const factureController = {
                         },
                         table: {
                             headerRows: 1,
-                            widths: ['*', 80, 80],
-                            body: [
-                                [{
-                                        text: 'ITEM DESCRIPTION',
-                                        fillColor: '#eaf2f5',
-                                        border: [false, true, false, true],
-                                        margin: [0, 5, 0, 5],
-                                        textTransform: 'uppercase',
-                                    },
-                                    {
-                                        text: 'ITEM DESCRIPTION',
-                                        fillColor: '#eaf2f5',
-                                        border: [false, true, false, true],
-                                        margin: [0, 5, 0, 5],
-                                        textTransform: 'uppercase',
-                                    },
-                                    {
-                                        text: 'ITEM TOTAL',
-                                        border: [false, true, false, true],
-                                        alignment: 'right',
-                                        fillColor: '#eaf2f5',
-                                        margin: [0, 5, 0, 5],
-                                        textTransform: 'uppercase',
-                                    },
-                                ],
-                                [{
-                                        text: 'Item 1',
-                                        border: [false, false, false, true],
-                                        margin: [0, 5, 0, 5],
-                                        alignment: 'left',
-                                    },
-                                    {
-                                        text: 'Item 144',
-                                        border: [false, false, false, true],
-                                        margin: [0, 5, 0, 5],
-                                        alignment: 'left',
-                                    },
-                                    {
-                                        border: [false, false, false, true],
-                                        text: '$999.99',
-                                        fillColor: '#f5f5f5',
-                                        alignment: 'right',
-                                        margin: [0, 5, 0, 5],
-                                    },
-                                ],
-                                [{
-                                        text: 'Item 2',
-                                        border: [false, false, false, true],
-                                        margin: [0, 5, 0, 5],
-                                        alignment: 'left',
-                                    },
-                                    {
-                                        text: 'Item 144',
-                                        border: [false, false, false, true],
-                                        margin: [0, 5, 0, 5],
-                                        alignment: 'left',
-                                    },
-                                    {
-                                        text: '$999.99',
-                                        border: [false, false, false, true],
-                                        fillColor: '#f5f5f5',
-                                        alignment: 'right',
-                                        margin: [0, 5, 0, 5],
-                                    },
-                                ],
-                            ],
+                            widths: ['*', 54, 50, 50, 50, 50],
+                            body: theBody,
                         },
                     },
                     '\n',
@@ -459,21 +559,21 @@ const factureController = {
                             widths: ['*', 'auto'],
                             body: [
                                 [{
-                                        text: 'Payment Subtotal1',
+                                        text: 'Total produits',
                                         border: [false, true, false, true],
                                         alignment: 'right',
                                         margin: [0, 5, 0, 5],
                                     },
                                     {
                                         border: [false, true, false, true],
-                                        text: '$999.991',
+                                        text: ``,
                                         alignment: 'right',
                                         fillColor: '#f5f5f5',
                                         margin: [0, 5, 0, 5],
                                     },
                                 ],
                                 [{
-                                        text: 'Payment Subtotal',
+                                        text: 'Frais d\expédition',
                                         border: [false, true, false, true],
                                         alignment: 'right',
                                         margin: [0, 5, 0, 5],
@@ -487,7 +587,7 @@ const factureController = {
                                     },
                                 ],
                                 [{
-                                        text: 'Payment Processing Fee',
+                                        text: 'Total (HT)',
                                         border: [false, false, false, true],
                                         alignment: 'right',
                                         margin: [0, 5, 0, 5],
@@ -501,9 +601,9 @@ const factureController = {
                                     },
                                 ],
                                 [{
-                                        text: 'Total Amount',
+                                        text: 'Total Taxes',
                                         bold: true,
-                                        fontSize: 20,
+                                        fontSize: 15,
                                         alignment: 'right',
                                         border: [false, false, false, true],
                                         margin: [0, 5, 0, 5],
@@ -511,7 +611,25 @@ const factureController = {
                                     {
                                         text: 'USD $999.99',
                                         bold: true,
-                                        fontSize: 20,
+                                        fontSize: 15,
+                                        alignment: 'right',
+                                        border: [false, false, false, true],
+                                        fillColor: '#f5f5f5',
+                                        margin: [0, 5, 0, 5],
+                                    },
+                                ],
+                                [{
+                                        text: 'Total',
+                                        bold: true,
+                                        fontSize: 15,
+                                        alignment: 'right',
+                                        border: [false, false, false, true],
+                                        margin: [0, 5, 0, 5],
+                                    },
+                                    {
+                                        text: 'USD $999.99',
+                                        bold: true,
+                                        fontSize: 15,
                                         alignment: 'right',
                                         border: [false, false, false, true],
                                         fillColor: '#f5f5f5',
@@ -521,9 +639,9 @@ const factureController = {
                             ],
                         },
                     },
-                    '\n\n',
+                    '\n',
                     {
-                        text: 'NOTES',
+                        text: 'Pour toute assistance, merci de nous contacter : ',
                         style: 'notesTitle',
                     },
                     {

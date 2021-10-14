@@ -683,6 +683,45 @@ const factureController = {
         }
     },
 
+
+    getFacture: async (req, res) => {
+        try {
+            // Attent un req.body.idCommande
+
+            let commande;
+
+            try {
+                commande = await Commande.findOneWithClient(req.body.idCommande) // les commandes avec statut : en attente ou annulée ne seront pas selectionné.
+            } catch (error) {
+                console.trace('Erreur dans la méthode getFacture du factureController, pour la recherche de la commande :',
+                    error);
+                return res.status(500).end();
+            }
+
+
+            if (commande === null || commande === undefined) {
+
+                console.log("Aucune commande n'existe avec cet identifiant de commande.");
+                return res.status(200).json("Aucune commande n'existe avec cet identifiant de commande.");
+            }
+
+            if ((req.session.user.privilege === 'Client') && (req.session.user.idClient !== commande.idClient)) {
+                console.log("Vous n'avez pas les droit pour accéder a ala ressource.");
+                return res.status(403).json("Vous n'avez pas les droit pour accéder a ala ressource.");
+            }
+
+
+            res.sendFile(path.resolve(__dirname + `../../../Factures/client:_${commande.email}/${commande.nomFamille}_${commande.prenom}__${commande.reference}.pdf`));
+            res.setHeader('Content-type', 'application/pdf');
+
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getFacture du factureController :',
+                error);
+            res.status(500).end();
+        }
+    },
+
     getAll: async (req, res) => {
         try {
             const factures = await Facture.findAll();

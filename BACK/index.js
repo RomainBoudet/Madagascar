@@ -162,6 +162,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'x-xsrf-token'],
 }));
 
+
 //FIN DES MIDDLEWARES----------------------------------------------------------------------
 
 // on préfixe notre router avec un V1 qui sera inclus devant chaque nom de route. Permet de faire évoluer l'app avec une V2 plus facilement.

@@ -1410,7 +1410,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JkBpHLNa9FFzz1X0E9Exz8f_secret_CUkgPFm6BfsfGb7mSjb3HVPOy",
+                client_secret: "pi_3JkIPzLNa9FFzz1X0kkmTubM_secret_oMNcjY64J2S5cJaM9WGwIjvBc",
             });
 
 
@@ -2018,7 +2018,7 @@ const paiementController = {
                 }
 
             }
-            
+
             try {
                 // Je modifis la facture en spécifiant le fait que le statut de la facture est remboursée !
                 factureRefund(refCommandeOk[0].commandeid);

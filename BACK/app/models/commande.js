@@ -187,6 +187,35 @@ class Commande {
      * @static - une méthode static
      * @async - une méthode asynchrone
      */
+     static async findOneWithClient(id) {
+
+
+        const {
+            rows,
+        } = await db.query(
+            "SELECT commande.*, client.prenom, client.nom_famille, client.email, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id JOIN mada.client ON client.id = commande.id_client WHERE commande.id = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée' OR statut_commande.statut = 'Remboursée');",
+            [id]
+        );
+
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
+        }
+
+        consol.model(
+            `la commande id : ${id} a été demandé en BDD !`
+        );
+
+        return new Commande(rows[0]);
+    }
+
+
+    /**
+     * Méthode chargé d'aller chercher les informations relatives à une commande via son id passée en paramétre
+     * @param - un id d'une commande
+     * @returns - les informations d'une commande demandées
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
     static async findOneLimited(id) {
 
 

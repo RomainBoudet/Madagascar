@@ -435,6 +435,16 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
   router.get('/users/facture/:id(\\d+)', client, factureController.facture);
 
 
+  /**
+ * Route pour l'ouverture d'une facture PDF avec l'idClient et le idCommande en body !
+ * @route GET /users/readFacture
+ * @group utilisateur
+ * @summary  Permet de générer une facture PDF pour la commande voulue 
+ * @returns {JSON} 200 - Permet de générer une facture PDF pour la commande voulue
+ */
+   router.get('/users/readFacture', client, factureController.getFacture);
+
+
 //! Non util, permet de récupérer des email sur serveur Imap... 
  /**
  * Permet de lire les emails

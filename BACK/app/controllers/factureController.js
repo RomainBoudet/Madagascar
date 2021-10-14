@@ -45,6 +45,11 @@ const factureController = {
                 res.status(500).end();
             }
 
+            if (commande === null || commande === undefined || commande === []) {
+                console.log('Aucune commande n\'existe pour cet identifiant de commande !');
+                return res.status(500).json('Aucune commande n\'existe pour cet identifiant de commande !');
+            }
+
             let shop;
             try {
                 shop = await Shop.findOne(1);
@@ -483,7 +488,7 @@ const factureController = {
                         },
                         table: {
                             headerRows: 1,
-                            widths: ['*', 54, 50, 50, 50, 50],
+                            widths: ['*', 54, 50, 80, 30, 50],
                             body: theBody,
                         },
                     },

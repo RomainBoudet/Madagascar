@@ -52,7 +52,8 @@ const {
 } = require('../services/sendEmail');
 
 const {
-    facture
+    facture,
+    factureRefund,
 } = require('../services/facture');
 
 const validator = require('validator');
@@ -164,13 +165,13 @@ const paiementController = {
                 })
             }
 
-             // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
-             const isFacturationOk = await Adresse.findByFacturationTrue(req.session.user.idClient);
-             if (!isFacturationOk || isFacturationOk ===  null || isFacturationOk === undefined) {
-                 return res.status(200).json({
-                     message: "Pour effectuer une commande, vous devez avoir enregistré une adresse de Facturation a minima'."
-                 })
-             }
+            // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
+            const isFacturationOk = await Adresse.findByFacturationTrue(req.session.user.idClient);
+            if (!isFacturationOk || isFacturationOk === null || isFacturationOk === undefined) {
+                return res.status(200).json({
+                    message: "Pour effectuer une commande, vous devez avoir enregistré une adresse de Facturation a minima'."
+                })
+            }
 
             // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
             const isEnvoieOk = await Adresse.findByEnvoie(req.session.user.idClient);
@@ -1569,8 +1570,9 @@ const paiementController = {
 
             } catch (error) {
                 console.log("Erreur dans le try catch STRIPE de création du remboursement dans la méthode refund du PaiementController !", error);
-                return res.status(500);
+                return res.status(500).end();
             }
+
 
 
             return res.status(200).end();
@@ -1582,8 +1584,7 @@ const paiementController = {
         }
     },
 
-    // retour de l'evnt charge.refund.updated signifiant qu'un remboursement a échoué !
-
+    // retour de l'evnt charge.refund.updated 
     webhookRefundUpdate: async (req, res) => {
         try {
             //je verifis la signature STRIPE et je récupére la situation du paiement.
@@ -1671,7 +1672,7 @@ const paiementController = {
 
                     const emailSend = shop.emailContact;
                     sendEmail(emailSend, subject, contexte, text, template);
-                    console.log(`Un email d'information d'une érreur de remboursement à bien été envoyé a ${shop.emailContact} : ${info.response}`);
+                    console.log(`Un email d'information d'une érreur de remboursement à bien été envoyé a ${shop.emailContact}`);
 
                 } catch (error) {
                     console.log(`Erreur dans la méthode d'envoie d'un mail aux admins aprés und érreur de remboursement dans la methode webhookRefundUpdate du paiementController : ${error.message}`);
@@ -1741,7 +1742,7 @@ const paiementController = {
             res.status(500).end();
         }
     },
-
+    //Réagit a l'évenement : charge.refunded
     webhookRefund: async (req, res) => {
 
         try {
@@ -1973,7 +1974,7 @@ const paiementController = {
                     const template = 'apresRemboursement';
                     const emailSend = refCommandeOk[0].email;
                     sendEmail(emailSend, subject, contexte, text, template);
-                    console.log(`Un email de confirmation de remboursement à bien été envoyé a ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} via l'adresse email: ${refCommandeOk[0].email} : ${info.response}`);
+                    console.log(`Un email de confirmation de remboursement à bien été envoyé a ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} via l'adresse email: ${refCommandeOk[0].email}`);
 
 
                 } catch (error) {
@@ -2007,7 +2008,7 @@ const paiementController = {
                     const text = `Bonjour ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille}, nous vous confirmons le remboursement de votre commande n°${metadata.refCommande} effectué sur le site ${shop.nom}. La somme de ${metadata.montant}€ seront recréditté sur votre moyen de paiement utilisé lors de l'achat.`;
                     const template = 'apresRemboursement';
                     sendEmail(emailSend, subject, contexte, text, template);
-                    console.log(`Un email de confirmation de remboursement à bien été envoyé a ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} via l'adresse email: ${refCommandeOk[0].email} : ${info.response}`);
+                    console.log(`Un email de confirmation de remboursement à bien été envoyé a ${refCommandeOk[0].prenom} ${refCommandeOk[0].nomFamille} via l'adresse email: ${refCommandeOk[0].email}`);
 
 
                 } catch (error) {
@@ -2017,6 +2018,18 @@ const paiementController = {
                 }
 
             }
+            
+            try {
+                // Je modifis la facture en spécifiant le fait que le statut de la facture est remboursée !
+                factureRefund(refCommandeOk[0].commandeid);
+
+            } catch (error) {
+                console.log("Erreur dans le try catch de ré-écrtiture de la facture dans la méthode WhebookRefund du PaiementController !", error);
+                return res.status(500).end();
+            }
+
+
+
             return res.status(200).end();
 
 
@@ -2039,7 +2052,7 @@ const paiementController = {
             // Je vérifis que le numéro de commande existe en BDD, qu'il y ait un paiement pour cette commande et que son statut n'est pas "en attente ou "annulée" ou "Remboursée"
 
             const idClientFromCommande = req.body.commande.split('.', 1);
-            if (Number(idClientFromCommande) !== Number(req.session.user.idClient)) {
+            if ((Number(idClientFromCommande) !== Number(req.session.user.idClient)) && req.session.user.privilege === "Client") {
 
                 console.log("idClient en provenance de la référence de la commande n'est pas le même que l'idClient fournit dans la session.");
                 return res.status(200).json({
@@ -2059,7 +2072,7 @@ const paiementController = {
 
             console.log("refCommandeOk ==>> ", refCommandeOk);
 
-            if (refCommandeOk[0] === null || refCommandeOk[0].nom === undefined) {
+            if (refCommandeOk === null || refCommandeOk[0].nom === undefined) {
                 console.log("Aucun paiement pour cette référence de commande ou elle n'a pas de paiement ... !");
                 return res.status(200).json({
                     message: "Aucune commande n'est compatible avec un remboursement, merci de vérifier l'orthographe de la référence de la commande."
@@ -2180,7 +2193,7 @@ const paiementController = {
 
                     const emailSend = shop.emailContact;
                     sendEmail(emailSend, subject, contexte, text, template);
-                    console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${shop.emailContact} : ${info.response}`);
+                    console.log(`Un email d'information concernant l'annulation d'une commande à bien été envoyé a ${shop.emailContact}`);
 
                 } catch (error) {
                     console.log(`Erreur dans la méthode d'envoie d'un mail au admins pour annulation envoie si possible dans la methode refundClient du paiementController : ${error.message}`);

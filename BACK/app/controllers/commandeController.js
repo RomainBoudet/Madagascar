@@ -397,6 +397,8 @@ const commandeController = {
 
             console.log("updateDone == ", updateDone);
 
+           
+
             // Si le client a souhaité recevoir un sms concernant l'envoi d'une notification quand sa commande serait envoyé, et si le statut est "envoyé", alors on envoie un SMS !
 
             /* updateDone ==  Commande {

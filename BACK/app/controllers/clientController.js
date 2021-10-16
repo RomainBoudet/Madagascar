@@ -800,7 +800,7 @@ const clientController = {
             const secret = `${userInDb.password}_${userInDb.createdDate}`
 
 
-            const decodedToken = await jsonwebtoken.verify(token, secret, {
+             await jsonwebtoken.verify(token, secret, {
                 audience: 'envoiresetpwd',
                 issuer: `${userInDb.prenom} ${userInDb.nomFamille}`
             }, function (err, decoded) {

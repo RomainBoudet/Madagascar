@@ -21,10 +21,6 @@ const sessionStore = new RedisStore({
 });
 
 const {
-    promisify
-} = require('util');
-
-const {
     capitalize
 } = require('../middlewares/sanitizer');
 
@@ -165,7 +161,7 @@ const paiementController = {
                 })
             }
 
-            // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
+            // et avoir une adresse de facturation 
             const isFacturationOk = await Adresse.findByFacturationTrue(req.session.user.idClient);
             if (!isFacturationOk || isFacturationOk === null || isFacturationOk === undefined) {
                 return res.status(200).json({
@@ -313,6 +309,14 @@ const paiementController = {
                 })
             }
 
+            // et avoir une adresse de facturation
+            const isFacturationOk = await Adresse.findByFacturationTrue(req.session.user.idClient);
+            if (!isFacturationOk || isFacturationOk === null || isFacturationOk === undefined) {
+                return res.status(200).json({
+                    message: "Pour effectuer une commande, vous devez avoir enregistré une adresse de Facturation a minima'."
+                })
+            }
+
             // et avoir une adresse de livraison définit (et non seulement une adresse de facturation) OU choisi le retrait sur place.
             const isEnvoieOk = await Adresse.findByEnvoie(req.session.user.idClient);
             if (!isEnvoieOk && req.session.idTransporteur != 3) {
@@ -320,8 +324,6 @@ const paiementController = {
                     message: "Pour effectuer un paiement, vous devez avoir enregistré une adresse de livraison en plus de votre adresse de facturation ou choisir le mode de livraison : 'Retrait sur le stand'."
                 })
             }
-
-
             //je construit ce que je vais passer comme metadata
             const articles = [];
             req.session.cart.map(article => (`${articles.push(article.produit+' / ' + 'idArticle = ' + article.id + ' /' + ' prix HT avec reduction: '+article.prixHTAvecReduc+'€'+' / '+' Qte: '+article.quantite)}`));
@@ -813,7 +815,7 @@ const paiementController = {
                             res.status(500).end();
                         }
 
-                        //! Je vire l'argent  nouvellement dispo sur le compte STRIPE vers le compte bancaire.
+                        //! Je vire l'argent nouvellement dispo sur le compte STRIPE vers le compte bancaire.
                         // Je demande la balance du compte et si la balance est supérieur a 0 je vire le montant disponible une fois la réponse de la balance donnée.
                         // 1€ minimum pour le virement...
                         // appel asynchrone
@@ -927,7 +929,7 @@ const paiementController = {
 
 
                         //! Suppression des stock mis de coté lors du webhookSEPA
-                        // je ré-augmente la valeur des produits en stock en ajoutantceux contenu dans le panier annulé
+                        // je ré-augmente la valeur des produits en stock en ajoutant ceux contenu dans le panier annulé
 
                         try {
                             for (const item of session.cart) {
@@ -1543,7 +1545,7 @@ const paiementController = {
 
             }
 
-            // je vérifit que le montant demandé rembourser est égal ou inférieur au montant de la commande
+            // je vérifit que le montant rembourser est égal ou inférieur au montant de la commande
             if (Number(req.body.montant) > Number(refCommandeOk.montant)) {
                 console.log("Il n'est pas possible d'effectuer un remboursement supérieur au montant de la commande !");
                 return res.status(200).json({
@@ -1766,11 +1768,6 @@ const paiementController = {
                 console.log("Erreur dans le try catch de récupération de la commande dans la méthode webhookRefund du PaiementController !", error);
                 return res.status(500).end();
             }
-
-            //FLAG
-            //TODO
-            //! gérer si le retour du webHook est négatif avec une érreur !
-
 
             // j'update le statut de la commande a "rembourséé" !
             //RAPPEL des statuts de commande : 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée;
@@ -2281,7 +2278,6 @@ const paiementController = {
     coupon: async (req, res) => {
         try {
             // reçois = 
-            // req.body.isActive
             // un req.body.postfix
             // un req.body.prefix
             // req.body.montant en euros !
@@ -2289,12 +2285,12 @@ const paiementController = {
             // req.body.ttl (en jour)
 
             //! je vérifis si un idClient a été passé en data:
-            if (req.body.idClient === "") {
-                req.body.idclient === null
+            if (req.body.idClient === "" || req.body.idClient === undefined) {
+                req.body.idClient === null
             }
             let client;
             console.log("req.body.idClient == ", req.body.idClient);
-            if (req.body.idClient && (req.body.idclient !== null || req.body.idclient !== undefined)) {
+            if (req.body.idClient && (req.body.idClient !== null || req.body.idClient !== undefined)) {
 
                 // si il y a un idClient, je dois vérifier qu'il existe bien en BDD
                 client = await Client.findUnique(Number(req.body.idClient));
@@ -2345,7 +2341,6 @@ const paiementController = {
                     coupon: code[0],
                     montant,
                     dateEmission: capitalize(formatLongSeconde(Date.now())),
-                    isActive: req.body.isActive,
                 };
 
             } else {
@@ -2356,7 +2351,6 @@ const paiementController = {
                     nameClient: `${client.prenom} ${client.nomFamille}`,
                     emailClient: client.email,
                     dateEmission: capitalize(formatLongSeconde(Date.now())),
-                    isActive: req.body.isActive,
                 };
             }
 

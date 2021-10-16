@@ -1,15 +1,23 @@
 {
     "swaggerDefinition": {
         "info": {
-            "description": "Online shopping website under construction !",
+            "description": "A beatiful swagger fot my online shopping website under construction !",
             "title": "Madagascar",
             "version": "1.0.0"
         },
-        "basePath": "/",
+        "basePath": "/v1",
         "produces": [
             "application/json"
         ],
-        "schemes": ["https"]
+        "schemes": ["https"],
+        "securityDefinitions": {
+            "JWT": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": ""
+            }
+        }
     },
     "files": ["./app/router.js"]
 }

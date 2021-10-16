@@ -70,6 +70,9 @@ const couponSchema = require('./schemas/couponSchema');
 const delCouponSchema = require('./schemas/delCouponSchema');
 
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('../swagger-config.json');
+
 
 
 
@@ -103,7 +106,7 @@ const apiLimiter = rateLimit({
 //!-----------------------------------------------------------------------------------------
 //! Un simple mot a ajouter aprés la route pour changer les droits d'accés :
 
-//! Pour autoriser une route a tous les utilisateurs connéctés :
+//! Pour autoriser une route a tous les Utilisateurs connéctés :
 //on ajoute "auth" aprés la route   ex = router.get('/produits', auth, produitController.allproduits);
 //! pour autoriser une route aux seuls Administrateurs :
 //on ajoute "admin" aprés la route  ex = router.get('/produits', admin, produitController.allproduits);
@@ -120,41 +123,48 @@ client = autorise les "Client", "Developpeur" et "Administrateur" sur la route, 
 apiLimiter = restreint l'accée de la route selon l'ip du visiteur. Si plus de 100 tentavives de connexion en 10 heure, accés est refusé jusqu'a la fin des 10h.
 aut */
 
+//router.use('/api-docs', swaggerUi.serve);
+//router.get('/api-docs', swaggerUi.setup(swaggerDocument));
+
+
 /**
- * Page d'acceuil de swagger
- * @route GET /v1/
+ * Page d'acceuil de la swagger doc
+ * @route GET /api-docs
  * @summary Une magnifique documentation swagger :)
- * @group acceuil
+ * @group Acceuil
  * @returns {JSON} 200 - la page d'acceuil
  */
-router.get('/', mainController.init);
+router.get('/api-docs', mainController.init);
 
 
 //! ROUTES UTILISATEUR ----------------
 /**
  * Une connexion
- * @typedef {object} connexion
+ * @typedef {connexion} connexion
  * @property {string} email - email
  * @property {string} password - password
  */
 /**
- * Autorise la connexion d'un utilisateur au site.
+ * Autorise la connexion d'un Utilisateur au site.
  * Route sécurisée avec Joi et limité a 100 requetes par 10h pour le même user
  * @route POST /v1/connexion
  * @group connexion - Pour se connecter ou se déconnecter
- * @summary Autorise la connexion d'un utilisateur au site.
- * @param {connexion.Model} connexion.body.required - les informations qu'on doit fournir
- * @returns {JSON} 200 - Un utilisateur à bien été connecté
+ * @summary Autorise la connexion d'un Utilisateur au site.
+ * @param {string} email.body.required - les informations qu'on doit fournir
+ * @param {string} password.body.required - les informations qu'on doit fournir
+ * @returns {JSON} 200 - Un Utilisateur à bien été connecté
+ * @returns {JSON} 200 - {xsrfToken, id, prenom, nomFamille, email, privilege}
+ * @headers {integer} 200.X-Rate-Limit - limité a 100 requetes par 10h pour le même user
  */
-
 router.post('/connexion', apiLimiter, validateBody(userLoginSchema), authController.login);
 
 /**
- * Permet la déconnexion d'un utilisateur au site. Nécéssite un token dans le cookie le xsrfToken du local storage
+ * Permet la déconnexion d'un Utilisateur au site.
+ * Destroy la session et supprime le cookie
  * @route GET /v1/deconnexion
  * @group connexion - 
- * @summary déconnecte un utilisateur - on reset les infos du user en session
- * @returns {JSON} 200 - Un utilisateur a bien été déconnecté
+ * @summary déconnecte un Utilisateur - on reset les infos du user en session
+ * @returns {JSON} 200 - L'Utilisateur a été déconnecté avec succés
  */
 router.get('/deconnexion', authController.deconnexion);
 
@@ -168,32 +178,42 @@ router.get('/deconnexion', authController.deconnexion);
  * @property {string} passwordConfirm - la confirmation du password
  */
 /**
- * Permet l'inscription d'un utilisateur au site.
+ * Permet l'inscription d'un Utilisateur au site.
  * Route sécurisée avec Joi et validator
  * @route POST /v1/inscription
  * @group inscription - Pour s'inscire 
- * @summary Inscrit un utilisateur en base de donnée
- * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
- * @returns {JSON} 200 - les données d'un utilisateur ont été inséré en BDD, redirigé vers la page de connexon
+ * @summary Inscrit un Utilisateur en base de donnée
+ * @param {string} prenom.body.required - les informations d'inscriptions qu'on doit fournir
+ * @param {string} nomFamille.body.required - les informations d'inscriptions qu'on doit fournir
+ * @param {string} email.body.required - les informations d'inscriptions qu'on doit fournir
+ * @param {string} password.body.required - les informations d'inscriptions qu'on doit fournir
+ * @param {string} passwordConfirm.body.required - les informations d'inscriptions qu'on doit fournir
+ * @returns {JSON} 200 - {email, prenom, nomFamille, message : "Vous pouvez désormais vous connecter !"}
  */
 router.post('/inscription', validateBody(userSigninSchema), clientController.signIn);
 
 
 /**
  * Permet l'inscription d'un Administrateur au site.
+ * Utilise email validator (métthode isEmail et isStrongPassword)
  * Route sécurisée avec Joi et MW Developpeur
+ * Un email est envoyé à l'administrateur récémment inscrit
  * @route POST /v1/signin
  * @group Administrateur - Des méthodes a dispositions des Administrateurs
  * @summary Inscrit un Administrateur en base de donnée
- * @param {inscription.Model} inscription.body.required - les informations d'inscriptions qu'on doit fournir
- * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
+ * @param {string} prenom.body.required - les informations d'inscriptions qu'on doit fournir
+ * @param {string} nomFamille.body.required - les informations d'inscriptions qu'on doit fournir
+ * @param {string} email.body.required - les informations d'inscriptions qu'on doit fournir
+ * @param {string} password.body.required - les informations d'inscriptions qu'on doit fournir
+ * @param {string} passwordConfirm.body.required - les informations d'inscriptions qu'on doit fournir * 
+ * @returns {JSON} 200 - {email, prenom, nomFamille, message : "Vous pouvez désormais vous connecter !"}
  */
 router.post('/signin', dev, validateBody(userSigninSchema), adminController.signInAdmin);
 
 
 /**
- * Un utilisateur
- * @typedef {object} utilisateur
+ * Un Utilisateur
+ * @typedef {object} Utilisateur
  * @property {number} id - id du jeu
  * @property {string} prenom - prénom
  * @property {string} nomFamille - nom de famille
@@ -201,72 +221,93 @@ router.post('/signin', dev, validateBody(userSigninSchema), adminController.sign
  * @property {string} password - password
  */
 /**
- * Met a jour les informations d'un utilisateur.
+ * Met a jour les informations d'un Utilisateur.
+ * Les données STRIPE sont également mis a jour 
+ * On envoie un mail pour informer l'utilisateur de changement de ses données !
+ * Si l'email est également changé, on envoie un email sur l'ancien email également par mesure de sécurité.
  * @route PATCH /user/update/:id
- * @group utilisateur - Des méthodes a dispositions des utilisateurs
- * @summary Met a jour un utilisateur en base de donnée. Un email est envoyé pour signaler les changements. Si changement d'email, un second email est également envoyé sur l'ancienne adresse pour signaler le changement.
- * @param {utilisateur.Model} utiisateur.body.required
- * @param {number} id.path.required - l'id à fournir
- * @returns {JSON} 200 - les données d'un utilisateur ont été mises a jour
+ * @group Utilisateur - Des méthodes a dispositions des Utilisateurs
+ * @summary Met a jour un Utilisateur en base de donnée. Un email est envoyé pour signaler les changements. Si changement d'email, un second email est également envoyé sur l'ancienne adresse pour signaler le changement.
+ * @param {string} password.body.required - les informations d'un user que l'on souhaite mettre a jour.
+ * @param {string} newPassword.body.required - les informations d'un user que l'on souhaite mettre a jour.
+ * @param {string} newPasswordConfirm.body.required - les informations d'un user que l'on souhaite mettre a jour.
+ * @param {string} pprenom.body.required - les informations d'un user que l'on souhaite mettre a jour.
+ * @param {string} nomFamille.body.required - les informations d'un user que l'on souhaite mettre a jour.
+ * @param {string} email.body.required - les informations d'un user que l'on souhaite mettre a jour.
+ * @param {number} id.path.required - l'id d'un client à fournir
+ * @returns {JSON} 200 - {message: "message variable selon les données mises a jour !""}
  */
 router.patch('/user/update/:id(\\d+)', cleanPassword, client, validateBody(userUpdateSchema), clientController.updateClient);
 
+// ETAPE 1 => Envoie d'un email avec un lien 
 /**
- * Envoie un email si l'utilisateur ne se souvient plus de son mot de passe, pour mettre en place un nouveau mot de passe de maniére sécurisé.
+ * Envoie un email si l'Utilisateur ne se souvient plus de son mot de passe, pour mettre en place un nouveau mot de passe de maniére sécurisé.
+ * L'email posséde un lien sur lequel cliquer !
  * @route POST /user/new_pwd
- * @group utilisateur
+ * @group Utilisateur
  * @summary Prend un mail en entrée et renvoie un email dessus si celui çi est présent en BDD.  Cliquer sur le lien dans l'email l'enmenera sur la route /user/reset_pwd ou l'attent un formulaire
- * @param {utilisateur.Model} utilisateur.body.required
- * @returns {JSON} 200 - Un email a été délivré
+ * @param {string} email.body.required - L'email du compte pour lequel on souhaite retrouver le mot de passe
+ * @returns {JSON} 200 - "Merci de consulter vos emails et de cliquer sur le lien envoyé pour renouveller votre mot de passe."
  */
 router.post('/user/new_pwd', cleanPassword, validateBody(verifyEmailSchema), clientController.new_pwd);
-// ETAPE 2 => envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
 
+// ETAPE 2 => envoi en second newPassword, passwordConfirm  dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
 /**
- *  envoi en second newPassword, passwordConfirm et pseudo dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
- *  @route POST /user/reset_pwd
- * @group utilisateur
+ * Seconde partie de la méthode pour renouveller son password :
+ * envoi en second newPassword, passwordConfirm dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
+ * L'ancien mot de passe est conservé en BDD pour de potentielles futurs utilisation
+ * Un mail est envoyé pour confirmer a l'utilisateur le changement de mot de passe.
+ * @route POST /user/reset_pwd
+ * @group Utilisateur
  * @summary  Reset du mot de passe. prend en entrée, newPassword et passwordConfirm dans le body et userId et token en query: decode le token avec clé dynamique et modifit password (new hash + bdd) !
- * @param {utilisateur.Model} utilisateur.body.required
- * @returns {JSON} 200 - Un nouveau mot de passe est entré en BDD
+ * @param {string} passwordConfirm.body.required
+ * @param {string} newPassword.body.required
+ * @param {number} userId.query.required
+ * @param {string} token.query.required
+ * @returns {JSON} 200 -  {message: `Bonjour prenom, nom de famille, votre mot de passe a été modifié avec succés ! Un email de confirmation vous a été envoyé.`}
  */
 router.post('/user/reset_pwd', validateBody(resetPwdSchema), validateQuery(resendEmailSchema), clientController.reset_pwd);
 
 
 /**
  * Prend en charge l'acceptation de la politique de cookie sur le site
- *  @route POST /setcookie
- * @group utilisateur
- * @summary  Renvoie un cookie avec le nom 'cookieAccepted' et la valeur 'true'
- * @param {utilisateur.Model} utilisateur.body.required
- * @returns {JSON} 200 - Renvoie un cookie avec le nom 'cookieAccepted' et la valeur 'true'
+ * Renvoie un cookie chiffrée nommé "cookieAccepted" si la valeur du body "cookieAccepted" est a true, avec une expiration du cookie fixé a 180 jours.
+ * Insére en session la valeur "cookie"= 'accepted'
+ * @route POST /setcookie
+ * @group Utilisateur
+ * @summary  Renvoie un cookie avec le nom 'cookieAccepted' si la valeur cookieAccepted est a 'true'
+ * @param {string} cookieAccepted.body.required (booléean) Doit valoir 'true' pour renvoyer un cookie au client.
+ * @returns {JSON} 200 - {"Vous avez accepté notre politique d'utilisation des cookies sur ce site et nous vous en remerçiont !"} / Renvoie un cookie avec le nom 'cookieAccepted' et la valeur 'true'
  */
 router.post('/setcookie', clean, authController.cookie);
 
 /**
  * Prend en charge l'acceptation des Conditions Générale de Ventes
+ * Insére l'information en session.
  *  @route POST /cgv
- * @group utilisateur
+ * @group Utilisateur
  * @summary  L'acceptation des Conditions Générale de Ventes est stocké en session
- * @returns {JSON} 200 - L'acceptation des Conditions Générale de Ventes est stocké en session
+ * @returns {JSON} 200 - {"Les Conditions Générales de Ventes ont été accéptés."}
  */
 router.get('/cgv', paiementController.cgv);
 
 //! PAIEMENT -----------------------------------------------------------------------------------------------------------------------------------------
 
 /**
- * Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client valide le panier, avant de choisir son mode paiement mais apres avoir choisit son transporteur.
- *  @route GET /user/paiementCB
- * @group utilisateur
+ * Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client choisit un mode de paiement par carte bancaire apres avoir choisit son transporteur.
+ * Nécéssite d'être authentifié, d'avoir accepté les CGV, avoir des article dans le panier, avoir choisit un transporteur, avoir une adresse de livraison OU choisi le retrait sur place de sa commande, et avoir une adresse de facturation
+ * @route GET /user/paiementCB
+ * @group Utilisateur
  * @summary  Prend en charge le paiement via STRIPE
- * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
+ * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE et stock en session une clé secréte qui sera demandé lors du paiement par le Front.
  */
 router.get('/user/paiementCB', client, paiementController.paiementCB);
 
 /**
- * Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client valide le panier, avant de choisir son mode paiement mais apres avoir choisit son transporteur.
+* Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client choisit un mode de paiement par virement SEPA apres avoir choisit son transporteur.
+ * Nécéssite d'être authentifié, d'avoir accepté les CGV, avoir des article dans le panier, avoir choisit un transporteur, avoir une adresse de livraison OU choisi le retrait sur place de sa commande, et avoir une adresse de facturation
  *  @route GET /user/paiementSEPA
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Prend en charge le paiement via STRIPE
  * @returns {JSON} 200 -  Prend en charge le paiement via STRIPE
  */
@@ -274,19 +315,21 @@ router.get('/user/paiementSEPA', client, paiementController.paiementSEPA);
 
 /**
  * Permet de récupérer la clé client secret nécéssaire a STRIPE pour une paiement CB, nécéssaire pour le front.
- *  @route GET /user/paiementkey
- * @group utilisateur
+ * Nécessite d'être connecté et d'avoir réaliser une tentative de paiement
+ * @route GET /user/paiementkey
+ * @group Utilisateur
  * @summary  Permet de récupérer la clé client secret nécéssaire a STRIPE *** nécéssite d'être authentifié et d'avoir tenté d'effectuer un paiement.
- * @returns {JSON} 200 -  Renvoie la valeur de payementIntent.client_secret
+ * @returns {JSON} 200 -  {client_secret: "pi_3JkQuOLNa9FFzz1X1k9sSb4o_secret_VwFZt1ZASDVjEZBvG95GAAu3Q"}
  */
 router.get('/user/paiementkey', paiementController.key);
 
 /**
  * Permet de récupérer la clé client secret nécéssaire a STRIPE pour un paiement SEPA, nécéssaire pour le front.
- *  @route GET /user/paiementkeySEPA
- * @group utilisateur
+ * Nécessite d'être connecté et d'avoir réaliser une tentative de paiement
+ * @route GET /user/paiementkeySEPA
+ * @group Utilisateur
  * @summary  Permet de récupérer la clé client secret nécéssaire a STRIPE *** nécéssite d'être authentifié et d'avoir tenté d'effectuer un paiement.
- * @returns {JSON} 200 -  Renvoie la valeur de payementIntent.client_secret
+ * @returns {JSON} 200 -  {client_secret: "pi_3JkQuOLNa9FFzz1X1k9sSb4o_secret_VwFZt1ZASDVjEZBvG95GAAu3Q"}
  */
 router.get('/user/paiementkeySEPA', paiementController.keySEPA);
 
@@ -294,10 +337,16 @@ router.get('/user/paiementkeySEPA', paiementController.keySEPA);
 // router.get('/insertCookieForWebhookTest', paiementController.insertCookieForWebhookTest);
 
 /**
- * Prend en charge le webhook STRIPE apres un paiement validé CB et SEPA
- * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
- *  @route POST /webhookpaiement
- * @group utilisateur
+ * Prend en charge le webhook STRIPE apres un paiement validé via carte bancaire et virement SEPA
+ * Route avec une signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
+ * Cette route est contacté par 3 évenement :  payment_intent.succeeded, payment_intent.canceled, payment_intent.payment_failed 
+ * Si le paiement est validée : les stock sont mis a jour, la BDD est mis a jour, un email est envoyé au client lui résumant son achat, un email est envoyé a l'administrateur du site pour l'informer d'une nouvelle commande, un sms peut être envoyé a l'admin si il a choisi d'en recevoir.
+ * L'argent rçu sur Stripe est viré sur le compte bancaire
+ * Si un coupon a été utilisé, il est supprimé.
+ * En cas d'érreur le stock est ré-augmenté, un email est envoyé pour signaler l'échec a l'utilisateur.
+ * Génére automatiquement une facture au format PDF avec le statut "PAYÉ".
+ * @route POST /webhookpaiement
+ * @group Utilisateur
  * @summary  Prend en charge le webhook STRIPE apres un paiement validé CB et SEPA
  * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres un paiement validé CB et SEPA
  */
@@ -307,7 +356,7 @@ router.post('/webhookpaiement', paiementController.webhookpaiement);
  * Prend en charge le webhook STRIPE apres une tentative paiement SEPA
  * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
  *  @route POST /webhookpaiementSEPA
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Prend en charge le webhook STRIPE apres un paiement
  * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres une tentative paiement SEPA
  */
@@ -315,38 +364,49 @@ router.post('/webhookpaiementSEPA', paiementController.webhookpaiementSEPA);
 
 /**
  * Connaitre la balance STRIPE du compte
+ * Nécessite d'être authentifié comme administrateur
  * @route GET /balanceStripe
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Connaitre la balance STRIPE du compte
- * @returns {JSON} 200 -  Connaitre la balance STRIPE du compte
+ * @returns {JSON} 200 -  Connaitre la balance STRIPE du compte {{"object": "balance","available": [{"amount": 0,"currency": "eur","source_types": {"card": 0}}],"livemode": false,"pending": [{"amount": 0,"currency": "eur","source_types": {"card": 0}}]}}
  */
 router.get('/balanceStripe', admin, paiementController.balanceStripe);
 
 /**
- * Demander un remboursement sur un paiement de la part d'un Admin
- * route qui attend : "commande", "montant" "email" ou "idClient"
+ * Demander un remboursement sur un paiement de la part d'un Admin. Utilise l'API STRIPE
+ * Nécéssite d'être authentifié comme un Administrateur.
+ * Le montant a rembourser ne peut être supérieur a celuin de la commande
+ * Une commande avec le statut "En attente", "Annulée" ou "Remboursée" ne sera pas remboursé.
  * @route POST /admin/refund
  * @group Administrateur
- * @summary  Demander un remboursement sur un paiement de la part d'un Admin
+ * @summary  Demander un remboursement sur un paiement de la part d'un Administrateur
+ * @param {string} commande.body.required - Une référence de commande.
+ * @param {string} email.body.required - L'email du client a remboursé.
+ * @param {number} montant.body.required - Une valeur en euros et non en centimes.
  * @returns {JSON} 200 -  Demander un remboursement sur un paiement de la part d'un Admin
  */
 router.post('/admin/refund', clean, admin, validateBody(refundSchema), paiementController.refund);
 
 /**
- * Demander un remboursement sur un paiement de la part d'un client
- * route qui attend : "commande" ou "idCommande" // "email" ou "idClient"
+ * Demander un remboursement sur un paiement de la part d'un client. Utilise l'API STRIPE
+ * Nécéssite d'être authentifié par l'utilisateur.
+ * Une annulation automatique n'est possible que si la commande a la statut "Paiement validé" (2) ou "En cour de préparation" (3)
+ * Si la commande a le statut "Pret pour expedition" (4) : ici pas de remboursement automatique, demande d'annulation d'envoie simplement par un mail au ADmin et un SMS, si l'admin l'a choisi
+ * Si le statut est "Expédié" (5) alors on demande a l'utilisateur de lancer une procédure de retour aprés la réception de sa commande.
  * @route POST /client/refund
- * @group Administrateur
+ * @group Utilisateur
  * @summary  Demander un remboursement sur un paiement de la part d'un Admin
+ * @param {string} commande.body.required - Une référence de commande.
  * @returns {JSON} 200 -  Demander un remboursement sur un paiement de la part d'un Admin
  */
 router.post('/client/refund', clean, client, validateBody(refundClientSchema), paiementController.refundClient);
 
 /**
  * Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement
- * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
+ * Route avec signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
+ * Un email est envoyé a l'administrateur en cas d'échec, ou en cas de succés (dans ce cas il s'agit d'une mise a jour)
  *  @route POST /webhookRefundUpdate
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement
  * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres un échec ou une mise a jour d'une tentative de remboursement
  */
@@ -354,9 +414,10 @@ router.post('/webhookRefundUpdate', paiementController.webhookRefundUpdate);
 
 /**
  * Prend en charge le webhook STRIPE apres un remboursement
+ * Mofifit la facture PDF créé lors du paiement pour marquer en filigrame "Remboursée" sur toute la facture.
  * Route non filtré mais signature vérifié par une API STRIPE pour s'assurer que l'info vient bien de STRIPE.
  *  @route POST /webhookRefund
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Prend en charge le webhook STRIPE apres un remboursement
  * @returns {JSON} 200 -  Prend en charge le webhook STRIPE apres une tentative paiement SEPA
  */
@@ -365,87 +426,113 @@ router.post('/webhookRefund', paiementController.webhookRefund);
 /**
  * Créer un coupon de reduction utilisable par un client
  * Met dans REDIS des coupons qui seront vérifié lors du paiement. 
+ * Nécéssite d'être authentifié comme Administrateur.
  * @route POST /admin/coupon
- * @group Administarteur
+ * @group Administrateur
  * @summary  Créer un coupon de reduction utilisable par un client
- * @returns {JSON} 200 -  Un coupon utilisable par un client !
+ * @param {number} idClient.body - Un identifiant d'un client (pas obligatoire). Si présent, ce coupon ne sera utilisable que par ce client.
+ * @param {string} prefix.body.required - Un prefix pour personnaliser notre coupon.
+ * @param {string} postfix.body.required - Un postfix pour personnaliser notre coupon.
+ * @param {string} montant.body.required - Un montant pour la valeur de notre coupon, en euros.
+ * @param {number} ttl.body.required - La durée de vie en jour, de notre coupon.
+ * @returns {JSON} 200 -  {coupon:"monCodeCoupon"} Un coupon utilisable par un client !
  */
 router.post('/admin/coupon', admin, validateBody(couponSchema), paiementController.coupon);
 
 /**
  * Affiche la liste des coupons non expiré
+ * Nécéssite d'être authentifié comme Administrateur.
  * @route GET /admin/couponList
  * @group Administrateur
  * @summary  Affiche la liste des coupons non expiré
- * @returns {JSON} 200 -  Affiche la liste des coupons non expiré
+ * @returns {JSON} 200 - {"allCoupons = ", allCoupons} / Affiche dans un tableau la liste des coupons non expiré
  */
 router.get('/admin/couponList', admin, paiementController.couponList);
 
 
 /**
  * Supprime un coupon passé en paramétre
+ * Nécéssite d'être authentifié comme Administrateur.
  * @route DELETE /admin/coupon
  * @group Administrateur
  * @summary  Supprime un coupon passé en paramétre
+ * @param {string} coupon.body.required - Un coupon a supprimer
  * @returns {JSON} 200 -  Supprime un coupon passé en paramétre
  */
 router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementController.delCoupon);
 
 /**
  * Utilise un coupon passé en paramétre et met a jour le panier
+ * Nécéssite d'être authentifié comme Client et d'avoir un coupon valide.
+ * Si le coupon a été créé pour un client en particulier, seul ceui-çi pourra s'en servir.
  * @route POST /user/coupon
- * @group utilisateur
- * @summary  Met a jour le panier d'un utilisateur avec le montant du panier déduit du montant du coupon 
- * @returns {JSON} 200 - Met a jour le panier d'un utilisateur avec le montant du panier déduit du montant du coupon 
+ * @group Utilisateur
+ * @summary  Met a jour le panier d'un Utilisateur avec le montant du panier déduit du montant du coupon 
+ * @param {string} coupon.body.required - Un coupon a supprimer
+ * @returns {JSON} 200 - {totalHT,totalTTC,totalTVA,(coutTransporteur,)cart,totalAPayer} / Met a jour le panier d'un Utilisateur avec le montant du panier déduit du montant du coupon 
  */
- router.post('/user/coupon', client, validateBody(delCouponSchema), panierController.insertCoupon);
+router.post('/user/coupon', client, validateBody(delCouponSchema), panierController.insertCoupon);
 
 /**
- * Supprime la valeur d'un coupon passé par un utilisateur et met a jour le panier
+ * Supprime la valeur d'un coupon passé par un Utilisateur et met a jour le panier
+ * Nécéssite d'être authentifié comme Client et d'avoir un coupon valide.
+ * Le coupon n'est pas supprimé, sa valeur n'est juste plus appliqué dans le panier.
  * @route GET /user/cancelCoupon
- * @group utilisateur
- * @summary  Supprime la valeur d'un coupon passé par un utilisateur et met a jour le panier
- * @returns {JSON} 200 - Supprime la valeur d'un coupon passé par un utilisateur et met a jour le panier 
+ * @group Utilisateur
+ * @summary  Supprime la valeur d'un coupon passé par un Utilisateur et met a jour le panier
+ * @returns {JSON} 200 - {totalHT,totalTTC,totalTVA,(coutTransporteur,)cart,totalAPayer} Supprime la valeur d'un coupon passé par un Utilisateur et met a jour le panier 
  */
- router.get('/user/cancelCoupon', client, panierController.cancelCoupon);
+router.get('/user/cancelCoupon', client, panierController.cancelCoupon);
 
 
 
 //! UPDATE COMMANDE --------------------------------------------------------------------------------------------------------------------------
 
 /**
- * Mise a jour du statut du statut d'une commande. prend en entrée req.body.comfirmStatut // req.body.statut // req.body.commande
- * Droits différents entre Admin et Developpeur
+ * Mise a jour du statut d'une commande. 
+ * Nécéssite d'être authentifié comme Administrateur.
+ * Uniquement les statuts : 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, sont autorisé a être mis a jour.
+ * Droits différents entre Admin et Developpeur. Le Dev a le droit de changer le statut d'une commande par tous les statuts existant.
+ * Entrées flexible : on prend soit une réference de commande soit un id de commande et soit le nom d'un statut soit sont id et on autorise l'administrateur a faire 3 fautes par statut, dans ce cas on le corrige automatiquement. Sinon on lui propose le plus proche statut existant de ce qui a été écrit (Levenshtein).
+ * Si le statut est mis a jour a "Expédié", et que l'utilisateur a choisit de recevoir un sms a l'expédition de sa commande, alors un sms lui sera envoyé, lui confirmant le départ de sa commmande.
+ * Si la mise a jour de la commande ne suit pas un ordre logique, on accept mais on avertit l'admin par un message en JSON.
  * @route POST /admin/updateCommande
  * @group Administrateur
  * @summary  Mise a jour du statut du statut d'une commande 
+ * @param {string} statut.body.required - Un statut a mettre a jour qui peut être soit un identifiant de statut (chiffre de 2 à 5) ou un nom de statut (ex: "Paiement validé")
+ * @param {string} statutConfirm.body.required - La confirmation d'un statut a mettre a jour, identique a req.body.statut
+ * @param {string} commande.body.required - Une commande a mettre a jour, qui peut être soit une référence, soit un identifiant de commande.
  * @returns {JSON} 200 - Mise a jour du statut du statut d'une commande et renvoie le statut de la commande nouvellement mis a jour 
  */
- router.post('/admin/updateCommande', admin, commandeController.updateStatut);
+router.post('/admin/updateCommande', admin, commandeController.updateStatut);
 
 
- //! FACTURES Création de factures aprés la commande et le paiement ---------------------------------------------------------------------------
- /**
+//! FACTURES Création de factures aprés la commande et le paiement ---------------------------------------------------------------------------
+/**
+ * Bien qu'un facture soit généré automatiquement a chaque paiement, cette route permet a l'admin de la regénérer a volonté.
  * Route pour la génération d'une facture PDF pour l'identifiant de commande passée dans URL !
+ * Si une facture existe déja au format psd pour cette commande, cette facture pdf la remplacera.
  * @route GET /users/facture/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Permet de générer une facture PDF pour la commande voulue 
- * @returns {JSON} 200 - Permet de générer une facture PDF pour la commande voulue
+ * @param {number} id.path.required - l'identifiant de commande à fournir
+ * @returns {JSON} 200 - Une commande au format pdf est construite sur le serveur.
  */
-  router.get('/users/facture/:id(\\d+)', admin, factureController.facture);
+router.get('/users/facture/:id(\\d+)', factureController.facture);
 
 
 /**
- * Route pour l'ouverture d'une facture PDF avec l'idClient et le idCommande en body !
+ * Route pour l'ouverture d'une facture PDF 
  * @route GET /users/readFacture
- * @group utilisateur
- * @summary  Permet de générer une facture PDF pour la commande voulue 
- * @returns {JSON} 200 - Permet de générer une facture PDF pour la commande voulue
+ * @group Utilisateur
+ * @summary  Permet de lire dans le navigateur une facture PDF pour la commande voulue 
+ * @param {number} idCommande.body.required - Un identifiant de commande
+ * @returns {JSON} 200 - Permet d'ouvrir un facture pdf dans le navigateur
  */
-   router.get('/users/readFacture', client, factureController.getFacture);
+router.get('/users/readFacture', client, factureController.getFacture);
 
 //! Non util, permet de récupérer des email sur serveur Imap... 
- /**
+/**
  * Permet de lire les emails
  * Route sécurisée avec Joi et MW Administrateur
  * @route GET /admin/email
@@ -456,34 +543,40 @@ router.delete('/admin/coupon', admin, validateBody(delCouponSchema), paiementCon
 //router.get('/admin/email', clean, admin, commandeController.getEmail);
 
 /**
- * Permet de démarrer le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
- * Route sécurisée avec Joi et MW Administrateur // le mail (admin) doit avoir le subject : "update statut" et le body : "reférence : statut ""
+ * Permet de lire les emails automatiquement et de mettre a jour le statut d'une commande selon le contenu d'un mail
+ * L'email doit avoir un statut précis = "update statut" et un body précis = "commande : statut".
+ * Commande peut être un identifiant de commande ou une référence de commande.
+ * statut peut être un identifiant de staut ou un nom de statut.
+ * Seul le mail d'un administrateur sera pris en compte
+ * Route sécurisée avec MW Administrateur.
+ * Un email est envoyé dans chaque cas, érreur ou succés, sur le mail de l'administrateur qui contacté l'API
  * @route GET /admin/StartUpdateCommandeFromEmail
  * @group Administrateur 
  * @summary Permet de démarrer le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
- * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
- * @returns {JSON} 200 - le statut d'une commande mise a jour selon le contenu d'un mail
+ * @param {email} email.required - L'email doit avoir un statut précis = "update statut" et un body précis = "commande : statut".
+ * @returns {JSON} 200 - Envoi d'un email a l'administrateur qui a contacté l'API par email
  */
- router.get('/admin/startUpdateCommandeFromEmail', clean, admin, commandeController.startUpdateCommandeFromEmail);
+router.get('/admin/startUpdateCommandeFromEmail', clean, admin, commandeController.startUpdateCommandeFromEmail);
 
+//FLAG
 //! Non fonctionnel, si on l'arrete, plus moyen de le démarrer si ce n'est qu'en relancant le serveur !
- /**
+/**
  * Permet d'arréter le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
  * Route sécurisée avec Joi et MW Administrateur
  * @route GET /admin/stopUpdateCommandeFromEmail
  * @group Administrateur 
  * @summary Permet de démarrer le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
- * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
  * @returns {JSON} 200 - le statut d'une commande mise a jour selon le contenu d'un mail
  */
-  //router.get('/admin/stopUpdateCommandeFromEmail', clean, admin, commandeController.stopUpdateCommandeFromEmail);
+//router.get('/admin/stopUpdateCommandeFromEmail', clean, admin, commandeController.stopUpdateCommandeFromEmail);
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
-
+//TODO 
+//NOTE nettoyage du router a finir !! 
 /**
  * Receptionne une string et renvoie un tableau d'objet représentant les produits qui match. 
  * @route POST /user/searchProduit
- * @group utilisateur
+ * @group Utilisateur
  * @summary Permet la recherche d'un mot ou d'une phrase (une string) dans les produits. 
  * @returns {JSON} 200 - Un tableau d'objeta 
  */
@@ -611,7 +704,7 @@ router.get('/admin/user/adresses', admin, adresseController.getAllAdresse);
 /**
  * Renvoie les adresses d'un client selon son idClient
  * @route GET /client/adresses/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary Renvoie toutes les adresse d'un client en BDD
  * @returns {JSON} 200 -Renvoie toutes les adresse d'un client en BDD
  */
@@ -620,7 +713,7 @@ router.get('/client/adresses/:id(\\d+)', client, adresseController.getAdresseByI
 /**
  * Renvoie une seule adresse d'un client selon son client_adresse.id
  * @route GET /client/adresse/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary Renvoie une seule adresse d'un client selon son client_adresse.id
  * @returns {JSON} 200 - Renvoie une seule adresse d'un client selon son client_adresse.id
  */
@@ -629,7 +722,7 @@ router.get('/client/adresse/:id(\\d+)', client, adresseController.getOneAdresse)
 /**
  * Renvoie la derniére adresse saisi d'un client selon son idClient
  * @route GET /client/adresselast/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary Renvoie la derniére adresse saisi d'un client selon son idClient
  * @returns {JSON} 200 - Renvoie la derniére adresse saisi d'un client selon son idClient
  */
@@ -640,7 +733,7 @@ router.get('/client/adresselast/:id(\\d+)', client, adresseController.getLastAdr
 /**
  * Une route pour insérer une adresse
  * @route POST /client/adresse/new
- * @group utilisateur
+ * @group Utilisateur
  * @summary Insére une nouvelle adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse insérée
  */
@@ -649,7 +742,7 @@ router.post('/client/adresse/new', cleanPassword, client, validateBody(adressePo
 /**
  * Une route pour mettre a jour une adresse
  * @route PATCH /client/adresse/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary Met a jour une adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
@@ -658,7 +751,7 @@ router.patch('/client/adresse/:id(\\d+)', cleanPassword, client, validateBody(ad
 /**
  * Une route pour supprimer une adresse
  * @route DELETE /client/adresse/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary Supprime une adresse ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
@@ -669,7 +762,7 @@ router.delete('/client/adresse/:id(\\d+)', client, validateBody(passwordSchema),
  * Une route pour supprimer toutes les adresses d'un client
  * route accessible a tous
  * @route DELETE /client/adresses/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary Supprime des adresses d'un même client ***néccésite un mot de passe
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
@@ -679,9 +772,9 @@ router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema)
 //! ROUTE TRANSPORTEUR ---------------------
 
 /**
- * Une route pour déterminer le type de livraison choisi par l'utilisateur et permet de laisser un commentaire en session 
+ * Une route pour déterminer le type de livraison choisi par l'Utilisateur et permet de laisser un commentaire en session 
  * @route POST /client/livraisonChoix
- * @group utilisateur
+ * @group Utilisateur
  * @summary Permet de déterminer le choix du transporteur fait par le client et de laisser un commentaire en session
  * @returns {JSON} 200 - Le choix du transporteur fait par le client et permet de laisser un commentaire en session  
  */
@@ -691,7 +784,7 @@ router.post('/client/livraisonChoix', clean, validateBody(choixLivraisonSchema),
 /**
  * Renvoie tous les transporteurs en BDD
  * @route GET /user/transporteurs
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Renvoie tous les transporteurs en BDD
  * @returns {JSON} 200 - Renvoie tous les transporteurs en BDD
  */
@@ -741,7 +834,7 @@ router.get('/admin/livraisons', admin, livraisonController.getAllLivraison);
 /**
  * Renvoie toutes les livraisons pour un client 
  * @route GET /user/livraisons/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Renvoie toutes les livraisons d'un client en BDD
  * @returns {JSON} 200 - Renvoie toutes les livraisons d'un client en BDD
  */
@@ -761,7 +854,7 @@ router.get('/admin/produitcommande', admin, livraisonController.getAllLigneComma
 /**
  * Renvoie toutes les produit commandé / livré pour un client en particulier
  * @route GET /user/produitLivre
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Renvoie toutes les livraisons d'un client en BDD
  * @returns {JSON} 200 - Renvoie tous les livraisons d'un client en BDD
  */
@@ -771,7 +864,7 @@ router.get('/user/produitcommande/:id(\\d+)', client, livraisonController.getAll
 /**
  * Renvoie tous les produits commandés / livré pour une commande particuliére
  * @route GET /user/produitLivreByCommande
- * @group utilisateur
+ * @group Utilisateur
  * @summary  Renvoie toutes les livraisons d'un client en BDD
  * @returns {JSON} 200 - Renvoie tous les livraisons d'un client en BDD
  */
@@ -809,7 +902,7 @@ router.delete('/admin/livraison/:id(\\d+)', admin, livraisonController.delete);
 /**
  * Une route pour modifier le choix de l'adresse d'envoi. Enléve la valeur TRUE de la précédente adresse et la met a une autre adresse
  * @route PATCH /user/choixAdresseEnvoi/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary Met a jour la nouvelle adresse de livraison 
  * @returns {JSON} 200 - Les données d'une adresse de livraison mise a jour
  */
@@ -819,7 +912,7 @@ router.patch('/user/choixAdresseEnvoi/:id(\\d+)', clean, client, adresseControll
 /**
  * Une route pour modifier le choix de l'adresse de facturation. Enléve la valeur TRUE de la précédente adresse et la met a une autre adresse
  * @route PATCH /user/choixAdresseFacturation/:id
- * @group utilisateur
+ * @group Utilisateur
  * @summary Met a jour la nouvelle adresse de facturation 
  * @returns {JSON} 200 - Les données d'une adresse de facturation mise a jour
  */
@@ -1110,7 +1203,7 @@ router.delete('/dev/delPrivilege', dev, adminController.deletePrivilege);
  * Une route pour voir ce qu'on a dans le panier
  * route accessible a tous 
  * @route GET /user/panier
- * @group utilisateur
+ * @group Utilisateur
  * @summary Affiche les articles d'un panier selon la session
  * @returns {JSON} 200 - les articles présent dans ce panier et leurs caractéristiques
  */
@@ -1121,7 +1214,7 @@ router.get('/user/panier', panierController.getPanier);
  * Une route pour ajouter un article dans le panier
  * route accessible a tous 
  * @route GET /user/addPanier
- * @group utilisateur
+ * @group Utilisateur
  * @summary Ajoute un article dans le panier
  * @returns {JSON} 200 - les articles ajouté dans ce panier et leurs caractéristiques
  */
@@ -1131,7 +1224,7 @@ router.get('/user/addPanier/:id(\\d+)', panierController.addArticlePanier);
  * Une route pour supprimer un article dans le panier
  * route accessible a tous 
  * @route DELETE /user/delPanier
- * @group utilisateur
+ * @group Utilisateur
  * @summary Supprime un article dans le panier
  * @returns {JSON} 200 - les articles restant dans le panier et leurs caractéristiques
  */
@@ -2045,12 +2138,12 @@ router.get('/dev/allHistoConn', dev, clientHistoController.getAllHistoConn);
 router.get('/dev/HistoConnByIdClient/:id(\\d+)', dev, clientHistoController.getHistoConnByIdClient);
 
 /**
- * Une route pour voir la derniere connexion valide d'un utilisateur 
+ * Une route pour voir la derniere connexion valide d'un Utilisateur 
  * @route GET /user/lastconn/:id
- * @group utilisateur
- * @summary Affiche la derniere connexion valide d'un utilisateur 
+ * @group Utilisateur
+ * @summary Affiche la derniere connexion valide d'un Utilisateur 
  * @param {produit.Model} req.params - L'id du client
- * @returns {JSON} 200 - Affiche la derniere connexion valide d'un utilisateur 
+ * @returns {JSON} 200 - Affiche la derniere connexion valide d'un Utilisateur 
  */
 router.get('/user/lastconn/:id(\\d+)', client, clientHistoController.getLastHistoConn);
 
@@ -2161,7 +2254,7 @@ router.delete('/admin/delAvisByIdClient/:id(\\d+)', client, avisController.delet
  * Redirection vers une page 404
  */
 router.use((req, res) => {
-  //res.redirect(`https://localhost:3000/api-docs#/`);
+  //res.redirect(`https://localhost:4000/api-docs#/`);
   res.status(404).json(`La route choisie n\'existe pas : Pour la liste des routes existantes, saisir cette URL dans le navigateur => https://localhost:${port}/api-docs#/`);
 });
 

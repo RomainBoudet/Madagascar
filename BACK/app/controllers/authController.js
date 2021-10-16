@@ -177,7 +177,10 @@ const authController = {
             }
 
             if (req.body.cookieAccepted === 'true') {
-                res.status(200).cookie('cookieAccepted', true, {
+
+                req.session.cookie = 'accepted';
+
+                return res.status(200).cookie('cookieAccepted', true, {
                     httpOnly: true, // Garantit que le cookie n’est envoyé que sur HTTP(S), pas au JavaScript du client, ce qui renforce la protection contre les attaques de type cross-site scripting.
                     secure: true, // si true, la navigateur n'envoit que des cookie sur du HTTPS
                     //sameSite: 'strict', //le mode Strict empêche l’envoi d’un cookie de session dans le cas d’un accès au site via un lien externe//https://blog.dareboost.com/fr/2017/06/securisation-cookies-attribut-samesite/
@@ -186,7 +189,6 @@ const authController = {
                 }).json("Vous avez accepté notre politique d'utilisation des cookies sur ce site et nous vous en remerçiont !");
 
 
-                req.session.cookie = 'accepted';
             }
             console.log()
             return res.json("Merci d\'accépter la politique de cookie pour continuer d\'utiliser ce site");

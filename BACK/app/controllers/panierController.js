@@ -37,8 +37,6 @@ const panierController = {
             }
 
             //On verifit si le coupon inséré existe
-
-
             if ((await redis.exists(`mada/coupon:${req.body.coupon}`)) === 0) {
 
                 //ici la clé n'existe pas !
@@ -48,16 +46,6 @@ const panierController = {
                     message: "Ce coupon n'existe pas ou n'est plus valable !"
                 });
 
-            }
-
-            //on vérifit si le coupon existant est valide
-            const existCoupon = await redis.get(`mada/coupon:${req.body.coupon}`).then(JSON.parse);
-            console.log("existCoupon == ", existCoupon);
-            if (existCoupon.isActive == "false") {
-                console.log("Ce coupon existe mais n'est pas valide... ");
-                return res.status(200).json({
-                    message: "Ce coupon existe mais n'est pas valide..."
-                });
             }
 
 

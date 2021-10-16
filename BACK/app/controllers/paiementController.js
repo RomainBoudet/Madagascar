@@ -1361,7 +1361,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JkBlvLNa9FFzz1X12oEuAKR_secret_YaqQNqbGlm2tqotDYjXw9P2j2",
+                client_secret: "pi_3JkQuOLNa9FFzz1X1k9sSb4o_secret_VwFZt1ZASDVjEZBvG95GAAu3Q",
             });
 
 

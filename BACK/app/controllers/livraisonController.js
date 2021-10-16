@@ -45,7 +45,7 @@ const livraisonController = {
             if (req.body.sendSmsWhenShipping && req.body.idTransporteur !== 3) {
                 req.session.sendSmsWhenShipping = req.body.sendSmsWhenShipping;
             } else if (req.body.sendSmsWhenShipping == 'undefined') {
-                req.session.sendSmsWhenShipping == 'false'
+                req.session.sendSmsWhenShipping = 'false'
             };
 
             // Je met a jour le prix du panier en prenant en compte le cout du transport

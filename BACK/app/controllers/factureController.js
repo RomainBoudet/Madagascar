@@ -18,7 +18,6 @@ const {
 } = require('../services/adresse');
 
 
-
 /**
  * Une méthode qui va servir a intéragir avec le model Facture pour les intéractions avec la BDD
  * Retourne un json
@@ -686,7 +685,7 @@ const factureController = {
 
     getFacture: async (req, res) => {
         try {
-            // Attent un req.body.idCommande
+            // Attend un req.body.idCommande
 
             let commande;
 
@@ -710,8 +709,11 @@ const factureController = {
                 return res.status(403).json("Vous n'avez pas les droit pour accéder a ala ressource.");
             }
 
+            // Je me prémuni des email avec des slash qui pourrait court-circuiter mon chemin d'accés. Remplacement des / par des __ 
+            const email = commande.email;
+            const emailWithoutSlash = email.replace("/", "____________________"); // En partant du principe qu'aucun mail ne contient 20 "_". 
 
-            res.sendFile(path.resolve(__dirname + `../../../Factures/client:_${commande.email}/${commande.nomFamille}_${commande.prenom}__${commande.reference}.pdf`));
+            res.sendFile(path.resolve(__dirname + `../../../Factures/client:_${emailWithoutSlash}/${commande.nomFamille}_${commande.prenom}__${commande.reference}.pdf`));
             res.setHeader('Content-type', 'application/pdf');
 
 

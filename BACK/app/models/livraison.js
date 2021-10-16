@@ -130,7 +130,7 @@ class Livraison {
         } = await db.query('SELECT * FROM mada.view_livraisons;');
 
         if (!rows[0]) {
-            throw new Error("Aucune livraisons dans la BDD");
+            return null;
         }
         consol.model(
             `les informations des ${rows.length} livraisons ont été demandées !`
@@ -151,7 +151,7 @@ class Livraison {
         } = await db.query('SELECT * FROM mada.view_produit_livrer;');
 
         if (!rows[0]) {
-            throw new Error("Aucun produits livrés  dans la BDD");
+            return null;
         }
         consol.model(
             `les informations des ${rows.length} livraisons ont été demandées !`
@@ -179,7 +179,7 @@ class Livraison {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun livraison avec cet id");
+            return null;
         }
 
         consol.model(
@@ -207,7 +207,7 @@ class Livraison {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun livraison avec cet id");
+            return null;
         }
 
         consol.model(
@@ -237,7 +237,7 @@ class Livraison {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucune livraison avec cet idClient");
+            return null;
         }
 
         consol.model(
@@ -266,7 +266,7 @@ class Livraison {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucune livraison avec cet idTransporteur");
+            return null;
         }
 
         consol.model(
@@ -294,7 +294,7 @@ class Livraison {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucune livraison avec cet idCommande");
+            return null;
         }
 
         consol.model(

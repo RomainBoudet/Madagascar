@@ -17,6 +17,8 @@ This project aims to provide a shopping website for product from Madagascar. The
         * Node.js
          * Express 
         * Sqitch
+        * STRIPE
+        * TWILLIO
         * Joi
         * Mocha et chai 
         * PostgreSql

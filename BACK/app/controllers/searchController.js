@@ -28,7 +28,8 @@ const redis = {
  * @return {JSON}  - une donnée en format json
  */
 
-//! pour plus de souplesse je pourrais metre en variable l'endroit ou l'utilisateur veut faire sa recherche (categorie, produit, description, etc..) et la valeur du slice qui séléctionne un nombre de résultats. Si c'est données passe en req.body. alors beaucoup plus de choix dans la recherche...
+//! pour plus de souplesse je pourrais metre en variable l'endroit ou l'utilisateur veut faire sa recherche (categorie, produit, description, etc..) et la valeur du slice qui séléctionne un nombre de résultats. 
+//! Si c'est données passe en req.body. alors beaucoup plus de choix dans la recherche...
 
 const searchController = {
 

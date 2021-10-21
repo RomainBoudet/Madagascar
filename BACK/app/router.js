@@ -553,7 +553,7 @@ router.get('/users/readFacture', client, factureController.getFacture);
  * @route GET /admin/StartUpdateCommandeFromEmail
  * @group Administrateur 
  * @summary Permet de démarrer le serveur qui lira les email et de mettra a jour le statut d'une commande selon le contenu d'un mail
- * @param {email} email.required - L'email doit avoir un statut précis = "update statut" et un body précis = "commande : statut".
+ * @param {string} email.required - L'email doit avoir un statut précis = "update statut" et un body précis = "commande : statut".
  * @returns {JSON} 200 - Envoi d'un email a l'administrateur qui a contacté l'API par email
  */
 router.get('/admin/startUpdateCommandeFromEmail', clean, admin, commandeController.startUpdateCommandeFromEmail);
@@ -578,6 +578,7 @@ router.get('/admin/startUpdateCommandeFromEmail', clean, admin, commandeControll
  * @route POST /user/searchProduit
  * @group Utilisateur
  * @summary Permet la recherche d'un mot ou d'une phrase (une string) dans les produits. 
+ * req.body.search
  * @returns {JSON} 200 - Un tableau d'objeta 
  */
 router.post('/user/searchProduit', clean, validateBody(searchSchema), searchController.search);

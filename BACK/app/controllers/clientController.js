@@ -40,6 +40,7 @@ const clientController = {
      */
     getAll: async (req, res) => {
         try {
+
             const clients = await Client.findAll();
 
             res.status(200).json(clients);
@@ -506,7 +507,7 @@ const clientController = {
 
             }
 
-            // le mail demandé doit être relié au mail du user en session !! Seul le dev peut envoyer un lien a un email que le sien !
+            // le mail demandé doit être relié au mail du user en session !! Seul le dev peut envoyer un lien a un autre email que le sien !
             if (req.session.user.privilege === "Administrateur" && req.session.user.email !== email) {
                 console.log("vous n'avez pas les droit nécéssaire.");
 
@@ -613,18 +614,24 @@ const clientController = {
 
             const userInDb = await Client.findOne(userId);
 
+            let decodedToken;
+            try {
+                decodedToken = await jsonwebtoken.verify(token, jwtSecret, {
+                    audience: 'MADAshop',
+                    issuer: `${userInDb.prenom} ${userInDb.nomFamille}`,
+                }, function (err, decoded) {
 
-            const decodedToken = await jsonwebtoken.verify(token, jwtSecret, {
-                audience: 'MADAshop',
-                issuer: `${userInDb.prenom} ${userInDb.nomFamille}`,
-            }, function (err, decoded) {
+                    if (err) {
+                        return res.json("la validation de votre email a échoué")
+                    }
 
-                if (err) {
-                    return res.json("la validation de votre email a échoué")
-                }
+                    return decoded
+                });
+            } catch (error) {
+                return res.status(403).json("la validation de votre email a échoué")
 
-                return decoded
-            });
+            }
+
 
             if (userInDb.statut) {
                 console.log(`Le mail ${userInDb.email} à déja été authentifié avec succés !`);
@@ -800,7 +807,7 @@ const clientController = {
             const secret = `${userInDb.password}_${userInDb.createdDate}`
 
 
-             await jsonwebtoken.verify(token, secret, {
+            await jsonwebtoken.verify(token, secret, {
                 audience: 'envoiresetpwd',
                 issuer: `${userInDb.prenom} ${userInDb.nomFamille}`
             }, function (err, decoded) {
@@ -925,11 +932,11 @@ const clientController = {
             } = req.body;
             const clientAuthentifieInDb = await Client.authenticateWhitoutHisto(req.session.user.email, password);
             if (!clientAuthentifieInDb) {
-                return res.status(401).json("Erreur d'authentification : vous nêtes pas autoriser a supprimer un utilisateur.");
+                return res.status(401).json("Erreur d'authentification : vous n'êtes pas autoriser a supprimer un utilisateur.");
             }
 
             const clientInDb = await Client.findByEmail(req.body.email);
-            if (clientInDb.email === undefined) {
+            if (clientInDb.email === undefined || clientInDb.email === null) {
                 return res.status(404).json("Le client qui vous souhaitez supprimer n'existe pas en BDD");
             }
             const client = await clientInDb.delete();

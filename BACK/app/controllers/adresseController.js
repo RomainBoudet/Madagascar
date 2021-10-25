@@ -8,7 +8,6 @@ const countrynames = require('countrynames');
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 
 
-
 /**
  * Une méthode qui va servir a intéragir avec le model Adresse pour les intéractions des adresses des clients avec la BDD 
  * Retourne un json
@@ -182,7 +181,7 @@ const adresseController = {
                 })
             };
 
-            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== client.idClient) {
+            if (( req.session.user.privilege === 'Client') && req.session.user.idClient !== client.idClient) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
@@ -206,7 +205,7 @@ const adresseController = {
     getAdresseByIdClient: async (req, res) => {
         try {
 
-            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== parseInt(req.params.id, 10)) {
+            if ((req.session.user.privilege === 'Client') && req.session.user.idClient !== parseInt(req.params.id, 10)) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
@@ -229,17 +228,39 @@ const adresseController = {
 
 
 
-    getLastAdresseByIdClient: async (req, res) => {
+    getFacturationAdresseByIdClient: async (req, res) => {
         try {
 
-            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== parseInt(req.params.id, 10)) {
+            if ((req.session.user.privilege === 'Client') && req.session.user.idClient !== parseInt(req.params.id, 10)) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
             };
 
 
-            const client = await Adresse.findLastAdresseByIdClient(req.params.id);
+            const client = await Adresse.findByFacturationTrue(req.params.id);
+            console.log(client);
+
+            client.codePostal = Number(client.codePostal);
+            res.status(200).json(client);
+
+        } catch (error) {
+            console.trace('Erreur dans la méthode getLastAdresseByIdClient du adresseController :',
+                error);
+            res.status(500).json(error.message);
+        }
+    },
+
+    getEnvoieAdresseByIdClient: async (req, res) => {
+        try {
+
+            if ((req.session.user.privilege === 'Client') && req.session.user.idClient !== parseInt(req.params.id, 10)) {
+                return res.status(403).json({
+                    message: "Vous n'avez pas les droits pour accéder a cette ressource"
+                })
+            };
+
+            const client = await Adresse.findByEnvoiTrue(req.params.id);
             console.log(client);
 
             client.codePostal = Number(client.codePostal);
@@ -301,7 +322,7 @@ const adresseController = {
 
             // On n'accepte que les adresses en France pour cette premiére version de l'API
             // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
-            console.log(req.body.pays);
+            //console.log(req.body.pays);
             if (req.body.pays !== 'FRANCE') {
                 return res.status(404).json({
                     message: "Bonjour, merci de renseigner une adresse en France pour cette version de l'API"
@@ -590,7 +611,6 @@ const adresseController = {
 
                 const envoiIsTrue = await Adresse.findByEnvoie(req.session.user.idClient)
                 if (envoiIsTrue) {
-                    console.log("on passe !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     await envoiIsTrue.envoieNull();
                 }
                 console.log("idClientStripe ==> ", idClientStripe);
@@ -661,7 +681,7 @@ const adresseController = {
 
             if (!clientInDb) {
                 return res.status(401).json({
-                    message: "Erreur d'authentification : vous n'êtes pas autoriser a supprimer votre adresse."
+                    message: "Erreur d'authentification : vous n'êtes pas autoriser a supprimer cette adresse."
                 });
             };
 
@@ -723,7 +743,7 @@ const adresseController = {
                 })
             };
 
-            if (adressesToDelete[0].idClient !== req.session.user.idClient) {
+            if ( req.session.privilege === 'Client' && adressesToDelete[0].idClient !== req.session.user.idClient) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })

@@ -304,7 +304,7 @@ router.get('/cgv', paiementController.cgv);
 router.get('/user/paiementCB', client, paiementController.paiementCB);
 
 /**
-* Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client choisit un mode de paiement par virement SEPA apres avoir choisit son transporteur.
+ * Prend en charge l'intention de paiement via STRIPE, a utiliser lorsque le client choisit un mode de paiement par virement SEPA apres avoir choisit son transporteur.
  * Nécéssite d'être authentifié, d'avoir accepté les CGV, avoir des article dans le panier, avoir choisit un transporteur, avoir une adresse de livraison OU choisi le retrait sur place de sa commande, et avoir une adresse de facturation
  *  @route GET /user/paiementSEPA
  * @group Utilisateur
@@ -571,26 +571,27 @@ router.get('/admin/startUpdateCommandeFromEmail', clean, admin, commandeControll
 //router.get('/admin/stopUpdateCommandeFromEmail', clean, admin, commandeController.stopUpdateCommandeFromEmail);
 
 //! SEARCH BAR -------------------------------------------------------------------------------------------------------------------------------
-//TODO 
-//NOTE nettoyage du router a finir !! 
 /**
  * Receptionne une string et renvoie un tableau d'objet représentant les produits qui match. 
+ * Dans la configuration de la recherche, on admet que le nombre de caractére minimum qui doit matcher avec le résultat est egale a la longeur du mot de recherche proposé moins une lettre.
+ * Insensible a la casse et ne comprend pas les scores.
+ * Ne seront présenté uniquement les scores qui sont inférieur a 0.4 et pas plus de 20 articles par recherche.
  * @route POST /user/searchProduit
  * @group Utilisateur
- * @summary Permet la recherche d'un mot ou d'une phrase (une string) dans les produits. 
- * req.body.search
- * @returns {JSON} 200 - Un tableau d'objeta 
+ * @summary Permet la recherche d'un mot ou d'une phrase (une string) dans les produits.
+ * @param {string} search.body.required - Une commande a mettre a jour, qui peut être soit une référence, soit un identifiant de commande.
+ * @returns {JSON} 200 - Un tableau d'objet
  */
 router.post('/user/searchProduit', clean, validateBody(searchSchema), searchController.search);
 
 //! ROUTES ADMINISTRATEUR -----------------------------------------------------------------------------------------------------------------------
 
-
 /**
- * Envoie un email pour que l'admin qui le souhaite puisse vérifier son email.
+ * Envoie un email avec un lien pour que l'admin qui le souhaite puisse vérifier son email.
  * @route POST /sendEmailLink
  * @group Administrateur
  * @summary Prend un mail en entrée et renvoie un email si celui çi est présent en BDD.  Cliquer sur le lien dans l'email envoyé enmenera sur la route /verifyemail  
+ * @param {string} email.body.required - 
  * @returns {JSON} 200 - Un email a été délivré
  */
 router.post('/sendEmailLink', clean, admin, validateBody(resendEmailSchema), clientController.sendEmailLink);
@@ -601,55 +602,68 @@ router.post('/sendEmailLink', clean, admin, validateBody(resendEmailSchema), cli
  * @route POST /verifyEmail
  * @group Administrateur
  * @summary Route qui réceptionne le lien de la validation du mail avec un token en query et valide le mail en BDD.
- * @returns {JSON} 200 - On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
+ * @param {string} userId.query.required - 
+ * @param {string} token.query.required - 
+ * @returns {JSON} 200 - "message: Bonjour 'prenom', votre mail 'email' a été authentifié avec succés ! Vous pouvez désormais fermer cette page."
+                } On passe la verif de l'email de l'admin a TRUE. Il peut désormais effectuer des opérations qui nécessitent un vérification de l'email en amont.
  */
 router.get('/verifyEmail', clean, validateQuery(verifyEmailSchema), clientController.verifyEmail);
 /**
  * Permet d'enregitrer en BDD et de vérifier un téléphone par l'envoie d'un sms sur le numéro.
+ * Récupére les données de connexion de twilio dans la BDD et les utilise pour l'envoi d'un sms
+ * Le numéro de téléphone doit être français.
+ * Un code a 6 chiffre est envoyé. La longeur du code peut être modifié sur le dasboard de Twillio.
  * @route POST /admin/smsVerify
  * @group Administrateur
  * @summary Utilise l'API de Twillio. Permet de vérifier un numéro de téléphone
- * @param {Administrateur.Model} Administrateur.body.required
+ * @param {string} phoneNumber.body.required
  * @returns {JSON} 200 - Un code par sms a été envoyé
  */
 router.post('/admin/smsVerify', admin, clean, validateBody(phoneNumberSchema), adminController.smsVerify);
 
 /**
  * Reçoi un code pour vérifier un numéro de téléphone et si le code est correct, le téléphone est enregistré en BDD sous format E. 164.
+ * Entre l'envoi et la reception du code, le numéro de téléphone est stocké en session.
  * @route POST /admin/smsCheck
  * @group Administrateur
  * @summary Utilise l'API de Twillio. C'est le retour de la route smsVerify. Insert un téléphone vérifié d'un admin en BDD
- * @param {Administrateur.Model} Administrateur.body.required
- * @returns {JSON} 200 - Un un json informant que le téléphone a été authentifié
+ * @param {string} code.body.required - Le code a 6 chiffre reçu par sms.
+ * @returns {JSON} 200 - Un json informant que le téléphone a été authentifié
  */
 router.post('/admin/smsCheck', admin, clean, validateBody(codeSchema), adminController.smsCheck);
 
 
 /**
- * Reçoie un true ou false pour pouvoir choisir l'envoie de sms a l'admin a chaque commande, ou non. Nécéssite d'avoir vérifié son téléphone avant.
+ * Reçoie la valeur true ou false contenu dans un objet ayant également comme clé la valeur true ou false pour pouvoir choisir l'envoie de sms a l'admin a chaque création ou annulation de commandes. Nécéssite d'avoir vérifié son téléphone avant.
  * @route POST /admin/smsChoice
  * @group Administrateur
  * @summary Permet d'insérer en BDD le choix de l'admin en matiére d'envoie de sms a chaque commande reçu
- * @param {Administrateur.Model} Administrateur.body.required
+ * @param {string} true.body
+ * @param {string} false.body
+ * @returns {JSON} 200 - message: "Votre choix a bien été enregistré !"
  */
 router.post('/admin/smsChoice', admin, clean, validateBody(smsChoiceSchema), adminController.smsChoice);
 
 /**
- * Reçoie un true ou false pour pouvoir choisir l'envoie de email a l'admin a chaque commande, ou non. Nécéssite d'avoir vérifié son email avant.
+ * Reçoie la valeur true ou false contenu dans un objet ayant également comme clé la valeur true ou false. Nécéssite d'avoir vérifié son email avant.
  * @route POST /admin/emailChoice
  * @group Administrateur
- * @summary Permet d'insérer en BDD le choix de l'admin en matiére d'envoie d'email a chaque commande reçu
- * @param {Administrateur.Model} Administrateur.body.required
+ * @summary Permet d'insérer en BDD le choix de l'admin en matiére d'envoie d'email a chaque commande reçu ou annulée.
+ * @param {string} true.body - doit contenir la valeur "true"
+ * @param {string} false.body - doit contenir la valeur "false"
+ * @returns {JSON} 200 - message: "Votre choix a bien été enregistré !"
  */
 router.post('/admin/emailChoice', admin, clean, validateBody(emailChoiceSchema), adminController.emailChoice);
 
 
 /**
  * Faire appel a la méthode smsSend envoi un sms avec le contenu voulu. Ici un exemple générique qui renvoie le nombre d'enregistrement dans la table clients, a chaque demande. A modifier selon les besoins d'envoie de SMS...
+ * Le numéro de téléphone de Twillio DOIT être anglais. Celui du dev, doit être français.
+ * Envoie un sms sur le téléphone du developpeur, pour l'exemple, indiquant le nombre de client en BDD.
  * @route GET /admin/smsSend
  * @group Administrateur
  * @summary Utilise l'API de Twillio. Permet d'envoyer un sms sur le numéro souhaité. Relié au numéro de l'admin du site.
- * @returns {JSON} 200 -Renvoie un sms au numéro souhaité.
+ * @returns {JSON} 200 -message:'Sms bien envoyé !'
  */
 router.get('/admin/smsSend', admin, adminController.smsSend);
 
@@ -666,35 +680,40 @@ router.get('/admin/user/all', admin, clientController.getAll);
  * Renvoie un client selon son id
  * @route GET /admin/user/all
  * @group Administrateur
- * @summary Renvoie tous les client en BDD
- * @returns {JSON} 200 -Renvoie la liste des clients en BDD.
+ * @summary Renvoie un client selon son id
+ * @param {number} id.params.required - L'identifiant d'un client a afficher 
+ * @returns {JSON} 200 -Renvoie un clients en BDD.
  */
 router.get('/admin/user/getone/:id(\\d+)', admin, clientController.getOne);
 
 
 /**
- * Supprime un client selon son id
+ * Supprime un client selon son id. Nécéssite un mot de passe
  * @route DELETE /admin/user/:id
  * @group Administrateur
- * @summary Supprime un client en BDD selon son id    *** nécéssite un mot de passe
- * @returns {JSON} 200 - Supprime un client en BDD
+ * @summary Supprime un client en BDD selon son id 
+ * @param {number} id.params.required - L'identifiant d'un client a supprimer
+ * @param {string} password.body.required - 
+ * @returns {JSON} 200 - Supprime un client en BDD. On renvoie le client supprimé en JSON.
  */
 router.delete('/admin/user/:id(\\d+)', admin, validateBody(passwordSchema), clientController.deleteById);
 
 
 /**
- * Supprime un client selon son email
+ * Supprime un client selon son email. Nécéssite un mot de passe
  * @route DELETE /admin/user
  * @group Administrateur
  * @summary Supprime un client en BDD selon son email    *** nécéssite un mot de passe et l'email a supprimer
- * @returns {JSON} 200 - Supprime un client en BDD
+ * @param {string} password.body.required - 
+ * @param {string} email.body.required - L'email d'un client a supprimer
+ * @returns {JSON} 200 - Supprime un client en BDD. On renvoie le client supprimé en JSON.
  */
 router.delete('/admin/user', admin, validateBody(userLoginSchema), clientController.deleteByEmail);
 
 //! ADRESSE DES CLIENT -----------------------------------
 
 /**
- * Renvoie toutes les adresses des clients en bdd 
+ * Renvoie toutes les adresses des clients en bdd. Donné dans l'ordre des identifiants client
  * @route GET /admin/user/adresse
  * @group Administrateur
  * @summary Renvoie toutes les adresses des clients en BDD
@@ -707,65 +726,112 @@ router.get('/admin/user/adresses', admin, adresseController.getAllAdresse);
  * @route GET /client/adresses/:id
  * @group Utilisateur
  * @summary Renvoie toutes les adresse d'un client en BDD
+ * @param {number} id.params.required - L'identifiant d'un client.
  * @returns {JSON} 200 -Renvoie toutes les adresse d'un client en BDD
  */
 router.get('/client/adresses/:id(\\d+)', client, adresseController.getAdresseByIdClient);
 
 /**
  * Renvoie une seule adresse d'un client selon son client_adresse.id
+ * Renvoie l'adesse compléte avec son pays, ville, CP.
  * @route GET /client/adresse/:id
  * @group Utilisateur
  * @summary Renvoie une seule adresse d'un client selon son client_adresse.id
+ * @param {number} id.param.required - L'identifiant d'une adresse.
  * @returns {JSON} 200 - Renvoie une seule adresse d'un client selon son client_adresse.id
  */
 router.get('/client/adresse/:id(\\d+)', client, adresseController.getOneAdresse);
 
 /**
- * Renvoie la derniére adresse saisi d'un client selon son idClient
- * @route GET /client/adresselast/:id
+ * Renvoie l'adresse de facturation d'un client selon son idClient
+ * @route GET /client/dresseFacturation/:id
  * @group Utilisateur
- * @summary Renvoie la derniére adresse saisi d'un client selon son idClient
- * @returns {JSON} 200 - Renvoie la derniére adresse saisi d'un client selon son idClient
+ * @summary Renvoie l'adresse de facturation d'un client selon son idClient
+ * @param {number} id.param.required - L'identifiant d'un client
+ * @returns {JSON} 200 - Renvoie l'adresse de facturation d'un client selon son idClient
  */
-router.get('/client/adresselast/:id(\\d+)', client, adresseController.getLastAdresseByIdClient);
+router.get('/client/adresseFacturation/:id(\\d+)', client, adresseController.getFacturationAdresseByIdClient);
 
+/**
+ * Renvoie l'adresse d'envoie' d'un client selon son idClient
+ * @route GET /client/adresseEnvoie/:id
+ * @group Utilisateur
+ * @summary Renvoie l'adresse d'envoie d'un client selon son idClient
+ * @param {number} id.param.required - L'identifiant d'un client.
+ * @returns {JSON} 200 - Renvoie l'adresse d'envoie d'un client selon son idClient
+ */
+router.get('/client/adresseEnvoie/:id(\\d+)', client, adresseController.getEnvoieAdresseByIdClient);
 
 
 /**
- * Une route pour insérer une adresse
+ * Une route pour insérer une adresse, néccésite un mot de passe.
+ * Uniquement les adresses en France sont autorisé.
+ * Les données STRIPE sont également mise a jour via cette méthode.
+ * Les titres d'adresses doivent être unique.
  * @route POST /client/adresse/new
  * @group Utilisateur
- * @summary Insére une nouvelle adresse ***néccésite un mot de passe
+ * @summary Insére une nouvelle adresse 
+ * @param {string} password.body.required - Le mot de passe de l'utilisateur qui souhaite rentrer une nouvelle adresse.
+ * @param {string} titre.body.required - Un titre, unique pour retrouver l'adresse.
+ * @param {string} prenom.body.required - 
+ * @param {string} nomFamille.body.required - 
+ * @param {string} ligne1.body.required - 
+ * @param {string} ligne2.body - Un complément d'adresse si nécéssaire
+ * @param {string} ligne3.body - Un complément d'adresse si nécéssaire
+ * @param {string} codePostal.body.required - 
+ * @param {string} ville.body.required - 
+ * @param {string} pays.body.required - Seul la France est autorisé...
+ * @param {string} telephone.body.required - 
+ * @param {string} envoie.body.required - Avec la valeur "true" si cette envoie est aussi une adresse d'envoie. 
+ * @param {number} id.param.required - L'identifiant d'une adresse. 
  * @returns {JSON} 200 - Les données de la nouvelle adresse insérée
  */
 router.post('/client/adresse/new', cleanPassword, client, validateBody(adressePostSchema), adresseController.newAdresse);
 
 /**
  * Une route pour mettre a jour une adresse
+ * Uniquement les adresses en France sont autorisé.
+ * Les données STRIPE sont également mise a jour via cette méthode.
+ * Un message personnalisé est envoyé selon les données mise a jour. 
  * @route PATCH /client/adresse/:id
  * @group Utilisateur
  * @summary Met a jour une adresse ***néccésite un mot de passe
+ * @param {string} password.body.required - Le mot de passe de l'utilisateur qui souhaite rentrer une nouvelle adresse.
+ * @param {string} titre.body.required - Un titre, unique pour retrouver l'adresse.
+ * @param {string} prenom.body.required - 
+ * @param {string} nomFamille.body.required - 
+ * @param {string} ligne1.body.required - 
+ * @param {string} ligne2.body - Un complément d'adresse si nécéssaire
+ * @param {string} ligne3.body - Un complément d'adresse si nécéssaire
+ * @param {string} codePostal.body.required - 
+ * @param {string} ville.body.required - 
+ * @param {string} pays.body.required - Seul la France est autorisé...
+ * @param {string} telephone.body.required - 
+ * @param {string} envoie.body.required - Avec la valeur "true" si cette envoie est aussi une adresse d'envoie.
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
 router.patch('/client/adresse/:id(\\d+)', cleanPassword, client, validateBody(adresseSchema), adresseController.updateAdresse);
 
 /**
- * Une route pour supprimer une adresse
+ * Une route pour supprimer une adresse, néccésite un mot de passe.
  * @route DELETE /client/adresse/:id
  * @group Utilisateur
- * @summary Supprime une adresse ***néccésite un mot de passe
- * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
+ * @summary Supprime une adresse
+ * @param {string} password.body.required - Le mot de passe de l'utilisateur qui souhaite supprimer une adresse.
+ * @param {number} id.params.required - L'identifiant d'une adresse a supprimer.
+ * @returns {JSON} 200 - Les données de l'adresse supprimée.
  */
 router.delete('/client/adresse/:id(\\d+)', client, validateBody(passwordSchema), adresseController.delete);
 
-
 /**
- * Une route pour supprimer toutes les adresses d'un client
- * route accessible a tous
+ * Une route pour supprimer toutes les adresses d'un client, néccésite un mot de passe. 
+ * route accessible a tous les clients connectés.
  * @route DELETE /client/adresses/:id
  * @group Utilisateur
- * @summary Supprime des adresses d'un même client ***néccésite un mot de passe
- * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
+ * @summary Supprime des adresses d'un même client
+ * @param {string} password.body.required - Le mot de passe de l'utilisateur qui souhaite supprimer ses adresses.
+ * @param {number} id.params.required - L'identifiant d'un client
+ * @returns {JSON} 200 - Les données des adresses supprimées.
  */
 router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema), adresseController.deleteByIdClient);
 

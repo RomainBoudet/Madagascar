@@ -8,7 +8,7 @@ const capitalizeNotForceLowerCase = (string) => string.charAt(0).toUpperCase() +
 
 
 //module installé comme MW dans l'index !
-//! Non utilisé, fait pplanter la vérification de la signature de STRIPE dans le webhook du payment !! "Expected a string but received a number"
+//! Non utilisé, fait planter la vérification de la signature de STRIPE dans le webhook du payment !! "Expected a string but received a number"
 
 cleanPass.use((req, res, next) => {
 

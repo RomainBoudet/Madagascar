@@ -65,7 +65,7 @@ const adminController = {
 
             // ici req.body peut être true ou false . Pas strcitement identique === pour autoriser les érreurs de type..
 
-            if (req.body.true === 'true') {
+            if (req.body.true == 'true') {
 
                 if (phoneInDb.smsNewCommande === true) {
                     console.log("L'envoie de sms a chaque commande est déja configuré !")
@@ -96,7 +96,7 @@ const adminController = {
             }
             // Le choix de l'admin a bien été inséré en BDD
 
-            res.status(200).end();
+            res.status(200).json({message: "Votre choix a bien été enregistré !"});
 
         } catch (error) {
             console.log(`Erreur dans la methode smsChoice du adminController ${error.message}`);
@@ -119,7 +119,7 @@ const adminController = {
 
             // ici req.body peut être true ou false . Pas strcitement identique === pour autoriser les érreurs de type..
 
-            if (req.body.true === 'true') {
+            if (req.body.true == 'true') {
 
                 if (EmailVerifInDb.emailNewCommandeChoice === true) {
                     console.log("L'envoie de sms a chaque commande est déja configuré !")
@@ -150,7 +150,7 @@ const adminController = {
             }
             // Le choix de l'admin a bien été inséré en BDD
 
-            res.status(200).end();
+            res.status(200).json({message: "Votre choix a bien été enregistré !"});
 
         } catch (error) {
             console.log(`Erreur dans la methode emailChoice du adminController ${error.message}`);
@@ -336,7 +336,7 @@ const adminController = {
             if (!phoneInDb === null) {
                 return res.status(200).json('Votre numéro de téléphone a déja été vérifié avec succés !')
             }
-            //Malgrés la validator en backup, ne pas oublier que Joi sanctionnera avant si le format neconvient pas...
+            //Malgrés la validator en backup, ne pas oublier que Joi sanctionnera avant si le format ne convient pas...
             if (validator.isMobilePhone(req.body.phoneNumber, 'fr-FR', {
                     strictMode: true
                 })) {
@@ -423,7 +423,7 @@ const adminController = {
 
                 })
                 .then(message => console.log(message.sid));
-            res.status(200).json('Sms bien envoyé !');
+            res.status(200).json({message:'Sms bien envoyé !'});
 
         } catch (error) {
             console.trace(

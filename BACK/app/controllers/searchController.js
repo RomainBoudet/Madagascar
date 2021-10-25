@@ -53,7 +53,8 @@ const searchController = {
 
             };
 
-            // Ici, n'ayant pas créeé la clé mada:/v1/user/produits, je ne fais que l'utiliser, elle a bien déja été mis dans l'index en JS qui recéle nos clé REDIS dans la méthode du cacheGenerator, lors de sa création (sur la route /v1/user/produits) et ainsi, elle sera bien supprimée en cas d'activation d'une route flush.  
+            // Ici, n'ayant pas créeé la clé mada:/v1/user/produits, je ne fais que l'utiliser, elle a bien déja été mis dans l'index en JS qui recéle nos clé REDIS dans la méthode du cacheGenerator, 
+            // lors de sa création (sur la route /v1/user/produits) et ainsi, elle sera bien supprimée en cas d'activation d'une route flush.  
 
             // les options de fuse => https://fusejs.io/api/options.html 
             //comprendre le scoring ==> https://fusejs.io/concepts/scoring-theory.html 

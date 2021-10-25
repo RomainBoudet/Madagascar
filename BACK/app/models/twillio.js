@@ -64,7 +64,7 @@ class Twillio {
         } = await db.query('SELECT * FROM mada.twillio ORDER BY twillio.id ASC');
 
         if (!rows[0]) {
-            throw new Error("Aucun twillio dans la BDD");
+            return null;
         }
         consol.model(
             `les informations des ${rows.length} twillios ont été demandées !`
@@ -85,8 +85,7 @@ class Twillio {
         } = await db.query('SELECT * FROM mada.twillio ORDER BY twillio.id ASC LIMIT 1');
 
         if (!rows[0]) {
-            throw new Error("Aucun twillio dans la BDD");
-        }
+            return null;        }
         this.id = rows[0].id;
         consol.model(
             `la première info avec l'id ${this.id} a été demandées !`
@@ -114,8 +113,7 @@ class Twillio {
         );
 
         if (!rows[0]) {
-            throw new Error("Aucun twillio avec cet id");
-        }
+            return null;        }
 
         consol.model(
             `le twillio id : ${id} a été demandé en BDD !`

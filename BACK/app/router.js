@@ -797,17 +797,17 @@ router.post('/client/adresse/new', cleanPassword, client, validateBody(adressePo
  * @group Utilisateur
  * @summary Met a jour une adresse ***néccésite un mot de passe
  * @param {string} password.body.required - Le mot de passe de l'utilisateur qui souhaite rentrer une nouvelle adresse.
- * @param {string} titre.body.required - Un titre, unique pour retrouver l'adresse.
- * @param {string} prenom.body.required - 
- * @param {string} nomFamille.body.required - 
- * @param {string} ligne1.body.required - 
+ * @param {string} titre.body - Un titre, unique pour retrouver l'adresse.
+ * @param {string} prenom.body - 
+ * @param {string} nomFamille.body - 
+ * @param {string} ligne1.body - 
  * @param {string} ligne2.body - Un complément d'adresse si nécéssaire
  * @param {string} ligne3.body - Un complément d'adresse si nécéssaire
- * @param {string} codePostal.body.required - 
- * @param {string} ville.body.required - 
- * @param {string} pays.body.required - Seul la France est autorisé...
- * @param {string} telephone.body.required - 
- * @param {string} envoie.body.required - Avec la valeur "true" si cette envoie est aussi une adresse d'envoie.
+ * @param {string} codePostal.body - 
+ * @param {string} ville.body - 
+ * @param {string} pays.body - Seul la France est autorisé...
+ * @param {string} telephone.body - 
+ * @param {string} envoie.body - Avec la valeur "true" si cette envoie est aussi une adresse d'envoie.
  * @returns {JSON} 200 - Les données de la nouvelle adresse mise a jour
  */
 router.patch('/client/adresse/:id(\\d+)', cleanPassword, client, validateBody(adresseSchema), adresseController.updateAdresse);
@@ -875,7 +875,7 @@ router.get('/user/transporteurs', client, livraisonController.getAllTransporteur
  * @param {string} idClient.body.required - 
  * @param {string} idCommande.body.required - 
  * @param {string} idTransporteur.body.required - 
-* @returns {JSON} 200 - Les données du nouveau transporteur inséré
+ * @returns {JSON} 200 - Les données du nouveau transporteur inséré
  */
 router.post('/admin/transporteur/new', clean, admin, validateBody(transporteurPostSchema), livraisonController.newTransporteur);
 
@@ -884,16 +884,26 @@ router.post('/admin/transporteur/new', clean, admin, validateBody(transporteurPo
  * @route POST /admin/transporteur/new
  * @group Administrateur
  * @summary Met a jour un nouveau transporteur 
+ * @param {number} id.params.required - L'identifiant d'un tranporteur a mettre a jour
+ * @param {string} nom.body - 
+ * @param {string} description.body - 
+ * @param {string} fraisExpedition.body - 
+ * @param {string} estimeArrive - 
+ * @param {string} logo.body - 
+ * @param {string} idClient.body - 
+ * @param {string} idCommande.body - 
+ * @param {string} idTransporteur.body - 
  * @returns {JSON} 200 - Les données du nouveau transporteur mis a jour
  */
 router.patch('/admin/transporteurs/:id(\\d+)', clean, admin, validateBody(transporteurSchema), livraisonController.updateTransporteur);
 
 
 /**
- * Une route pour supprimer un un transporteur
+ * Une route pour supprimer un transporteur
  * @route DELETE /admin/transporteur/:id
  * @group Administrateur
  * @summary Supprime un transporteur
+ * @param {number} id.params.required - L'identifiant d'un tranporteur a supprimer
  * @returns {JSON} 200 - Les données du transporteur supprimé
  */
 router.delete('/admin/transporteur/:id(\\d+)', admin, livraisonController.deleteTransporteur);
@@ -916,6 +926,7 @@ router.get('/admin/livraisons', admin, livraisonController.getAllLivraison);
  * @route GET /user/livraisons/:id
  * @group Utilisateur
  * @summary  Renvoie toutes les livraisons d'un client en BDD
+ * @param {number} id.params.required - L'identifiant d'un client dont on veut savoir toutes ses livraisons.
  * @returns {JSON} 200 - Renvoie toutes les livraisons d'un client en BDD
  */
 router.get('/user/livraisons/:id(\\d+)', client, livraisonController.getByIdClient);
@@ -923,7 +934,7 @@ router.get('/user/livraisons/:id(\\d+)', client, livraisonController.getByIdClie
 
 /**
  * Renvoie toutes les produit commandé / livré en BDD
- * @route GET /admin/produitLivre
+ * @route GET /admin/produitcommande
  * @group Administrateur
  * @summary  Renvoie toutes les livraisons en BDD
  * @returns {JSON} 200 - Renvoie tous les livraisons en BDD
@@ -932,11 +943,12 @@ router.get('/admin/produitcommande', admin, livraisonController.getAllLigneComma
 
 
 /**
- * Renvoie toutes les produit commandé / livré pour un client en particulier
- * @route GET /user/produitLivre
+ * Renvoie tous les produit commandés / livrés pour un client en particulier
+ * @route GET /user/produitcommande/:id
  * @group Utilisateur
- * @summary  Renvoie toutes les livraisons d'un client en BDD
- * @returns {JSON} 200 - Renvoie tous les livraisons d'un client en BDD
+ * @summary  Renvoie tous les produit commandés / livrés pour un client en particulier
+ * @param {number} id.params.required - L'identifiant d'un client dont on veut savoir toutes ses lignes de commande.
+ * @returns {JSON} 200 - Renvoie tous les produit commandés / livrés pour un client 
  */
 router.get('/user/produitcommande/:id(\\d+)', client, livraisonController.getAllLivraisonByIdClient);
 
@@ -945,8 +957,9 @@ router.get('/user/produitcommande/:id(\\d+)', client, livraisonController.getAll
  * Renvoie tous les produits commandés / livré pour une commande particuliére
  * @route GET /user/produitLivreByCommande
  * @group Utilisateur
- * @summary  Renvoie toutes les livraisons d'un client en BDD
- * @returns {JSON} 200 - Renvoie tous les livraisons d'un client en BDD
+ * @summary  Renvoie tous les produits commandés / livré pour une commande particuliére
+ * @param {number} id.params.required - L'identifiant d'une commande dont on veut savoir toutes ses lignes de commande.
+ * @returns {JSON} 200 - Renvoie tous les produits commandés / livré pour une commande particuliére
  */
 router.get('/user/produitLivreByCommande/:id(\\d+)', client, livraisonController.getByIdCommande);
 
@@ -956,6 +969,13 @@ router.get('/user/produitLivreByCommande/:id(\\d+)', client, livraisonController
  * @route POST /admin/livraison/new
  * @group Administrateur
  * @summary Insére une nouvelle livraison 
+ * @param {string} reference.body.required - 
+ * @param {string} numeroSuivi.body.required - 
+ * @param {string} URLSuivi.body.required - 
+ * @param {string} poid.body.required - 
+ * @param {string} idClient.body.required - 
+ * @param {string} idCommande.body.required - 
+ * @param {string} idTransporteur.body.required - 
  * @returns {JSON} 200 - Les données de la nouvelle livraison insérée
  */
 router.post('/admin/livraison/new', clean, admin, validateBody(livraisonPostSchema), livraisonController.new);
@@ -965,6 +985,14 @@ router.post('/admin/livraison/new', clean, admin, validateBody(livraisonPostSche
  * @route POST /admin/livraison/new
  * @group Administrateur
  * @summary Met a jour une nouvelle livraison 
+ * @param {string} reference.body - 
+ * @param {string} numeroSuivi.body - 
+ * @param {string} URLSuivi.body - 
+ * @param {string} poid.body - 
+ * @param {string} idClient.body - 
+ * @param {string} idCommande.body - 
+ * @param {string} idTransporteur.body - 
+ * @param {number} id.params.required - l'identifiant d'une livraison que l'on souhaite mettre a jour.
  * @returns {JSON} 200 - Les données d'une nouvelle livraison mise a jour
  */
 router.patch('/admin/livraison/:id(\\d+)', clean, admin, validateBody(livraisonSchema), livraisonController.update);
@@ -974,26 +1002,29 @@ router.patch('/admin/livraison/:id(\\d+)', clean, admin, validateBody(livraisonS
  * @route DELETE /admin/livraison/:id
  * @group Administrateur
  * @summary Supprime une livraison
+ * @param {number} id.params.required - l'identifiant d'une livraison que l'on souhaite supprimer.
  * @returns {JSON} 200 - Les données de la livraison supprimée
  */
 router.delete('/admin/livraison/:id(\\d+)', admin, livraisonController.delete);
 
 
 /**
- * Une route pour modifier le choix de l'adresse d'envoi. Enléve la valeur TRUE de la précédente adresse et la met a une autre adresse
+ * Une route pour modifier le choix de l'adresse d'envoi. Enléve la valeur TRUE de la précédente adresse et la met a une envoyé en paramétre.
  * @route PATCH /user/choixAdresseEnvoi/:id
  * @group Utilisateur
- * @summary Met a jour la nouvelle adresse de livraison 
+ * @summary Met a jour la nouvelle adresse de livraison
+ * @param {number} id.params.required - L'identifiant d'une adresse a passé a TRUE
  * @returns {JSON} 200 - Les données d'une adresse de livraison mise a jour
  */
 router.patch('/user/choixAdresseEnvoi/:id(\\d+)', clean, client, adresseController.setAdresseEnvoiTrue);
 
 
 /**
- * Une route pour modifier le choix de l'adresse de facturation. Enléve la valeur TRUE de la précédente adresse et la met a une autre adresse
+ * Une route pour modifier le choix de l'adresse de facturation. Enléve la valeur TRUE de la précédente adresse et la met a l'adresse passé en paramétre
  * @route PATCH /user/choixAdresseFacturation/:id
  * @group Utilisateur
- * @summary Met a jour la nouvelle adresse de facturation 
+ * @summary Met a jour la nouvelle adresse de facturation
+ * @param {number} id.params.required - L'identifiant d'une adresse qui doit être définit comme adresse de facturation.
  * @returns {JSON} 200 - Les données d'une adresse de facturation mise a jour
  */
 router.patch('/user/choixAdresseFacturation/:id(\\d+)', clean, client, adresseController.setAdresseFacturationTrue);
@@ -1003,11 +1034,12 @@ router.patch('/user/choixAdresseFacturation/:id(\\d+)', clean, client, adresseCo
 //! ROUTES DEVELOPPEUR ----------------
 
 /**
- * Faire appel a la méthode smsBalance envoi un sms avec la balance du compte Twilio. 
+ * Faire appel a la méthode smsBalance envoi un sms sur le numéro de téléphone du développeur avec la balance du compte Twilio. 
+ * Le numéro utilisé par Twillio doit être Anglais et celui du developpeur, en Français.
  * @route GET /dev/smsBalance
  * @group Developpeur - Twillio
  * @summary Utilise l'API de Twillio. Renvoie la balance du compte par sms au numéro souhaité. Relier au numéro du developpeur.
- * @returns {JSON} 200 -Renvoie la balance du compte par sms au numéro souhaité.
+ * @returns {JSON} 200 -Renvoie la balance du compte par sms sur le numéro de téléphone du développeur.
  */
 router.get('/dev/smsBalance', dev, adminController.smsBalance);
 
@@ -1022,11 +1054,11 @@ router.get('/dev/balanceTwillio', dev, adminController.balanceTwillio);
 
 /**
  * Faire appel a la méthode smsResponse envoi un sms avec le contenu voulu selon le contenu d'un sms envoyé. A modifier selon les besoins d'envoie de SMS. Il pourrait être intéressant d'envoyer l'adresse a laquel envoyé le colis pour la derniére commande par example. 
- * Actuellement la méthode répond a 3 payload différents => "Balance ?"" // "Paiement ?"" // "Clients ?"" qui répond respectivement, la balance du compte Twillio, le dernier paiement effectué et le nombre de client en BDD, toujours par sms.
+ * Actuellement la méthode répond a 3 payload différents => "Twilio ?" // "Paiement ?" // "Clients ?" // "Stripe ?" qui répond respectivement, la balance du compte Twillio, le dernier paiement effectué et le nombre de client en BDD, et la balance du compte Stripe. toujours par sms.
  * @route POST /admin/smsRespond
  * @group Developpeur
  * @summary Utilise l'API de Twillio. Permet d'envoyer un sms selon le contenu d'un sms reçu. Relier au numéro du développeur
- * @param {Administrateur.Model} Administrateur.body.required
+ * @param {string} Body.body.required - Le corp du sms.
  * @returns {JSON} 200 -Renvoie un sms au numéro souhaité avec la réponse attendue.
  */
 router.post('/admin/smsRespond', clean, adminController.smsRespond);
@@ -1045,6 +1077,7 @@ router.get('/dev/allTwillio', dev, adminController.getAllTwillio);
  * @route GET /dev/oneTwillio
  * @group Developpeur - twillio
  * @summary  Renvoie une information de connexion lié a un compte twillio
+ * @param {number} id.params.required -L'identifiant d'une donnée Twillio
  * @returns {JSON} 200 - Renvoie les informations souhaitées
  */
 router.get('/dev/oneTwillio/:id(\\d+)', dev, adminController.getOneTwillio);
@@ -1053,6 +1086,12 @@ router.get('/dev/oneTwillio/:id(\\d+)', dev, adminController.getOneTwillio);
  * Insére une ligne d'infos twillio
  * @route POST /dev/newTwillio
  * @group Developpeur - twillio
+ * @param {string} twillioNumber.body.required -
+ * @param {string} devNumber.body.required -
+ * @param {string} clientNumber.body.required -
+ * @param {string} accountSid.body.required -
+ * @param {string} authToken.body.required -
+ * @param {string} sidVerify.body.required -
  * @summary  Insére une information de connexion lié a un compte twillio
  * @returns {JSON} 200 - Renvoie les informations souhaitées
  */
@@ -1063,6 +1102,13 @@ router.post('/dev/newTwillio', clean, dev, adminController.newTwillio);
  * @route PATCH /dev/newTwillio
  * @group Developpeur - twillio
  * @summary  Met a jour une information de connexion lié a un compte twillio
+ * @param {string} twillioNumber.body.required -
+ * @param {string} devNumber.body.required -
+ * @param {string} clientNumber.body.required -
+ * @param {string} accountSid.body.required -
+ * @param {string} authToken.body.required -
+ * @param {string} sidVerify.body.required -
+ * @param {number} id.params.required -L'identifiant d'une donnée Twillio
  * @returns {JSON} 200 - Renvoie les informations mis a jour
  */
 router.patch('/dev/updateTwillio/:id(\\d+)', clean, dev, adminController.updateTwillio);
@@ -1071,6 +1117,7 @@ router.patch('/dev/updateTwillio/:id(\\d+)', clean, dev, adminController.updateT
  * Supprime une ligne d'infos twillio
  * @route DELETE /dev/newTwillio
  * @group Developpeur - twillio
+ * @param {number} id.params.required -L'identifiant d'une donnée Twillio a supprimer
  * @summary  Supprime une information de connexion lié a un compte twillio
  * @returns {JSON} 200 - Renvoie les informations supprimé
  */
@@ -1080,6 +1127,7 @@ router.delete('/dev/deleteTwillio/:id(\\d+)', dev, adminController.deleteTwillio
  * Pour vérifier un paiement avec Twillio et sa méthode PSD2 // ETAPE 1
  * @route POST /dev/psd2Verify
  * @group Developpeur - twillio
+ * @param {string} phoneNumber.body.required -
  * @summary  Permet de certifier un paiement, mesure de sécurité redondante si 3D secure... codé pour le plaisir ;)
  * @returns {JSON} 200 - Envoie un SMS averc un code, le montant d'un paiement et le site 
  */
@@ -1100,8 +1148,8 @@ router.post('/dev/psd2Check', clean, dev, adminController.smsVerifypsd2);
  * @route PATCH /v1/updatePrivilege
  * @group Developpeur - 
  * @summary Transforme un client en Administrateur dans la base de donnée
- * @param {admin.Model} req.params - les informations d'inscriptions qu'on doit fournir
- * @returns {JSON} 200 - les données d'un admin ont été inséré en BDD, redirigé vers la page de connexon
+ * @param {string} req.params.required - L'identifiant d'un client a passé au statut Administarteur.
+ * @returns {JSON} 200 - {message:"Votre nouveau privilege a bien été enregistré"}
  */
 router.patch('/dev/updateprivilege/:id(\\d+)', clean, dev, adminController.updatePrivilege);
 
@@ -1122,11 +1170,13 @@ router.get('/dev/emailVerif', dev, adminController.getAllEmailVerif);
  * Route sécurisée avec Joi et MW Developpeur
  * @route GET /v1/dev/emailVerif/:id
  * @group Developpeur - 
- * @summary Affiche un emails d'admin existant, vérifié ou non 
+ * @summary Affiche un emails d'admin existant, vérifié ou non
+ * @param {number} id.params.required -L'identifiant d'un email vérifié. 
  * @returns {JSON} 200 - un email d'admin, vérifié ou non
  */
 router.get('/dev/emailVerif/:id(\\d+)', dev, adminController.getOneEmailVerif);
 
+//! A finir _____________________-------------------______________--------------------_______________-_-_-_-_-_-_-_-_-_-_-_-
 /**
  * Permet de voir tous un email vérifié ou non pour les admins, selon son id Client
  * Route sécurisée avec Joi et MW Developpeur

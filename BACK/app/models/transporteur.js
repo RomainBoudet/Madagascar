@@ -81,7 +81,7 @@ class Transporteur {
     );
 
     if (!rows[0]) {
-      throw new Error("Aucun transporteur avec cet id");
+      return null;
     }
 
     consol.model(

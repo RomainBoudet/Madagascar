@@ -107,6 +107,11 @@ const livraisonController = {
         try {
             const livraisons = await Livraison.findAllPlus();
 
+            if(livraisons === null ) {
+                console.log("Aucunes livraisons en BDD !");
+                return res.status(200).end();
+            }
+
             res.status(200).json(livraisons);
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du livraisonController :',
@@ -135,7 +140,10 @@ const livraisonController = {
     getAllLigneCommande: async (req, res) => {
         try {
             const livraisons = await Livraison.findAllProduitLivrer();
-            console.log(livraisons)
+            if(livraisons === null ) {
+                console.log("Aucune lignes de commande en BDD !");
+                return res.status(200).end();
+            }
             res.status(200).json(livraisons);
         } catch (error) {
             console.trace('Erreur dans la méthode getAllLigneCommande du livraisonController :',
@@ -156,7 +164,13 @@ const livraisonController = {
 
 
             const livraison = await Livraison.findOnePlus(req.params.id);
-            res.json(livraison);
+            
+            if(livraison === null ) {
+                console.log("Aucune lignes de commande en BDD !");
+                return res.status(200).end();
+            }
+
+            res.status(200).json(livraison);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du livraisonController :',
@@ -171,6 +185,10 @@ const livraisonController = {
 
             const livraison = await Livraison.findByIdCommande(req.params.id);
 
+            if(livraison === null ) {
+                console.log("Aucune lignes de commande en BDD !");
+                return res.status(200).end();
+            }
             console.log(livraison);
 
 
@@ -181,7 +199,7 @@ const livraisonController = {
             };
 
 
-            res.json(livraison);
+            res.status(200).json(livraison);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdCommande du livraisonController :',
@@ -200,9 +218,15 @@ const livraisonController = {
             };
 
             const livraisons = await Livraison.findByIdClient(req.params.id);
+
+            if(livraisons === null ) {
+                console.log("Aucune livraison pour ce client !");
+                return res.status(200).end();
+            }
+
             livraisons.map(livraison => livraison.poid = arrondi(livraison.poid));
 
-            res.json(livraisons);
+            res.status(200).json(livraisons);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du livraisonController :',
@@ -248,7 +272,7 @@ const livraisonController = {
 
 
             await newLivraison.save();
-            res.json(newLivraison);
+            res.status(200).json(newLivraison);
         } catch (error) {
             console.log(`Erreur dans la méthode newLigneCommande du livraisonController : ${error.message}`);
             res.status(500).end();
@@ -274,7 +298,7 @@ const livraisonController = {
             const newTransporteur = new Transporteur(data);
             await newTransporteur.save();
 
-            res.json(newTransporteur);
+            res.status(200).json(newTransporteur);
         } catch (error) {
             console.log(`Erreur dans la méthode newTransporteur du livraisonController : ${error.message}`);
             res.status(500).end();
@@ -296,11 +320,18 @@ const livraisonController = {
 
             const updateLivraison = await Livraison.findOne(id);
 
+        
+
             if (req.session.user.privilege === 'Client' && req.session.user.idClient !== updateLivraison.idClient) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
             };
+
+            if(updateLivraison === null ) {
+                console.log("Aucune livraison pour ce client !");
+                return res.status(200).end();
+            }
 
             const reference = req.body.reference;
             const numeroSuivi = req.body.numeroSuivi;
@@ -366,7 +397,7 @@ const livraisonController = {
 
             await updateLivraison.update();
 
-            res.json(message);
+            res.status(200).json(message);
 
         } catch (error) {
             console.log(`Erreur dans la méthode update du livraisonController ${error.message}`);
@@ -388,6 +419,12 @@ const livraisonController = {
             }
 
             const updateTransporteur = await Transporteur.findOne(id);
+
+
+            if(updateTransporteur === null ) {
+                console.log("Aucune livraison pour ce client !");
+                return res.status(200).end();
+            }
 
             const nom = req.body.nom;
             const description = req.body.description;
@@ -434,7 +471,7 @@ const livraisonController = {
 
             await updateTransporteur.update();
 
-            res.json(message);
+            res.status(200).json(message);
 
         } catch (error) {
             console.log(`Erreur dans la méthode updateTransporteur du livraisonController ${error.message}`);
@@ -458,6 +495,10 @@ const livraisonController = {
 
             const updateLivraison = await LigneCommande.findOne(id);
 
+            if(updateLivraison === null ) {
+                console.log("Aucune livraison pour ce client !");
+                return res.status(200).end();
+            }
 
             const quantiteLivraison = req.body.quantiteLivraison;
             const idLivraison = req.body.idLivraison;
@@ -493,7 +534,7 @@ const livraisonController = {
 
             await updateLivraison.update();
 
-            res.json(message);
+            res.status(200).json(message);
 
         } catch (error) {
             console.log(`Erreur dans la méthode updateLigneCommande du livraisonController ${error.message}`);
@@ -508,9 +549,14 @@ const livraisonController = {
 
             const livraisonInDb = await Livraison.findOne(req.params.id);
 
+
+            if(livraisonInDb === null ) {
+                console.log("Aucune livraison pour ce client !");
+                return res.status(200).end();
+            }
             const livraison = await livraisonInDb.delete();
 
-            res.json(livraison);
+            res.status(200).json(livraison);
 
         } catch (error) {
             console.trace('Erreur dans la méthode delete du livraisonController :',
@@ -525,9 +571,14 @@ const livraisonController = {
 
             const transporteurInDb = await Transporteur.findOne(req.params.id);
 
+            if (transporteurInDb === null ) {
+                console.log("Aucun transporteur n'existe avec cet identifiant !");
+                return res.statut(200).end();
+            }
+
             const transporteur = await transporteurInDb.delete();
 
-            res.json(transporteur);
+            res.status(200).json(transporteur);
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteTransporteur du livraisonController :',

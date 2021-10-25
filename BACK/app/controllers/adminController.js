@@ -96,7 +96,9 @@ const adminController = {
             }
             // Le choix de l'admin a bien été inséré en BDD
 
-            res.status(200).json({message: "Votre choix a bien été enregistré !"});
+            res.status(200).json({
+                message: "Votre choix a bien été enregistré !"
+            });
 
         } catch (error) {
             console.log(`Erreur dans la methode smsChoice du adminController ${error.message}`);
@@ -150,7 +152,9 @@ const adminController = {
             }
             // Le choix de l'admin a bien été inséré en BDD
 
-            res.status(200).json({message: "Votre choix a bien été enregistré !"});
+            res.status(200).json({
+                message: "Votre choix a bien été enregistré !"
+            });
 
         } catch (error) {
             console.log(`Erreur dans la methode emailChoice du adminController ${error.message}`);
@@ -167,6 +171,10 @@ const adminController = {
 
             const updateClient = await Client.findOne(id);
 
+            if (updateClient === null) {
+                console.log("Aucun client a upgrader avec cet identifiant...")
+                return res.status(200).end()
+            };
 
             const newAdmin = await updateClient.updatePrivilege();
             const message = {
@@ -178,7 +186,7 @@ const adminController = {
             // je passe a false la vérification du mail de ce new admin !
             await AdminVerifEmail.false(newAdmin.id);
 
-            res.status(200).end();
+            res.status(200).json({message:"Votre nouveau privilege a bien été enregistré"});
 
         } catch (error) {
             console.log(`Erreur dans la methode updatePrivilege du adminController ${error.message}`);
@@ -423,7 +431,9 @@ const adminController = {
 
                 })
                 .then(message => console.log(message.sid));
-            res.status(200).json({message:'Sms bien envoyé !'});
+            res.status(200).json({
+                message: 'Sms bien envoyé !'
+            });
 
         } catch (error) {
             console.trace(
@@ -515,7 +525,7 @@ const adminController = {
 
 
                 return;
-
+                //! 2bauche de méthode pour la mise a jour des statut de commande par sms. S'inspirer de ce qui a été fait par mail...
             } else if (body.startsWith("update")) {
 
                 //format requis du corp du sms =  "update : 234344 : jfdjjjvf"
@@ -625,7 +635,7 @@ const adminController = {
             console.trace(
                 'Erreur dans la méthode smsBalance du adminController :',
                 error);
-            res.status(500).json('Erreur lors de l\'envoie de la balance du compte via votre numéro de téléphone');
+            res.status(500).end();
         }
     },
 
@@ -634,8 +644,15 @@ const adminController = {
         const twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
 
         try {
+            let balance;
 
-            const balance = await twilio.balance.fetch()
+            try {
+                balance = await twilio.balance.fetch()
+
+            } catch (error) {
+                console.log("Imossible d'avoir la balance Twillio du compte !");
+                return res.status(500).end();
+            }
 
             return res.status(200).json(balance);
 
@@ -644,13 +661,19 @@ const adminController = {
             console.trace(
                 'Erreur dans la méthode balanceTwillio du adminController :',
                 error);
-            res.status(500).json('Erreur lors de la balance du compte');
+            res.status(500).end();
         }
     },
 
     getAllTwillio: async (req, res) => {
         try {
             const resultats = await Twillio.findAll();
+
+            if (resultats === null) {
+                return res.status(404).json({
+                    message: "Aucune données Twillio."
+                })
+            };
 
             res.status(200).json(resultats);
         } catch (error) {
@@ -664,6 +687,11 @@ const adminController = {
         try {
 
             const resultat = await Twillio.findOne(req.params.id);
+            if (resultat === null) {
+                return res.status(404).json({
+                    message: "Aucune données Twillio."
+                })
+            };
             res.json(resultat);
 
         } catch (error) {
@@ -706,6 +734,12 @@ const adminController = {
             }
 
             const updateClient = await Twillio.findOne(id);
+
+            if (updateClient === null) {
+                return res.status(404).json({
+                    message: "Cette donnée Twillio n'existe pas...."
+                })
+            };
 
             const twillioNumber = req.body.twillioNumber;
             const devNumber = req.body.devNumber;
@@ -778,6 +812,12 @@ const adminController = {
 
             const twillioInDb = await Twillio.findOne(req.params.id);
 
+            if (twillioInDb === null) {
+                return res.status(404).json({
+                    message: "Cette donnée Twillio n'existe pas...."
+                })
+            };
+
             const twillioDeleted = await twillioInDb.delete();
 
             res.json(twillioDeleted);
@@ -789,21 +829,15 @@ const adminController = {
         }
     },
 
-
-
-
-
-
-
-
-
-
-
-
     getAllEmailVerif: async (req, res) => {
         try {
             const resultats = await AdminVerifEmail.findAll();
 
+            if (resultats === null) {
+                return res.status(404).json({
+                    message: "Aucun email vérifiés en BDD..."
+                })
+            };
             res.status(200).json(resultats);
         } catch (error) {
             console.trace('Erreur dans la méthode getAllEmailVerif du adminController :',
@@ -815,7 +849,11 @@ const adminController = {
     getAllPhone: async (req, res) => {
         try {
             const resultats = await AdminPhone.findAll();
-
+            if (resultats === null) {
+                return res.status(404).json({
+                    message: "Aucun téléphone vérifiés en BDD..."
+                })
+            };
             res.status(200).json(resultats);
         } catch (error) {
             console.trace('Erreur dans la méthode getAllPhone du adminController :',
@@ -828,6 +866,11 @@ const adminController = {
         try {
             const resultats = await Privilege.findAll();
 
+            if (resultats === null) {
+                return res.status(404).json({
+                    message: "Aucun priviléges en BDD..."
+                })
+            };
             res.status(200).json(resultats);
         } catch (error) {
             console.trace('Erreur dans la méthode getAllPrivilege du adminController :',
@@ -847,7 +890,13 @@ const adminController = {
         try {
 
             const resultat = await AdminVerifEmail.findOne(req.params.id);
-            res.json(resultat);
+            if (resultat === null) {
+                return res.status(404).json({
+                    message: "Aucun email vérifié en BDD..."
+                })
+            };
+            
+            res.status(200).json(resultat);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOneEmailVerif du adminController :',
@@ -859,7 +908,12 @@ const adminController = {
         try {
 
             const resultat = await AdminPhone.findOne(req.params.id);
-            res.json(resultat);
+            if (resultat === null) {
+                return res.status(404).json({
+                    message: "Aucun téléphone vérifié en BDD..."
+                })
+            };
+            res.status(200).json(resultat);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOnePhone du adminController :',
@@ -871,7 +925,13 @@ const adminController = {
         try {
 
             const resultat = await Privilege.findOne(req.params.id);
-            res.json(resultat);
+            if (resultat === null) {
+                return res.status(404).json({
+                    message: "Aucun privilége en BDD..."
+                })
+            };
+            
+            res.status(200).json(resultat);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getOnePrivilege du adminController :',
@@ -892,7 +952,13 @@ const adminController = {
         try {
             console.log(req.params);
             const resultat = await AdminVerifEmail.findByIdClient(req.params.id);
-            res.json(resultat);
+            
+            if (resultat === null) {
+                return res.status(404).json({
+                    message: "Aucun email vérifiés en BDD..."
+                })
+            };
+            res.status(200).json(resultat);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getEmailVerifByIdClient du adminController :',
@@ -905,7 +971,13 @@ const adminController = {
         try {
             console.log(req.params);
             const resultat = await AdminPhone.findByIdClient(req.params.id);
-            res.json(resultat);
+            
+            if (resultat === null) {
+                return res.status(404).json({
+                    message: "Aucun téléphone vérifié en BDD..."
+                })
+            };
+            res.status(200).json(resultat);
 
         } catch (error) {
             console.trace('Erreur dans la méthode getPhoneByIdClient du adminController :',
@@ -932,7 +1004,7 @@ const adminController = {
 
             const newClient = new AdminVerifEmail(data);
             await newClient.true();
-            res.json(newClient);
+            res.status(200).json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newVerifEmail du adminController : ${error.message}`);
             res.status(500).end();
@@ -950,7 +1022,7 @@ const adminController = {
 
             const newClient = new Privilege(data);
             await newClient.save();
-            res.json(newClient);
+            res.status(200).json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newPrivilege du adminController : ${error.message}`);
             res.status(500).end();
@@ -967,10 +1039,16 @@ const adminController = {
         try {
 
             const emailInDb = await AdminVerifEmail.findOne(req.params.id);
+            
+            if (emailInDb === null) {
+                return res.status(404).json({
+                    message: "Aucun email vérifiés en BDD..."
+                })
+            };
 
             const emailDeleted = await emailInDb.delete();
 
-            res.json(emailDeleted);
+            res.status(200).json(emailDeleted);
 
         } catch (error) {
             console.trace('Erreur dans la méthode deleteVerifEmail du adminController :',
@@ -984,10 +1062,14 @@ const adminController = {
         try {
 
             const phoneInDb = await AdminPhone.findOne(req.params.id);
-
+            if (phoneInDb === null) {
+                return res.status(404).json({
+                    message: "Aucun téléphone en BDD..."
+                })
+            };
             const phoneDeleted = await phoneInDb.delete();
 
-            res.json(phoneDeleted);
+            res.status(200).json(phoneDeleted);
 
         } catch (error) {
             console.trace('Erreur dans la méthode deletePhone du adminController :',

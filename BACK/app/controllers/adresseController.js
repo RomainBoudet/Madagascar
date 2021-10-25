@@ -29,7 +29,7 @@ const adresseController = {
 
             //Je vérifie si une adresse est déja a TRUE dans la liste
             //si oui, je supprime le true.
-            //je passe l'adreese demandé a TRUE dans la colonne Envoi
+            //je passe l'adresse demandé a TRUE dans la colonne Envoi
 
             //Attention si aucune adresse ne posséde l'attribue TRUE, on ne doit pas bloquer le processus...
 
@@ -42,7 +42,7 @@ const adresseController = {
                 })
             };
 
-            if ((req.session.user.privilege === 'Administrateur' || req.session.user.privilege === 'Client') && req.session.user.idClient !== adresseExist.idClient) {
+            if ((req.session.user.privilege === 'Client') && req.session.user.idClient !== adresseExist.idClient) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
@@ -57,7 +57,7 @@ const adresseController = {
 
             const adresse = await Adresse.findByEnvoiTrue(req.session.user.idClient);
 
-            //Si l'utilisateur a déja une adresse indiqués commen adresse de livraison, je passe a null cette adresse.
+            //Si l'utilisateur a déja une adresse indiqués comme adresse de livraison, je passe a null cette adresse.
             if (adresse && adresse.idClient !== undefined) {
 
                 const adresseToSetNull = new Adresse({

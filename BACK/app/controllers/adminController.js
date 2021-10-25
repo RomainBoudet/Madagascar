@@ -100,7 +100,7 @@ const adminController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode smsChoice du adminController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -154,7 +154,7 @@ const adminController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode emailChoice du adminController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -182,7 +182,7 @@ const adminController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updatePrivilege du adminController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -656,7 +656,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllTwillio du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -669,7 +669,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneTwillio du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     newTwillio: async (req, res) => {
@@ -689,7 +689,7 @@ const adminController = {
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newTwillio du adminController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     updateTwillio: async (req, res) => {
@@ -769,7 +769,7 @@ const adminController = {
 
         } catch (error) {
             console.log(`Erreur dans la méthode updateTwillio du adminController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     deleteTwillio: async (req, res) => {
@@ -785,7 +785,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteTwillio du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -808,7 +808,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllEmailVerif du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -820,7 +820,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllPhone du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -832,7 +832,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllPrivilege du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -852,7 +852,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneEmailVerif du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     getOnePhone: async (req, res) => {
@@ -864,7 +864,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOnePhone du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     getOnePrivilege: async (req, res) => {
@@ -876,7 +876,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOnePrivilege du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -897,7 +897,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getEmailVerifByIdClient du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -910,7 +910,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getPhoneByIdClient du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -935,7 +935,7 @@ const adminController = {
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newVerifEmail du adminController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -953,7 +953,7 @@ const adminController = {
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newPrivilege du adminController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -975,7 +975,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteVerifEmail du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -992,7 +992,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deletePhone du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1009,7 +1009,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deletePrivilege du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1038,7 +1038,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteVerifEmailByIdClient du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1059,7 +1059,7 @@ const adminController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deletePhoneByIdClient du adminController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1106,7 +1106,7 @@ const adminController = {
 
         } catch (error) {
             console.log(`Erreur dans la méthode updateVerifEmail du adminController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1134,7 +1134,7 @@ const adminController = {
             console.trace(
                 'Erreur dans la méthode smsVerify du clientController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1171,7 +1171,7 @@ const adminController = {
             console.trace(
                 'Erreur dans la méthode smsCheck du clientController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

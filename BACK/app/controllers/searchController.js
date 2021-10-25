@@ -165,7 +165,7 @@ const searchController = {
 
         } catch (error) {
             console.log(`Erreur dans la méthode search du searchController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
 
 

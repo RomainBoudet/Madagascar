@@ -130,7 +130,7 @@ const authController = {
             console.trace('Erreur dans la méthode login du authController :',
                 error);
 
-            response.status(500).json(error.message);
+            response.status(500).end();
         }
 
     },
@@ -163,7 +163,7 @@ const authController = {
             console.trace(
                 'Erreur dans la méthode deconnexion du authController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
 
     },
@@ -198,7 +198,7 @@ const authController = {
             console.trace(
                 'Erreur dans la méthode cookie du authController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
 
     },

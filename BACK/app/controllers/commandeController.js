@@ -713,7 +713,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getEmail du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -777,7 +777,7 @@ The following are valid types that require a string parseable by JavaScript's Da
                 } catch (error) {
                     console.trace('Erreur lors de la recherche des email vérifiés, dans la méthode StartUpdateCommandeFromEmail du commandeController :',
                         error);
-                    res.status(500).json(error.message);
+                    res.status(500).end();
                 }
 
                 for (const item of adminsMail) {
@@ -1233,7 +1233,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode stopUpdateCommandeFromEmail du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1245,7 +1245,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     getAllLigneCommande: async (req, res) => {
@@ -1256,7 +1256,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getAllLigneCommande du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1268,7 +1268,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getAllStatutCommande du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1284,7 +1284,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     getOneLigneCommande: async (req, res) => {
@@ -1296,7 +1296,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getOneLigneCommande du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1309,7 +1309,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getOneStatutCommande du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1323,7 +1323,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     getLigneCommandeByIdCommande: async (req, res) => {
@@ -1335,7 +1335,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getLigneCommandeByIdCommande du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1362,7 +1362,7 @@ The following are valid types that require a string parseable by JavaScript's Da
             res.json(newCommande);
         } catch (error) {
             console.log(`Erreur dans la méthode new du commandeController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     newLigneCommande: async (req, res) => {
@@ -1380,7 +1380,7 @@ The following are valid types that require a string parseable by JavaScript's Da
             res.json(newCommande);
         } catch (error) {
             console.log(`Erreur dans la méthode newLigneCommande du commandeController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     newStatutCommande: async (req, res) => {
@@ -1398,7 +1398,7 @@ The following are valid types that require a string parseable by JavaScript's Da
             res.json(newCommande);
         } catch (error) {
             console.log(`Erreur dans la méthode newStatutCommande du commandeController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1463,7 +1463,7 @@ The following are valid types that require a string parseable by JavaScript's Da
 
         } catch (error) {
             console.log(`Erreur dans la methode update du commandeController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     updateLigneCommande: async (req, res) => {
@@ -1520,7 +1520,7 @@ The following are valid types that require a string parseable by JavaScript's Da
 
         } catch (error) {
             console.log(`Erreur dans la methode updateLigneCommande du commandeController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1568,7 +1568,7 @@ The following are valid types that require a string parseable by JavaScript's Da
 
         } catch (error) {
             console.log(`Erreur dans la methode updateStatutCommande du commandeController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1589,7 +1589,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode delete du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     deleteLigneCommande: async (req, res) => {
@@ -1605,7 +1605,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode deleteLigneCommande du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1622,7 +1622,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode deleteStatutCommande du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1645,7 +1645,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode deleteByIdClient du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     deleteLigneCommandeByIdCommande: async (req, res) => {
@@ -1666,7 +1666,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode deleteLigneCommandeByIdCommande du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1680,7 +1680,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getAllProduitRetour du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     getOneProduitRetour: async (req, res) => {
@@ -1692,7 +1692,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode getOneProduitRetour du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     newProduitRetour: async (req, res) => {
@@ -1711,7 +1711,7 @@ The following are valid types that require a string parseable by JavaScript's Da
             res.json(newCommande);
         } catch (error) {
             console.log(`Erreur dans la méthode newProduitRetour du commandeController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     updateProduitRetour: async (req, res) => {
@@ -1767,7 +1767,7 @@ The following are valid types that require a string parseable by JavaScript's Da
 
         } catch (error) {
             console.log(`Erreur dans la methode updateProduitRetour du commandeController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     deleteProduitRetour: async (req, res) => {
@@ -1783,7 +1783,7 @@ The following are valid types that require a string parseable by JavaScript's Da
         } catch (error) {
             console.trace('Erreur dans la méthode deleteProduitRetour  du commandeController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

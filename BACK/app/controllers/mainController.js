@@ -37,7 +37,7 @@ const mainController = {
     } catch (error) {
       console.trace('Erreur dans la méthode getAllShop du mainController :',
         error);
-      res.status(500).json(error.message);
+      res.status(500).end();
     }
   },
   getOneShop: async (req, res) => {
@@ -49,7 +49,7 @@ const mainController = {
     } catch (error) {
       console.trace('Erreur dans la méthode getOneShop du mainController :',
         error);
-      res.status(500).json(error.message);
+      res.status(500).end();
     }
   },
   newShop: async (req, res) => {
@@ -74,7 +74,7 @@ const mainController = {
       res.json(newClient);
     } catch (error) {
       console.log(`Erreur dans la méthode newShop du mainController: ${error.message}`);
-      res.status(500).json(error.message);
+      res.status(500).end();
     }
   },
 
@@ -184,7 +184,7 @@ const mainController = {
 
     } catch (error) {
       console.log(`Erreur dans la méthode  updateShop du mainController : ${error.message}`);
-      res.status(500).json(error.message);
+      res.status(500).end();
     }
   },
 
@@ -201,7 +201,7 @@ const mainController = {
     } catch (error) {
       console.trace('Erreur dans la méthode deleteShop du mainController :',
         error);
-      res.status(500).json(error.message);
+      res.status(500).end();
     }
   },
 

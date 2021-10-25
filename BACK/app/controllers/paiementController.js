@@ -107,7 +107,7 @@ const paiementController = {
             console.trace(
                 'Erreur dans la méthode CGV du paiementController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
 
     },
@@ -2496,7 +2496,7 @@ const paiementController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du paiementController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -2511,7 +2511,7 @@ const paiementController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdCommande du paiementController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -2535,7 +2535,7 @@ const paiementController = {
             res.json(newPaiement);
         } catch (error) {
             console.log(`Erreur dans la méthode new du paiementController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -2600,7 +2600,7 @@ const paiementController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode update du paiementController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -2620,7 +2620,7 @@ const paiementController = {
         } catch (error) {
             console.trace('Erreur dans la méthode delete du paiementController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -2643,7 +2643,7 @@ const paiementController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteUByIdPaiement du paiementController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

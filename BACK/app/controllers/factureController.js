@@ -678,7 +678,7 @@ const factureController = {
         } catch (error) {
             console.trace('Erreur dans la méthode facture du factureController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -732,7 +732,7 @@ const factureController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du factureController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -745,7 +745,7 @@ const factureController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du factureController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -760,7 +760,7 @@ const factureController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdFacture du factureController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -785,7 +785,7 @@ const factureController = {
             res.json(newFacture);
         } catch (error) {
             console.log(`Erreur dans la méthode new du factureController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -866,7 +866,7 @@ const factureController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode update du factureController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -886,7 +886,7 @@ const factureController = {
         } catch (error) {
             console.trace('Erreur dans la méthode delete du factureController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -908,7 +908,7 @@ const factureController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteUByIdClient du factureController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

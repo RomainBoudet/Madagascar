@@ -23,7 +23,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode  getAllHistoPass du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -35,7 +35,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode  getAllHistoConn du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -48,7 +48,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode  getOneHistoPass du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -61,7 +61,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode  getOneHistoConn du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -75,7 +75,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getHistoPassByIdClient du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     
@@ -88,7 +88,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getHistoConnByIdClient du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -113,7 +113,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getHistoConnByIdClient du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -132,7 +132,7 @@ const clientHistoController = {
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newHistoPass du clientHistoController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -149,7 +149,7 @@ const clientHistoController = {
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newHistoConn du clientHistoController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -169,7 +169,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteHistoPass du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -186,7 +186,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteHistoConn du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -209,7 +209,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteHistoPassByIdClient du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -231,7 +231,7 @@ const clientHistoController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteHistoConnByIdClient du clientHistoController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

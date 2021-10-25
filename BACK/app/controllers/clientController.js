@@ -47,8 +47,8 @@ const clientController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllUser du clientController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
     /**
@@ -66,8 +66,8 @@ const clientController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du clientController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
     /**
@@ -89,8 +89,8 @@ const clientController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getUserbyId du clientController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
 
@@ -234,8 +234,8 @@ const clientController = {
             console.trace(
                 'Erreur dans la méthode SignIn du userController :',
                 error);
-            response.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
 
@@ -597,8 +597,8 @@ const clientController = {
             console.trace(
                 'Erreur dans la méthode resendEmailLink du userController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
 
@@ -668,8 +668,8 @@ const clientController = {
             console.trace(
                 'Erreur dans la méthode verifyEmail du clientController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
 
     },
 
@@ -773,8 +773,8 @@ const clientController = {
             console.trace(
                 'Erreur dans la méthode resendEmailLink du clientController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
 
@@ -888,8 +888,8 @@ const clientController = {
             console.trace(
                 'Erreur dans la méthode reset_pwd du clientController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
 
     },
 
@@ -919,8 +919,8 @@ const clientController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteById du clientController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
     deleteByEmail: async (req, res) => {
@@ -946,8 +946,8 @@ const clientController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteByEmail du clientController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
 

@@ -703,7 +703,7 @@ router.delete('/admin/user/:id(\\d+)', admin, validateBody(passwordSchema), clie
  * Supprime un client selon son email. Nécéssite un mot de passe
  * @route DELETE /admin/user
  * @group Administrateur
- * @summary Supprime un client en BDD selon son email    *** nécéssite un mot de passe et l'email a supprimer
+ * @summary Supprime un client en BDD selon son email
  * @param {string} password.body.required - 
  * @param {string} email.body.required - L'email d'un client a supprimer
  * @returns {JSON} 200 - Supprime un client en BDD. On renvoie le client supprimé en JSON.
@@ -744,7 +744,7 @@ router.get('/client/adresse/:id(\\d+)', client, adresseController.getOneAdresse)
 
 /**
  * Renvoie l'adresse de facturation d'un client selon son idClient
- * @route GET /client/dresseFacturation/:id
+ * @route GET /client/adresseFacturation/:id
  * @group Utilisateur
  * @summary Renvoie l'adresse de facturation d'un client selon son idClient
  * @param {number} id.param.required - L'identifiant d'un client
@@ -830,7 +830,7 @@ router.delete('/client/adresse/:id(\\d+)', client, validateBody(passwordSchema),
  * @group Utilisateur
  * @summary Supprime des adresses d'un même client
  * @param {string} password.body.required - Le mot de passe de l'utilisateur qui souhaite supprimer ses adresses.
- * @param {number} id.params.required - L'identifiant d'un client
+ * @param {number} id.params.required - L'identifiant d'un client qui souhaite supprimer toutes ses adresses.
  * @returns {JSON} 200 - Les données des adresses supprimées.
  */
 router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema), adresseController.deleteByIdClient);
@@ -840,10 +840,15 @@ router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema)
 
 /**
  * Une route pour déterminer le type de livraison choisi par l'Utilisateur et permet de laisser un commentaire en session 
+ * Aucun sms ne sera envoyé si le retrait sur le marché a été choisi.
+ * Le panier est mis a jour en prenant en compte le cout du transporteur. Les données concernant les totaux sont renvoyés a l'utilisateur.
  * @route POST /client/livraisonChoix
  * @group Utilisateur
  * @summary Permet de déterminer le choix du transporteur fait par le client et de laisser un commentaire en session
- * @returns {JSON} 200 - Le choix du transporteur fait par le client et permet de laisser un commentaire en session  
+ * @param {number} idTransporteur.body.required - L'identifiant du transporteur, compris entre 1 et 4.
+ * @param {string} commentaire.body.required - Le commentaire laissé par lors du choix du transporteur. D'une longeur max de 500 caractéres. Les caractéres suivant : <>&#=+*"|{} seront rejetés.
+ * @param {boolean} sendSmsWhenShipping.body - Booléen avec true ou false comme valeur accéptée.
+ * @returns {JSON} 200 -  {totalHT, totalTTC, totalTVA, coutTransporteur, transporteur, totalTTCAvecTransport, message, commentaire, sendSmsWhenShipping,}
  */
 router.post('/client/livraisonChoix', clean, validateBody(choixLivraisonSchema), livraisonController.choixLivraison);
 
@@ -853,7 +858,7 @@ router.post('/client/livraisonChoix', clean, validateBody(choixLivraisonSchema),
  * @route GET /user/transporteurs
  * @group Utilisateur
  * @summary  Renvoie tous les transporteurs en BDD
- * @returns {JSON} 200 - Renvoie tous les transporteurs en BDD
+ * @returns {JSON} 200 - {"id": 1,"nom": "DPD","description": "DPD en point relai pickup","fraisExpedition": 720,"estimeArrive": "Expédié sous 24 à 48h","estimeArriveNumber": "2","logo": "http://placeimg.com/640/480/business"}
  */
 router.get('/user/transporteurs', client, livraisonController.getAllTransporteur);
 
@@ -862,7 +867,15 @@ router.get('/user/transporteurs', client, livraisonController.getAllTransporteur
  * @route POST /admin/transporteur/new
  * @group Administrateur
  * @summary Insére un nouveau transporteur 
- * @returns {JSON} 200 - Les données du nouveau transporteur inséré
+ * @param {string} nom.body.required - 
+ * @param {string} description.body.required - 
+ * @param {string} fraisExpedition.body.required - 
+ * @param {string} estimeArrive.required - 
+ * @param {string} logo.body.required - 
+ * @param {string} idClient.body.required - 
+ * @param {string} idCommande.body.required - 
+ * @param {string} idTransporteur.body.required - 
+* @returns {JSON} 200 - Les données du nouveau transporteur inséré
  */
 router.post('/admin/transporteur/new', clean, admin, validateBody(transporteurPostSchema), livraisonController.newTransporteur);
 

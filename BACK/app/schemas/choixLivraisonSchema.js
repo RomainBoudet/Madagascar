@@ -31,7 +31,7 @@ const choixLivraisonSchema = Joi.object({
 
     commentaire: Joi.string()
     .pattern(new RegExp(/^[^<>&#=+*/"|{}]*$/))
-    .max(300)
+    .max(500)
     .allow(null, '')
     .messages({
         'string.max': `Votre commentaire doit avoir une longeur maximum de {#limit} caractéres !`,

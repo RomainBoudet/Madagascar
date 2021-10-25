@@ -38,14 +38,13 @@ const livraisonController = {
             // Concerne l'option permettant de recevoir un sms, si le client le souhaite, lorsque sa commande sera remis au transporteur.
             // on garde la donnée au chaud concernant l'envoie d'un sms et on l'enverra en BDD dans le webbhook du paiement quand on est certain de la commande et du client..
             // n'est possible que si il y a une expédition avec une livraison, donc si req.session.idTransporteur = 3 , on ne permet pas !
-            console.log("req.body.sendSmsWhenShipping ", req.body.sendSmsWhenShipping);
 
             //BUG 
             //! a fixer, quand champs vide, false par défault !!
-            if (req.body.sendSmsWhenShipping && req.body.idTransporteur !== 3) {
-                req.session.sendSmsWhenShipping = req.body.sendSmsWhenShipping;
-            } else if (req.body.sendSmsWhenShipping == 'undefined') {
-                req.session.sendSmsWhenShipping = 'false'
+            if (req.body.sendSmsWhenShipping == 'true' && req.body.idTransporteur !== 3) {
+                req.session.sendSmsWhenShipping = true;
+            } else {
+                req.session.sendSmsWhenShipping = false;
             };
 
             // Je met a jour le prix du panier en prenant en compte le cout du transport
@@ -98,8 +97,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode choixLivraison du livraisonController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
 
     },
 
@@ -112,8 +111,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du livraisonController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
     getAllTransporteur: async (req, res) => {
@@ -128,8 +127,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllTransporteur du livraisonController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
 
@@ -141,8 +140,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllLigneCommande du livraisonController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
     getAllLivraisonByIdClient: async (req, res) => {
@@ -162,8 +161,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du livraisonController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
 
@@ -187,8 +186,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdCommande du livraisonController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
     getByIdClient: async (req, res) => {
@@ -208,8 +207,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du livraisonController :',
                 error);
-            res.status(500).json(error.message);
-        }
+                res.status(500).end();
+            }
     },
 
 
@@ -232,7 +231,7 @@ const livraisonController = {
             res.json(newLivraison);
         } catch (error) {
             console.log(`Erreur dans la méthode new du livraisonController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     newLigneCommande: async (req, res) => {
@@ -252,7 +251,7 @@ const livraisonController = {
             res.json(newLivraison);
         } catch (error) {
             console.log(`Erreur dans la méthode newLigneCommande du livraisonController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -272,14 +271,13 @@ const livraisonController = {
             data.fraisExpedition = arrondi(data.fraisExpedition);
             data.estimeArrive = arrondi(data.estimeArrive);
 
-
             const newTransporteur = new Transporteur(data);
             await newTransporteur.save();
 
             res.json(newTransporteur);
         } catch (error) {
             console.log(`Erreur dans la méthode newTransporteur du livraisonController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -372,7 +370,7 @@ const livraisonController = {
 
         } catch (error) {
             console.log(`Erreur dans la méthode update du livraisonController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -440,7 +438,7 @@ const livraisonController = {
 
         } catch (error) {
             console.log(`Erreur dans la méthode updateTransporteur du livraisonController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -499,7 +497,7 @@ const livraisonController = {
 
         } catch (error) {
             console.log(`Erreur dans la méthode updateLigneCommande du livraisonController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -517,7 +515,7 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode delete du livraisonController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -534,7 +532,7 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteTransporteur du livraisonController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

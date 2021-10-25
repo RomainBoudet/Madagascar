@@ -333,7 +333,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getPanier du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
 
 
@@ -506,7 +506,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode addArticlePanier du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
 
     },
@@ -659,7 +659,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode delArticlePanier du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
 
     },
@@ -676,7 +676,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllUser du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -697,7 +697,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -710,7 +710,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -730,7 +730,7 @@ const panierController = {
             res.status(200).json(newClient);
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau panier: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -782,7 +782,7 @@ const panierController = {
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau panier: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -808,7 +808,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode delete du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -836,7 +836,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteByIdClien du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -856,7 +856,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllUser du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -869,7 +869,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -882,7 +882,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -900,7 +900,7 @@ const panierController = {
             res.status(200).json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newLignePanier du panierController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -947,7 +947,7 @@ const panierController = {
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau panier: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -964,7 +964,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteLignePanier du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -986,7 +986,7 @@ const panierController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteLignePanierByIdPanier du panierController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

@@ -79,7 +79,7 @@ const adresseController = {
         } catch (error) {
             console.trace('Erreur dans la méthode setAdresseEnvoiTrue du adresseController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -145,7 +145,7 @@ const adresseController = {
         } catch (error) {
             console.trace('Erreur dans la méthode setAdresseFacturationTrue du adresseController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -163,7 +163,7 @@ const adresseController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllAdresse du adresseController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -195,7 +195,7 @@ const adresseController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneAdresse du adresseController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -222,7 +222,7 @@ const adresseController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAdresseByIdClient du adresseController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -247,7 +247,7 @@ const adresseController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getLastAdresseByIdClient du adresseController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -269,7 +269,7 @@ const adresseController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getLastAdresseByIdClient du adresseController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -439,7 +439,7 @@ const adresseController = {
         } catch (error) {
             console.trace(error);
             console.log(`Erreur dans la méthode newAdresse du adresseController: ${error}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -664,7 +664,7 @@ const adresseController = {
         } catch (error) {
             console.trace(error);
             console.log(`Erreur dans la méthode updateAdress du adresseController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -714,7 +714,7 @@ const adresseController = {
         } catch (error) {
             console.trace('Erreur dans la méthode delete du AdresseController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -757,7 +757,7 @@ const adresseController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteByidClient du AdresseController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

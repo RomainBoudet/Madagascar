@@ -32,7 +32,7 @@ const testController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllUser du userController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -45,7 +45,7 @@ const testController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du userController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -58,7 +58,7 @@ const testController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du userController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -103,7 +103,7 @@ const testController = {
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -123,7 +123,7 @@ const testController = {
         } catch (error) {
             console.trace('Erreur dans la méthode DeleteUserById du userController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -146,7 +146,7 @@ const testController = {
         } catch (error) {
             console.trace('Erreur dans la méthode DeleteUserById du userController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -220,7 +220,7 @@ const testController = {
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -238,7 +238,7 @@ const testController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getUserbyId du userController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -256,7 +256,7 @@ const testController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getUserbyId du userController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -303,7 +303,7 @@ const testController = {
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -342,7 +342,7 @@ const testController = {
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -381,7 +381,7 @@ const testController = {
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -420,7 +420,7 @@ const testController = {
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -465,7 +465,7 @@ const testController = {
 
         } catch (error) {
             console.log(`Erreur lors de l'enregistrement du nouveau client: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

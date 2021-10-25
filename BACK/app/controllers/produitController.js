@@ -40,7 +40,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -61,7 +61,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -83,7 +83,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode articleByCategorie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -117,7 +117,7 @@ const produitController = {
             res.json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode new du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -198,7 +198,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode update du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -218,7 +218,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode delete du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -237,7 +237,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllCaracteristique du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -250,7 +250,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneCaracteristique du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -265,7 +265,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getCaracteristiqueByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -283,7 +283,7 @@ const produitController = {
             res.json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newCaracteristique du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -339,7 +339,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateCaracteristique du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -359,7 +359,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteCaracteristique du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -380,7 +380,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteCaracteristiqueByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -399,7 +399,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllStock du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -412,7 +412,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneStock du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -427,7 +427,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getStockByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -444,7 +444,7 @@ const produitController = {
             res.json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newStock du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -490,7 +490,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateStock du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -510,7 +510,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteStock du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -531,7 +531,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteStockByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -546,7 +546,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllFournisseur du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -559,7 +559,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneFournisseur du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -576,7 +576,7 @@ const produitController = {
             res.json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newFournisseur du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -622,7 +622,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateFournisseur du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -642,7 +642,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteFournisseur du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -661,7 +661,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllFournie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     getOneFournie: async (req, res) => {
@@ -673,7 +673,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneFournie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     newFournie: async (req, res) => {
@@ -689,7 +689,7 @@ const produitController = {
             res.json(newClient);
         } catch (error) {
             console.log(`Erreur dans la méthode newFournie du produitController: ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -732,7 +732,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la méthode updateFournie du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -749,7 +749,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteFournie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -766,7 +766,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllReduction du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -779,7 +779,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneReduction du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -798,7 +798,7 @@ const produitController = {
             res.json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newReduction du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -860,7 +860,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateReduction du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -877,7 +877,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteReduction du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -895,7 +895,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllTva du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -908,7 +908,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneTva du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -927,7 +927,7 @@ const produitController = {
             res.json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newTva du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -984,7 +984,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateTva du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1001,7 +1001,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteTva du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1022,7 +1022,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllImage du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1035,7 +1035,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneImage du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1050,7 +1050,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getImageByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1069,7 +1069,7 @@ const produitController = {
             res.json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newImage du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1132,7 +1132,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateImage du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1152,7 +1152,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteImage du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1173,7 +1173,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteImageByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1188,7 +1188,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllCategorie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1201,7 +1201,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneCategorie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1220,7 +1220,7 @@ const produitController = {
             res.status(200).json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newCategorie du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1273,7 +1273,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateCategorie du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1290,7 +1290,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteCategorie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1306,7 +1306,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllSousCategorie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     getOneSousCategorie: async (req, res) => {
@@ -1318,7 +1318,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneSousCategorie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     getSousCategorieByIdCategorie: async (req, res) => {
@@ -1330,7 +1330,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getSousCategorieByIdSousCategorie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     newSousCategorie: async (req, res) => {
@@ -1347,7 +1347,7 @@ const produitController = {
             res.json(newSousCategorie);
         } catch (error) {
             console.log(`Erreur dans la méthode newSousCategorie du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     updateSousCategorie: async (req, res) => {
@@ -1396,7 +1396,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateSousCategorie du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     deleteSousCategorie: async (req, res) => {
@@ -1409,7 +1409,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteSousCategorie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
     deleteSousCategorieByIdCategorie: async (req, res) => {
@@ -1427,7 +1427,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteSousCategorieByIdSousCategorie du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1443,7 +1443,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllSsCatImage du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1456,7 +1456,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneSsCatImage du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1471,7 +1471,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getSsCatImageByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1488,7 +1488,7 @@ const produitController = {
             res.json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newSsCatImage du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1541,7 +1541,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateSsCatImage du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1561,7 +1561,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteSsCatImage du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1582,7 +1582,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteSsCatImageByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1598,7 +1598,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllCategorieImage du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1611,7 +1611,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOneCategorieImage du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1626,7 +1626,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getCategorieImageByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1643,7 +1643,7 @@ const produitController = {
             res.json(newProduit);
         } catch (error) {
             console.log(`Erreur dans la méthode newCategorieImage du produitController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1696,7 +1696,7 @@ const produitController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode updateCategorieImage du produitController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1716,7 +1716,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteCategorieImage du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -1737,7 +1737,7 @@ const produitController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteCategorieImageByIdProduit du produitController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

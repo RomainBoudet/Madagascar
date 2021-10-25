@@ -21,7 +21,7 @@ const avisController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du avisController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -34,7 +34,7 @@ const avisController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du avisController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -55,7 +55,7 @@ const avisController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdAvis du avisController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -79,7 +79,7 @@ const avisController = {
             res.json(newAvis);
         } catch (error) {
             console.log(`Erreur dans la méthode new du avisController : ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -154,7 +154,7 @@ const avisController = {
 
         } catch (error) {
             console.log(`Erreur dans la methode update du avisController ${error.message}`);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -180,7 +180,7 @@ const avisController = {
         } catch (error) {
             console.trace('Erreur dans la méthode delete du avisController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 
@@ -205,7 +205,7 @@ const avisController = {
         } catch (error) {
             console.trace('Erreur dans la méthode deleteUByIdAvis du avisController :',
                 error);
-            res.status(500).json(error.message);
+            res.status(500).end();
         }
     },
 

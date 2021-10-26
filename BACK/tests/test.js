@@ -1,6 +1,6 @@
 const {expect, assertChai} = require('chai');  
-
-
+const chalk = require('chalk');
+/* 
 //https://nodejs.org/dist/latest-v14.x/docs/api/assert.html
 const assert = require('assert');
 
@@ -57,4 +57,34 @@ expect(myString).to.be.a('string');
 
 // on vérifit que anObj est un objet, avec une clé "cle", qui est de type string ! En une seule ligne :) 
 expect(anObj).to.be.a('object').with.property('cle').to.be.a.a('string');
-console.log ('apres Chai');
+console.log ('apres Chai'); */
+
+
+//! test sur mon schéma userLogin
+
+const userLoginSchema = require('../app/schemas/userLoginSchema');
+
+// le mot de passe d'un utilisateur, doit avoir 8 caractéres au minimum, une lettre minuscule, une lettre majuscule, un nombre et un caractéres spécial parmis : (@#$%^&*)
+
+//Objet a valider
+const mockLogin = {
+    email:'test@test.fr',
+    password:'AZEaze123!'
+}
+// validate sur un schema Joi retourne un objet avec systématiquement une propriétée value et en cas d'érreur, une propriété error 
+expect(userLoginSchema.validate(mockLogin)).not.to.have.property('error');
+
+// Valider qu'un schéma invalide, retourne une érreur
+mockLogin.password = 'mot_de_passe_sans_chiffre';
+
+expect(userLoginSchema.validate(mockLogin)).to.have.property('error');
+
+
+const validation = userLoginSchema.validate(mockLogin).error.details[0].path[0];
+
+console.log(validation);
+
+expect(validation).to.be('test');
+
+
+console.log(chalk.green(" Test du userLoginSchema passé avec succés ! ✅ "));

@@ -15,15 +15,16 @@ const code = Joi.object({
   code: Joi.number()
     .integer()
     .positive()
-    .min(6)
-    .max(6)
+    .min(000000)
+    .max(999999)
     .required()
     .messages({
       'any.number': 'Le champs de votre code doit être un chiffre !',
       'number.empty': 'Le champs de votre code doit être un chiffre !',
       'any.required': 'Le champs de votre code ne peut être vide !',
-      'number.max': 'Le champs de votre code ne peut être supérieur a 6 !',
+      'number.max': 'Le champs de votre code doit être un chiffre positif inférieur a 6 !',
       'number.positive': 'Le champs de votre code doit être un chiffre positif !',
+      'number.integer': 'Le champs de votre code doit être un chiffre entier',
 
     }),
 

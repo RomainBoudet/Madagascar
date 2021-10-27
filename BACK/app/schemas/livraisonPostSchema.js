@@ -8,11 +8,13 @@ const Joi = require('joi');
  * Valide les informations reçu dans le body et envoyé par les utilisateurs
  * @name livraisonPostSchema 
  * @group Joi - Vérifie les informations du body
- * @property {string} password - le mot de passe d'un utilisateur, doit avoir 8 caractéres au minimum, une lettre minuscule, une lettre majuscule, un nombre et un caractéres spécial parmis : (@#$%^&*)
- * @property {string} passwordConfirm - doit être identique au password
- * @property {string} prenom - Le prenom de l'utilisateur, devant contenir au minimum 2 caractéres, sans espaces.
- * @property {string} nomFamille - le nom de famille de l'utilisateur devant contenir au minimum 2 caractéres, sans espaces.
- * @property {string} email - l'adresse email d'un utilisateur doit correspondre a un format valide.
+ * @property {string} reference - 
+ * @property {string} numeroSuivi -
+ * @property {string} URLSuivi -
+ * @property {string} poid -
+ * @property {string} idClient -
+ * @property {string} idCommande -
+ * @property {string} idTransporteur -
  * @return {json} messages - Un texte adapté en cas d'érreur, en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
 const livraisonPostSchema = Joi.object({
@@ -59,13 +61,13 @@ const livraisonPostSchema = Joi.object({
     .greater(0.5)
     .precision(2)
     .positive()
-    .max(100)
+    .max(10000)
     .required()
     .messages({
         'any.number': 'Le champs de votre poid doit être un chiffre !',
         'number.empty': 'Le champs de votre poid doit être un chiffre !',
         'any.required': 'Le champs de votre poid ne peut être vide !',
-        'number.max': 'Le champs de votre poid ne peut être supérieur a 100 !',
+        'number.max': 'Le champs de votre poid ne peut être supérieur a {#limit} !',
         'number.positive': 'Le champs de votre poid ne peut être inférieur a zéro !',
 
     }),
@@ -97,13 +99,16 @@ const livraisonPostSchema = Joi.object({
     }),
     idTransporteur: Joi.number()
     .integer()
+    .min(1)
+    .max(4)
     .positive()
     .required()
     .messages({
         'any.number': 'Le champs de votre  idTransporteur doit être un chiffre !',
         'number.empty': 'Le champs de votre  idTransporteur doit être un chiffre !',
         'any.required': 'Le champs de votre  idTransporteur ne peut être vide !',
-        'number.max': 'Le champs de votre  idTransporteur ne peut être supérieur a 100 !',
+        'number.max': 'Le champs de votre  idTransporteur ne peut être supérieur a ${limit} !',
+        'number.min': 'Le champs de votre  idTransporteur ne peut être inférieur a ${limit} !',
         'number.positive': 'Le champs de votre  idTransporteur ne peut être inférieur a zéro !',
 
     }),

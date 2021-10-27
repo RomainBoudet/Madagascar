@@ -52,56 +52,59 @@ const livraisonSchema = Joi.object({
         }),
 
     poid: Joi.number()
-    .greater(0.5)
-    .precision(2)
-    .positive()
-    .max(100)
-    .messages({
-        'any.number': 'Le champs de votre poid doit être un chiffre !',
-        'number.empty': 'Le champs de votre poid doit être un chiffre !',
-        'any.required': 'Le champs de votre poid ne peut être vide !',
-        'number.max': 'Le champs de votre poid ne peut être supérieur a 100 !',
-        'number.positive': 'Le champs de votre poid ne peut être inférieur a zéro !',
+        .greater(0.5)
+        .precision(2)
+        .positive()
+        .max(10000)
+        .messages({
+            'any.number': 'Le champs de votre poid doit être un chiffre !',
+            'number.empty': 'Le champs de votre poid doit être un chiffre !',
+            'any.required': 'Le champs de votre poid ne peut être vide !',
+            'number.max': 'Le champs de votre poid ne peut être supérieur a 100 !',
+            'number.positive': 'Le champs de votre poid ne peut être inférieur a zéro !',
 
-    }),
+        }),
 
     idClient: Joi.number()
-    .integer()
-    .positive()
-    .messages({
-        'any.number': 'Le champs de votre  idClient doit être un chiffre !',
-        'number.empty': 'Le champs de votre  idClient doit être un chiffre !',
-        'any.required': 'Le champs de votre  idClient ne peut être vide !',
-        'number.max': 'Le champs de votre  idClient ne peut être supérieur a 100 !',
-        'number.positive': 'Le champs de votre  idClient ne peut être inférieur a zéro !',
+        .integer()
+        .positive()
+        .messages({
+            'any.number': 'Le champs de votre  idClient doit être un chiffre !',
+            'number.empty': 'Le champs de votre  idClient doit être un chiffre !',
+            'any.required': 'Le champs de votre  idClient ne peut être vide !',
+            'number.max': 'Le champs de votre  idClient ne peut être supérieur a 100 !',
+            'number.positive': 'Le champs de votre  idClient ne peut être inférieur a zéro !',
 
-    }),
+        }),
 
     idCommande: Joi.number()
-    .integer()
-    .positive()
-    .messages({
-        'any.number': 'Le champs de votre   idCommande doit être un chiffre !',
-        'number.empty': 'Le champs de votre   idCommande doit être un chiffre !',
-        'any.required': 'Le champs de votre   idCommande ne peut être vide !',
-        'number.max': 'Le champs de votre   idCommande ne peut être supérieur a 100 !',
-        'number.positive': 'Le champs de votre   idCommande ne peut être inférieur a zéro !',
+        .integer()
+        .positive()
+        .messages({
+            'any.number': 'Le champs de votre   idCommande doit être un chiffre !',
+            'number.empty': 'Le champs de votre   idCommande doit être un chiffre !',
+            'any.required': 'Le champs de votre   idCommande ne peut être vide !',
+            'number.max': 'Le champs de votre   idCommande ne peut être supérieur a 100 !',
+            'number.positive': 'Le champs de votre   idCommande ne peut être inférieur a zéro !',
 
-    }),
+        }),
     idTransporteur: Joi.number()
-    .integer()
-    .positive()
-    .messages({
-        'any.number': 'Le champs de votre  idTransporteur doit être un chiffre !',
-        'number.empty': 'Le champs de votre  idTransporteur doit être un chiffre !',
-        'any.required': 'Le champs de votre  idTransporteur ne peut être vide !',
-        'number.max': 'Le champs de votre  idTransporteur ne peut être supérieur a 100 !',
-        'number.positive': 'Le champs de votre  idTransporteur ne peut être inférieur a zéro !',
+        .integer()
+        .min(1)
+        .max(4)
+        .positive()
+        .messages({
+            'any.number': 'Le champs de votre  idTransporteur doit être un chiffre !',
+            'number.empty': 'Le champs de votre  idTransporteur doit être un chiffre !',
+            'any.required': 'Le champs de votre  idTransporteur ne peut être vide !',
+            'number.max': 'Le champs de votre  idTransporteur ne peut être supérieur a 4 !',
+            'number.min': 'Le champs de votre  idTransporteur ne peut être inférieur a 1 !',
+            'number.positive': 'Le champs de votre  idTransporteur ne peut être inférieur a zéro !',
 
-    }),
+        }),
 
 
-    
+
 
 });
 

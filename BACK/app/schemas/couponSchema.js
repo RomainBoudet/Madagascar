@@ -51,13 +51,6 @@ const coupon = Joi.object({
             'any.required': 'Le champs de votre prefix ne peut être vide !',
         }),
 
-    isActive: Joi.boolean()
-        .sensitive()
-        .required()
-        .messages({
-            'boolean.base': `Seule les valeurs true ou false seront accéptées.`,
-        }),
-
     montant: Joi.string()
         .regex(/^\d+(\,\d{0,2})?$/)
         .required()

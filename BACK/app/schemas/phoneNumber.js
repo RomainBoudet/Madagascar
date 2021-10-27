@@ -17,7 +17,7 @@ const Joi = require('joi');
      .required()
      .max(12)
      .messages({
-      'any.required':'le champs de votre numéro de téléphone ne peut être vide ',
+      'any.required':'le champs de votre numéro de téléphone ne peut être vide',
       'string.max': `Votre numéro de télphone doit avoir une longeur maximum de {#limit} caractéres ! n'oublier pas de supprimer le premier 0 de votre numéro.`,
       'string.empty': `Le champs de votre numéro de téléphone ne peut être vide !`,
       'string.pattern.base':'Le format de votre numéro de téléphone est incorrect : Il doit être composé de 12 caractéres, commencer par +33, suivi de votre numéro de téléphone portable sans le permier 0 .',

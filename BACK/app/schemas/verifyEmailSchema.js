@@ -6,12 +6,13 @@ const verifyEmailSchema = Joi.object({
     userId: Joi.number().integer().positive()
         .required()
         .messages({
-            'string.empty': `L'URL doit contenir un userId pour être valide!`,
+            'any.required': `L'URL doit contenir un userId pour être valide!`,
         }),
     token: Joi.string()
-        //.pattern(new RegExp(/^[A-Za-z0-9._-.]{20,}$/))
+        .pattern(new RegExp(/^[A-Za-z0-9_./-]{15,}$/))
         .required()
         .messages({
+            'any.required':'L\'URL doit contenir un token pour être valide!',
             'string.empty': `L'URL doit contenir un token pour être valide!`,
             'string.pattern.base':'Votre format de token est incorrect !',
         }),

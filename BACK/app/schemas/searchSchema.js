@@ -12,10 +12,14 @@ const Joi = require('joi');
 const search = Joi.object({
     search: Joi.string()
         .max(200)
+        .pattern(new RegExp(/^[^<>&#=+*"|{}]*$/))
         .required()
         .messages({
             'string.max': `Votre recherche doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le champs de votre recherche ne peut être vide !`,
+            'string.pattern.base': 'Le format de votre recherche est incorrect',
+            'any.required':'Le champs de votre recherche ne peut être vide !',
+
         }),
 
 });

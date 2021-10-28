@@ -67,7 +67,6 @@ const userSigninSchema = Joi.object().keys({
      passwordConfirm: Joi.string()
      //.valid(Joi.ref('password')).required().strict() ok,  mais comment on reprend l'érreur par défault ?
     .pattern(new RegExp(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/))
-    .required()
     .max(200)
     .trim()
     .messages({

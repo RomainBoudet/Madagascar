@@ -10,6 +10,7 @@ const resendEmailSchema = Joi.object({
       'string.max': `Votre email doit avoir une longeur maximum de {#limit} caractéres !`,
       'string.empty': `Le champs email ne peut être vide.`,
       'string.pattern.base': 'Votre format d\'email est incorrect !',
+      'any.required':'Le champs email ne peut être vide.',
     }),
 });
 

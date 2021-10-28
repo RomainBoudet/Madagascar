@@ -7,63 +7,7 @@ const {
 } = require('chai');
 const chalk = require('chalk');
 
-//! test sur mon schéma userLogin
-
-const userLoginSchema = require('../app/schemas/userLoginSchema');
-
-// le mot de passe d'un utilisateur, doit avoir 8 caractéres au minimum, une lettre minuscule, une lettre majuscule, un nombre et un caractéres spécial parmis : (!@#$%^&*)
-
-let mockLogin;
-
-describe(chalk.magenta('Test de validation du userLoginSchema JOI :'), function () {
-
-    //préparer un contexte favorable a l'exécution des test unitaire
-    before(function () {
-        mockLogin = {
-            email: 'test@test.fr',
-            password: 'AZEaze123!'
-        };
-
-    })
-
-    it('should validate a valid login (password and email)', function () {
-        // validate sur un schema Joi retourne un objet avec systématiquement une propriétée value et en cas d'érreur, une propriété error 
-        expect(userLoginSchema.validate(mockLogin)).not.to.have.property('error');
-    });
-
-
-    it("should not validate the password format (without special caracteres)", function () {
-
-        // Valider qu'un schéma invalide, retourne une érreur si le mot de passe n'a pas le bon format :
-        mockLogin.password = 'mot_de_passe_sans_chiffre';
-        expect(userLoginSchema.validate(mockLogin)).to.have.property('error');
-
-        const validation = userLoginSchema.validate(mockLogin).error.details[0].path[0];
-        // Ne pas oublier que tous les tests intermédaires sont inutiles car déja testé par Joi...
-        // je cherche une info significative qui me prouve que l'érreur vient bien du password !
-        expect(validation).to.deep.equal('password');
-    })
-
-
-
-    it("should not validate the email format (without @)", function () {
-
-        //je remet un bon mot de passe :
-        mockLogin.password = 'AZEFDDsdff43@';
-        //et j'introduis un mauvais email :
-        mockLogin.email = 'coucoutest.fr'
-
-        // Valider qu'un schéma invalide me retourne bien une érreur si le mail n'a pas le bon format :
-        expect(userLoginSchema.validate(mockLogin)).to.have.property('error');
-
-        const validation2 = userLoginSchema.validate(mockLogin).error.details[0].message;
-
-        expect(validation2).to.equal('Le format de votre email est incorrect');
-
-    });
-
-
-});
+//! Tests sur les SCHEMA JOI ----------------------------------------------
 
 
 //! Test sur adressePostSchema
@@ -595,8 +539,6 @@ describe(chalk.magenta('Test de validation du refundClientSchema JOI :'), functi
     it("should not validate commande with letter", function () {
 
         mockRefundClient.commande = "024543567AE545871";
-
-        console.log(refundClientSchema.validate(mockRefundClient));
         expect(refundClientSchema.validate(mockRefundClient)).to.have.property('error');
 
         const validation = refundClientSchema.validate(mockRefundClient).error.details[0].path[0];
@@ -616,12 +558,553 @@ describe(chalk.magenta('Test de validation du refundClientSchema JOI :'), functi
 });
 
 
+//! Test refundClientSchema
+
+const refundSchema = require('../app/schemas/refundSchema');
+
+
+describe(chalk.magenta('Test de validation du refundSchema JOI :'), function () {
+
+    before(function () {
+
+        mockRefund = {
+            email: 'test@test.fr',
+            //idClient: 34, Soit email soit idClient ! (xor)
+            commande: '233.45.65.1',
+            montant: 135,
+        };
+    });
+
+    it('should validate a valid refund', function () {
+        expect(refundSchema.validate(mockRefund)).not.to.have.property('error');
+    });
+
+    it("should not validate email with wrong format", function () {
+
+        mockRefund.email = "test@test.23";
+        expect(refundSchema.validate(mockRefund)).to.have.property('error');
+
+        const validation = refundSchema.validate(mockRefund).error.details[0].path[0];
+        expect(validation).to.deep.equal('email');
+    })
+
+    it("should check that 'idClient' or 'email' keys are present but not both ", function () {
+        // test du xor fonctionnel !
+        mockRefund.email = "test@test.de";
+        mockRefund.idClient = 23;
+
+        expect(refundSchema.validate(mockRefund)).to.have.property('error');
+
+        const validation2 = refundSchema.validate(mockRefund).error.details[0].context.peers;
+        expect(validation2).to.deep.equal(['email', 'idClient']);
+
+    });
+
+});
+
+//! Test resendEmailSchema
+
+const resendEmailSchema = require('../app/schemas/resendEmailSchema');
+
+
+describe(chalk.magenta('Test de validation du resendEmailSchema JOI :'), function () {
+
+    before(function () {
+
+        mockResendEmail = {
+            email: "test@test.de",
+        };
+    });
+
+    it('should validate a valid email', function () {
+
+        expect(resendEmailSchema.validate(mockResendEmail)).not.to.have.property('error');
+    });
+
+    it("should not validate wrong email format (with two @)", function () {
+
+        mockResendEmail.email = "test@@test.de";
+        expect(resendEmailSchema.validate(mockResendEmail)).to.have.property('error');
+
+        const validation = resendEmailSchema.validate(mockResendEmail).error.details[0].path[0];
+        expect(validation).to.deep.equal('email');
+    })
+
+    it("should not validate an empty email ", function () {
+
+        mockResendEmail.email = undefined;
+        expect(resendEmailSchema.validate(mockResendEmail)).to.have.property('error');
+
+        const validation2 = resendEmailSchema.validate(mockResendEmail).error.details[0].message;
+        expect(validation2).to.equal('Le champs email ne peut être vide.');
+
+    });
+
+});
+
+//! Test resetPwdSchema
+
+const resetPwdSchema = require('../app/schemas/resetPwdSchema');
+
+
+describe(chalk.magenta('Test de validation du resetPwdSchema JOI :'), function () {
+
+    before(function () {
+
+        mockResetPwdSchema = {
+            newPassword: "MyPasswordenBeton45@",
+            passwordConfirm: "MyPasswordenBeton45@",
+
+        };
+    });
+
+    it('should validate a valid reset password', function () {
+        expect(resetPwdSchema.validate(mockResetPwdSchema)).not.to.have.property('error');
+    });
+
+    it("should not validate wrong password format (without upper case)", function () {
+
+        mockResetPwdSchema.password = "mypasswordenbéton45@";
+        expect(resetPwdSchema.validate(mockResetPwdSchema)).to.have.property('error');
+
+        const validation = resetPwdSchema.validate(mockResetPwdSchema).error.details[0].path[0];
+        expect(validation).to.deep.equal('password');
+    })
+
+    it("should check that password field can't be alone, without passwordConfirm field ", function () {
+        // check .with
+        mockResetPwdSchema.passwordConfirm = undefined;
+
+        expect(resetPwdSchema.validate(mockResetPwdSchema)).to.have.property('error');
+
+        const validation2 = resetPwdSchema.validate(mockResetPwdSchema).error.details[0].context.child;
+
+        expect(validation2).to.equal('password');
+
+    });
+});
+
+//! Test searchSchema
+
+const searchSchema = require('../app/schemas/searchSchema');
+
+
+describe(chalk.magenta('Test de validation du searchSchema JOI :'), function () {
+
+    before(function () {
+
+        mockSearch = {
+            search: "myCategory",
+        };
+    });
+
+    it('should validate a valid search', function () {
+
+        expect(searchSchema.validate(mockSearch)).not.to.have.property('error');
+    });
+
+    it("should not validate search with special caracteres (mycategorie<link>)", function () {
+
+        mockSearch.search = "mycategorie<link>";
+        expect(searchSchema.validate(mockSearch)).to.have.property('error');
+
+        const validation = searchSchema.validate(mockSearch).error.details[0].path[0];
+        expect(validation).to.deep.equal('search');
+    })
+
+    it("should not validate an empty search ", function () {
+
+        mockSearch.search = undefined;
+        expect(searchSchema.validate(mockSearch)).to.have.property('error');
+
+        const validation2 = searchSchema.validate(mockSearch).error.details[0].message;
+        expect(validation2).to.equal('Le champs de votre recherche ne peut être vide !');
+
+    });
+
+});
+
+
+//! Test smsChoiceSchema
+
+const smsChoiceSchema = require('../app/schemas/smsChoiceSchema');
+
+
+describe(chalk.magenta('Test de validation du smsChoiceSchema JOI :'), function () {
+
+    before(function () {
+
+        mockSmsChoice = {
+            true: true,
+            //false: false,
+        };
+    });
+
+    it('should validate a valid sms choice', function () {
+        expect(smsChoiceSchema.validate(mockSmsChoice)).not.to.have.property('error');
+    });
+
+    it("should not validate email with wrong format", function () {
+
+        mockSmsChoice.true = "coucou";
+        expect(smsChoiceSchema.validate(mockSmsChoice)).to.have.property('error');
+
+        const validation = smsChoiceSchema.validate(mockSmsChoice).error.details[0].path[0];
+        expect(validation).to.deep.equal('true');
+    })
+
+    it("should check that 'idClient' or 'email' keys are present but not both ", function () {
+        // test du xor fonctionnel !
+        mockSmsChoice.true = true;
+        mockSmsChoice.false = false;
+
+        expect(smsChoiceSchema.validate(mockSmsChoice)).to.have.property('error');
+
+        const validation2 = smsChoiceSchema.validate(mockSmsChoice).error.details[0].context.peers;
+        expect(validation2).to.deep.equal(['true', 'false']);
+
+    });
+
+});
+
+
+//! Test transporteurPostSchema
+
+const transporteurPostSchema = require('../app/schemas/transporteurPostSchema');
+
+
+describe(chalk.magenta('Test de validation du transporteurPostSchema JOI :'), function () {
+
+    before(function () {
+
+        mockTransporteur = {
+            nom: "theBestTranporter",
+            description: "faster than ever",
+            fraisExpedition: 18,
+            estimeArrive: 1,
+            logo: "https://pixy.org/src/477/4774988.jpg",
+        };
+    });
+
+    it('should validate a valid transporter', function () {
+
+        expect(transporteurPostSchema.validate(mockTransporteur)).not.to.have.property('error');
+    });
+
+    it("should not validate transporter name with special caracteres (my transporter <link>)", function () {
+
+        mockTransporteur.nom = "my transporter <link>";
+        expect(transporteurPostSchema.validate(mockTransporteur)).to.have.property('error');
+
+        const validation = transporteurPostSchema.validate(mockTransporteur).error.details[0].path[0];
+        expect(validation).to.deep.equal('nom');
+    })
+
+    it("should not validate 'frais expedition' bigger than 100", function () {
+
+        mockTransporteur.fraisExpedition = 101;
+        mockTransporteur.nom = "my transporter";
+
+        expect(transporteurPostSchema.validate(mockTransporteur)).to.have.property('error');
+
+        const validation2 = transporteurPostSchema.validate(mockTransporteur).error.details[0].message;
+        expect(validation2).to.equal('Le champs de votre fraisExpedition ne peut être supérieur a 100 !');
+
+    });
+    it("should not validate an empty 'frais expedition' field", function () {
+
+        mockTransporteur.fraisExpedition = undefined;
+
+        expect(transporteurPostSchema.validate(mockTransporteur)).to.have.property('error');
+
+        const validation2 = transporteurPostSchema.validate(mockTransporteur).error.details[0].message;
+        expect(validation2).to.equal('Le champs de votre fraisExpedition ne peut être vide !');
+
+    });
+
+});
+
+
+//! Test transporteurSchema
+
+const transporteurSchema = require('../app/schemas/transporteurShema');
+
+
+describe(chalk.magenta('Test de validation du transporteurPostSchema JOI :'), function () {
+
+    before(function () {
+
+        mockTransporteur = {
+            //nom: "theBestTranporter",
+            description: "faster than ever",
+            fraisExpedition: 18,
+            //estimeArrive:1,
+            logo: "https://pixy.org/src/477/4774988.jpg",
+        };
+    });
+
+    it('should validate a valid transporter with empty field', function () {
+
+        expect(transporteurSchema.validate(mockTransporteur)).not.to.have.property('error');
+    });
+
+    it("should not validate transporter logo with not an URI", function () {
+
+        mockTransporteur.logo = "coucou";
+        expect(transporteurSchema.validate(mockTransporteur)).to.have.property('error');
+
+        const validation = transporteurSchema.validate(mockTransporteur).error.details[0].path[0];
+        expect(validation).to.deep.equal('logo');
+    })
+
+    it("should not validate 'description' with special caracteres", function () {
+
+        mockTransporteur.description = 'this is a wrong description <<';
+        mockTransporteur.logo = "https://pixy.org/src/477/4774988.jpg";
+
+        expect(transporteurSchema.validate(mockTransporteur)).to.have.property('error');
+
+        const validation2 = transporteurSchema.validate(mockTransporteur).error.details[0].message;
+        expect(validation2).to.equal('Le format de votre description est incorrect : Il ne doit pas être composé d\'un de ces caractéres spéciaux : [<>&#=+*/"|] !');
+
+    });
+
+});
+
+//! test sur mon schéma userLogin
+
+const userLoginSchema = require('../app/schemas/userLoginSchema');
+
+// le mot de passe d'un utilisateur, doit avoir 8 caractéres au minimum, une lettre minuscule, une lettre majuscule, un nombre et un caractéres spécial parmis : (!@#$%^&*)
+
+let mockLogin;
+
+describe(chalk.magenta('Test de validation du userLoginSchema JOI :'), function () {
+
+    //préparer un contexte favorable a l'exécution des test unitaire
+    before(function () {
+        mockLogin = {
+            email: 'test@test.fr',
+            password: 'AZEaze123!'
+        };
+
+    })
+
+    it('should validate a valid login (password and email)', function () {
+        // validate sur un schema Joi retourne un objet avec systématiquement une propriétée value et en cas d'érreur, une propriété error 
+        expect(userLoginSchema.validate(mockLogin)).not.to.have.property('error');
+    });
+
+
+    it("should not validate the password format (without special caracteres)", function () {
+
+        // Valider qu'un schéma invalide, retourne une érreur si le mot de passe n'a pas le bon format :
+        mockLogin.password = 'mot_de_passe_sans_chiffre';
+        expect(userLoginSchema.validate(mockLogin)).to.have.property('error');
+
+        const validation = userLoginSchema.validate(mockLogin).error.details[0].path[0];
+        // Ne pas oublier que tous les tests intermédaires sont inutiles car déja testé par Joi...
+        // je cherche une info significative qui me prouve que l'érreur vient bien du password !
+        expect(validation).to.deep.equal('password');
+    })
+
+
+
+    it("should not validate the email format (without @)", function () {
+
+        //je remet un bon mot de passe :
+        mockLogin.password = 'AZEFDDsdff43@';
+        //et j'introduis un mauvais email :
+        mockLogin.email = 'coucoutest.fr'
+
+        // Valider qu'un schéma invalide me retourne bien une érreur si le mail n'a pas le bon format :
+        expect(userLoginSchema.validate(mockLogin)).to.have.property('error');
+
+        const validation2 = userLoginSchema.validate(mockLogin).error.details[0].message;
+
+        expect(validation2).to.equal('Le format de votre email est incorrect');
+
+    });
+
+
+});
+
+//! Test userSigninSchema
+
+const userSigninSchema = require('../app/schemas/userSigninSchema');
+
+
+describe(chalk.magenta('Test de validation du userSigninSchema JOI :'), function () {
+
+    before(function () {
+
+        mockUserSignin = {
+            prenom: 'Albert',
+            nomFamille: 'Duppontel',
+            email: 'bebert@gmail.com',
+            password: "MyPasswordenBeton45@",
+            passwordConfirm: "MyPasswordenBeton45@",
+
+        };
+    });
+
+    it('should validate a valid reset user signin', function () {
+        expect(userSigninSchema.validate(mockUserSignin)).not.to.have.property('error');
+    });
+
+    it("should not validate family name smaller than  caracteres", function () {
+
+        mockUserSignin.nomFamille = "m";
+        expect(userSigninSchema.validate(mockUserSignin)).to.have.property('error');
+
+        const validation = userSigninSchema.validate(mockUserSignin).error.details[0].path[0];
+        expect(validation).to.deep.equal('nomFamille');
+    })
+
+    it("should check that password field can't be alone, without passwordConfirm field ", function () {
+        // check .with
+        mockUserSignin.passwordConfirm = undefined;
+        mockUserSignin.nomFamille = "Duppontel";
+
+        expect(userSigninSchema.validate(mockUserSignin)).to.have.property('error');
+
+        const validation2 = userSigninSchema.validate(mockUserSignin).error.details[0].context.peer;
+        expect(validation2).to.equal('passwordConfirm');
+
+    });
+});
+
+//! Test userUpdateSchema
+
+const userUpdateSchema = require('../app/schemas/userUpdateSchema');
+
+
+describe(chalk.magenta('Test de validation du userUpdateSchema JOI :'), function () {
+
+    before(function () {
+
+        mockUserUpdate = {
+            //prenom:'Albert',
+            nomFamille: 'Duppontel',
+            email: 'bebert@gmail.com',
+            password: "oldPasswordenBeton45@",
+            newPassword: "MyNewPasswordenBeton45@",
+            newPasswordConfirm: "MyNewPasswordenBeton45@",
+
+        };
+    });
+
+    it('should validate a valid user update with empty field', function () {
+        expect(userUpdateSchema.validate(mockUserUpdate)).not.to.have.property('error');
+    });
+
+    it("should not validate email with wrong pattern", function () {
+
+        mockUserUpdate.email = "test@coucou";
+        expect(userUpdateSchema.validate(mockUserUpdate)).to.have.property('error');
+
+        const validation = userUpdateSchema.validate(mockUserUpdate).error.details[0].path[0];
+        expect(validation).to.deep.equal('email');
+    })
+
+    it("should check that newPassword field can't be alone, without newPasswordConfirm field ", function () {
+        // check .with
+        mockUserUpdate.newPasswordConfirm = undefined;
+        mockUserUpdate.email = "Duppontel@albert.fr";
+
+        expect(userUpdateSchema.validate(mockUserUpdate)).to.have.property('error');
+
+        const validation2 = userUpdateSchema.validate(mockUserUpdate).error.details[0].context.peer;
+        expect(validation2).to.equal('newPasswordConfirm');
+
+    });
+
+    it("should check that newPassword field can't be different than newPasswordConfirm field ", function () {
+        // check .with
+        mockUserUpdate.newPasswordConfirm = 'NewPasswordenBeton45@';
+
+        expect(userUpdateSchema.validate(mockUserUpdate)).to.have.property('error');
+
+        const validation2 = userUpdateSchema.validate(mockUserUpdate).error.details[0].context.key;
+        expect(validation2).to.equal('newPasswordConfirm');
+
+    });
+});
+
+//! Test verifyEmailSchema
+
+const verifyEmailSchema = require('../app/schemas/verifyEmailSchema');
+
+
+describe(chalk.magenta('Test de validation du verifyEmailSchema JOI :'), function () {
+
+    before(function () {
+
+        mockVerifyEmail = {
+            userId: 21,
+            token: 'DGGLDOBDGL4577GLBLGLT/LflblbltLLLSFL35764-LLBLT356LLL.GLrjrn',
+        };
+    });
+
+    it('should validate a valid VerifyEmail schema', function () {
+        expect(verifyEmailSchema.validate(mockVerifyEmail)).not.to.have.property('error');
+    });
+
+    it("should not validate userId with wrong type", function () {
+
+        mockVerifyEmail.userId = "ECDR";
+        expect(verifyEmailSchema.validate(mockVerifyEmail)).to.have.property('error');
+
+        const validation = verifyEmailSchema.validate(mockVerifyEmail).error.details[0].path[0];
+        expect(validation).to.deep.equal('userId');
+    })
+
+     it("should check that token field is required ", function () {
+        // check .with
+        mockVerifyEmail.token = undefined;
+        mockVerifyEmail.userId = "3456";
+
+        expect(verifyEmailSchema.validate(mockVerifyEmail)).to.have.property('error');
+
+        const validation2 = verifyEmailSchema.validate(mockVerifyEmail).error.details[0].message;
+        expect(validation2).to.equal('L\'URL doit contenir un token pour être valide!');
+
+    });
+
+     it("should not validate token field with wrong format", function () {
+        
+        mockVerifyEmail.token = 'DGGLDOBDGL4577GLBLGLT/LflblbltLLLSFL35764-LLBLT356LLL.GLrjrn<';
+
+        expect(verifyEmailSchema.validate(mockVerifyEmail)).to.have.property('error');
+
+        const validation2 = verifyEmailSchema.validate(mockVerifyEmail).error.details[0].message;
+        expect(validation2).to.equal('Votre format de token est incorrect !');
+
+    });  
+});
+
+
 //!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
 
 
 
 //!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
 
+//! Tests sur les SERVICES-------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+//!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+
+
+
+//!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+
+//! Tests sur les MODEL-----------------------------------------------------------------------------------------------------------------
 
 //! Test sur le model Client !
 

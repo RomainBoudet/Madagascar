@@ -1059,7 +1059,7 @@ describe(chalk.magenta('Test de validation du verifyEmailSchema JOI :'), functio
         expect(validation).to.deep.equal('userId');
     })
 
-     it("should check that token field is required ", function () {
+    it("should check that token field is required ", function () {
         // check .with
         mockVerifyEmail.token = undefined;
         mockVerifyEmail.userId = "3456";
@@ -1071,8 +1071,8 @@ describe(chalk.magenta('Test de validation du verifyEmailSchema JOI :'), functio
 
     });
 
-     it("should not validate token field with wrong format", function () {
-        
+    it("should not validate token field with wrong format", function () {
+
         mockVerifyEmail.token = 'DGGLDOBDGL4577GLBLGLT/LflblbltLLLSFL35764-LLBLT356LLL.GLrjrn<';
 
         expect(verifyEmailSchema.validate(mockVerifyEmail)).to.have.property('error');
@@ -1080,7 +1080,7 @@ describe(chalk.magenta('Test de validation du verifyEmailSchema JOI :'), functio
         const validation2 = verifyEmailSchema.validate(mockVerifyEmail).error.details[0].message;
         expect(validation2).to.equal('Votre format de token est incorrect !');
 
-    });  
+    });
 });
 
 
@@ -1092,7 +1092,135 @@ describe(chalk.magenta('Test de validation du verifyEmailSchema JOI :'), functio
 
 //! Tests sur les SERVICES-------------------------------------------------------------------------------------
 
+const db = require('../app/database');
+const Commande = require('../app/models/commande');
 
+
+const {
+    facture,
+    factureRefund,
+} = require('../app/services/facture');
+
+let commande = {};
+let privilege = {};
+let client = {};
+let transporteur = {};
+
+const arrayIdStatutCommande = [];
+
+describe(chalk.blue('Test du service de facture :'), function () {
+
+    // Au préalable j'insére en BDD une commande dont je pourrais demander la facture
+    // je dois également insérer un statut, un client et un transporteur auquelle la commande fait référence !
+    before(async function () {
+
+        //insertion d'un statut commande !
+        const statutCommandes = [{
+            nom: 'En attente',
+            description: 'Vous avez choisi le paiement par virement ? Ce statut est normal et n’évoluera qu’à partir du moment où le virement sera réalisé et les fonds reçus sur notre compte.'
+
+        }, {
+            nom: 'Paiement validé',
+            description: 'La commande est validée et va être prise en charge par notre équipe de préparation.'
+
+        }, {
+            nom: 'En cours de préparation',
+            description: 'La commande est en cours de préparation par notre équipe logistique.'
+
+        }, {
+            nom: 'Prêt pour expédition',
+            description: 'La préparation de votre commande est terminée. Elle sera remise au transporteur dans la journée.'
+
+        }, {
+            nom: 'Expédiée',
+            description: "La commande a remis au transporteur. Vous avez dû recevoir un email contenant le numéro de tracking vous permettant de suivre l'acheminement de votre colis. Ce numéro de tracking est également accessible dans votre compte client dans la rubrique Mes commandes / Onglet Expéditions"
+        }, {
+            nom: 'Remboursée',
+            description: "La commande a été remboursé. Vous avez dû recevoir un email confirmant ce remboursement"
+        }, {
+            nom: 'Annulée',
+            description: "Vous avez choisi d'annuler votre commande ou avez demandé à notre service client de l'annuler ? Vous serez remboursé du montant que vous avez réglé sur le moyen de paiement utilisé.Vous n'avez pas choisi d'annuler votre commande ? Ce statut indique que le paiement en ligne n’a pas abouti (paiement rejeté, coordonnées bancaires non renseignées dans le délai imparti …) Cette commande ne sera pas préparée, vous pouvez faire une nouvelle tentative."
+
+        }]
+        const statutCommandesInsert = "INSERT INTO mada.statut_commande (statut, description) VALUES ($1, $2) RETURNING *;";
+        for (const statut_commande of statutCommandes) {
+            const statut = await db.query(statutCommandesInsert, [statut_commande.nom, statut_commande.description]);
+            // Je met de coté tous les id insérés pour ce TU afin de les supprimer a a la fin du test.
+            arrayIdStatutCommande.push(statut.rows[0].id);
+        }
+
+        // Insertion d'un privilege (préalable a l'insertion d'un client !)
+        const privilegeInsert = "INSERT INTO mada.privilege (nom) VALUES ($1) RETURNING *;";
+        privilege = await db.query(privilegeInsert, ['Client']);
+
+        // Insertion d'un client !
+        const custumersInsert = "INSERT INTO mada.client (prenom, nom_famille, email, password, id_privilege) VALUES ($1, $2, $3 ,$4, $5) RETURNING *;";
+        client = await db.query(custumersInsert, ['Thomas', ' Jefferson', 'thomas@jefferson.us', '$2b$10$NTmOgZb2fN1QxewdWOYchOVQXUtUSaW47uOCBhRJ2zi1s2dK4kJsi', `${privilege.rows[0].id}`]);
+
+        // Insertion d'un transporteur !
+        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, estime_arrive_number, logo) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;";
+        transporteur = await db.query(transporteursInsert, ['TheTransporteur', 'So fast, you will be surprised', 20, 'des le lendemain', 1, 'https://logos-download.com/wp-content/uploads/2016/10/TNT_logo-700x286.png']);
+        // Et enfin, l'insertion d'une commande
+        commande = await db.query('INSERT INTO mada.commande (reference, commentaire, id_commandeStatut, id_client, id_transporteur) VALUES ($1, $2, $3, $4, $5) RETURNING *;', ['123.43.3567654.56.4.2.2.3', 'Sur un plateau d\'argent. Merci', `${arrayIdStatutCommande[1]}`, `${client.rows[0].id}`, `${transporteur.rows[0].id}`]);
+
+    });
+
+
+
+    // commande que je supprimerais aprés les tests.
+    after(async function () {
+
+        for (const id of arrayIdStatutCommande) {
+            await db.query("DELETE FROM mada.statut_commande WHERE id = $1", [id])
+        }
+
+        console.log('1');
+        await db.query("DELETE FROM mada.client WHERE id = $1", [client.rows[0].id])
+        console.log('2');
+
+        await db.query("DELETE FROM mada.privilege WHERE id = $1", [privilege.rows[0].id])
+        console.log('3');
+
+        //await db.query("DELETE FROM mada.transporteur WHERE id = $1", [transporteur.rows[0].id])
+        console.log('4');
+
+        await db.query("DELETE FROM mada.commande WHERE id = $1", [commande.rows[0].id])
+
+    })
+
+    it('should validate and create a valid facture in pdf format', function () {
+
+        facture(commande.id);
+
+        expect(facture(commande.id)).not.to.have.property('error');
+    });
+
+    /*  it("should not validate the telephone format (without + caractere)", function () {
+
+         // Valider qu'un schéma invalide, retourne une érreur si le mot de passe n'a pas le bon format :
+         mockAddress.telephone = '33603420629';
+         expect(adressePostSchema.validate(mockAddress)).to.have.property('error');
+
+         const validation = adressePostSchema.validate(mockAddress).error.details[0].path[0];
+         // Ne pas oublier que tous les tests intermédaires sont inutiles car déja testé par Joi...
+         // je cherche une info significative qui me prouve que l'érreur vient bien du password !
+         expect(validation).to.deep.equal('telephone');
+     })
+
+     it("should not validate the codePostal format (more than 5 number)", function () {
+
+         mockAddress.codePostal = '072004';
+         //et je ré-introduis un téléphone valide :
+         mockAddress.telephone = '+33603420629';
+         // Valider qu'un schéma invalide me retourne bien une érreur si le mail n'a pas le bon format :
+         expect(adressePostSchema.validate(mockAddress)).to.have.property('error');
+
+         const validation2 = adressePostSchema.validate(mockAddress).error.details[0].message;
+         expect(validation2).to.equal('Le format de votre code postale est incorrect : Il doit être composé de 5 chiffres.');
+
+     }); */
+
+});
 
 
 
@@ -1108,26 +1236,37 @@ describe(chalk.magenta('Test de validation du verifyEmailSchema JOI :'), functio
 
 //! Test sur le model Client !
 
-const db = require('../app/database');
+//const db = require('../app/database');
 
 const Client = require('../app/models/client');
+const {
+    func
+} = require('joi');
 
 const user = {};
+let privilege2 = {};
 
 describe(chalk.yellow('Model Client'), function () {
 
 
     before(async function () {
 
+
+        const privilegeInsert = "INSERT INTO mada.privilege (nom) VALUES ($1) RETURNING *;";
+        privilege2 = await db.query(privilegeInsert, ['Client']);
+
         const {
             rows
-        } = await db.query('INSERT INTO mada.client (prenom, nom_famille, email, password, id_privilege) VALUES ($1, $2, $3 ,$4, $5) RETURNING *;', ['Barack', 'Obama', 'obama@whiteHouse.us', '$2b$10$NTmOgZb2fN1QxewdWOYchOVQXUtUSaW47uOCBhRJ2zi1s2dK4kJsi', 1]);
+        } = await db.query('INSERT INTO mada.client (prenom, nom_famille, email, password, id_privilege) VALUES ($1, $2, $3 ,$4, $5) RETURNING *;', ['Barack', 'Obama', 'obama@whiteHouse.us', '$2b$10$NTmOgZb2fN1QxewdWOYchOVQXUtUSaW47uOCBhRJ2zi1s2dK4kJsi', privilege2.rows[0].id]);
         user.id = rows[0].id;
     });
 
     after(async function () {
 
-        await db.query("DELETE FROM mada.client WHERE id = $1", [user.id])
+        await db.query("DELETE FROM mada.client WHERE id = $1", [user.id]);
+
+        await db.query("DELETE FROM mada.privilege WHERE id = $1", [privilege2.rows[0].id]);
+
 
     });
 

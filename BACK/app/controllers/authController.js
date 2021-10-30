@@ -2,9 +2,6 @@ const Client = require('../models/client');
 const crypto = require('crypto');
 const consol = require('../services/colorConsole');
 const AdminVerifEmail = require('../models/adminVerifEmail');
-const {
-    v4: uuid
-} = require('uuid');
 
 
 /**

@@ -1093,7 +1093,9 @@ describe(chalk.magenta('Test de validation du verifyEmailSchema JOI :'), functio
 //! Tests sur les SERVICES-------------------------------------------------------------------------------------
 
 const db = require('../app/database');
-const Commande = require('../app/models/commande');
+const fs = require('fs').promises;
+
+const redis = require('../app/services/redis');
 
 
 const {
@@ -1101,17 +1103,28 @@ const {
     factureRefund,
 } = require('../app/services/facture');
 
-let commande = {};
-let privilege = {};
-let client = {};
-let transporteur = {};
 
-const arrayIdStatutCommande = [];
 
 describe(chalk.blue('Test du service de facture :'), function () {
 
+    let commande = {};
+    let privilege = {};
+    let client = {};
+    let transporteur = {};
+    let adresse = {};
+    let paiement = {};
+    let tva = {};
+    let produit = {};
+    let caracteristique = {};
+    let ligneCommande = {};
+    let shop = {};
+    const arrayIdStatutCommande = [];
+    let nomFacture;
+    let emailWithoutSlash;
+
+
     // Au préalable j'insére en BDD une commande dont je pourrais demander la facture
-    // je dois également insérer un statut, un client et un transporteur auquelle la commande fait référence !
+    // je dois également insérer toutes les données auquelles la commande fait référence !
     before(async function () {
 
         //insertion d'un statut commande !
@@ -1147,6 +1160,7 @@ describe(chalk.blue('Test du service de facture :'), function () {
             const statut = await db.query(statutCommandesInsert, [statut_commande.nom, statut_commande.description]);
             // Je met de coté tous les id insérés pour ce TU afin de les supprimer a a la fin du test.
             arrayIdStatutCommande.push(statut.rows[0].id);
+
         }
 
         // Insertion d'un privilege (préalable a l'insertion d'un client !)
@@ -1155,70 +1169,128 @@ describe(chalk.blue('Test du service de facture :'), function () {
 
         // Insertion d'un client !
         const custumersInsert = "INSERT INTO mada.client (prenom, nom_famille, email, password, id_privilege) VALUES ($1, $2, $3 ,$4, $5) RETURNING *;";
-        client = await db.query(custumersInsert, ['Thomas', ' Jefferson', 'thomas@jefferson.us', '$2b$10$NTmOgZb2fN1QxewdWOYchOVQXUtUSaW47uOCBhRJ2zi1s2dK4kJsi', `${privilege.rows[0].id}`]);
+        client = await db.query(custumersInsert, ['Test', 'Unitaire', 'testUnitaire@mocha.us', '$2b$10$NTmOgZb2fN1QxewdWOYchOVQXUtUSaW47uOCBhRJ2zi1s2dK4kJsi', `${privilege.rows[0].id}`]);
+
+        // Insertion d'une adresse pour ce client !
+        const adressesInsertEnvoieTrue = "INSERT INTO mada.adresse (titre, prenom, nom_famille, ligne1, code_postal, ville, pays, telephone, envoie, created_date, id_client) VALUES ($1, $2, $3 ,$4, $5, $6, $7, $8, TRUE, now(), $9) RETURNING *;";
+        adresse = await db.query(adressesInsertEnvoieTrue, ['Maison', 'Test', 'Unitaire', '1600 Pennsylvania Ave NW', '20500', 'Washington', 'France', '+33612547687', client.rows[0].id]);
 
         // Insertion d'un transporteur !
         const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, estime_arrive_number, logo) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;";
-        transporteur = await db.query(transporteursInsert, ['TheTransporteur', 'So fast, you will be surprised', 20, 'des le lendemain', 1, 'https://logos-download.com/wp-content/uploads/2016/10/TNT_logo-700x286.png']);
-        // Et enfin, l'insertion d'une commande
-        commande = await db.query('INSERT INTO mada.commande (reference, commentaire, id_commandeStatut, id_client, id_transporteur) VALUES ($1, $2, $3, $4, $5) RETURNING *;', ['123.43.3567654.56.4.2.2.3', 'Sur un plateau d\'argent. Merci', `${arrayIdStatutCommande[1]}`, `${client.rows[0].id}`, `${transporteur.rows[0].id}`]);
+        transporteur = await db.query(transporteursInsert, ['TheTransporteur', 'So fast, you will be surprised', 2000, 'des le lendemain', 1, 'https://logos-download.com/wp-content/uploads/2016/10/TNT_logo-700x286.png']);
+
+        // Insertion  d'une TVA !
+        const taxRatesInsert = "INSERT INTO mada.TVA (taux, nom) VALUES ($1, $2) RETURNING *;";
+        tva = await db.query(taxRatesInsert, [0.20, 'Taux normal 20%']);
+
+        // Insertion d'un produit !
+        const productsInsert = "INSERT INTO mada.produit (nom, description, prix_HT, image_mini, id_TVA) VALUES ($1, $2, $3 ,$4, $5) RETURNING *;";
+        produit = await db.query(productsInsert, ['Spatula', 'The best spatula ever !', 8000, 'https://evans.brandeditems.com/wp-content/uploads/2017/09/Small-Silicone-Spatula-1307.jpeg', tva.rows[0].id]);
+
+        // Insertion d'une commande
+        commande = await db.query('INSERT INTO mada.commande (reference, commentaire, id_commandeStatut, id_client, id_transporteur) VALUES ($1, $2, $3, $4, $5) RETURNING *;', [`${client.rows[0].id}.${2000+1600+(8000*2)}.21041944140000.${produit.rows[0].id}.2`, 'Sur un plateau d\'argent. Merci', `${arrayIdStatutCommande[1]}`, `${client.rows[0].id}`, `${transporteur.rows[0].id}`]);
+
+
+        // Insertion des caractéristique d'un produit !
+        const caracteristiquesInsert = "INSERT INTO mada.caracteristique (couleur, taille, id_produit) VALUES ($1, $2, $3) RETURNING *;";
+        caracteristique = await db.query(caracteristiquesInsert, ['blue', 'M', produit.rows[0].id]);
+
+        // Insertion d'une ligne de Commande !
+        const ligne_commandesInsert = "INSERT INTO mada.ligne_commande ( quantite_commande, id_produit, id_commande) VALUES ($1, $2, $3) RETURNING *;";
+        ligneCommande = await db.query(ligne_commandesInsert, [2, produit.rows[0].id, commande.rows[0].id]);
+
+        // Insertion d'un paiement !! 
+        const paiementsInsert = "INSERT INTO mada.paiement (reference, methode, payment_intent, moyen_paiement, moyen_paiement_detail, origine, derniers_chiffres, montant, id_commande) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;";
+        const ref = `1120249999.${client.rows[0].id}.${2000+1600+(8000*2)}.21041944140000.${produit.rows[0].id}.2`
+        // 2000 = transporteur, 1600 = TVA 20% pour un produit a 80€, 8000 x 2= prix du produit multiplié par la qté, absence de réduction et de coupon !
+        // date format secret : DDMMYYYYHHmmss
+        paiement = await db.query(paiementsInsert, [ref, 'Carte bancaire', 'pi_3JkIPzLNa9FFzz1X0kkmTubM_secret_oMNcjY64J2S5cJaM9WGwIjvBc', 'Carte bancaire', 'visa', 'France', '9999', `${2000+1600+(8000*2)}`, commande.rows[0].id]);
+
+        // Insertion d'un shop 
+        shop = await db.query(`INSERT INTO mada.shop (nom, adresse1, code_postal, ville, pays, texte_intro, email_contact, telephone) VALUES('Mock-Test_Unitaire', 'Adresse_ Ligne 1', '07170', 'Ville', 'France','texte intro', 'test_for_TU@test.fr', '+33606345632') RETURNING *;`);
+
+
+        // Je stocke des données qui devront être accéssible durant mes tests :
+        nomFacture = `${client.rows[0].nom_famille}_${client.rows[0].prenom}__${commande.rows[0].reference}`;
+        const email = client.rows[0].email;
+        const reg = /\//ig;
+        if (reg.test(email)) {
+            // Je récupére l'email avec le slash remplacé par un uuid et stocké dans REDIS
+            emailWithoutSlash = await redis.get(`mada/replaceEmailWithSlashForFacturePath:${email}`);
+        } else {
+            emailWithoutSlash = email;
+        }
 
     });
 
 
-
-    // commande que je supprimerais aprés les tests.
+    // Toutes les données utile a la rédaction d'une facture sont supprimées aprés les tests.
     after(async function () {
 
         for (const id of arrayIdStatutCommande) {
             await db.query("DELETE FROM mada.statut_commande WHERE id = $1", [id])
         }
 
-        console.log('1');
-        await db.query("DELETE FROM mada.client WHERE id = $1", [client.rows[0].id])
-        console.log('2');
+        await db.query("DELETE FROM mada.client WHERE id = $1", [client.rows[0].id]);
 
-        await db.query("DELETE FROM mada.privilege WHERE id = $1", [privilege.rows[0].id])
-        console.log('3');
+        await db.query("DELETE FROM mada.privilege WHERE id = $1", [privilege.rows[0].id]);
 
-        //await db.query("DELETE FROM mada.transporteur WHERE id = $1", [transporteur.rows[0].id])
-        console.log('4');
+        await db.query("DELETE FROM mada.transporteur WHERE id = $1", [transporteur.rows[0].id]);
 
-        await db.query("DELETE FROM mada.commande WHERE id = $1", [commande.rows[0].id])
+        await db.query("DELETE FROM mada.produit WHERE id = $1", [produit.rows[0].id]);
+
+        await db.query("DELETE FROM mada.shop WHERE id = $1", [shop.rows[0].id]);
+
+        await db.query("DELETE FROM mada.TVA WHERE id = $1", [tva.rows[0].id]);
+
+
+        //"commande" et "caracteristique" sont supprimé par le CASCADE
+
+
+        // Je supprime le sous dossier créer pour ranger la facture et tous ce qu'il contient !
+       
+
+          fs.rmdir(`./Factures/client:_${emailWithoutSlash}`, {
+            recursive: true
+        }, (err) => {
+            if (err) {
+                console.log(`Un érreur est arrivé au cour de la suppression du nouveau dossier == ./Factures/client:_${emailWithoutSlash}`, err);
+                return;
+            }
+        }); 
 
     })
 
-    it('should validate and create a valid facture in pdf format', function () {
+    it('should create a valid facture in pdf format without error', function () {
 
-        facture(commande.id);
+        expect(facture(commande.rows[0].id)).not.to.have.property('error');
+    }); 
 
-        expect(facture(commande.id)).not.to.have.property('error');
+    it('should create an accesible facture in pdf format, in the Factures directory, without error', async function () {
+       
+        //const path = `./Factures/client:_${emailWithoutSlash}/${nomFacture}.pdf`;
+        const path = `./Factures`;
+
+        async function exists(path) {
+            try {
+                await fs.access(path)
+                return true
+            } catch (err) {
+                console.log(err)
+                return false
+
+            }
+        }
+        
+
+
+        const isFilePDF = await exists(path);
+        expect(isFilePDF).to.be.true;
+
     });
 
-    /*  it("should not validate the telephone format (without + caractere)", function () {
 
-         // Valider qu'un schéma invalide, retourne une érreur si le mot de passe n'a pas le bon format :
-         mockAddress.telephone = '33603420629';
-         expect(adressePostSchema.validate(mockAddress)).to.have.property('error');
-
-         const validation = adressePostSchema.validate(mockAddress).error.details[0].path[0];
-         // Ne pas oublier que tous les tests intermédaires sont inutiles car déja testé par Joi...
-         // je cherche une info significative qui me prouve que l'érreur vient bien du password !
-         expect(validation).to.deep.equal('telephone');
-     })
-
-     it("should not validate the codePostal format (more than 5 number)", function () {
-
-         mockAddress.codePostal = '072004';
-         //et je ré-introduis un téléphone valide :
-         mockAddress.telephone = '+33603420629';
-         // Valider qu'un schéma invalide me retourne bien une érreur si le mail n'a pas le bon format :
-         expect(adressePostSchema.validate(mockAddress)).to.have.property('error');
-
-         const validation2 = adressePostSchema.validate(mockAddress).error.details[0].message;
-         expect(validation2).to.equal('Le format de votre code postale est incorrect : Il doit être composé de 5 chiffres.');
-
-     }); */
+    
 
 });
 
@@ -1242,6 +1314,12 @@ const Client = require('../app/models/client');
 const {
     func
 } = require('joi');
+const {
+    dirname
+} = require('path');
+const {
+    set
+} = require('../app/services/redis');
 
 const user = {};
 let privilege2 = {};

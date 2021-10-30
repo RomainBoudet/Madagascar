@@ -51,7 +51,7 @@ const factureController = {
 
             let shop;
             try {
-                shop = await Shop.findOne(1);
+                shop = await Shop.findFirst();
             } catch (error) {
                 console.trace('Erreur dans la méthode facture du factureController :',
                     error);
@@ -72,10 +72,18 @@ const factureController = {
 
             const nomFacture = `${commande[0].client_nom}_${commande[0].client_prenom}__${commande[0].reference}`;
 
-            // Je m'assure que l'email ne contient pas de slash, je le remplace par une série de tiret sinon.
+            // Je m'assure que l'email ne contient pas de slash, je le remplace par un uuid.
+            // "/" est un caractére acceptable pour un email, mais ça me "casse" mon chemin. Je remplace donc ce caratére dans le cas ou celui ci serait présent. https://www.rfc-editor.org/rfc/rfc5321  https://www.rfc-editor.org/rfc/rfc5322 ou plus simplement https://en.wikipedia.org/wiki/Email_address#Local-part 
             const email = commande[0].email;
-            const emailWithoutSlash = email.replace("/", "____________________"); // En partant du principe qu'aucun mail ne contient 20 "_". 
+            const emailWithoutSlash = email.replace("/", `${uuidv4()}`); // En partant du principe qu'aucun mail n'existe avec cet uuid... 
 
+            // Email contenant un slash /
+            const reg = /\//ig;
+            if (reg.test(email)) {
+                // Je stocke l'info dans redis pour pouvoir refaire la conversion lorqu'on demandera la facture avec cet email particulier.
+                await redis.set(`mada/replaceEmailWithSlashForFacturePath:${email}`, emailWithoutSlash);
+
+            }
             // Je créer un dossier pour ranger ma facture selon le mail du client. J'utilise l'option récursive pour ne pas avoir d'érreur si le dossier "mail" client exite déja.
             fs.mkdir(`./Factures/client:_${emailWithoutSlash}`, {
                 recursive: true
@@ -709,9 +717,19 @@ const factureController = {
                 return res.status(403).json("Vous n'avez pas les droit pour accéder a ala ressource.");
             }
 
-            // Je me prémuni des email avec des slash qui pourrait court-circuiter mon chemin d'accés. Remplacement des / par des __ 
+            // Je me prémuni des email avec des slash qui pourrait court-circuiter mon chemin d'accés. Remplacement des / par des uuid  
             const email = commande.email;
-            const emailWithoutSlash = email.replace("/", "____________________"); // En partant du principe qu'aucun mail ne contient 20 "_". 
+
+            // Je récupére le mail sans slash dans REDIS, là ou je l'ai mis a la création de la facture (si il en possédait un...)
+            let emailWithoutSlash;
+            const reg = /\//ig;
+            if (reg.test(email)) {
+                // Je récupére l'email avec le slash remplacé par un uuid dans REDIS
+                emailWithoutSlash = await redis.get(`mada/replaceEmailWithSlashForFacturePath:${email}`);
+            } else {
+                emailWithoutSlash = email;
+            }
+
 
             res.sendFile(path.resolve(__dirname + `../../../Factures/client:_${emailWithoutSlash}/${commande.nomFamille}_${commande.prenom}__${commande.reference}.pdf`));
             res.setHeader('Content-type', 'application/pdf');

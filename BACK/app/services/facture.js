@@ -1,5 +1,9 @@
 const Commande = require('../models/commande');
 const Shop = require('../models/shop');
+const {
+    v4: uuidv4
+} = require('uuid');
+
 
 const fs = require('fs');
 const PdfPrinter = require('pdfmake');
@@ -16,12 +20,16 @@ const {
     facturePhone
 } = require('../services/adresse');
 
+const redis = require('../services/redis');
+
+
 const facture = async (idCommande) => {
 
     try {
 
         // Infos du client, de l'adresse du client, de la commande, de ligne_commande, du paiement, des produits, des cararctéristiques, de la TVA, des reductions de produits, 
         let commande;
+        //console.log("idCommande == ", idCommande);
         // ICI LE findCommandeFactures VA RECHERCHER QUE LES ADRESSES DÉFINIT POUR LES FACTURATION ! On va chercher les adresses de livraison avec le service textAdresseLivraison 
         try {
             commande = await Commande.findCommandeFactures(idCommande);
@@ -29,13 +37,14 @@ const facture = async (idCommande) => {
             return console.trace('Erreur dans la méthode facture du factureController :',
                 error);
         }
+        //console.log('commande ==', commande);
         if (commande === null || commande === undefined || commande === []) {
-            return console.log('Aucune commande n\'existe pour cet identifiant de commande !');
+            return console.log('Aucune commande n\'existe pour cet identifiant de commande, dommage.. !');
         }
 
         let shop;
         try {
-            shop = await Shop.findOne(1);
+            shop = await Shop.findFirst();
         } catch (error) {
             return console.trace('Erreur dans la méthode facture du factureController :',
                 error);
@@ -45,9 +54,18 @@ const facture = async (idCommande) => {
 
         const nomFacture = `${commande[0].client_nom}_${commande[0].client_prenom}__${commande[0].reference}`;
 
-        // Je m'assure que l'email ne contient pas de slash, je le remplace par une série de tiret sinon.
+        // Je m'assure que l'email ne contient pas de slash, je le remplace par un uuid.
+        // "/" est un caractére acceptable pour un email, mais ça me "casse" mon chemin. Je remplace donc ce caratére dans le cas ou celui ci serait présent. https://www.rfc-editor.org/rfc/rfc5321  https://www.rfc-editor.org/rfc/rfc5322 ou plus simplement https://en.wikipedia.org/wiki/Email_address#Local-part 
         const email = commande[0].email;
-        const emailWithoutSlash = email.replace("/", "____________________"); // En partant du principe qu'aucun mail ne contient 20 "_". 
+        const emailWithoutSlash = email.replace("/", `${uuidv4()}`); // En partant du principe qu'aucun mail n'existe avec cet uuid... 
+
+        // Email contenant un slash /
+        const reg = /\//ig;
+        if (reg.test(email)) {
+            // Je stocke l'info dans redis pour pouvoir refaire la conversion lorqu'on demandera la facture avec cet email particulier.
+            await redis.set(`mada/replaceEmailWithSlashForFacturePath:${email}`, emailWithoutSlash);
+
+        }
 
         // Je créer un dossier pour ranger ma facture selon le mail du client. J'utilise l'option récursive pour ne pas avoir d'érreur si le dossier "mail" client exite déja.
         fs.mkdir(`./Factures/client:_${emailWithoutSlash}`, {
@@ -65,18 +83,20 @@ const facture = async (idCommande) => {
         // Si pas de réduction, la valeur vaut 0
         for (const item of commande) {
 
+
             if (item.reduction === null || item.reduction === undefined) {
                 item.reduction = 0;
+
             }
         }
         // Calcul des valeurs des totaux.
         // Je n'oubli pas de réafficher les prix unitaires en comprenant de possible réductions...
         commande.map(article => (article.prixHTAvecReduc = parseInt((article.prix_ht) * (1 - article.reduction)), article.montantTax = Math.round(article.prixHTAvecReduc * article.taux)));
+
         const arrayTotalPrixAvecReduc = [];
         const arrayTotalTax = [];
         commande.map(article => (arrayTotalPrixAvecReduc.push(article.prixHTAvecReduc * article.quantite_commande), arrayTotalTax.push(article.montantTax * article.quantite_commande)));
         const accumulator = (previousValue, currentValue) => previousValue + currentValue;
-        console.log(commande);
 
         const totalProduit = (arrayTotalPrixAvecReduc.reduce(accumulator)) / 100;
         const fraisExpedition = commande[0].frais_expedition / 100;
@@ -90,7 +110,6 @@ const facture = async (idCommande) => {
             adresseLivraison = `Vous n'avez pas choisi \n de livraison mais un retrait \n sur le stand lors du \n prochain marché.`
 
         } else {
- 
             adresseLivraison = await textAdresseLivraison(commande[0].idClient);
         }
 
@@ -639,7 +658,7 @@ const facture = async (idCommande) => {
 
 
     } catch (error) {
-       return console.trace('Erreur dans le service facture :',
+        return console.trace('Erreur dans le service facture :',
             error);
     }
 
@@ -655,30 +674,37 @@ const factureRefund = async (idCommande) => {
         try {
             commande = await Commande.findCommandeFactures(idCommande);
         } catch (error) {
-           return console.trace('Erreur dans la méthode factureRefund du factureController :',
+            return console.trace('Erreur dans la méthode factureRefund du factureController :',
                 error);
         }
 
         if (commande === null || commande === undefined || commande === []) {
-           return console.log('Aucune commande n\'existe pour cet identifiant de commande !');
+            return console.log('Aucune commande n\'existe pour cet identifiant de commande !');
         }
 
         let shop;
         try {
-            shop = await Shop.findOne(1);
+            shop = await Shop.findFirst();
         } catch (error) {
-           return console.trace('Erreur dans la méthode factureRefund du factureController :',
+            return console.trace('Erreur dans la méthode factureRefund du factureController :',
                 error);
         }
         //console.log(shop);
 
 
         const nomFacture = `${commande[0].client_nom}_${commande[0].client_prenom}__${commande[0].reference}`;
-
-        // Je m'assure que l'email ne contient pas de slash, je le remplace par une série de tiret sinon.
+        // Je m'assure que l'email ne contient pas de slash, je le remplace par un uuid.
+        // "/" est un caractére acceptable pour un email, mais ça me "casse" mon chemin. Je remplace donc ce caratére dans le cas ou celui ci serait présent. https://www.rfc-editor.org/rfc/rfc5321  https://www.rfc-editor.org/rfc/rfc5322 ou plus simplement https://en.wikipedia.org/wiki/Email_address#Local-part 
         const email = commande[0].email;
-        const emailWithoutSlash = email.replace("/", "____________________"); // En partant du principe qu'aucun mail ne contient 20 "_". 
+        const emailWithoutSlash = email.replace("/", `${uuidv4()}`); // En partant du principe qu'aucun mail n'existe avec cet uuid... 
 
+        // Email contenant un slash /
+        const reg = /\//ig;
+        if (reg.test(email)) {
+            // Je stocke l'info dans redis pour pouvoir refaire la conversion lorqu'on demandera la facture avec cet email particulier.
+            await redis.set(`mada/replaceEmailWithSlashForFacturePath:${email}`, emailWithoutSlash);
+
+        }
         // Je créer un dossier pour ranger ma facture selon le mail du client. J'utilise l'option récursive pour ne pas avoir d'érreur si le dossier "mail" client exite déja.
         fs.mkdir(`./Factures/client:_${emailWithoutSlash}`, {
             recursive: true
@@ -720,7 +746,7 @@ const factureRefund = async (idCommande) => {
             adresseLivraison = `Vous n'avez pas choisi \n de livraison mais un retrait \n sur le stand lors du \n prochain marché.`
 
         } else {
- 
+
             adresseLivraison = await textAdresseLivraison(commande[0].idClient);
         }
 
@@ -865,7 +891,13 @@ const factureRefund = async (idCommande) => {
                     }
                 ]
             },
-            watermark: { text: 'REMBOURSÉE', color: 'red', opacity: 0.1, bold: false, italics: false },
+            watermark: {
+                text: 'REMBOURSÉE',
+                color: 'red',
+                opacity: 0.1,
+                bold: false,
+                italics: false
+            },
 
             content: [{
                     columns: [{
@@ -1270,7 +1302,7 @@ const factureRefund = async (idCommande) => {
 
 
     } catch (error) {
-      return  console.trace('Erreur dans le service factureRefund :',
+        return console.trace('Erreur dans le service factureRefund :',
             error);
     }
 

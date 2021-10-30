@@ -11,7 +11,6 @@ const facturePhone = (telephone) => {
     //console.log("nicePhone2 == ", nicePhone2); //0603720741
     const nicePhone = nicePhone2.replace(/(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, "$1-$2-$3-$4-$5");
     //console.log("nicePhone == ", nicePhone); // 06-03-72-07-41
-
     return nicePhone;
 
 };
@@ -87,7 +86,7 @@ const textShopFacture = async () => {
     let shopAdresse;
     let adresseData;
     try {
-        adresseData = await Shop.findOne(1);
+        adresseData = await Shop.findFirst();
     } catch (error) {
         console.log(`Erreur dans le service Adresse, function textShopFacture  : ${error.message}`);
         console.trace(error);

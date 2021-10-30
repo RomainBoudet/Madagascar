@@ -285,9 +285,9 @@ class Adresse {
             return null;
         }
 
-        consol.model(
+        /* consol.model(
             `l'adresse avec pour envoi TRUE pour le client id : ${idClient} a été demandée en BDD !`
-        );
+        ); */
 
         return new Adresse(rows[0]);
     }
@@ -314,9 +314,9 @@ class Adresse {
             return null;
         }
 
-        consol.model(
+        /* consol.model(
             `l'adresse avec pour facturation TRUE pour le client id : ${idClient} a été demandée en BDD !`
-        );
+        ); */
 
         return new Adresse(rows[0]);
     }

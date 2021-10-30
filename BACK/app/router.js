@@ -511,7 +511,7 @@ router.post('/admin/updateCommande', admin, commandeController.updateStatut);
 /**
  * Bien qu'un facture soit généré automatiquement a chaque paiement, cette route permet a l'admin de la regénérer a volonté.
  * Route pour la génération d'une facture PDF pour l'identifiant de commande passée dans URL !
- * Si une facture existe déja au format psd pour cette commande, cette facture pdf la remplacera.
+ * Si une facture existe déja au format pdf pour cette commande, cette facture pdf la remplacera.
  * @route GET /users/facture/:id
  * @group Utilisateur
  * @summary  Permet de générer une facture PDF pour la commande voulue 

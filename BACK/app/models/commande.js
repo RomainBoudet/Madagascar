@@ -144,9 +144,9 @@ class Commande {
     if (!rows[0] || rows[0] === undefined) {
         return null;
     }
-    consol.model(
+    /* consol.model(
         `les produit de la commande ${id} ont été demandées !`
-    );
+    ); */
 
     return rows.map((commande) => new Commande(commande));
 }

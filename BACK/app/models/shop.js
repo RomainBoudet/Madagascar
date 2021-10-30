@@ -59,6 +59,27 @@ class Shop {
         return rows.map((shop) => new Shop(shop));
     }
 
+    /**
+     * Méthode chargé d'aller chercher toutes les informations relatives au shop 
+     * @returns - tous les Shops présent en BDD
+     * @static - une méthode static
+     * @async - une méthode asynchrone
+     */
+     static async findFirst() {
+        const {
+            rows
+        } = await db.query('SELECT * FROM mada.shop ORDER BY shop.id ASC LIMIT 1');
+
+        if (!rows[0]) {
+            null;
+        }
+        /* consol.model(
+            `les informations des ${rows.length} shop ont été demandé !`
+        ); */
+
+        return new Shop(rows[0]);
+    }
+
 
     /**
      * Méthode chargé d'aller chercher les informations relatives au shop passé en paramétre
@@ -81,9 +102,9 @@ class Shop {
             null;
         }
 
-        consol.model(
+        /* consol.model(
             `le Shop id : ${id} a été demandé en BDD !`
-        );
+        ); */
 
         return new Shop(rows[0]);
     }

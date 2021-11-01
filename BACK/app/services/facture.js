@@ -6,6 +6,11 @@ const {
 
 
 const fs = require('fs');
+const {
+    promisify
+} = require('util');
+const mkdirAsync = promisify(fs.mkdir);
+const createWriteStreamAsync = promisify(fs.createWriteStream);
 const PdfPrinter = require('pdfmake');
 const path = require('path');
 
@@ -25,7 +30,9 @@ const redis = require('../services/redis');
 
 const facture = async (idCommande) => {
 
+
     try {
+
 
         // Infos du client, de l'adresse du client, de la commande, de ligne_commande, du paiement, des produits, des cararctéristiques, de la TVA, des reductions de produits, 
         let commande;
@@ -64,9 +71,7 @@ const facture = async (idCommande) => {
         if (reg.test(email)) {
             // Je stocke l'info dans redis pour pouvoir refaire la conversion lorqu'on demandera la facture avec cet email particulier.
             await redis.set(`mada/replaceEmailWithSlashForFacturePath:${email}`, emailWithoutSlash);
-
         }
-
         // Je créer un dossier pour ranger ma facture selon le mail du client. J'utilise l'option récursive pour ne pas avoir d'érreur si le dossier "mail" client exite déja.
         fs.mkdir(`./Factures/client:_${emailWithoutSlash}`, {
             recursive: true
@@ -76,7 +81,6 @@ const facture = async (idCommande) => {
                 return;
             }
         });
-
 
         //!Calcul des infos pour la facture :
 
@@ -651,10 +655,15 @@ const facture = async (idCommande) => {
         }
 
         const pdfDoc = printer.createPdfKitDocument(docDefinition);
-        pdfDoc.pipe(fs.createWriteStream(`Factures/client:_${emailWithoutSlash}/${nomFacture}.pdf`));
+
+        try {
+            pdfDoc.pipe(await createWriteStreamAsync(`Factures/client:_${emailWithoutSlash}/${nomFacture}.pdf`));
+
+        } catch (error) {
+            console.trace("Erreur dans le service facture, lors de l'appel de createWriteStreamAsync ", error);
+        }
+       
         pdfDoc.end();
-
-
 
 
     } catch (error) {

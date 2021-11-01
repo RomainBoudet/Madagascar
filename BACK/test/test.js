@@ -1084,16 +1084,17 @@ describe(chalk.magenta('Test de validation du verifyEmailSchema JOI :'), functio
 });
 
 
-//!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
-
-
+//!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
 
 //!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
 
 //! Tests sur les SERVICES-------------------------------------------------------------------------------------
 
+//! test sur le service "facture"
+
 const db = require('../app/database');
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsPromises = fs.promises;
 
 const redis = require('../app/services/redis');
 
@@ -1160,7 +1161,6 @@ describe(chalk.blue('Test du service de facture :'), function () {
             const statut = await db.query(statutCommandesInsert, [statut_commande.nom, statut_commande.description]);
             // Je met de coté tous les id insérés pour ce TU afin de les supprimer a a la fin du test.
             arrayIdStatutCommande.push(statut.rows[0].id);
-
         }
 
         // Insertion d'un privilege (préalable a l'insertion d'un client !)
@@ -1228,6 +1228,7 @@ describe(chalk.blue('Test du service de facture :'), function () {
     after(async function () {
 
         for (const id of arrayIdStatutCommande) {
+
             await db.query("DELETE FROM mada.statut_commande WHERE id = $1", [id])
         }
 
@@ -1246,51 +1247,145 @@ describe(chalk.blue('Test du service de facture :'), function () {
 
         //"commande" et "caracteristique" sont supprimé par le CASCADE
 
-
         // Je supprime le sous dossier créer pour ranger la facture et tous ce qu'il contient !
-       
 
-          fs.rmdir(`./Factures/client:_${emailWithoutSlash}`, {
+
+        fs.rmdir(`./Factures/client:_${emailWithoutSlash}`, {
             recursive: true
         }, (err) => {
             if (err) {
                 console.log(`Un érreur est arrivé au cour de la suppression du nouveau dossier == ./Factures/client:_${emailWithoutSlash}`, err);
                 return;
             }
-        }); 
+        });
+
+
 
     })
 
     it('should create a valid facture in pdf format without error', function () {
 
         expect(facture(commande.rows[0].id)).not.to.have.property('error');
-    }); 
+
+    });
 
     it('should create an accesible facture in pdf format, in the Factures directory, without error', async function () {
-       
+
+        // je donne les droits en lecture
+        //fs.chmodSync(`./Factures/client:_${emailWithoutSlash}`, fs.constants.R_OK); 
+
         //const path = `./Factures/client:_${emailWithoutSlash}/${nomFacture}.pdf`;
+        const path2 = "./Factures/client:_testUnitaire@mocha.us/Unitaire_Test__215.19600.21041944140000.108.2.pdf";
+        const path1 = `./Factures/client:_${emailWithoutSlash}`;
         const path = `./Factures`;
+
+
+        //TODO le fichier est bien présent, mais fs.access ne semble pas y avoir accés ?
+        // il y a néanmoins un accés si le chemin est sans le nom du fichier (./Factures/client:_${emailWithoutSlash}) et que la suppression du dossier en fin de test est "commenté".
+        // Il y a également un accés (le test est réussi), toujours si on "commente" le module de suppression du dossier et qu'on met en dure le chemin complet (comme la variable path2). 
+        // Dans tous les cas la facture est bien crée.
 
         async function exists(path) {
             try {
-                await fs.access(path)
+                await fsPromises.access(path)
                 return true
             } catch (err) {
-                console.log(err)
+                console.trace(err)
                 return false
-
             }
         }
-        
 
 
         const isFilePDF = await exists(path);
-        expect(isFilePDF).to.be.true;
+
+        await expect(isFilePDF).to.be.true;
+
+    });
+
+    it('should create a valid facture in pdf format, stocked in the good directory, even with a "slash" in the email of the client, without error', async function () {
+
+        const saveEmailWithoutSlash = emailWithoutSlash;
+
+        const newData = await db.query("UPDATE mada.client SET email = $1 WHERE id = $2 RETURNING *;", ['test/Unitaire@mocha.us', `${client.rows[0].id}`]);
+
+        const emailWithSlash = newData.rows[0].email;
+
+        // je peux seulement await quelque chose qui renvoit une promesse...
+        await expect(facture(commande.rows[0].id)).not.to.have.property('error');
+
+        //! A corriger !
+        // probleme de timing, sans le setTimeout, REDIS.get va chercher la donnée avant que le service facture ne la mette dans REDIS...
+
+        setTimeout(async function () {
+
+            emailWithoutSlash = await redis.get(`mada/replaceEmailWithSlashForFacturePath:${emailWithSlash}`);
+            fs.rmdir(`./Factures/client:_${emailWithoutSlash}`, {
+                recursive: true
+            }, (err) => {
+                if (err) {
+                    console.log(`Un érreur est arrivé au cour de la suppression du nouveau dossier == ./Factures/client:_${emailWithoutSlash}`, err);
+                    return;
+                }
+            })
+        }, 1000);
+
+        // Je remet la bonne valeur pour que la supppression du pdf issue du test 2, se fasse bien avec la bonne valeur dans cette variable.
+        emailWithoutSlash = saveEmailWithoutSlash;
 
     });
 
 
-    
+});
+
+//! test sur le service "adresse"
+
+//! test sur le service "adresse"
+
+const {
+    textShopFacture,
+    textAdresseLivraison,
+    textAdresseFacturation,
+    facturePhone
+} = require('../app/services/adresse');
+
+describe(chalk.blue('Test du service adresse :'), function () {
+
+    before(function () {
+
+
+    });
+
+    describe(chalk.blue('# Test du service de modification du numéro de téléphone :'), function () {
+
+
+        it('should modificate the phone number format without error', function () {
+
+            const phoneNumber = "+33703254376";
+
+            expect(facturePhone(phoneNumber)).not.to.have.property('error');
+        });
+
+        it('should be equal to the phone number format expected', function () {
+
+            const phoneNumber = "+33703254376";
+            const expectedFormat = ' 07-03-25-43-76';
+
+            expect(facturePhone(phoneNumber)).to.be.deep.equal(expectedFormat);
+
+        })
+
+        // a finir !
+        /* context('with incorrect arguments', function () {
+            it('should return an error if the given phone number don\'t have the expected format', function () {
+
+                const phoneNumber = "33703254376";
+
+                expect(facturePhone(phoneNumber)).to.throw(TypeError,'Votre téléphone n\'a pas le format souhaité pour le service adresse / facturePhone');
+
+            });
+        }); */
+
+    })
 
 });
 

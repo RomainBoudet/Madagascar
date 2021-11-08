@@ -589,6 +589,8 @@ const fakeData = async () => {
                 idCommande: index,
                 ref: `LIVRAISON/${uuid()}`,
                 idTransporteur: nbTranporteur[Math.floor(Math.random() * nbTranporteur.length)],
+                //idLigneCommande: arrayCommande[index], // 500 par lots de 5 chiffre identique !
+
                 // on a construit 2500 lignes de commande pour garnir ces commandes. Pour 5 lignes de commande par commandes
 
             };
@@ -606,10 +608,10 @@ const fakeData = async () => {
         // voir client...
 
 
-        //! FACTURE
+        //! FACTURE (table supprimée..)
 
 
-        consol.seed(`Début de la génération de fake factures`);
+        /* consol.seed(`Début de la génération de fake factures`);
         console.time(`Génération de ${volume*5} factures`);
         const factures1 = [];
         const factures2 = [];
@@ -695,7 +697,7 @@ const fakeData = async () => {
         console.timeEnd(`Génération de ${volume*5} factures`);
         console.table(factures4);
         consol.seed(`Fin de la génération de fake factures`);
-
+ */
 
         //! STOCK
 
@@ -800,7 +802,7 @@ const fakeData = async () => {
                 id_commande: arrayCommande[index], // 2500 par lots de 5 chiffre identique 1,1,1,1,1,2,2,2,2,2 (5000 x 5 chiffres identique)
                 id_produit: arrayProduit[index - 1], // 2500 par lot de 300. (arraProduit contient 2700 valeurs mais via l'index pn en prend 2500)
                 quantite_commande: Math.floor(Math.random() * (5 - 1 + 1)) + 1, // un random entre 1 et 5.
-                id_livraison: arrayCommande[index], // 500 par lots de 5 chiffre identique !
+                //id_livraison: arrayCommande[index], // 500 par lots de 5 chiffre identique !
 
             };
             ligne_commandes.push(ligne_commande);
@@ -946,8 +948,6 @@ const fakeData = async () => {
         console.timeEnd(`Génération de ${volume} fournies`);
         console.table(fournies);
         consol.seed(`Fin de la génération de fake fournies`);
-
-
 
 
 
@@ -1375,13 +1375,12 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${livraisons.length} livraisons`);
         console.time(`Import de ${livraisons.length} livraisons`);
-        const livraisonsInsert = "INSERT INTO mada.livraison (reference, numero_suivi, URL_suivi, poid, id_client, id_commande, id_transporteur) VALUES ($1, $2, $3, $4, $5, $6, $7);";
+        const livraisonsInsert = "INSERT INTO mada.livraison (reference, numero_suivi, URL_suivi, poid, id_client, id_commande, id_transporteur, id_lignecommande) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);";
 
         for (const livraison of livraisons) {
             consol.seed(`Import du livraison pour le client id ${livraison.indexClientCommande} et l'id commande ${livraison.indexClientCommande} `);
-            await db.query(livraisonsInsert, [livraison.ref, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.indexClientCommande, livraison.idCommande, livraison.idTransporteur]);
+            await db.query(livraisonsInsert, [livraison.ref, livraison.randomTransport.numero_suivi, livraison.randomTransport.URL_suivi, livraison.randomTransport.poid, livraison.indexClientCommande, livraison.idCommande, livraison.idTransporteur, livraison.idLigneCommande]);
         }
-
 
         consol.seed(`Fin de l'import de ${livraisons.length} livraisons`);
         console.timeEnd(`Import de ${livraisons.length} livraisons`);
@@ -1446,10 +1445,10 @@ const fakeData = async () => {
         consol.seed(`Fin de l'import de ${adresses.length *3} adresses`);
         console.timeEnd(`Import de ${adresses.length *3} adresses`);
 
-        //! FACTURE
+        //! FACTURE (table supprimée apres MAJ...) PDF crée a partir des données d'une vue, rassemblant les données nécéssaires...
 
 
-        consol.seed(`Début de l'import de ${factures1.length*4} factures`);
+       /*  consol.seed(`Début de l'import de ${factures1.length*4} factures`);
         console.time(`Import de ${factures1.length*4} factures`);
         const facturesInsert = "INSERT INTO mada.facture (reference, montant_HT, montant_TTC, montant_TVA, id_paiement, id_client) VALUES ($1, $2, $3, $4, $5, $6);";
 
@@ -1471,7 +1470,7 @@ const fakeData = async () => {
         }
 
         consol.seed(`Fin de l'import de ${factures1.length*4} factures`);
-        console.timeEnd(`Import de ${factures1.length*4} factures`);
+        console.timeEnd(`Import de ${factures1.length*4} factures`); */
 
 
         //! STOCK
@@ -1544,11 +1543,11 @@ const fakeData = async () => {
 
         consol.seed(`Début de l'import de ${ligne_commandes.length} ligne_commandes`);
         console.time(`Import de ${ligne_commandes.length} ligne_commandes`);
-        const ligne_commandesInsert = "INSERT INTO mada.ligne_commande ( quantite_commande, id_produit, id_commande, id_livraison) VALUES ($1, $2, $3, $4);";
+        const ligne_commandesInsert = "INSERT INTO mada.ligne_commande ( quantite_commande, id_produit, id_commande) VALUES ($1, $2, $3);";
 
         for (const ligne_commande of ligne_commandes) {
             consol.seed(`Import de la ligne_commande pour la commande id : ${ligne_commande.id_commande} avec l'index numéro ${ligne_commande.index}`);
-            await db.query(ligne_commandesInsert, [ligne_commande.quantite_commande, ligne_commande.id_produit, ligne_commande.id_commande, ligne_commande.id_livraison]);
+            await db.query(ligne_commandesInsert, [ligne_commande.quantite_commande, ligne_commande.id_produit, ligne_commande.id_commande]);
         }
 
         consol.seed(`Fin de l'import de ${ligne_commandes.length} ligne_commandes`);

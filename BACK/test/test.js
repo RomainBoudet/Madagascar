@@ -1250,7 +1250,7 @@ describe(chalk.blue('Test du service de facture :'), function () {
         // Je supprime le sous dossier créer pour ranger la facture et tous ce qu'il contient !
 
 
-        fs.rmdir(`./Factures/client:_${emailWithoutSlash}`, {
+        fs.rm(`./Factures/client:_${emailWithoutSlash}`, {
             recursive: true
         }, (err) => {
             if (err) {
@@ -1319,7 +1319,7 @@ describe(chalk.blue('Test du service de facture :'), function () {
         setTimeout(async function () {
 
             emailWithoutSlash = await redis.get(`mada/replaceEmailWithSlashForFacturePath:${emailWithSlash}`);
-            fs.rmdir(`./Factures/client:_${emailWithoutSlash}`, {
+            fs.rm(`./Factures/client:_${emailWithoutSlash}`, {
                 recursive: true
             }, (err) => {
                 if (err) {

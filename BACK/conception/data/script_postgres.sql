@@ -220,7 +220,7 @@ CREATE TABLE admin_verif_email(
 	id                        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	verif_email               BOOLEAN  NOT NULL DEFAULT FALSE,
 	email_new_commande_choice BOOLEAN NOT NULL DEFAULT FALSE,
-	date_verif_email          timestamptz,
+	date_verif_email          timestamptz NOT NULL DEFAULT now(),
 	id_client                 INT UNIQUE NOT NULL REFERENCES client(id) ON DELETE CASCADE
 );
 
@@ -531,7 +531,18 @@ CREATE TABLE sous_categorie_image(
 	id_sousCategorie       INT  NOT NULL REFERENCES sous_categorie(id) ON DELETE CASCADE
 );
 
+------------------------------------------------------------
+-- Table: ligne_commande
+------------------------------------------------------------
+CREATE TABLE ligne_commande(
+	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	quantite_commande   posintsup  NOT NULL,
+	created_date        timestamptz NOT NULL DEFAULT now(),
+	updated_date        timestamptz,
 
+	id_produit          INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE,
+	id_commande			INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE
+);
 
 ------------------------------------------------------------
 -- Table: livraison
@@ -549,24 +560,12 @@ CREATE TABLE livraison(
 
 	id_client            INT  NOT NULL REFERENCES client(id) ON DELETE CASCADE,
 	id_commande          INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE,
-	id_transporteur		 INT NOT NULL REFERENCES transporteur(id) ON DELETE CASCADE
+	id_transporteur		 INT NOT NULL REFERENCES transporteur(id) ON DELETE CASCADE,
+	id_lignecommande     INT NOT NULL REFERENCES ligne_commande(id) ON DELETE CASCADE
 	
 );
 
-------------------------------------------------------------
--- Table: ligne_commande
-------------------------------------------------------------
-CREATE TABLE ligne_commande(
-	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	quantite_commande   posintsup  NOT NULL,
-	created_date        timestamptz NOT NULL DEFAULT now(),
-	updated_date        timestamptz,
 
-	id_produit          INT  NOT NULL REFERENCES produit(id) ON DELETE CASCADE,
-	id_commande			INT  NOT NULL REFERENCES commande(id) ON DELETE CASCADE,
-	id_livraison        INT  REFERENCES livraison(id)  ON DELETE CASCADE
-	
-);
 
 -- CREATE INDEX idx_ligne_commande_id ON ligne_commande(idClient,idCommande,idCommandeLigne);
 
@@ -885,7 +884,7 @@ FROM
 mada.ligne_commande
 JOIN mada.produit ON produit.id = ligne_commande.id_produit
 JOIN mada.tva ON tva.id = produit.id_tva
-JOIN mada.livraison ON ligne_commande.id_livraison = livraison.id
+JOIN mada.livraison ON livraison.id_lignecommande = ligne_commande.id
 JOIN mada.client ON client.id = livraison.id_client 
 JOIN mada.adresse ON client.id = adresse.id_client AND adresse.envoie = TRUE
 JOIN mada.transporteur ON livraison.id_transporteur = transporteur.id

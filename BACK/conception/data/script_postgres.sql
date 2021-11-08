@@ -552,7 +552,7 @@ CREATE TABLE livraison(
 	reference			text_valid UNIQUE NOT NULL,
 	numero_suivi       text_valid,
 	URL_suivi          text_valid,
-	poid               posint  NOT NULL DEFAULT 2, -- en gramme
+	poid               posint, -- en gramme
 	created_date        timestamptz NOT NULL DEFAULT now(),
 	updated_date        timestamptz,
 	

@@ -348,7 +348,9 @@ const panierController = {
             console.log("monArticle juste apres ==>> ", monArticle);
 
             if (monArticle.stock < 1) {
-                return res.json("Cet article n'est plus disponible !")
+                return res.json({
+                    message: "Cet article n'est plus disponible !"
+                });
             };
 
             //je verifie qu'il existe
@@ -360,11 +362,6 @@ const panierController = {
             let article = req.session.cart.find(
                 (articleDansLePanier) => articleDansLePanier.id == articleId
             );
-
-            //TODO
-            // je dois vérifier ici que la réduction a bien le statut actif en base de données. et qu'on ne considére que les reduction avec le statut actif ici !  
-
-            //console.log("mon artcile ==>>  ", monArticle);
 
             let reduction;
 
@@ -542,26 +539,25 @@ const panierController = {
 
             const cart = req.session.cart;
 
+            console.log('cart == ', cart);
 
-            if (cart === []) {
-                
-                let reduction;
+            if (cart.length > 0) {
 
-                if (monArticle.reduction === null) {
+                console.log("on passe dedans");
+                // pour tous les articles restant dans le panier, on définit a Zéro la réduction si reduction vaut "null"
 
-                    reduction = 0;
+                for (const article of cart) {
 
-                } else if (monArticle.reduction > 0) {
+                    if (article.reduction === null) {
 
-                    reduction = monArticle.reduction
+                        article.reduction = 0;
 
-                } else {
-                    reduction = 0;
+                    }
                 }
 
                 //prise en charge de la réduction en construisant une nouvelle clé valeur représentant le nouveau prix avec la réduction sur lequel baser les calculs du panier.
                 // Si la réduction est de 0, cette valeur sera identique au prix...
-                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi((article.prixHT) * (1 - reduction))));
+                cart.map(article => article.prixHTAvecReduc = parseFloat(arrondi((article.prixHT) * (1 - article.reduction))));
                 //cart.map(article => article.prixHT = article.prixHT );
 
                 totalHT1 = cart.reduce(
@@ -622,7 +618,6 @@ const panierController = {
 
                 console.log("req.session a la sortie du delPanier ==> ", req.session);
 
-
                 if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
                     const coutTransporteur = req.session.coutTransporteur;
                     // On renvoit les infos calculés au front avec les cout du transport !
@@ -651,7 +646,9 @@ const panierController = {
 
             }
 
-            return res.status(200).json('Votre panier est vide');
+            return res.status(200).json({
+                message: 'Votre panier est vide'
+            });
 
 
 

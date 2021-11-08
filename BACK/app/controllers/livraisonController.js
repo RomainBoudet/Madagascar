@@ -8,6 +8,8 @@ const {
     expression
 } = require('joi');
 
+const fetch = require('node-fetch');
+
 /**
  * Une méthode qui va servir a intéragir avec le model Livraison pour les intéractions avec la BDD
  * Retourne un json
@@ -18,21 +20,50 @@ const {
  */
 const livraisonController = {
 
+//https://developer.laposte.fr/signup
+//https://www.npmjs.com/package/delivery-trackerhttps://www.npmjs.com/package/delivery-trackerhttps://www.npmjs.com/package/delivery-tracker 
 
-    newCommande: async (req, res) => {
+
+    newLivraison: async (req, res) => {
         try {
 
-            const data = {};
+            // En entrée j'attend un numéro de colis et un numéro de commande ou un id de commande !
 
-            data.reference = req.body.reference;
-            data.numeroSuivi = req.body.numeroSuivi;
-            data.URLSuivi = req.body.URLSuivi;
-            data.poid = req.body.poid;
-            data.idClient = req.body.idClient;
-            data.idCommande = req.body.idCommande;
-            data.idTransporteur = req.body.idTransporteur;
+            const commande = req.body.commande;
 
-            const newLivraison = new Livraison(data);
+            // je réceptionne le numéro du colis pour le suivi
+            // Je vérifie si le numéro de colis est présent dans las API de tracking ?
+
+            // Je crée la réference
+            // avec le numéro de commande, je récupére l'id du transporteur, l'id du client
+            // j'insére dans la table le numéro de suivi donné, l'id transporteur, l'id client, le poid si il est là, et la nouvelle référence pour la commande voulue !
+
+            //! Créer une méthode pour suivre le statut de la commande ! Que le colis soit encore chez le marchand ou déja géré par le transporteur !
+
+            const body = {a: 1};
+
+            const response = await fetch('https://httpbin.org/post', {
+                method: 'post',
+                body: JSON.stringify(body),
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await response.json();
+
+            
+            console.log(data);
+
+            const dataLivraison = {};
+
+            dataLivraison.reference = req.body.reference;
+            dataLivraison.numeroSuivi = req.body.numeroSuivi;
+            dataLivraison.URLSuivi = req.body.URLSuivi;
+            dataLivraison.poid = req.body.poid;
+            dataLivraison.idClient = req.body.idClient;
+            dataLivraison.idCommande = req.body.idCommande;
+            dataLivraison.idTransporteur = req.body.idTransporteur;
+            dataLivraison.idLigneCommande = req.body.idLigneCommande;
+
+            const newLivraison = new Livraison(dataLivraison);
 
             await newLivraison.save();
             res.json(newLivraison);
@@ -50,7 +81,7 @@ const livraisonController = {
 
 
         } catch (error) {
-            console.log(`Erreur dans la méthode new du livraisonController : ${error.message}`);
+            console.log(`Erreur dans la méthode newLivraison du livraisonController : ${error.message}`);
             res.status(500).end();
         }
     },

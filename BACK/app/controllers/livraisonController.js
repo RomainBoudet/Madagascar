@@ -19,8 +19,43 @@ const {
 const livraisonController = {
 
 
+    newCommande: async (req, res) => {
+        try {
 
-    
+            const data = {};
+
+            data.reference = req.body.reference;
+            data.numeroSuivi = req.body.numeroSuivi;
+            data.URLSuivi = req.body.URLSuivi;
+            data.poid = req.body.poid;
+            data.idClient = req.body.idClient;
+            data.idCommande = req.body.idCommande;
+            data.idTransporteur = req.body.idTransporteur;
+
+            const newLivraison = new Livraison(data);
+
+            await newLivraison.save();
+            res.json(newLivraison);
+
+
+            const dataLigneCommande = {};
+
+            dataLigneCommande.quantiteLivraison = req.body.quantiteLivraison;
+            dataLigneCommande.idLivraison = req.body.idLivraison;
+            dataLigneCommande.idCommandeLigne = req.body.idCommandeLigne;
+
+            const newLigneCommande = new LigneCommande(dataLigneCommande);
+
+            console.log("newLigneCommande == ", newLigneCommande);
+
+
+        } catch (error) {
+            console.log(`Erreur dans la méthode new du livraisonController : ${error.message}`);
+            res.status(500).end();
+        }
+    },
+
+
 
     choixLivraison: async (req, res) => {
         try {

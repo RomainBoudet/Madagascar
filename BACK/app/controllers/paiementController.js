@@ -1330,7 +1330,11 @@ const paiementController = {
 
     },
 
-
+// https://stripe.com/docs/testing
+// code avec 3D secure : 4000002760003184
+// code numéro CB français : 4000002500000003
+// Le paiement est refusé avec le code card_declined. : 4000000000000002 
+// Le paiement est refusé avec le code card_declined. L’attribut decline_code est insufficient_funds. : 4000000000009995
 
     key: async (req, res) => {
         try {
@@ -1363,7 +1367,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JphzMLNa9FFzz1X1nX0SirC_secret_Qj66eqdH8n9Nswlbz9KI2VJC3",
+                client_secret: "pi_3Ju56MLNa9FFzz1X0yRZhMTV_secret_6szkY7Yrt2jlAGWd9T1XmDkHr",
             });
 
 
@@ -1412,7 +1416,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3JkIPzLNa9FFzz1X0kkmTubM_secret_oMNcjY64J2S5cJaM9WGwIjvBc",
+                client_secret: "pi_3Jtu7cLNa9FFzz1X1cUEKanV_secret_LQLiFY1yq39yESZYPxAVC2PGv",
             });
 
 

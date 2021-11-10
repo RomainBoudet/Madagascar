@@ -11,7 +11,6 @@ class Livraison {
     idClient;
     idCommande;
     idTransporteur;
-    idLigneCommande;
     createdDate;
     updatedDate;
 
@@ -48,12 +47,7 @@ class Livraison {
     set id_transporteur(val) {
         this.idTransporteur = val;
     }
-    set id_lignecommande(val) {
-        this.idLigneCommande = val;
-    }
-
-
-
+   
 
 
 
@@ -317,7 +311,6 @@ class Livraison {
      * @param idClient
      * @param idCommande
      * @param idTransporteur
-     * @param idLigneCommande
      * @returns - les informations d'une livraison qui viennent d'être inséreés
      * @async - une méthode asynchrone
      */
@@ -326,8 +319,8 @@ class Livraison {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.livraison (reference, numero_suivi, URL_suivi, poid, created_date, id_client, id_commande, id_transporteur, id_lignecommande) VALUES ($1, $2, $3, $4, now(), $5, $6, $7, $8) RETURNING *;`,
-            [this.reference, this.numeroSuivi, this.URLSuivi, this.poid, this.idClient, this.idCommande, this.idTransporteur, this.idLigneCommande]
+            `INSERT INTO mada.livraison (reference, numero_suivi, URL_suivi, poid, created_date, id_client, id_commande, id_transporteur) VALUES ($1, $2, $3, $4, now(), $5, $6, $7) RETURNING *;`,
+            [this.reference, this.numeroSuivi, this.URLSuivi, this.poid, this.idClient, this.idCommande, this.idTransporteur]
         );
 
         this.id = rows[0].id;
@@ -354,8 +347,8 @@ class Livraison {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.livraison SET reference = $1, numero_suivi = $2, URL_suivi = $3, poid = $4, updated_date = now(), id_client = $5, id_commande = $6, id_transporteur = $7, id_lignecommande = $8  WHERE id = $9 RETURNING *;`,
-            [this.reference, this.numeroSuivi, this.URLSuivi, this.poid, this.idClient, this.idCommande, this.idTransporteur,, this.idLigneCommande, this.id]
+            `UPDATE mada.livraison SET reference = $1, numero_suivi = $2, URL_suivi = $3, poid = $4, updated_date = now(), id_client = $5, id_commande = $6, id_transporteur = $7 WHERE id = $8 RETURNING *;`,
+            [this.reference, this.numeroSuivi, this.URLSuivi, this.poid, this.idClient, this.idCommande, this.idTransporteur, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(

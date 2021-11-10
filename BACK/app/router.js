@@ -500,7 +500,7 @@ router.get('/user/cancelCoupon', client, panierController.cancelCoupon);
  * @group Administrateur
  * @summary  Mise a jour du statut du statut d'une commande 
  * @param {string} statut.body.required - Un statut a mettre a jour qui peut être soit un identifiant de statut (chiffre de 2 à 5) ou un nom de statut (ex: "Paiement validé")
- * @param {string} statutConfirm.body.required - La confirmation d'un statut a mettre a jour, identique a req.body.statut
+ * @param {string} confirmStatut.body.required - La confirmation d'un statut a mettre a jour, identique a req.body.statut
  * @param {string} commande.body.required - Une commande a mettre a jour, qui peut être soit une référence, soit un identifiant de commande.
  * @returns {JSON} 200 - Mise a jour du statut du statut d'une commande et renvoie le statut de la commande nouvellement mis a jour 
  */
@@ -969,17 +969,15 @@ router.get('/user/produitLivreByCommande/:id(\\d+)', client, livraisonController
  * @route POST /admin/livraison/new
  * @group Administrateur
  * @summary Insére une nouvelle livraison 
- * @param {string} reference.body.required - 
- * @param {string} numeroSuivi.body.required - 
- * @param {string} URLSuivi.body.required - 
- * @param {string} poid.body.required - 
- * @param {string} idClient.body.required - 
- * @param {string} idCommande.body.required - 
- * @param {string} idTransporteur.body.required - 
+ * @param {string} numeroSuivi.body.required 
+ * @param {string} confirmNumeroSuivi.body.required 
+ * @param {string} commande.body.required 
+ * @param {number} poid.body - 
  * @returns {JSON} 200 - Les données de la nouvelle livraison insérée
  */
-router.post('/admin/livraison/new', clean, admin, validateBody(livraisonPostSchema), livraisonController.new);
-
+//FLAG
+// router.post('/admin/livraison/new', clean, admin, validateBody(livraisonPostSchema), livraisonController.newLivraison);
+router.post('/admin/livraison/new', clean, admin, livraisonController.newLivraison);
 /**
  * Une route pour mettre a jour une livraison
  * @route POST /admin/livraison/new

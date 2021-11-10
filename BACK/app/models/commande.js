@@ -222,7 +222,7 @@ class Commande {
         const {
             rows,
         } = await db.query(
-            "SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.id = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
+            "SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.id = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition');",
             [id]
         );
 
@@ -278,7 +278,7 @@ class Commande {
         const {
             rows,
         } = await db.query(
-            "SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition' OR statut_commande.statut = 'Expédiée');",
+            "SELECT commande.*, statut_commande.statut FROM mada.commande JOIN mada.statut_commande ON commande.id_commandeStatut = statut_commande.id WHERE commande.reference = $1 AND (statut_commande.statut = 'Paiement validé' OR statut_commande.statut = 'En cours de préparation' OR statut_commande.statut = 'Prêt pour expédition');",
             [id]
         );
 

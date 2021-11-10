@@ -28,7 +28,7 @@ const seeding = async () => {
 
 
 
-        console.time("Génération de la fonction fakeData");
+        console.time("Génération de la fonction seeding");
 
         //! On fait place neuve ! En ligne de commande on supprime la BDD et on la recreer avant de seeder, pour s'assurer qu'elle est vierge.
         // permet de modifier le script SQL en même temps qu'on réalise le fichier de seeding et de toujours avoir la derniére version du script
@@ -312,7 +312,19 @@ const seeding = async () => {
             poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
             numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
             URL_suivi: faker.internet.url(),
+        },
+        {
+            frais_expedition: Math.floor(12.00*100),
+            logo: faker.image.business(),
+            nom_transporteur: "DHL",
+            estime_arrive: "Livraison entre 1 et 3 jours",
+            estime_arrive_number: 3,
+            description: "DHL solution logistique",
+            poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+            numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
+            URL_suivi: faker.internet.url(),
         }
+
 
     ];
 
@@ -586,17 +598,30 @@ const seeding = async () => {
             await redis.set(`mada/codeErreurPaiement:${item}`, infoErreur[i]);
             i += 1;
 
-            console.log("code érreur STRIPE bien inséré dans REDIS!");
+            console.log(`code érreur "${item}" STRIPE bien inséré dans REDIS!`);
         }
 
-        console.timeEnd("Génération de la fonction fakeData");
+        const arrayCodeEvenementAPIlaposte = ["DR1", "PC1", "PC2", "ET1", "ET2", "ET3", "ET4", "EP1", "DO1", "DO2", "DO3", "PB1", "PB2", "MD2", "ND1", "AG1", "RE1", "DI1", "DI2"];
+
+        const infoEvenement = ["Déclaratif réceptionné", "Pris en charge", "Pris en charge dans le pays d’expédition", "En cours de traitement", "En cours de traitement dans le pays d’expédition", "En cours de traitement dans le pays de destination", "En cours de traitement dans un pays de transit", "En attente de présentation","Entrée en Douane", "Sortie  de Douane", "Retenu en Douane", "Problème en cours", "Problème résolu", "Mis en distribution", "Non distribuable", "En attente d'être retiré au guichet", "Retourné à l'expéditeur", "Distribué", "Distribué à l'expéditeur"];
+
+        let j = 0;
+        for (const item of arrayCodeEvenementAPIlaposte) {
+
+            await redis.set(`mada/codeEvenementAPIlaposte:${item}`, infoEvenement[j]);
+            j += 1;
+
+            console.log(`code événement "${item}" API La poste bien inséré dans REDIS!`);
+        }
+
+        console.timeEnd("Génération de la fonction seeding");
         consol.admin("FIN DE L'IMPORT");
 
 
 
     } catch (error) {
         console.trace(
-            'Erreur dans la méthode fakeData de la seeding :',
+            'Erreur dans la méthode seeding',
             error);
 
 

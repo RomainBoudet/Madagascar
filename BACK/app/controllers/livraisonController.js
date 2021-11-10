@@ -1,55 +1,263 @@
 const Livraison = require('../models/livraison');
+const Commande = require('../models/commande');
 const Transporteur = require('../models/transporteur');
 const LigneCommande = require('../models/ligneCommande');
 const {
     arrondi
 } = require('../services/arrondi');
+
+
 const {
-    expression
-} = require('joi');
+    formatLong,
+} = require('../services/date');
 
 const fetch = require('node-fetch');
+const redis = require('../services/redis');
+
+const tracker = require('delivery-tracker')
+
 
 /**
  * Une méthode qui va servir a intéragir avec le model Livraison pour les intéractions avec la BDD
  * Retourne un json
  * @name livraisonController
- * @param {Express.Request} req - l'objet représentant la requête
- * @param {Express.Response} res - l'objet représentant la réponse
+ * @param {string} numeroSuivi.body - le numéro de suivi fournit par le transporteur qu'on doit fournir
+ * @param {string} confirmNumeroSuivi.body - la confirmation du numéro de suivi fournit par le transporteur
+ * @param {string} commande.body - l'identifiant ou la référence de commande
+ * @param {number} poid.body - le poid en gramme de la livraison, si celui ci est connu...
  * @return {JSON}  - une donnée en format json
  */
 const livraisonController = {
 
-//https://developer.laposte.fr/signup
-//https://www.npmjs.com/package/delivery-trackerhttps://www.npmjs.com/package/delivery-trackerhttps://www.npmjs.com/package/delivery-tracker 
+    //https://developer.laposte.fr/signup
+    //https://www.npmjs.com/package/delivery-trackerhttps://www.npmjs.com/package/delivery-trackerhttps://www.npmjs.com/package/delivery-tracker 
+
+    //TODO
+    //! Créer une méthode pour suivre le statut de la commande ! Que le colis soit encore chez le marchand ou déja géré par le transporteur !
+    //TODO
+    //! Créer un schema Joi pour la route /admin/updateCommande ! (commandeController.updateStatut)
+
 
 
     newLivraison: async (req, res) => {
         try {
+            // En entrée j'attend un numéro de colis, ça confirmation et une référence de commande ou un id de commande et potentiellement un poid en gramme.
 
-            // En entrée j'attend un numéro de colis et un numéro de commande ou un id de commande !
+            // on vérifit que la confirmation du numéro de colis est conforme !
+            if (req.body.numeroSuivi !== req.body.confirmNumeroSuivi) {
+                console.log("La confirmation de votre numéro de suivi doit être identique a votre numéro de suivi !");
+                return res.status(200).json({
+                    message: "La confirmation de votre numéro de suivi doit être identique a votre numéro de suivi !"
+                })
+            }
 
-            const commande = req.body.commande;
+            let commandeInDb;
 
-            // je réceptionne le numéro du colis pour le suivi
-            // Je vérifie si le numéro de colis est présent dans las API de tracking ?
+            const regRefCommande = /^([0-9]*[.]{1}[0-9]*)*$/; // pour une référence de commande
+            const number = /^[0-9]*$/; // pour un id de commande
 
-            // Je crée la réference
+            // je vérifit que la commande existe et que son précédent statut est compatible avec l'update du statut "Expédié"
+            // les statuts compatibles : 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition
+
+
+            if (regRefCommande.test(req.body.commande)) {
+
+                // ici commande est une référence
+                commandeInDb = await Commande.findOneCommandeLimited(req.body.commande);
+
+            } else if (number.test(req.body.commande)) {
+
+                // ici commande est un identifiant
+                commandeInDb = await Commande.findOneLimited(req.body.commande);
+
+            } else {
+                console.log("votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant.");
+                return res.status(200).json({
+                    message: "votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant."
+                })
+            }
+
+            // Je vérifit que le statut actuel de la commande est compatible
+            if (commandeInDb === null || commandeInDb === undefined) {
+                console.log("Cette référence de commande n'éxiste pas ou son statut n'est pas compatible avec une livraison. Cette commande peut-être déja expédié ou le paiement est encore en attente...");
+                return res.status(200).json({
+                    message: "Cette référence de commande n'éxiste pas ou son statut n'est pas compatible avec une livraison. Cette commande peut-être déja expédié ou le paiement est encore en attente..."
+                })
+            };
+
+            // Si le statut de la commande n'est pas pret a être expédié, (id_commandeStatut = 4), je n'autorise pas l'insertion dans la table livraison par sécurité)
+            if (Number(commandeInDb.idCommandeStatut) !== 4) {
+                console.log("Le statut actuel de la commande n'est pas compatible avec l'envoie d'une livraison. Pour être compatible, celui ci doit avoir le statut 'Prêt pour expédition'");
+                return res.status(200).json({
+                    message: "Le statut actuel de la commande n'est pas compatible avec l'envoie d'une livraison. Pour être compatible, celui ci doit avoir le statut 'Prêt pour expédition'"
+                })
+            };
+
+            // Je vérifit que le transporteur choisit n'est pas un retrait sur le marché !
+            const nomTransporteur = await Transporteur.findOne(Number(commandeInDb.idTransporteur));
+
+            if (nomTransporteur.nom === "Retrait sur le stand durant le prochain marché") {
+                console.log("Le transporteur choisi pour cette commande n'est pas compatible avec une livraison. Pour être compatible, celui ci doit avoir un transporteur autre que 'Retrait sur le stand durant le prochain marché'.");
+                return res.status(200).json({
+                    message: "Le transporteur choisi pour cette commande n'est pas compatible avec une livraison. Pour être compatible, celui ci doit avoir un transporteur autre que 'Retrait sur le stand durant le prochain marché'."
+                })
+            }
+
+            //! ici la let commandeInDb contient une commande compatible avec une insertion dans la table livraison.
+
+            // Je vérifit le transporteur et stock son nom :
+            const transporteur = await Transporteur.findOne(commandeInDb.idTransporteur);
+
+            // https://developer.laposte.fr/products/suivi/2/documentation
+            // Jeu de données => https://developer.laposte.fr/products/suivi/2/documentation#heading-2
+
+            let dataLaposte = {};
+
+            if (transporteur.nom === "La poste Collisimmo" || transporteur.nom === "Chronopost") {
+
+                // Je vérifie si le numéro de colis est présent dans l'API de tracking de la poste / chronopost 
+
+                // numero de colis : Identifiant de l'objet recherché de 11 à 15 caractères alphanumériques 
+
+                try {
+                    const laPosteResponse = await fetch(`https://api.laposte.fr/suivi/v2/idships/?lang=fr_FR`, {
+                        method: 'get',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Okapi-Key': `${process.env.LAPOSTEAPISANDBOX}`,
+                        }
+
+                    });
+                    dataLaposte = await laPosteResponse.json();
+
+                    console.log(dataLaposte);
+
+                    // je ne garde que les données de l'event et pas ceux de la timeLine, avec la date. 
+                    // et je vais chercher les données correspondant au code événement dans REDIS.
+
+                    //! je ne return rien avec un code 104, le code doit se dérouler...
+                    if (Number(dataLaposte.returnCode) === 104) {
+                        console.log(dataLaposte.returnMessage);
+                        res.status(200).json({
+                            message: `${dataLaposte.returnMessage}`
+                        })
+                    }
+
+                    if (Number(dataLaposte.returnCode) === 400 || Number(dataLaposte.returnCode) === 401 || Number(dataLaposte.returnCode) === 404) {
+                        console.log(dataLaposte.returnMessage);
+                        return res.status(400).json({
+                            message: `${dataLaposte.returnMessage}`
+                        })
+                    }
+                    if (dataLaposte.code === 'UNAUTHORIZED') {
+                        console.log(dataLaposte.message);
+                        return res.status(400).json({
+                            message: `${dataLaposte.code} : ${dataLaposte.message}`
+                        })
+                    }
+
+                    //res.status(200).json(dataLaposte.shipment);
+
+                } catch (error) {
+                    console.log(`Erreur dans la méthode newLivraison du livraisonController, lors du fetch api.laposte : ${error.message}`);
+                    res.status(500).end();
+                }
+
+
+                // ici si j'ai un code 104 (code FA633119313XX), la propriété shipment n'existe pas dans mon objet, mais je ne dois pas pour autant ne pas enregistrer la livraison...
+
+                if (dataLaposte.shipment !== undefined) {
+
+                    //console.log("dataLaposte.shipment  == ", dataLaposte.shipment);
+                    const theResponse = {};
+                    let url;
+                    if (transporteur.nom === "Chronopost" && dataLaposte.shipment !== undefined && dataLaposte.shipment.urlDetail !== undefined) {
+                        url = dataLaposte.shipment.urlDetail;
+                        theResponse.url = url;
+                    }
+
+                    const event = dataLaposte.shipment.event; // event est un array
+
+                    // dans event je dois aller chercher le 'order' le plus grand (100), extraire son label, date et code, retrouver le clé avec le code dans REDIS 
+                    const statutParcel = event.find(item => item.order === 100);
+                    let codeEvent;
+                    try {
+                        codeEvent = await redis.get(`mada/codeEvenementAPIlaposte:${statutParcel.code}`)
+                    } catch (error) {
+                        console.log("erreur dans la récupération du code event dans REDIS concernant l'API la poste", error);
+                        return res.statut(500).end();
+                    }
+                    theResponse.colis = req.body.numeroSuivi;
+                    theResponse.event = codeEvent;
+                    theResponse.info = statutParcel.label;
+                    theResponse.date = formatLong(statutParcel.date);
+
+                    res.status(200).json(theResponse);
+
+                    console.log(theResponse);
+                }
+            }
+
+            //! ici les cas de figure ou d'autre transoprteur sont requis...
+
+            const trackingNumber = req.body.numeroSuivi;
+
+            if (transporteur.nom === "DHL") {
+
+                // https://developer.dhl.com/api-reference/dgf-shipment-tracking#reference-docs-section/
+
+                
+
+                const DHLResponse = await fetch(`https://api.dhl.com/dgff/transportation/shipment-tracking?housebill=${trackingNumber}`, {
+                    method: 'get',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'DHL-API-Key': `${process.env.DHLAPI}`,
+                    }
+
+                });
+                dataDHL = await DHLResponse.json();
+
+                console.log("dataDHL == ", dataDHL);
+
+            }
+
+            stop
+
+            if (transporteur.nom === "DPD") {
+
+
+            }
+
+            if (transporteur.nom === "TNT") {
+
+
+            }
+
+            if (transporteur.nom === "UPS") {
+
+
+            }
+
+            stop
+
+
+
+            // je sauvegarde l'URL si elle existe
+            // Je créé la réference
+            // j'insére en BDD la livraison
+            // j'update le statut de la commande a Envoyé dans ma bdd
+            // je pique le bout de code pour envoyer un sms si l'utilisateur l'a demandé lors d'un envoi de sa commande !
+
+
+
             // avec le numéro de commande, je récupére l'id du transporteur, l'id du client
             // j'insére dans la table le numéro de suivi donné, l'id transporteur, l'id client, le poid si il est là, et la nouvelle référence pour la commande voulue !
 
-            //! Créer une méthode pour suivre le statut de la commande ! Que le colis soit encore chez le marchand ou déja géré par le transporteur !
 
-            const body = {a: 1};
 
-            const response = await fetch('https://httpbin.org/post', {
-                method: 'post',
-                body: JSON.stringify(body),
-                headers: {'Content-Type': 'application/json'}
-            });
-            const data = await response.json();
 
-            
+
             console.log(data);
 
             const dataLivraison = {};
@@ -123,12 +331,12 @@ const livraisonController = {
 
             // Je remet a jour le total dans le panier.
 
-             // si dans la session, un coupon existe, on applique sa valeur, sinon on ignore
-             if (req.session.coupon !== null && req.session.coupon !== undefined) {
-                req.session.totalStripe = (req.session.totalTTC  + req.session.coutTransporteur) - req.session.coupon.montant
+            // si dans la session, un coupon existe, on applique sa valeur, sinon on ignore
+            if (req.session.coupon !== null && req.session.coupon !== undefined) {
+                req.session.totalStripe = (req.session.totalTTC + req.session.coutTransporteur) - req.session.coupon.montant
 
             } else {
-                req.session.totalStripe = req.session.totalTTC  + req.session.coutTransporteur;
+                req.session.totalStripe = req.session.totalTTC + req.session.coutTransporteur;
 
             }
 
@@ -137,11 +345,11 @@ const livraisonController = {
 
             const message = "Le choix du transporteur a bien été pris en compte."
 
-            const totalHT = req.session.totalHT /100;
-            const totalTTC = req.session.totalTTC /100;
-            const totalTVA = req.session.totalTVA /100;
+            const totalHT = req.session.totalHT / 100;
+            const totalTTC = req.session.totalTTC / 100;
+            const totalTVA = req.session.totalTVA / 100;
             const transporteur = transporteurData.nom;
-            const coutTransporteur = req.session.coutTransporteur /100;
+            const coutTransporteur = req.session.coutTransporteur / 100;
             const totalTTCAvecTransport = (req.session.totalStripe) / 100; // je le reconvertis pour le rendre lisible en euro
             const commentaire = req.session.commentaire;
             const sendSmsWhenShipping = req.session.sendSmsWhenShipping;
@@ -163,8 +371,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode choixLivraison du livraisonController :',
                 error);
-                res.status(500).end();
-            }
+            res.status(500).end();
+        }
 
     },
 
@@ -173,7 +381,7 @@ const livraisonController = {
         try {
             const livraisons = await Livraison.findAllPlus();
 
-            if(livraisons === null ) {
+            if (livraisons === null) {
                 console.log("Aucunes livraisons en BDD !");
                 return res.status(200).end();
             }
@@ -182,8 +390,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAll du livraisonController :',
                 error);
-                res.status(500).end();
-            }
+            res.status(500).end();
+        }
     },
 
     getAllTransporteur: async (req, res) => {
@@ -198,15 +406,15 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllTransporteur du livraisonController :',
                 error);
-                res.status(500).end();
-            }
+            res.status(500).end();
+        }
     },
 
 
     getAllLigneCommande: async (req, res) => {
         try {
             const livraisons = await Livraison.findAllProduitLivrer();
-            if(livraisons === null ) {
+            if (livraisons === null) {
                 console.log("Aucune lignes de commande en BDD !");
                 return res.status(200).end();
             }
@@ -214,8 +422,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getAllLigneCommande du livraisonController :',
                 error);
-                res.status(500).end();
-            }
+            res.status(500).end();
+        }
     },
 
     getAllLivraisonByIdClient: async (req, res) => {
@@ -230,8 +438,8 @@ const livraisonController = {
 
 
             const livraison = await Livraison.findOnePlus(req.params.id);
-            
-            if(livraison === null ) {
+
+            if (livraison === null) {
                 console.log("Aucune lignes de commande en BDD !");
                 return res.status(200).end();
             }
@@ -241,8 +449,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getOne du livraisonController :',
                 error);
-                res.status(500).end();
-            }
+            res.status(500).end();
+        }
     },
 
 
@@ -251,7 +459,7 @@ const livraisonController = {
 
             const livraison = await Livraison.findByIdCommande(req.params.id);
 
-            if(livraison === null ) {
+            if (livraison === null) {
                 console.log("Aucune lignes de commande en BDD !");
                 return res.status(200).end();
             }
@@ -270,8 +478,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdCommande du livraisonController :',
                 error);
-                res.status(500).end();
-            }
+            res.status(500).end();
+        }
     },
 
     getByIdClient: async (req, res) => {
@@ -285,7 +493,7 @@ const livraisonController = {
 
             const livraisons = await Livraison.findByIdClient(req.params.id);
 
-            if(livraisons === null ) {
+            if (livraisons === null) {
                 console.log("Aucune livraison pour ce client !");
                 return res.status(200).end();
             }
@@ -297,8 +505,8 @@ const livraisonController = {
         } catch (error) {
             console.trace('Erreur dans la méthode getByIdClient du livraisonController :',
                 error);
-                res.status(500).end();
-            }
+            res.status(500).end();
+        }
     },
 
 
@@ -386,7 +594,7 @@ const livraisonController = {
 
             const updateLivraison = await Livraison.findOne(id);
 
-        
+
 
             if (req.session.user.privilege === 'Client' && req.session.user.idClient !== updateLivraison.idClient) {
                 return res.status(403).json({
@@ -394,7 +602,7 @@ const livraisonController = {
                 })
             };
 
-            if(updateLivraison === null ) {
+            if (updateLivraison === null) {
                 console.log("Aucune livraison pour ce client !");
                 return res.status(200).end();
             }
@@ -487,7 +695,7 @@ const livraisonController = {
             const updateTransporteur = await Transporteur.findOne(id);
 
 
-            if(updateTransporteur === null ) {
+            if (updateTransporteur === null) {
                 console.log("Aucune livraison pour ce client !");
                 return res.status(200).end();
             }
@@ -561,7 +769,7 @@ const livraisonController = {
 
             const updateLivraison = await LigneCommande.findOne(id);
 
-            if(updateLivraison === null ) {
+            if (updateLivraison === null) {
                 console.log("Aucune livraison pour ce client !");
                 return res.status(200).end();
             }
@@ -616,7 +824,7 @@ const livraisonController = {
             const livraisonInDb = await Livraison.findOne(req.params.id);
 
 
-            if(livraisonInDb === null ) {
+            if (livraisonInDb === null) {
                 console.log("Aucune livraison pour ce client !");
                 return res.status(200).end();
             }
@@ -637,7 +845,7 @@ const livraisonController = {
 
             const transporteurInDb = await Transporteur.findOne(req.params.id);
 
-            if (transporteurInDb === null ) {
+            if (transporteurInDb === null) {
                 console.log("Aucun transporteur n'existe avec cet identifiant !");
                 return res.statut(200).end();
             }

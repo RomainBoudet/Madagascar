@@ -18,7 +18,7 @@ const choixLivraisonSchema = Joi.object({
     .integer()
     .positive()
     .min(1)
-    .max(4)
+    .max(5)
     .required()
     .messages({
         'any.number': 'Le champs de votre idTransporteur doit être un chiffre !',

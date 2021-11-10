@@ -34,6 +34,7 @@
     "countrynames": "^0.1.1",
     "date-holidays": "^3.11.0",
     "dayjs": "^1.10.7",
+    "delivery-tracker": "^2.7.1",
     "dotenv": "^10.0.0",
     "email-validator": "^2.0.4",
     "express-jwt": "^6.1.0",

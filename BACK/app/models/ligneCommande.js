@@ -9,6 +9,7 @@ class LigneCommande {
     updatedDate;
     idProduit;
     idCommande;
+    idLivraison;
 
 
     set quantite_commande(val) {
@@ -28,6 +29,9 @@ class LigneCommande {
 
     set id_commande(val) {
         this.idCommande = val;
+    }
+    set id_livraison(val) {
+        this.idLivraison = val;
     }
    
 
@@ -125,7 +129,8 @@ class LigneCommande {
      * Méthode chargé d'aller insérer les informations relatives à une ligne_commande passé en paramétre
      * @param quantiteCommande - la quantité d'un produit dans la ligne de commande
      * @param idProduit - l'identifiant d'un produit
-     * @param IdCommande - l'identifiant d'une commande
+     * @param idCommande - l'identifiant d'une commande
+     * @param idLigneCommande - l'identifiant d'une ligne de commande
      * @returns - les informations du ligne_commande demandées
      * @async - une méthode asynchrone
      */
@@ -161,8 +166,8 @@ class LigneCommande {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.ligne_commande SET quantite_commande = $1, updated_date = now(), id_produit = $2, id_commande = $3  WHERE id = $4 RETURNING *;`,
-            [this.quantiteCommande, this.idProduit, this.idCommande, this.id]
+            `UPDATE mada.ligne_commande SET quantite_commande = $1, updated_date = now(), id_produit = $2, id_commande = $3, id_livraison = $4  WHERE id = $5 RETURNING *;`,
+            [this.quantiteCommande, this.idProduit, this.idCommande, this.idLivraison, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(

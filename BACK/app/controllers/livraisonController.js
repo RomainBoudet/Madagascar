@@ -204,11 +204,10 @@ const livraisonController = {
 
             if (transporteur.nom === "DHL") {
 
-                // https://developer.dhl.com/api-reference/dgf-shipment-tracking#reference-docs-section/
-
+                // https://developer.dhl.com/api-reference/shipment-tracking#reference-docs-section/
                 
 
-                const DHLResponse = await fetch(`https://api.dhl.com/dgff/transportation/shipment-tracking?housebill=${trackingNumber}`, {
+                const DHLResponse = await fetch(`https://api-eu.dhl.com/track/shipments?trackingNumber=${trackingNumber}`, {
                     method: 'get',
                     headers: {
                         'Content-Type': 'application/json',
@@ -220,6 +219,10 @@ const livraisonController = {
 
                 console.log("dataDHL == ", dataDHL);
 
+
+                if(dataDHL.status === 404) {
+                    res.status(200).json({message: "Pour information, DHL ne reconnait pas ce numéro de colis ! Aucun envoie n'est présent pour ce numéro de suivi."})
+                }
             }
 
             stop

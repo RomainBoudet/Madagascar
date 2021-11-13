@@ -71,7 +71,7 @@ CHECK (
 	-- https://stackoverflow.com/questions/31417387/regular-expression-to-find-bcrypt-hash
 	-- https://stackoverflow.com/questions/5393803/can-someone-explain-how-bcrypt-verifies-a-hash
 
-CREATE DOMAIN text_length AS text -- un domaine pour les descriptions = mini 15 caractéres sans espace autour
+CREATE DOMAIN text_length AS text -- un domaine pour les descriptions = mini 9 caractéres sans espace autour
     CHECK (
         char_length(trim(both from VALUE)) >= 9
     );

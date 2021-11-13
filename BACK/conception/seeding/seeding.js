@@ -3,10 +3,23 @@ const db = require('../../app/database');
 require('dotenv').config({
     path: `${__dirname}/../../.env.back`
 }); // j'aurai toutes les infos de connexion nécessaires 
-const bcrypt = require('bcrypt'); // pour hasher les fake passwords
-const {
-    exec
-} = require("child_process");
+const chalk = require('chalk');
+/**
+ *Exécute un commande shell et la retourne comme une promesse pour être "awaité".
+ * @param cmd {string}
+ * @return {Promise<string>}
+ */
+ function execShellCommand(cmd) {
+    const exec = require('child_process').exec;
+    return new Promise((resolve, reject) => {
+     exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+       console.warn(chalk.bold.red `${error}`);
+      }
+      resolve(stdout? console.log(chalk.bold.green `${stdout}`) : stderr);
+     });
+    });
+   }
 
 
 const redis = require('../../app/services/redis');
@@ -26,26 +39,13 @@ const seeding = async () => {
 
     try {
 
-
-
         console.time("Génération de la fonction seeding");
 
         //! On fait place neuve ! En ligne de commande on supprime la BDD et on la recreer avant de seeder, pour s'assurer qu'elle est vierge.
         // permet de modifier le script SQL en même temps qu'on réalise le fichier de seeding et de toujours avoir la derniére version du script
         // (on aurait également pu lancer la commande dans le package.json en même temps que le démarrage 'npm run seed'... )
         consol.seed("Début dropdb - createdb");
-
-        await exec(" dropdb --if-exists madagascar && createdb madagascar && cd .. && cd data && psql madagascar -f script_postgres.sql", (error, stdout, stderr) => {
-            if (error) {
-                consol.seed(`error: ${error.message}`);
-                return;
-            }
-            if (stderr) {
-                consol.seed(`stderr: ${stderr}`);
-                return;
-            }
-            consol.seed(`stdout: ${stdout}`);
-        });
+       await execShellCommand("dropdb --if-exists madagascar && createdb madagascar && cd .. && cd data && psql madagascar -f script_postgres.sql")
 
         // Mettre en place l'option WITH (FORCE) pour supprimer même si la DB est ouvert dans  PGAdmin... les données de la DB sont bien changé sans devoir fermer PG Admin !(?)
 

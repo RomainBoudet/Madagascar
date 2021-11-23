@@ -38,7 +38,7 @@ const livraisonController = {
     //! Créer un schema Joi pour la route /admin/updateCommande ! (commandeController.updateStatut)
 
 
-
+    //FLAG ROUTER ligne 980 !
     newLivraison: async (req, res) => {
         try {
             // En entrée j'attend un numéro de colis, ça confirmation et une référence de commande ou un id de commande et potentiellement un poid en gramme.
@@ -108,8 +108,14 @@ const livraisonController = {
             // Je vérifit le transporteur et stock son nom :
             const transporteur = await Transporteur.findOne(commandeInDb.idTransporteur);
 
+            const trackingNumber = req.body.numeroSuivi; //=> le numéro de suivi que l'on inserera dans les API des transporteurs !
+
+
             // https://developer.laposte.fr/products/suivi/2/documentation
             // Jeu de données => https://developer.laposte.fr/products/suivi/2/documentation#heading-2
+
+            // exemple numéro tracking : GF111111110NZ  //  ZZ111111110NZ (chronopost)
+            // 5S11111111110 (colis)  6P01007508742 (colis)  // 1K36275770836 (colis)
 
             let dataLaposte = {};
 
@@ -120,7 +126,7 @@ const livraisonController = {
                 // numero de colis : Identifiant de l'objet recherché de 11 à 15 caractères alphanumériques 
 
                 try {
-                    const laPosteResponse = await fetch(`https://api.laposte.fr/suivi/v2/idships/?lang=fr_FR`, {
+                    const laPosteResponse = await fetch(`https://api.laposte.fr/suivi/v2/idships/${trackingNumber}?lang=fr_FR`, {
                         method: 'get',
                         headers: {
                             'Content-Type': 'application/json',
@@ -200,14 +206,19 @@ const livraisonController = {
 
             //! ici les cas de figure ou d'autre transoprteur sont requis...
 
-            const trackingNumber = req.body.numeroSuivi;
+
+            let dataDHL;
 
             if (transporteur.nom === "DHL") {
 
                 // https://developer.dhl.com/api-reference/shipment-tracking#reference-docs-section/
-                
+                //https://developer.dhl.com/api-reference/shipment-tracking#get-started-section/
+                // exemple de tracking number : 7777777770
+                let DHLResponse;
+                try {
 
-                const DHLResponse = await fetch(`https://api-eu.dhl.com/track/shipments?trackingNumber=${trackingNumber}`, {
+                    // rates limit pour cette API : 250 call per day et 1 call par seconde
+                     DHLResponse = await fetch(`https://api-eu.dhl.com/track/shipments?trackingNumber=${trackingNumber}`, {
                     method: 'get',
                     headers: {
                         'Content-Type': 'application/json',
@@ -215,17 +226,116 @@ const livraisonController = {
                     }
 
                 });
+
+                } catch (error) {
+                    console.log("erreur dans la récupération des donnes du numéro de suivi dans l'API DHL", error);
+                        return res.statut(500).end();
+                }
+                
                 dataDHL = await DHLResponse.json();
 
-                console.log("dataDHL == ", dataDHL);
+                if (dataDHL.status === 404) {
+
+                    /* {
+                        title: 'No result found',
+                        status: 404,
+                        detail: 'No shipment with given tracking number found.'
+                        } */
+
+                    dataDHL = dataDHL.detail;
+                    console.log("Pour information, DHL ne reconnait pas ce numéro de colis ! Aucun envoie n'est présent pour ce numéro de suivi.");
+                    res.status(200).json({
+                        message: "Pour information, DHL ne reconnait pas ce numéro de colis ! Aucun envoie n'est présent pour ce numéro de suivi."
+                    })
+                } else {
+
+                    console.log("dataDHL ==> ", dataDHL.shipments[0]);
+
+                    dataDHL = dataDHL.shipments[0];
+
+                    //TODO construire un objet comme pour la poste composé de 4 clés, pour être renvoyé ! 
+                    /* {
+                        "colis": "GF111111110NZ",
+                        "event": "En attente de présentation",
+                        "info": "Destinataire informé par SMS ou mail",
+                        "date": "mercredi 18 mars 2020 à 15:43"
+                    }  */
 
 
-                if(dataDHL.status === 404) {
-                    res.status(200).json({message: "Pour information, DHL ne reconnait pas ce numéro de colis ! Aucun envoie n'est présent pour ce numéro de suivi."})
                 }
+
+
+                stop
+
+
+                /* dataDHL ==  {
+  shipments: [
+    {
+      id: '7777777770',
+      service: 'express',
+      origin: [Object],
+      destination: [Object],
+      status: [Object],
+      details: [Object],
+      events: [Array]
+    }
+  ],
+  possibleAdditionalShipmentsUrl: [
+    '/track/shipments?trackingNumber=7777777770&service=freight',
+    '/track/shipments?trackingNumber=7777777770&service=dgf',
+    '/track/shipments?trackingNumber=7777777770&service=ecommerce',
+    '/track/shipments?trackingNumber=7777777770&service=parcel-de',
+    '/track/shipments?trackingNumber=7777777770&service=parcel-nl',
+    '/track/shipments?trackingNumber=7777777770&service=parcel-pl',
+    '/track/shipments?trackingNumber=7777777770&service=post-de',
+    '/track/shipments?trackingNumber=7777777770&service=sameday',
+    '/track/shipments?trackingNumber=7777777770&service=parcel-uk'
+  ] */
+
+
+                //dataDHL.shipments[0] ==
+
+                /* {
+  id: '7777777770',
+  service: 'express',
+  origin: {
+    address: { addressLocality: '-' },
+    servicePoint: {
+      url: 'http://www.dhl.com/en/country_profile.html',
+      label: 'Origin Service Area'
+    }
+  },
+  destination: {
+    address: { addressLocality: '-' },
+    servicePoint: {
+      url: 'http://www.dhl.com/en/country_profile.html',
+      label: 'Destination Service Area'
+    }
+  },
+  status: { description: 'Shipment information received' },
+  details: {
+    proofOfDelivery: {
+      signatureUrl: 'https://proview.dhl.com/proview/adhocnotify?id=w0ZOjI%2BGUQXcukpSL49urGKP3ihCYJR8nQDfikb0a7A%3D&appuid=Rzthrtdq3ZB04f6NEsCFyw%3D%3D&locale=en_G0&token=g9EKcplMtfPX3BrwypVUx7A0V4qA124LF2O22zX5298%3D',
+      documentUrl: 'https://proview.dhl.com/proview/adhocnotify?id=w0ZOjI%2BGUQXcukpSL49urGKP3ihCYJR8nQDfikb0a7A%3D&appuid=Rzthrtdq3ZB04f6NEsCFyw%3D%3D&locale=en_G0&token=g9EKcplMtfPX3BrwypVUx7A0V4qA124LF2O22zX5298%3D'
+    },
+    proofOfDeliverySignedAvailable: false
+  },
+  events: [ { description: 'Shipment information received' } ]
+} */
+
+
+
+
+
+               
+
+
             }
 
             stop
+            //TODO 
+
+            //FLAG  A upgrader pour les autres transporteur !
 
             if (transporteur.nom === "DPD") {
 
@@ -244,7 +354,7 @@ const livraisonController = {
 
             stop
 
-
+            //TODO Continuer la suite de la méthode jusqu' l'envoie d'un sms si c'est le choix de l'acheteur !
 
             // je sauvegarde l'URL si elle existe
             // Je créé la réference

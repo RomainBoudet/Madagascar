@@ -1447,7 +1447,7 @@ describe(chalk.yellow('Model Client'), function () {
 
         it('should validate the findOne methode', function () {
 
-            it('should fetch an instance of Post', async function () {
+            it('should fetch an instance of Client', async function () {
                 const theClient = await Client.findOne(user.id);
 
                 console.log(theClient),

@@ -14,8 +14,6 @@ const {
 const fetch = require('node-fetch');
 const redis = require('../services/redis');
 
-const tracker = require('delivery-tracker')
-
 
 /**
  * Une méthode qui va servir a intéragir avec le model Livraison pour les intéractions avec la BDD
@@ -117,6 +115,8 @@ const livraisonController = {
             // exemple numéro tracking : GF111111110NZ  //  ZZ111111110NZ (chronopost)
             // 5S11111111110 (colis)  6P01007508742 (colis)  // 1K36275770836 (colis)
 
+            // Réel numéro de coli => XW415667162JB au 24/11
+
             let dataLaposte = {};
 
             if (transporteur.nom === "La poste Collisimmo" || transporteur.nom === "Chronopost") {
@@ -129,14 +129,14 @@ const livraisonController = {
                     const laPosteResponse = await fetch(`https://api.laposte.fr/suivi/v2/idships/${trackingNumber}?lang=fr_FR`, {
                         method: 'get',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-Okapi-Key': `${process.env.LAPOSTEAPISANDBOX}`,
+                            'Accept': 'application/json',
+                            'X-Okapi-Key': `${process.env.LAPOSTEAPI}`,
                         }
 
                     });
                     dataLaposte = await laPosteResponse.json();
 
-                    console.log(dataLaposte);
+                    //console.log("dataLaposte==>> ", dataLaposte.shipment);
 
                     // je ne garde que les données de l'event et pas ceux de la timeLine, avec la date. 
                     // et je vais chercher les données correspondant au code événement dans REDIS.
@@ -145,20 +145,20 @@ const livraisonController = {
                     if (Number(dataLaposte.returnCode) === 104) {
                         console.log(dataLaposte.returnMessage);
                         res.status(200).json({
-                            message: `${dataLaposte.returnMessage}`
+                            'message LaPoste / Chronopost': `${dataLaposte.returnMessage}`
                         })
                     }
 
                     if (Number(dataLaposte.returnCode) === 400 || Number(dataLaposte.returnCode) === 401 || Number(dataLaposte.returnCode) === 404) {
                         console.log(dataLaposte.returnMessage);
-                        return res.status(400).json({
-                            message: `${dataLaposte.returnMessage}`
+                        res.status(400).json({
+                            'message LaPoste / Chronopost': `${dataLaposte.returnMessage}`
                         })
                     }
                     if (dataLaposte.code === 'UNAUTHORIZED') {
                         console.log(dataLaposte.message);
-                        return res.status(400).json({
-                            message: `${dataLaposte.code} : ${dataLaposte.message}`
+                        res.status(400).json({
+                            'message LaPoste / Chronopost': `${dataLaposte.code} : ${dataLaposte.message}`
                         })
                     }
 
@@ -182,10 +182,8 @@ const livraisonController = {
                         theResponse.url = url;
                     }
 
-                    const event = dataLaposte.shipment.event; // event est un array
+                    const statutParcel = dataLaposte.shipment.event[0]; // event est un array
 
-                    // dans event je dois aller chercher le 'order' le plus grand (100), extraire son label, date et code, retrouver le clé avec le code dans REDIS 
-                    const statutParcel = event.find(item => item.order === 100);
                     let codeEvent;
                     try {
                         codeEvent = await redis.get(`mada/codeEvenementAPIlaposte:${statutParcel.code}`)
@@ -194,13 +192,11 @@ const livraisonController = {
                         return res.statut(500).end();
                     }
                     theResponse.colis = req.body.numeroSuivi;
+                    theResponse.transporteur = transporteur.nom;
                     theResponse.event = codeEvent;
                     theResponse.info = statutParcel.label;
-                    theResponse.date = formatLong(statutParcel.date);
-
+                    theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
                     res.status(200).json(theResponse);
-
-                    console.log(theResponse);
                 }
             }
 
@@ -214,6 +210,7 @@ const livraisonController = {
                 // https://developer.dhl.com/api-reference/shipment-tracking#reference-docs-section/
                 //https://developer.dhl.com/api-reference/shipment-tracking#get-started-section/
                 // exemple de tracking number : 7777777770
+                // 7777777 => shipment Cancelled
                 let DHLResponse;
                 try {
 
@@ -243,94 +240,69 @@ const livraisonController = {
                         } */
 
                     dataDHL = dataDHL.detail;
-                    console.log("Pour information, DHL ne reconnait pas ce numéro de colis ! Aucun envoie n'est présent pour ce numéro de suivi.");
+                    console.log("Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi.");
                     res.status(200).json({
-                        message: "Pour information, DHL ne reconnait pas ce numéro de colis ! Aucun envoie n'est présent pour ce numéro de suivi."
+                        'message DHL': "Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi."
                     })
-                } else {
+                } else if (dataDHL.status === 400) {
 
-                    console.log("dataDHL ==> ", dataDHL.shipments[0]);
-
-                    dataDHL = dataDHL.shipments[0];
-
-                    //TODO construire un objet comme pour la poste composé de 4 clés, pour être renvoyé ! 
-                    /* {
-                        "colis": "GF111111110NZ",
-                        "event": "En attente de présentation",
-                        "info": "Destinataire informé par SMS ou mail",
-                        "date": "mercredi 18 mars 2020 à 15:43"
-                    }  */
-
+                   /* {
+                        title: 'Invalid input',
+                        status: 400,
+                        detail: 'Input is invalid: Invalid tracking number - illegal length of number.'
+                      } */
+                    
+                    console.log("Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Le numéro de suivi du colis est invalide !");
+                    res.status(200).json({
+                        'message DHL': "Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Le numéro de suivi du colis est invalide !"
+                    })
 
                 }
+                else {
 
+                    const theResponse = {};
 
-                stop
+                    //console.log("dataDHL ==> ", dataDHL);
 
-
-                /* dataDHL ==  {
-  shipments: [
-    {
-      id: '7777777770',
-      service: 'express',
-      origin: [Object],
-      destination: [Object],
-      status: [Object],
-      details: [Object],
-      events: [Array]
-    }
-  ],
-  possibleAdditionalShipmentsUrl: [
-    '/track/shipments?trackingNumber=7777777770&service=freight',
-    '/track/shipments?trackingNumber=7777777770&service=dgf',
-    '/track/shipments?trackingNumber=7777777770&service=ecommerce',
-    '/track/shipments?trackingNumber=7777777770&service=parcel-de',
-    '/track/shipments?trackingNumber=7777777770&service=parcel-nl',
-    '/track/shipments?trackingNumber=7777777770&service=parcel-pl',
-    '/track/shipments?trackingNumber=7777777770&service=post-de',
-    '/track/shipments?trackingNumber=7777777770&service=sameday',
-    '/track/shipments?trackingNumber=7777777770&service=parcel-uk'
-  ] */
-
+                    theResponse.colis = req.body.numeroSuivi;
+                    theResponse.transporteur = transporteur.nom;
+                    theResponse.event = dataDHL.shipments[0].status.description;
+                    theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
+                    res.status(200).json(theResponse);
+                    
+                }
+        
+            }
 
                 //dataDHL.shipments[0] ==
 
                 /* {
-  id: '7777777770',
-  service: 'express',
-  origin: {
-    address: { addressLocality: '-' },
-    servicePoint: {
-      url: 'http://www.dhl.com/en/country_profile.html',
-      label: 'Origin Service Area'
-    }
-  },
-  destination: {
-    address: { addressLocality: '-' },
-    servicePoint: {
-      url: 'http://www.dhl.com/en/country_profile.html',
-      label: 'Destination Service Area'
-    }
-  },
-  status: { description: 'Shipment information received' },
-  details: {
-    proofOfDelivery: {
-      signatureUrl: 'https://proview.dhl.com/proview/adhocnotify?id=w0ZOjI%2BGUQXcukpSL49urGKP3ihCYJR8nQDfikb0a7A%3D&appuid=Rzthrtdq3ZB04f6NEsCFyw%3D%3D&locale=en_G0&token=g9EKcplMtfPX3BrwypVUx7A0V4qA124LF2O22zX5298%3D',
-      documentUrl: 'https://proview.dhl.com/proview/adhocnotify?id=w0ZOjI%2BGUQXcukpSL49urGKP3ihCYJR8nQDfikb0a7A%3D&appuid=Rzthrtdq3ZB04f6NEsCFyw%3D%3D&locale=en_G0&token=g9EKcplMtfPX3BrwypVUx7A0V4qA124LF2O22zX5298%3D'
-    },
-    proofOfDeliverySignedAvailable: false
-  },
-  events: [ { description: 'Shipment information received' } ]
-} */
-
-
-
-
-
-               
-
-
-            }
+                        id: '7777777770',
+                        service: 'express',
+                        origin: {
+                          address: { addressLocality: '-' },
+                          servicePoint: {
+                            url: 'http://www.dhl.com/en/country_profile.html',
+                            label: 'Origin Service Area'
+                          }
+                        },
+                        destination: {
+                          address: { addressLocality: '-' },
+                          servicePoint: {
+                            url: 'http://www.dhl.com/en/country_profile.html',
+                            label: 'Destination Service Area'
+                          }
+                        },
+                        status: { description: 'Shipment information received' },
+                        details: {
+                          proofOfDelivery: {
+                            signatureUrl: 'https://proview.dhl.com/proview/adhocnotify?id=w0ZOjI%2BGUQXcukpSL49urGKP3ihCYJR8nQDfikb0a7A%3D&appuid=Rzthrtdq3ZB04f6NEsCFyw%3D%3D&                     locale=en_G0&token=g9EKcplMtfPX3BrwypVUx7A0V4qA124LF2O22zX5298%3D',
+                            documentUrl: 'https://proview.dhl.com/proview/adhocnotify?id=w0ZOjI%2BGUQXcukpSL49urGKP3ihCYJR8nQDfikb0a7A%3D&appuid=Rzthrtdq3ZB04f6NEsCFyw%3D%3D&locale=en_G0&token=g9EKcplMtfPX3BrwypVUx7A0V4qA124LF2O22zX5298%3D'
+                          },
+                          proofOfDeliverySignedAvailable: false
+                        },
+                        events: [ { description: 'Shipment information received' } ]
+                    } */
 
             stop
             //TODO 

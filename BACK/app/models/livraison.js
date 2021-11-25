@@ -328,6 +328,8 @@ class Livraison {
         consol.model(
             `la livraison id ${this.id} a été inséré à la date du ${this.createdDate} avec comme reference ${this.reference} !`
         );
+        return new Livraison(rows[0]);
+
     }
 
     /**
@@ -354,6 +356,8 @@ class Livraison {
         console.log(
             `la livraison id ${this.id} avec comme reference${this.reference} pour le client id ${this.idClient} et la commande ${this.idCommande} via le transporteur ${this.idTransporteur} a été mise à jour le ${this.updatedDate} !`
         );
+        return new Livraison(rows[0]);
+
     }
 
 

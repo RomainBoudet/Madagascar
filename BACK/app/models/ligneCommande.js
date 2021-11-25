@@ -158,6 +158,7 @@ class LigneCommande {
      * @param quantiteCommande - la quantité d'un produit dans la ligne de commande
      * @param idProduit - l'identifiant d'un produit
      * @param IdCommande - l'identifiant d'une commande
+     * @param idLivraison - l'identifiant d'une livraison
      * @param id - l'identifiant du champs a mettre a jour
      * @returns - les informations du ligne_commande mis à jour
      * @async - une méthode asynchrone
@@ -172,6 +173,29 @@ class LigneCommande {
         this.updatedDate = rows[0].updated_date;
         console.log(
             `la ligne_commande id ${this.id} avec le statut ${this.idLigneCommandeStatut} et la référence ${this.reference} a été mise à jour le ${this.updatedDate} !`
+        );
+
+        return new LigneCommande(rows[0]);
+
+    }
+
+    /**
+     * Méthode chargé d'aller mettre à jour les informations relatives à une ligne_commande passé en paramétre
+     * @param idLivraison - l'identifiant d'une livraison
+     * @param id - l'identifiant du champs a mettre a jour
+     * @returns - les informations d'une ligne_commande mise à jour
+     * @async - une méthode asynchrone
+     */
+     async updateLivraison() {
+        const {
+            rows,
+        } = await db.query(
+            `UPDATE mada.ligne_commande SET id_livraison = $1, updated_date = now() WHERE id = $2 RETURNING *;`,
+            [this.idLivraison, this.id]
+        );
+        this.updatedDate = rows[0].updated_date;
+        console.log(
+            `la ligne_commande id ${this.id} a été mise à jour le ${this.updatedDate} avec la livraison id ${this.idLivraison}  !`
         );
 
         return new LigneCommande(rows[0]);

@@ -183,6 +183,7 @@ const seeding = async () => {
         consol.seed(`Fin de la génération de fake sous_categories`);
 
 
+        // si on change l'ordre ou les noms, on doit mettre à jour le code, au moins dans la méthode updateStatut du commandeController et la méthode newLivraison / startUpdateCommandeFromEmail du livraisonController !
         //! STATUT_COMMANDE
 
         consol.seed(`Début de la génération de fake statut_commandes`);
@@ -266,29 +267,29 @@ const seeding = async () => {
 
         // voir produit_image
 
-
+        // Si les noms des transporteurs sont changés, il faut changer le livraisonController (newLivraison), le panierController, PaiementController...
         //! TRANSPORTEUR 
 
-        const transporteurs = [{
-
-            frais_expedition: Math.floor(7.20 *100),
+        const transporteurs = [ 
+         {
+            frais_expedition: Math.floor(12.00*100),
             logo: faker.image.business(),
-            nom_transporteur: "DPD",
-            description: "DPD en point relai pickup",
-            estime_arrive: "Expédié sous 24 à 48h",
-            estime_arrive_number: 2,
-            poid: Math.floor((Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+            nom_transporteur: "La poste Collisimmo",
+            estime_arrive: "Livraison dans les 48h a 72h",
+            estime_arrive_number: 3,
+            description: "Le service colis de La Poste",
+            poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
             numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
             URL_suivi: faker.internet.url(),
-
-        }, {
-            frais_expedition: Math.floor(14.00 *100),
+        },
+        {
+            frais_expedition: Math.floor(13.00*100),
             logo: faker.image.business(),
-            nom_transporteur: "TNT",
-            estime_arrive: "Livraison le lendemain pour toute commande avant 12h00",
+            nom_transporteur: "Chronopost - Chrono Relais 13",
+            estime_arrive: "Chrono Relais 13",
             estime_arrive_number: 1,
-            description: "Express à domicile pour une livraison à domicile en france métropolitaine. livraison en mains propres et contre signature dès le lendemain de l'expédition de votre commande (1).(1) avant 13 heures ou en début d'après-midi en zone rurale.",
-            poid: Math.floor((Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+            description: "Livraison Chronopost - Livraison avant 13h dans l'un des 15000 points relais et consignes Pickup.",
+            poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
             numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
             URL_suivi: faker.internet.url(),
         },
@@ -302,13 +303,14 @@ const seeding = async () => {
             poid: Math.floor((Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
             numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
             URL_suivi: faker.internet.url(),
-        }, {
-            frais_expedition: Math.floor(12.00*100),
+        },
+        {
+            frais_expedition: Math.floor(26.00*100),
             logo: faker.image.business(),
-            nom_transporteur: "La poste Collisimmo",
-            estime_arrive: "Livraison dans les 48h a 72h",
-            estime_arrive_number: 3,
-            description: "Le service colis de La Poste",
+            nom_transporteur: "Chronopost - Chrono13",
+            estime_arrive: "Chrono13 - Livraison le lendemain avant 13h, colis livrés en matinée partout en France.",
+            estime_arrive_number: 1,
+            description: "Livraison Chronopost - Livraison en matinée partout en France, remise contre signature.",
             poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
             numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
             URL_suivi: faker.internet.url(),
@@ -324,7 +326,6 @@ const seeding = async () => {
             numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
             URL_suivi: faker.internet.url(),
         }
-
 
     ];
 

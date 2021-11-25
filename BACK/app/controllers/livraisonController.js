@@ -2,6 +2,10 @@ const Livraison = require('../models/livraison');
 const Commande = require('../models/commande');
 const Transporteur = require('../models/transporteur');
 const LigneCommande = require('../models/ligneCommande');
+const Twillio = require('../models/twillio');
+const Adresse = require('../models/adresse');
+const Shop = require('../models/shop');
+const crypto = require('crypto');
 const {
     arrondi
 } = require('../services/arrondi');
@@ -9,6 +13,7 @@ const {
 
 const {
     formatLong,
+    formatJMA,
 } = require('../services/date');
 
 const fetch = require('node-fetch');
@@ -37,6 +42,7 @@ const livraisonController = {
 
 
     //FLAG ROUTER ligne 980 !
+
     newLivraison: async (req, res) => {
         try {
             // En entrée j'attend un numéro de colis, ça confirmation et une référence de commande ou un id de commande et potentiellement un poid en gramme.
@@ -63,10 +69,24 @@ const livraisonController = {
                 // ici commande est une référence
                 commandeInDb = await Commande.findOneCommandeLimited(req.body.commande);
 
+
             } else if (number.test(req.body.commande)) {
 
                 // ici commande est un identifiant
                 commandeInDb = await Commande.findOneLimited(req.body.commande);
+
+                /* commandeInDb ==>>  Commande {
+                  id: 2,
+                  reference: '2.10469.25112021150924.128.2',
+                  dateAchat: 2021-11-25T14:09:24.354Z,
+                  commentaire: null,
+                  sendSmsShipping: false,
+                  updatedDate: 2021-11-25T14:13:53.154Z,
+                  idCommandeStatut: 4,
+                  idClient: 2,
+                  idTransporteur: 2,
+                  statut: 'Prêt pour expédition'
+                } */
 
             } else {
                 console.log("votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant.");
@@ -101,7 +121,7 @@ const livraisonController = {
                 })
             }
 
-            //! ici la let commandeInDb contient une commande compatible avec une insertion dans la table livraison.
+            // ici la let commandeInDb contient une commande compatible avec une insertion dans la table livraison.
 
             // Je vérifit le transporteur et stock son nom :
             const transporteur = await Transporteur.findOne(commandeInDb.idTransporteur);
@@ -117,12 +137,21 @@ const livraisonController = {
 
             // Réel numéro de coli => XW415667162JB au 24/11
 
-            let dataLaposte = {};
 
-            if (transporteur.nom === "La poste Collisimmo" || transporteur.nom === "Chronopost") {
+            const theResponse = {};
+            theResponse.colis = req.body.numeroSuivi;
+            theResponse.transporteur = transporteur.nom;
+
+            let dataLaposte = {};
+            let dataDHL = {};
+
+
+
+            //! LAPOSTE
+
+            if (transporteur.nom === "La poste Collisimmo" || transporteur.nom.includes('Chronopost')) {
 
                 // Je vérifie si le numéro de colis est présent dans l'API de tracking de la poste / chronopost 
-
                 // numero de colis : Identifiant de l'objet recherché de 11 à 15 caractères alphanumériques 
 
                 try {
@@ -136,50 +165,44 @@ const livraisonController = {
                     });
                     dataLaposte = await laPosteResponse.json();
 
-                    //console.log("dataLaposte==>> ", dataLaposte.shipment);
+                } catch (error) {
+                    console.log(`Erreur dans la méthode newLivraison du livraisonController, lors du fetch api.laposte : ${error.message}`);
+                }
 
-                    // je ne garde que les données de l'event et pas ceux de la timeLine, avec la date. 
-                    // et je vais chercher les données correspondant au code événement dans REDIS.
+                //console.log("dataLaposte==>> ", dataLaposte.shipment);
 
-                    //! je ne return rien avec un code 104, le code doit se dérouler...
+                // Je vais chercher les données correspondant au code événement dans REDIS.
+                // Je ne return rien avec un code 104, le code doit se dérouler...
+
+                if (dataLaposte && dataLaposte !== undefined && dataLaposte !== null) {
+
+
                     if (Number(dataLaposte.returnCode) === 104) {
-                        console.log(dataLaposte.returnMessage);
-                        res.status(200).json({
-                            'message LaPoste / Chronopost': `${dataLaposte.returnMessage}`
-                        })
+                        //console.log(dataLaposte.returnMessage);
+                        theResponse.infoTransporteur = `message LaPoste / Chronopost : ${dataLaposte.returnMessage}`;
                     }
 
                     if (Number(dataLaposte.returnCode) === 400 || Number(dataLaposte.returnCode) === 401 || Number(dataLaposte.returnCode) === 404) {
-                        console.log(dataLaposte.returnMessage);
-                        res.status(400).json({
-                            'message LaPoste / Chronopost': `${dataLaposte.returnMessage}`
-                        })
+                        //console.log(dataLaposte.returnMessage);
+                        theResponse.infoTransporteur = `message LaPoste / Chronopost : ${dataLaposte.returnMessage}`;
                     }
                     if (dataLaposte.code === 'UNAUTHORIZED') {
-                        console.log(dataLaposte.message);
-                        res.status(400).json({
-                            'message LaPoste / Chronopost': `${dataLaposte.code} : ${dataLaposte.message}`
-                        })
+                        //console.log(dataLaposte.message);
+                        theResponse.infoTransporteur = `message LaPoste / Chronopost : ${dataLaposte.code} : ${dataLaposte.message}`;
                     }
-
-                    //res.status(200).json(dataLaposte.shipment);
-
-                } catch (error) {
-                    console.log(`Erreur dans la méthode newLivraison du livraisonController, lors du fetch api.laposte : ${error.message}`);
-                    res.status(500).end();
                 }
-
 
                 // ici si j'ai un code 104 (code FA633119313XX), la propriété shipment n'existe pas dans mon objet, mais je ne dois pas pour autant ne pas enregistrer la livraison...
 
-                if (dataLaposte.shipment !== undefined) {
+                if (dataLaposte.shipment && dataLaposte.shipment !== undefined && dataLaposte.shipment !== null) {
 
-                    //console.log("dataLaposte.shipment  == ", dataLaposte.shipment);
-                    const theResponse = {};
-                    let url;
-                    if (transporteur.nom === "Chronopost" && dataLaposte.shipment !== undefined && dataLaposte.shipment.urlDetail !== undefined) {
-                        url = dataLaposte.shipment.urlDetail;
-                        theResponse.url = url;
+                    if (transporteur.nom.includes('Chronopost') && dataLaposte.shipment !== undefined && dataLaposte.shipment.urlDetail !== undefined) {
+
+                        theResponse.url = dataLaposte.shipment.urlDetail;
+
+                    } else {
+
+                        theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
                     }
 
                     const statutParcel = dataLaposte.shipment.event[0]; // event est un array
@@ -189,21 +212,17 @@ const livraisonController = {
                         codeEvent = await redis.get(`mada/codeEvenementAPIlaposte:${statutParcel.code}`)
                     } catch (error) {
                         console.log("erreur dans la récupération du code event dans REDIS concernant l'API la poste", error);
-                        return res.statut(500).end();
                     }
-                    theResponse.colis = req.body.numeroSuivi;
-                    theResponse.transporteur = transporteur.nom;
-                    theResponse.event = codeEvent;
-                    theResponse.info = statutParcel.label;
-                    theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
-                    res.status(200).json(theResponse);
+
+                    if (codeEvent !== undefined && codeEvent !== null) {
+                        theResponse.event = `${statutParcel.label} / ${codeEvent}`;
+                    } else {
+                        theResponse.event = statutParcel.label;
+                    }
                 }
             }
 
-            //! ici les cas de figure ou d'autre transoprteur sont requis...
-
-
-            let dataDHL;
+            //! DHL
 
             if (transporteur.nom === "DHL") {
 
@@ -215,167 +234,218 @@ const livraisonController = {
                 try {
 
                     // rates limit pour cette API : 250 call per day et 1 call par seconde
-                     DHLResponse = await fetch(`https://api-eu.dhl.com/track/shipments?trackingNumber=${trackingNumber}`, {
-                    method: 'get',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'DHL-API-Key': `${process.env.DHLAPI}`,
-                    }
+                    DHLResponse = await fetch(`https://api-eu.dhl.com/track/shipments?trackingNumber=${trackingNumber}`, {
+                        method: 'get',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'DHL-API-Key': `${process.env.DHLAPI}`,
+                        },
 
-                });
+                    });
+
+                    dataDHL = await DHLResponse.json();
 
                 } catch (error) {
-                    console.log("erreur dans la récupération des donnes du numéro de suivi dans l'API DHL", error);
-                        return res.statut(500).end();
+                    console.log("erreur dans la récupération des données du numéro de suivi dans l'API DHL", error);
                 }
-                
-                dataDHL = await DHLResponse.json();
 
-                if (dataDHL.status === 404) {
+                // Si on a bien une valeur au retour du call de l4API DHL :
+                if (dataDHL && dataDHL !== undefined && dataDHL !== null) {
 
-                    /* {
-                        title: 'No result found',
-                        status: 404,
-                        detail: 'No shipment with given tracking number found.'
-                        } */
+                    if (dataDHL.status === 404) {
 
-                    dataDHL = dataDHL.detail;
-                    console.log("Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi.");
-                    res.status(200).json({
-                        'message DHL': "Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi."
-                    })
-                } else if (dataDHL.status === 400) {
+                        /* {
+                            title: 'No result found',
+                            status: 404,
+                            detail: 'No shipment with given tracking number found.'
+                            } */
 
-                   /* {
-                        title: 'Invalid input',
-                        status: 400,
-                        detail: 'Input is invalid: Invalid tracking number - illegal length of number.'
-                      } */
-                    
-                    console.log("Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Le numéro de suivi du colis est invalide !");
-                    res.status(200).json({
-                        'message DHL': "Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Le numéro de suivi du colis est invalide !"
-                    })
+                        console.log("message DHL : Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi.");
+
+                        theResponse.infoTransporteur = `message DHL : Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi.`;
+
+                    } else if (dataDHL.status === 400) {
+
+                        /* {
+                             title: 'Invalid input',
+                             status: 400,
+                             detail: 'Input is invalid: Invalid tracking number - illegal length of number.'
+                           } */
+
+                        console.log("Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Le numéro de suivi du colis est invalide !");
+
+                        theResponse.infoTransporteur = `message DHL : Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Le numéro de suivi du colis est invalide !`;
+
+                    } else {
+
+                        theResponse.event = dataDHL.shipments[0].status.description;
+                        theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
+
+                    }
 
                 }
-                else {
-
-                    const theResponse = {};
-
-                    //console.log("dataDHL ==> ", dataDHL);
-
-                    theResponse.colis = req.body.numeroSuivi;
-                    theResponse.transporteur = transporteur.nom;
-                    theResponse.event = dataDHL.shipments[0].status.description;
-                    theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
-                    res.status(200).json(theResponse);
-                    
-                }
-        
-            }
-
-                //dataDHL.shipments[0] ==
-
-                /* {
-                        id: '7777777770',
-                        service: 'express',
-                        origin: {
-                          address: { addressLocality: '-' },
-                          servicePoint: {
-                            url: 'http://www.dhl.com/en/country_profile.html',
-                            label: 'Origin Service Area'
-                          }
-                        },
-                        destination: {
-                          address: { addressLocality: '-' },
-                          servicePoint: {
-                            url: 'http://www.dhl.com/en/country_profile.html',
-                            label: 'Destination Service Area'
-                          }
-                        },
-                        status: { description: 'Shipment information received' },
-                        details: {
-                          proofOfDelivery: {
-                            signatureUrl: 'https://proview.dhl.com/proview/adhocnotify?id=w0ZOjI%2BGUQXcukpSL49urGKP3ihCYJR8nQDfikb0a7A%3D&appuid=Rzthrtdq3ZB04f6NEsCFyw%3D%3D&                     locale=en_G0&token=g9EKcplMtfPX3BrwypVUx7A0V4qA124LF2O22zX5298%3D',
-                            documentUrl: 'https://proview.dhl.com/proview/adhocnotify?id=w0ZOjI%2BGUQXcukpSL49urGKP3ihCYJR8nQDfikb0a7A%3D&appuid=Rzthrtdq3ZB04f6NEsCFyw%3D%3D&locale=en_G0&token=g9EKcplMtfPX3BrwypVUx7A0V4qA124LF2O22zX5298%3D'
-                          },
-                          proofOfDeliverySignedAvailable: false
-                        },
-                        events: [ { description: 'Shipment information received' } ]
-                    } */
-
-            stop
-            //TODO 
-
-            //FLAG  A upgrader pour les autres transporteur !
-
-            if (transporteur.nom === "DPD") {
-
 
             }
+            //  DPD =>  pas d'API connu...? / TNT => API qui ne fonctionne que en XML, intégration peu claire... / UPS => API inexploitable gratuitement demande un compte pro avec justification ...
 
-            if (transporteur.nom === "TNT") {
-
-
-            }
-
-            if (transporteur.nom === "UPS") {
-
-
-            }
-
-            stop
-
-            //TODO Continuer la suite de la méthode jusqu' l'envoie d'un sms si c'est le choix de l'acheteur !
-
-            // je sauvegarde l'URL si elle existe
-            // Je créé la réference
-            // j'insére en BDD la livraison
-            // j'update le statut de la commande a Envoyé dans ma bdd
-            // je pique le bout de code pour envoyer un sms si l'utilisateur l'a demandé lors d'un envoi de sa commande !
-
-
-
-            // avec le numéro de commande, je récupére l'id du transporteur, l'id du client
-            // j'insére dans la table le numéro de suivi donné, l'id transporteur, l'id client, le poid si il est là, et la nouvelle référence pour la commande voulue !
-
-
-
-
-
-            console.log(data);
+          
 
             const dataLivraison = {};
 
-            dataLivraison.reference = req.body.reference;
+            // pour une référence unique. Le package uuid V4 permetrait un véritable numéro unique...
+            dataLivraison.reference = crypto.randomBytes(16).toString("hex");
             dataLivraison.numeroSuivi = req.body.numeroSuivi;
-            dataLivraison.URLSuivi = req.body.URLSuivi;
-            dataLivraison.poid = req.body.poid;
-            dataLivraison.idClient = req.body.idClient;
-            dataLivraison.idCommande = req.body.idCommande;
-            dataLivraison.idTransporteur = req.body.idTransporteur;
-            dataLivraison.idLigneCommande = req.body.idLigneCommande;
+            dataLivraison.URLSuivi = theResponse.url;
 
-            const newLivraison = new Livraison(dataLivraison);
+            if (req.body.poid !== undefined && req.body.poid !== null) {
+                dataLivraison.poid = req.body.poid;
+            }
+            dataLivraison.idClient = commandeInDb.idClient;
+            dataLivraison.idCommande = commandeInDb.id;
+            dataLivraison.idTransporteur = commandeInDb.idTransporteur;
 
-            await newLivraison.save();
-            res.json(newLivraison);
+            let theNewLivraison;
+            try {
+                const newLivraison = new Livraison(dataLivraison);
+                theNewLivraison = await newLivraison.save();
+            } catch (error) {
+                console.log("Erreur lors de l'insertion d'une nouvelle livraison dans la méthode nexLivraison dans le livraisonController : ", error);
+                return res.status(500).end();
+            }
+            console.log("theNewLivraison ==> ", theNewLivraison);
 
+            //! On update le numéro de livraison dans la table ligne_commande !
 
+            const allLigneCommandes = await LigneCommande.findByIdCommande(commandeInDb.id);
+
+            console.log("allLigneCommandes ==> ", allLigneCommandes);
+
+            // Pour toutes les data dans le tableaux, on boucle dessus et on update la valeur idLivraison dans la table ligne_commande 
             const dataLigneCommande = {};
+            try {
 
-            dataLigneCommande.quantiteLivraison = req.body.quantiteLivraison;
-            dataLigneCommande.idLivraison = req.body.idLivraison;
-            dataLigneCommande.idCommandeLigne = req.body.idCommandeLigne;
+                for (const item of allLigneCommandes) {
 
-            const newLigneCommande = new LigneCommande(dataLigneCommande);
+                    dataLigneCommande.idLivraison = theNewLivraison.id;
+                    dataLigneCommande.id = item.id;
 
-            console.log("newLigneCommande == ", newLigneCommande);
+                    const newLigneCommande = new LigneCommande(dataLigneCommande);
+                    await newLigneCommande.updateLivraison();
 
+                }
+            } catch (error) {
+                console.log("Erreur lors de la mise a jour d'une nouvelle ligne de commande dans la méthode newLivraison dans le livraisonController : ", error);
+                return res.status(500).end();
+            }
+
+
+            //! On change le statut de la commande dans la table statut_commande !
+            //TODO ne plus passer les statuts par leur identifiant dans la table commande, probléme en cas de modif du fichier de seeding, prendre le nom serait préférable !
+            try {
+                    const newUpdateStatut = new Commande({
+                    idCommandeStatut: 5,
+                    id: commandeInDb.id,
+                });
+                   const newStatut = await newUpdateStatut.updateStatutCommande();
+
+                    console.log("newStatut ==> ", newStatut);
+
+            } catch (error) {
+                console.log("Erreur lors de la mise a jour d'un statut de commande dans la méthode newLivraison dans le livraisonController : ", error);
+                return res.status(500).end();
+            }
+
+            //! On envoie un sms si l'utilisateur l'a demandé lors de sa commande !
+
+            /* commandeInDb ==>>  Commande {
+                  id: 2,
+                  reference: '2.10469.25112021150924.128.2',
+                  dateAchat: 2021-11-25T14:09:24.354Z,
+                  commentaire: null,
+                  sendSmsShipping: false,
+                  updatedDate: 2021-11-25T14:13:53.154Z,
+                  idCommandeStatut: 4,
+                  idClient: 2,
+                  idTransporteur: 2,
+                  statut: 'Prêt pour expédition'
+                } */
+
+            if (commandeInDb.sendSmsShipping === true) {
+
+                // Je vérifit que le client a bien renseigné un numéro de téléphone !
+
+                let client;
+                try {
+                    client = await Adresse.findByEnvoiTrue(commandeInDb.idClient);
+
+                } catch (error) {
+                    console.trace('Erreur dans la recherche du téléphone du client dans la méthode newLivraison du livraisonController :',
+                        error);
+                    return res.status(500).end();
+                }
+
+                if (client === null || client.telephone === null || client.telephone === undefined) {
+                    console.log(`Aucun numéro de téléphone ou client pour cet identifiant ! Aucun sms n'a été envoyé pour confirmation d'envoie au client identifiant ${updateDone.idClient}...`);
+                    return res.status(500).end();
+                }
+
+                const tel = client.telephone;
+
+                // je recupére les infos de Twilio
+                let dataTwillio;
+                let twilio;
+                try {
+                    dataTwillio = await Twillio.findFirst();
+                    twilio = require('twilio')(dataTwillio.accountSid, dataTwillio.authToken);
+
+                } catch (error) {
+                    console.trace('Erreur dans la recherche des infos Twilio dans la méthode newLivraison du livraisonController :',
+                        error);
+                    return res.status(500).end();
+                }
+
+                // je récupére les infos sur la commande ! 
+                let commande;
+                try {
+
+                    commande = await Commande.findViewCommande(commandeInDb.id);
+                } catch (error) {
+                    console.trace('Erreur dans la recherche des infos de la commande dans la méthode newLivraison du livraisonController :',
+                        error);
+                    return res.status(500).end();
+                }
+
+                const articles = [];
+                commande.map(article => (`${articles.push(article.produit_nom+"x"+article.quantite_commande+"/"+article.taille+"/"+article.couleur)}`));
+                const articlesachat = articles.join('.');
+
+                let shop;
+                try {
+                    shop = await Shop.findFirst(); // les données du premier enregistrement de la table shop... Cette table a pour vocation un unique enregistrement..
+                } catch (error) {
+                    console.trace('Erreur dans la recherche des infos de Mada Shop dans la méthode newLivraison du livraisonController :',
+                        error);
+                    return res.status(500).end();
+                }
+
+                twilio.messages.create({
+                        body: ` Votre commande ${shop.nom} contenant ${articlesachat} effectué le ${formatJMA(commande[0].date_achat)} a bien été envoyé via ${commande[0].transporteur} ce ${formatLong(commande[0].updatedDate)} !`,
+                        from: dataTwillio.twillioNumber,
+                        to: tel,
+
+                    })
+                    .then(theResponse.sms = "Un sms a bien été envoyé au client pour cette expédition !").then(message => console.log(`SMS bien envoyé a ${tel} depuis ${dataTwillio.twillioNumber} avec pour sid :${message.sid}`));
+
+            }
+
+
+            theResponse.info = "Cette nouvelle livraison a bien été enregistrée !";
+
+            res.status(200).json(theResponse);
 
         } catch (error) {
             console.log(`Erreur dans la méthode newLivraison du livraisonController : ${error.message}`);
-            res.status(500).end();
+            return res.status(500).end();
         }
     },
 

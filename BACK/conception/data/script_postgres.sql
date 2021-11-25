@@ -537,11 +537,11 @@ CREATE TABLE sous_categorie_image(
 -- Table: livraison
 ------------------------------------------------------------
 CREATE TABLE livraison(
-	id                 INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	id                  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	reference			text_valid UNIQUE NOT NULL,
-	numero_suivi       text_valid,
-	URL_suivi          text_valid,
-	poid               posint, -- en gramme
+	numero_suivi        text_valid,
+	URL_suivi           text_valid,
+	poid                posint, -- en gramme
 	created_date        timestamptz NOT NULL DEFAULT now(),
 	updated_date        timestamptz,
 	

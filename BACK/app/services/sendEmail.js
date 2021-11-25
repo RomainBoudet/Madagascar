@@ -47,9 +47,6 @@ const sendEmail = async (email, subject, context, text, template) => {
         console.log(`Un email à bien été envoyé a ${email} : ${info.response}`);
     } catch (error) {
         console.trace("erreur dans le service sendEmail", error);
-        res.statut(500).end();
-
-
     }
 };
 

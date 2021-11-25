@@ -516,8 +516,9 @@ const paiementController = {
                                 if (session.commentaire && session.commentaire !== '') {
                                     dataCommande.commentaire = session.commentaire
                                 };
-                                if (session.sendSmsWhenShipping == 'true') {
-                                    //const isTrueSet = (session.sendSmsWhenShipping === 'true');
+
+
+                                if (session.sendSmsWhenShipping === true) {
                                     dataCommande.sendSmsShipping = session.sendSmsWhenShipping
                                 };
 
@@ -1330,11 +1331,11 @@ const paiementController = {
 
     },
 
-// https://stripe.com/docs/testing
-// code avec 3D secure : 4000002760003184
-// code numéro CB français : 4000002500000003
-// Le paiement est refusé avec le code card_declined. : 4000000000000002 
-// Le paiement est refusé avec le code card_declined. L’attribut decline_code est insufficient_funds. : 4000000000009995
+    // https://stripe.com/docs/testing
+    // code avec 3D secure : 4000002760003184
+    // code numéro CB français : 4000002500000003
+    // Le paiement est refusé avec le code card_declined. : 4000000000000002 
+    // Le paiement est refusé avec le code card_declined. L’attribut decline_code est insufficient_funds. : 4000000000009995
 
     key: async (req, res) => {
         try {
@@ -1367,7 +1368,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3Jz3BCLNa9FFzz1X0Ec48v1h_secret_xwSZNsh0wyZinQ2Lww9yUYM4R",
+                client_secret: "pi_3JzoqDLNa9FFzz1X0rFfQrDB_secret_vl4DtGoPSHaqaGxIeGP1Vw6av",
             });
 
 

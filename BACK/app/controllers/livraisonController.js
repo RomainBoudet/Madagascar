@@ -32,17 +32,6 @@ const redis = require('../services/redis');
  */
 const livraisonController = {
 
-    //https://developer.laposte.fr/signup
-    //https://www.npmjs.com/package/delivery-trackerhttps://www.npmjs.com/package/delivery-trackerhttps://www.npmjs.com/package/delivery-tracker 
-
-    //TODO
-    //! Créer une méthode pour suivre le statut de la commande ! Que le colis soit encore chez le marchand ou déja géré par le transporteur !
-    //TODO
-    //! Créer un schema Joi pour la route /admin/updateCommande ! (commandeController.updateStatut)
-
-
-    //FLAG ROUTER ligne 980 !
-
     newLivraison: async (req, res) => {
         try {
             // En entrée j'attend un numéro de colis, ça confirmation et une référence de commande ou un id de commande et potentiellement un poid en gramme.
@@ -75,19 +64,6 @@ const livraisonController = {
                 // ici commande est un identifiant
                 commandeInDb = await Commande.findOneLimited(req.body.commande);
 
-                /* commandeInDb ==>>  Commande {
-                  id: 2,
-                  reference: '2.10469.25112021150924.128.2',
-                  dateAchat: 2021-11-25T14:09:24.354Z,
-                  commentaire: null,
-                  sendSmsShipping: false,
-                  updatedDate: 2021-11-25T14:13:53.154Z,
-                  idCommandeStatut: 4,
-                  idClient: 2,
-                  idTransporteur: 2,
-                  statut: 'Prêt pour expédition'
-                } */
-
             } else {
                 console.log("votre commande n'a pas le format souhaité ! Elle doit avoir soit le format d'une réference soit celui d'un identifiant.");
                 return res.status(200).json({
@@ -111,7 +87,7 @@ const livraisonController = {
                 })
             };
 
-            // Je vérifit que le transporteur choisit n'est pas un retrait sur le marché !
+            // Je vérifis que le transporteur choisit n'est pas un retrait sur le marché !
             const nomTransporteur = await Transporteur.findOne(Number(commandeInDb.idTransporteur));
 
             if (nomTransporteur.nom === "Retrait sur le stand durant le prochain marché") {
@@ -122,20 +98,10 @@ const livraisonController = {
             }
 
             // ici la let commandeInDb contient une commande compatible avec une insertion dans la table livraison.
-
             // Je vérifit le transporteur et stock son nom :
             const transporteur = await Transporteur.findOne(commandeInDb.idTransporteur);
 
             const trackingNumber = req.body.numeroSuivi; //=> le numéro de suivi que l'on inserera dans les API des transporteurs !
-
-
-            // https://developer.laposte.fr/products/suivi/2/documentation
-            // Jeu de données => https://developer.laposte.fr/products/suivi/2/documentation#heading-2
-
-            // exemple numéro tracking : GF111111110NZ  //  ZZ111111110NZ (chronopost)
-            // 5S11111111110 (colis)  6P01007508742 (colis)  // 1K36275770836 (colis)
-
-            // Réel numéro de coli => XW415667162JB au 24/11
 
 
             const theResponse = {};
@@ -146,7 +112,12 @@ const livraisonController = {
             let dataDHL = {};
 
 
+            //https://developer.laposte.fr/signup 
+            // https://developer.laposte.fr/products/suivi/2/documentation
+            // Jeu de données => https://developer.laposte.fr/products/suivi/2/documentation#heading-2
 
+            // exemple numéro tracking : GF111111110NZ  //  ZZ111111110NZ (chronopost)
+            // 5S11111111110 (colis)  6P01007508742 (colis)  // 1K36275770836 (colis)  
             //! LAPOSTE
 
             if (transporteur.nom === "La poste Collisimmo" || transporteur.nom.includes('Chronopost')) {
@@ -168,8 +139,6 @@ const livraisonController = {
                 } catch (error) {
                     console.log(`Erreur dans la méthode newLivraison du livraisonController, lors du fetch api.laposte : ${error.message}`);
                 }
-
-                //console.log("dataLaposte==>> ", dataLaposte.shipment);
 
                 // Je vais chercher les données correspondant au code événement dans REDIS.
                 // Je ne return rien avec un code 104, le code doit se dérouler...
@@ -288,7 +257,6 @@ const livraisonController = {
             }
             //  DPD =>  pas d'API connu...? / TNT => API qui ne fonctionne que en XML, intégration peu claire... / UPS => API inexploitable gratuitement demande un compte pro avec justification ...
 
-          
 
             const dataLivraison = {};
 
@@ -356,19 +324,6 @@ const livraisonController = {
             }
 
             //! On envoie un sms si l'utilisateur l'a demandé lors de sa commande !
-
-            /* commandeInDb ==>>  Commande {
-                  id: 2,
-                  reference: '2.10469.25112021150924.128.2',
-                  dateAchat: 2021-11-25T14:09:24.354Z,
-                  commentaire: null,
-                  sendSmsShipping: false,
-                  updatedDate: 2021-11-25T14:13:53.154Z,
-                  idCommandeStatut: 4,
-                  idClient: 2,
-                  idTransporteur: 2,
-                  statut: 'Prêt pour expédition'
-                } */
 
             if (commandeInDb.sendSmsShipping === true) {
 

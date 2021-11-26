@@ -59,7 +59,7 @@ const adressePostSchema = require('./schemas/adressePostSchema');
 const passwordSchema = require('./schemas/passwordOnlySchema');
 const transporteurSchema = require('./schemas/transporteurShema');
 const transporteurPostSchema = require('./schemas/transporteurPostSchema');
-const livraisonPostSchema = require('./schemas/livraisonPostSchema');
+const newLivraisonSchema = require('./schemas/newLivraisonSchema');
 const livraisonSchema = require('./schemas/livraisonSchema');
 const choixLivraisonSchema = require('./schemas/choixLivraisonSchema');
 const smsChoiceSchema = require('./schemas/smsChoiceSchema');
@@ -978,22 +978,6 @@ router.get('/user/produitLivreByCommande/:id(\\d+)', client, livraisonController
 //FLAG
 // router.post('/admin/livraison/new', clean, admin, validateBody(livraisonPostSchema), livraisonController.newLivraison);
 router.post('/admin/livraison/new', clean, admin, livraisonController.newLivraison);
-/**
- * Une route pour mettre a jour une livraison
- * @route POST /admin/livraison/new
- * @group Administrateur
- * @summary Met a jour une nouvelle livraison 
- * @param {string} reference.body - 
- * @param {string} numeroSuivi.body - 
- * @param {string} URLSuivi.body - 
- * @param {string} poid.body - 
- * @param {string} idClient.body - 
- * @param {string} idCommande.body - 
- * @param {string} idTransporteur.body - 
- * @param {number} id.params.required - l'identifiant d'une livraison que l'on souhaite mettre a jour.
- * @returns {JSON} 200 - Les données d'une nouvelle livraison mise a jour
- */
-router.patch('/admin/livraison/:id(\\d+)', clean, admin, validateBody(livraisonSchema), livraisonController.update);
 
 /**
  * Une route pour supprimer une livraison

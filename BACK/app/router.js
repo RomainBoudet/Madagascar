@@ -60,7 +60,6 @@ const passwordSchema = require('./schemas/passwordOnlySchema');
 const transporteurSchema = require('./schemas/transporteurShema');
 const transporteurPostSchema = require('./schemas/transporteurPostSchema');
 const newLivraisonSchema = require('./schemas/newLivraisonSchema');
-const livraisonSchema = require('./schemas/livraisonSchema');
 const choixLivraisonSchema = require('./schemas/choixLivraisonSchema');
 const smsChoiceSchema = require('./schemas/smsChoiceSchema');
 const emailChoiceSchema = require('./schemas/emailChoiceShema');
@@ -68,11 +67,6 @@ const refundSchema = require('./schemas/refundSchema');
 const refundClientSchema = require('./schemas/refundClientSchema');
 const couponSchema = require('./schemas/couponSchema');
 const delCouponSchema = require('./schemas/delCouponSchema');
-
-
-const swaggerUi = require('swagger-ui-express');
-const swaggerDocument = require('../swagger-config.json');
-
 
 
 
@@ -975,9 +969,7 @@ router.get('/user/produitLivreByCommande/:id(\\d+)', client, livraisonController
  * @param {number} poid.body - 
  * @returns {JSON} 200 - Les données de la nouvelle livraison insérée
  */
-//FLAG
-// router.post('/admin/livraison/new', clean, admin, validateBody(livraisonPostSchema), livraisonController.newLivraison);
-router.post('/admin/livraison/new', clean, admin, livraisonController.newLivraison);
+router.post('/admin/livraison/new', clean, admin, validateBody(newLivraisonSchema),livraisonController.newLivraison);
 
 /**
  * Une route pour supprimer une livraison

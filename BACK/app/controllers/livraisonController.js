@@ -47,6 +47,7 @@ const livraisonController = {
             let commandeInDb;
 
             const regRefCommande = /^([0-9]*[.]{1}[0-9]*)*$/; // pour une référence de commande
+            ///^[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+([.]{1}[0-9]+[.]{1}[0-9]+){2,}$/
             const number = /^[0-9]*$/; // pour un id de commande
 
             // je vérifit que la commande existe et que son précédent statut est compatible avec l'update du statut "Expédié"
@@ -167,12 +168,11 @@ const livraisonController = {
 
                     if (transporteur.nom.includes('Chronopost') && dataLaposte.shipment !== undefined && dataLaposte.shipment.urlDetail !== undefined) {
 
+                        console.log("on passe dans l'url chronopost");
+                        
                         theResponse.url = dataLaposte.shipment.urlDetail;
 
-                    } else {
-
-                        theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
-                    }
+                    } 
 
                     const statutParcel = dataLaposte.shipment.event[0]; // event est un array
 
@@ -188,6 +188,10 @@ const livraisonController = {
                     } else {
                         theResponse.event = statutParcel.label;
                     }
+
+                }  else {
+
+                    theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
                 }
             }
 

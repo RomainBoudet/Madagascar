@@ -5,122 +5,75 @@ const Joi = require('joi');
 
 
 /**
- * Valide les informations reçu dans le body et envoyé par les utilisateurs
- * @name livraisonPostSchema 
+ * Valide les informations reçu dans le body et envoyé par l'administrateur
+ * @name newLivraisonSchema 
  * @group Joi - Vérifie les informations du body
- * @property {string} reference - 
- * @property {string} numeroSuivi -
- * @property {string} URLSuivi -
- * @property {string} poid -
- * @property {string} idClient -
- * @property {string} idCommande -
- * @property {string} idTransporteur -
+ * @property {string} commande - Un identifiant, ou une référence (chiffres séparés par des points).
+ * @property {string} numeroSuivi - Le numéro de suivi fourni par le transporteur.
+ * @property {string} confirmNumeroSuivi - La confirmation du numéro de suivi
+ * @property {string} poid - Le poid en gramme compris entre 10 et 50 000.
  * @return {json} messages - Un texte adapté en cas d'érreur, en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
-const livraisonPostSchema = Joi.object({
-    reference: Joi.string()
-        .required()
-        .max(200)
-        .pattern(new RegExp(/^[a-zA-Z0-9/]{5,}$/))
-        .pattern(new RegExp(/^[^<>&#=+*"|{}]*$/))
-        .required()
-        .messages({
-            'string.max': `Votre reference doit avoir une longeur maximum de {#limit} caractéres !`,
-            'string.empty': `Le champs de votre reference ne peut être vide !`,
-            'any.required': 'Le champs de votre reference ne peut être vide !',
-            'string.pattern.base': 'Le format de votre reference est incorrect : Il ne doit pas être composé d\'un de ces caractéres : spéciaux [<>&#=+*"|] et posséder au minimum 5 chiffres ou lettres !',
+const newLivraisonSchema = Joi.object({
+    commande: Joi.alternatives().try(
+        Joi.number().integer().required().messages({
+            'string.empty': `Le champs de votre commande ne peut être vide !`,
+            'any.required': 'Le champs de votre commande ne peut être vide !',
+            'number': 'Le format de votre commande est incorrect : sonidentifiant devrait être un chiffre',
 
         }),
+        Joi.string().regex(/^([0-9]*[.]{1}[0-9]*)*$/).required().messages({
+            'string.empty': `Le champs de votre commande ne peut être vide !`,
+            'any.required': 'Le champs de votre commande ne peut être vide !',
+            'string.pattern.base': 'Le format de votre commande est incorrect : il ne respecte pas la structure d\'une référénce',
+
+        }),
+    ),
 
     numeroSuivi: Joi.string()
         .min(2)
         .max(200)
-        .pattern(new RegExp(/^[a-zA-Z0-9/]{4,}$/))
+        .pattern(new RegExp(/^[a-zA-Z0-9/]{5,30}$/))
         .required()
-        .pattern(new RegExp(/^[^<>&#=+*"|{}]*$/))
         .messages({
             'string.max': `Votre numeroSuivi doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le champs de votre numeroSuivi ne peut être vide !`,
             'string.min': `Votre numeroSuivi doit avoir une longeur minimum de {#limit} caractéres !`,
             'any.required': 'Le champs de votre numeroSuivi ne peut être vide !',
-            'string.pattern.base': 'Le format de votre numeroSuivi est incorrect : Il ne doit pas être composé d\'un de ces caractéres : spéciaux [<>&#=+*"|] et posséder au minimum 5 chiffres ou lettres !',
+            'string.pattern.base': 'Le format de votre numeroSuivi est incorrect : Il doit posséder au minimum 5 chiffres et / ou lettres !',
         }),
 
-    URLSuivi: Joi.string()
-        .required()
+    confirmNumeroSuivi: Joi.string()
+        .min(2)
         .max(200)
-        .regex(/^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/)
+        .pattern(new RegExp(/^[a-zA-Z0-9/]{5,30}$/))
+        .required()
         .messages({
-            'any.required': 'Le champs de votre  URLSuivi ne peut être vide !',
-            'string.max': `Votre  URLSuivi doit avoir une longeur maximum de {#limit} caractéres !`,
-            'string.empty': `Le champs de votre  URLSuivi ne peut être vide !`,
-            'string.pattern.base': 'Le format de votre  URLSuivi est incorrect',
+            'string.max': `Votre numeroSuivi doit avoir une longeur maximum de {#limit} caractéres !`,
+            'string.empty': `Le champs de votre numeroSuivi ne peut être vide !`,
+            'string.min': `Votre numeroSuivi doit avoir une longeur minimum de {#limit} caractéres !`,
+            'any.required': 'Le champs de votre numeroSuivi ne peut être vide !',
+            'string.pattern.base': 'Le format de votre numeroSuivi est incorrect : Il doit posséder au minimum 5 chiffres et / ou lettres !',
         }),
 
     poid: Joi.number()
-    .greater(0.5)
-    .precision(2)
-    .positive()
-    .max(10000)
-    .required()
-    .messages({
-        'any.number': 'Le champs de votre poid doit être un chiffre !',
-        'number.empty': 'Le champs de votre poid doit être un chiffre !',
-        'any.required': 'Le champs de votre poid ne peut être vide !',
-        'number.max': 'Le champs de votre poid ne peut être supérieur a {#limit} !',
-        'number.positive': 'Le champs de votre poid ne peut être inférieur a zéro !',
+        .min(10)
+        .integer()
+        .positive()
+        .max(50000)
+        .required()
+        .messages({
+            'any.number': 'Le champs de votre poid doit être un chiffre !',
+            'number.empty': 'Le champs de votre poid doit être un chiffre !',
+            'any.required': 'Le champs de votre poid ne peut être vide !',
+            'number.max': 'Le champs de votre poid ne peut être supérieur a {#limit} !',
+            'number.min': 'Le champs de votre poid ne peut être inférieur a {#limit} !',
+            'number.positive': 'Le champs de votre poid ne peut être inférieur a zéro !',
 
-    }),
-
-    idClient: Joi.number()
-    .integer()
-    .positive()
-    .required()
-    .messages({
-        'any.number': 'Le champs de votre  idClient doit être un chiffre !',
-        'number.empty': 'Le champs de votre  idClient doit être un chiffre !',
-        'any.required': 'Le champs de votre  idClient ne peut être vide !',
-        'number.max': 'Le champs de votre  idClient ne peut être supérieur a 100 !',
-        'number.positive': 'Le champs de votre  idClient ne peut être inférieur a zéro !',
-
-    }),
-
-    idCommande: Joi.number()
-    .integer()
-    .positive()
-    .required()
-    .messages({
-        'any.number': 'Le champs de votre   idCommande doit être un chiffre !',
-        'number.empty': 'Le champs de votre   idCommande doit être un chiffre !',
-        'any.required': 'Le champs de votre   idCommande ne peut être vide !',
-        'number.max': 'Le champs de votre   idCommande ne peut être supérieur a 100 !',
-        'number.positive': 'Le champs de votre   idCommande ne peut être inférieur a zéro !',
-
-    }),
-    idTransporteur: Joi.number()
-    .integer()
-    .min(1)
-    .max(4)
-    .positive()
-    .required()
-    .messages({
-        'any.number': 'Le champs de votre  idTransporteur doit être un chiffre !',
-        'number.empty': 'Le champs de votre  idTransporteur doit être un chiffre !',
-        'any.required': 'Le champs de votre  idTransporteur ne peut être vide !',
-        'number.max': 'Le champs de votre  idTransporteur ne peut être supérieur a ${limit} !',
-        'number.min': 'Le champs de votre  idTransporteur ne peut être inférieur a ${limit} !',
-        'number.positive': 'Le champs de votre  idTransporteur ne peut être inférieur a zéro !',
-
-    }),
+        }),
 
 
-    
 
-});
+}).with('numeroSuivi', 'confirmNumeroSuivi');
 
-module.exports = livraisonPostSchema;
-
-// source REGEX email : https://emailregex.com/
-//Cette syntaxe fonctionne aussi :
-//.pattern(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/).required()
-//.boolean().invalid(false) ou  .pattern(new RegExp(/^(?i)(true)$/))
+module.exports = newLivraisonSchema;

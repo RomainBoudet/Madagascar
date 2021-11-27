@@ -174,7 +174,10 @@ const livraisonController = {
                         // ici je fais le choix de rentrer dans mon if meme si l'info est érroné, que le transporteur est la poste collisimo mais que le numéro de colis est un n° Chronopost, on aura l'url provenant de cronopost !
                         theResponse.url = dataLaposte.shipment.urlDetail;
 
-                    } 
+                    } else {
+
+                        theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
+                    }
 
                     const statutParcel = dataLaposte.shipment.event[0]; // event est un array
 
@@ -192,7 +195,7 @@ const livraisonController = {
                     }
 
                 }  else {
-
+                    //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifier l'état de sa commande via le site web du transporteur
                     theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
                 }
             }
@@ -259,7 +262,7 @@ const livraisonController = {
                     }
 
                 }else {
-                    //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifeir l'état de sa commande via le site web du transporteur
+                    //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifier l'état de sa commande via le site web du transporteur
                     theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
 
                 }

@@ -73,8 +73,8 @@ const commandeController = {
 
             //! je fait le tri si c'est une référence de commande ou un id de commande !
 
-            const regRefCommande = /^([0-9]*[.]{1}[0-9]*)*$/; // pour une référence de commande
-            const number = /^[0-9]*$/; // pour un id de commande
+            const regRefCommande = /^([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+){1}([.]{1}[0-9]+[.]{1}[0-9]+)*$/; // pour une référence de commande
+            const number = /^[0-9]+$/; // pour un id de commande
             const notNumber = /[^0-9]+/; // a utiliser pour discriminer le statut de commande en format string. 
 
             // on vérifit que la confirmation de statut est conforme au statut !

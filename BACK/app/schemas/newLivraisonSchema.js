@@ -29,32 +29,36 @@ const newLivraisonSchema = Joi.object({
 
         }),
     ),
-
-    numeroSuivi: Joi.string()
+    // 11 a 15 caractéres alpha pour la poste !!
+    // DHL ? fake data a 9...  Noté 10 max sur leur site !
+    numeroSuivi: Joi.alternatives().try(
+        Joi.string()
         .min(2)
         .max(200)
-        .pattern(new RegExp(/^[a-zA-Z0-9/]{5,30}$/))
+        .pattern(new RegExp(/^[a-zA-Z0-9/]{11,15}$/))
         .required()
         .messages({
             'string.max': `Votre numero de suivi doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le champs de votre numero de suivi ne peut être vide !`,
             'string.min': `Votre numero de suivi doit avoir une longeur minimum de {#limit} caractéres !`,
             'any.required': 'Le champs de votre numero de suivi ne peut être vide !',
-            'string.pattern.base': 'Le format de votre numero de suivi est incorrect : Il doit posséder au minimum 5 chiffres et / ou lettres !',
+            'string.pattern.base': 'Le format de votre numero de suivi est incorrect : Il doit posséder au minimum 11 chiffres et 15 au maximum pour la poste et entre 6 et 10 pour DHL !',
         }),
-
-    confirmNumeroSuivi: Joi.string()
+        Joi.string()
         .min(2)
         .max(200)
-        .pattern(new RegExp(/^[a-zA-Z0-9/]{5,30}$/))
+        .pattern(new RegExp(/^[a-zA-Z0-9/]{6,10}$/))
         .required()
         .messages({
             'string.max': `Votre numero de suivi doit avoir une longeur maximum de {#limit} caractéres !`,
             'string.empty': `Le champs de votre numero de suivi ne peut être vide !`,
             'string.min': `Votre numero de suivi doit avoir une longeur minimum de {#limit} caractéres !`,
             'any.required': 'Le champs de votre numero de suivi ne peut être vide !',
-            'string.pattern.base': 'Le format de votre numero de suivi est incorrect : Il doit posséder au minimum 5 chiffres et / ou lettres !',
+            'string.pattern.base': 'Le format de votre numero de suivi est incorrect : Il doit posséder au minimum 11 chiffres et 15 au maximum pour la poste et entre 6 et 10 pour DHL !',
         }),
+    ),
+
+    confirmNumeroSuivi: Joi.ref('numeroSuivi'),
 
     poid: Joi.number()
         .min(10)

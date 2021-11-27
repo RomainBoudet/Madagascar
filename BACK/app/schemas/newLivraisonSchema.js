@@ -22,7 +22,7 @@ const newLivraisonSchema = Joi.object({
             'number': 'Le format de votre commande est incorrect : sonidentifiant devrait être un chiffre',
 
         }),
-        Joi.string().regex(/^([0-9]*[.]{1}[0-9]*)*$/).required().messages({
+        Joi.string().regex(/^([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+){1}([.]{1}[0-9]+[.]{1}[0-9]+)*$/).required().messages({
             'string.empty': `Le champs de votre commande ne peut être vide !`,
             'any.required': 'Le champs de votre commande ne peut être vide !',
             'string.pattern.base': 'Le format de votre commande est incorrect : il ne respecte pas la structure d\'une référénce',
@@ -36,11 +36,11 @@ const newLivraisonSchema = Joi.object({
         .pattern(new RegExp(/^[a-zA-Z0-9/]{5,30}$/))
         .required()
         .messages({
-            'string.max': `Votre numeroSuivi doit avoir une longeur maximum de {#limit} caractéres !`,
-            'string.empty': `Le champs de votre numeroSuivi ne peut être vide !`,
-            'string.min': `Votre numeroSuivi doit avoir une longeur minimum de {#limit} caractéres !`,
-            'any.required': 'Le champs de votre numeroSuivi ne peut être vide !',
-            'string.pattern.base': 'Le format de votre numeroSuivi est incorrect : Il doit posséder au minimum 5 chiffres et / ou lettres !',
+            'string.max': `Votre numero de suivi doit avoir une longeur maximum de {#limit} caractéres !`,
+            'string.empty': `Le champs de votre numero de suivi ne peut être vide !`,
+            'string.min': `Votre numero de suivi doit avoir une longeur minimum de {#limit} caractéres !`,
+            'any.required': 'Le champs de votre numero de suivi ne peut être vide !',
+            'string.pattern.base': 'Le format de votre numero de suivi est incorrect : Il doit posséder au minimum 5 chiffres et / ou lettres !',
         }),
 
     confirmNumeroSuivi: Joi.string()
@@ -49,11 +49,11 @@ const newLivraisonSchema = Joi.object({
         .pattern(new RegExp(/^[a-zA-Z0-9/]{5,30}$/))
         .required()
         .messages({
-            'string.max': `Votre numeroSuivi doit avoir une longeur maximum de {#limit} caractéres !`,
-            'string.empty': `Le champs de votre numeroSuivi ne peut être vide !`,
-            'string.min': `Votre numeroSuivi doit avoir une longeur minimum de {#limit} caractéres !`,
-            'any.required': 'Le champs de votre numeroSuivi ne peut être vide !',
-            'string.pattern.base': 'Le format de votre numeroSuivi est incorrect : Il doit posséder au minimum 5 chiffres et / ou lettres !',
+            'string.max': `Votre numero de suivi doit avoir une longeur maximum de {#limit} caractéres !`,
+            'string.empty': `Le champs de votre numero de suivi ne peut être vide !`,
+            'string.min': `Votre numero de suivi doit avoir une longeur minimum de {#limit} caractéres !`,
+            'any.required': 'Le champs de votre numero de suivi ne peut être vide !',
+            'string.pattern.base': 'Le format de votre numero de suivi est incorrect : Il doit posséder au minimum 5 chiffres et / ou lettres !',
         }),
 
     poid: Joi.number()

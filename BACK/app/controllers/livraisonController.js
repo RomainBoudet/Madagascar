@@ -46,9 +46,9 @@ const livraisonController = {
 
             let commandeInDb;
 
-            const regRefCommande = /^([0-9]*[.]{1}[0-9]*)*$/; // pour une référence de commande
+            const regRefCommande = /^([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+){1}([.]{1}[0-9]+[.]{1}[0-9]+)*$/; // pour une référence de commande
             ///^[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+([.]{1}[0-9]+[.]{1}[0-9]+){2,}$/
-            const number = /^[0-9]*$/; // pour un id de commande
+            const number = /^[0-9]+$/; // pour un id de commande
 
             // je vérifit que la commande existe et que son précédent statut est compatible avec l'update du statut "Expédié"
             // les statuts compatibles : 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition
@@ -131,7 +131,7 @@ const livraisonController = {
                         method: 'get',
                         headers: {
                             'Accept': 'application/json',
-                            'X-Okapi-Key': `${process.env.LAPOSTEAPI}`,
+                            'X-Okapi-Key': `${process.env.LAPOSTEAPISANDBOX}`,
                         }
 
                     });
@@ -164,12 +164,14 @@ const livraisonController = {
 
                 // ici si j'ai un code 104 (code FA633119313XX), la propriété shipment n'existe pas dans mon objet, mais je ne dois pas pour autant ne pas enregistrer la livraison...
 
+                console.log("dataLaposte ==>> ", dataLaposte);
+                console.log("dataLaposte.shipment ==>> ", dataLaposte.shipment);
+
+
                 if (dataLaposte.shipment && dataLaposte.shipment !== undefined && dataLaposte.shipment !== null) {
 
-                    if (transporteur.nom.includes('Chronopost') && dataLaposte.shipment !== undefined && dataLaposte.shipment.urlDetail !== undefined) {
-
-                        console.log("on passe dans l'url chronopost");
-                        
+                    if (dataLaposte.shipment.urlDetail !== undefined && dataLaposte.shipment.urlDetail !== null) {
+                        // ici je fais le choix de rentrer dans mon if meme si l'info est érroné, que le transporteur est la poste collisimo mais que le numéro de colis est un n° Chronopost, on aura l'url provenant de cronopost !
                         theResponse.url = dataLaposte.shipment.urlDetail;
 
                     } 
@@ -255,6 +257,10 @@ const livraisonController = {
                         theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
 
                     }
+
+                }else {
+                    //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifeir l'état de sa commande via le site web du transporteur
+                    theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
 
                 }
 

@@ -157,7 +157,7 @@ app.use(
 app.use(cors({
     optionsSuccessStatus: 200,
     credentials: true, // pour envoyer des cookies et des en-têtes d'autorisations faut rajouter une autorisation avec l'option credential
-    origin: ['http://localhost:3000', 'http://127.0.0.1:4040 '], // true = req.header('Origin') //! a pas oublier pour la prod ! => remplacer par le bon nom de domaine
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:4040 '], // true = req.header('Origin') //! a pas oublier pour la prod ! => remplacer par le bon nom de domaine
     methods: "GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS", // ok via un array aussi
     allowedHeaders: ['Content-Type', 'x-xsrf-token'],
 }));

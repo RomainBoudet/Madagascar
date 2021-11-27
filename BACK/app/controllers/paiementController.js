@@ -1368,7 +1368,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3K0TaXLNa9FFzz1X1aEsfzs2_secret_iqmXE7MlwlGHKXOQ5haPDxjRE",
+                client_secret: "pi_3K0UnSLNa9FFzz1X0Zt2M072_secret_CNEDQQ0OseDax30ypu3StzA0Q",
             });
 
 
@@ -1417,7 +1417,7 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3K0SI2LNa9FFzz1X0BsFC4E1_secret_qIEUhMKh8lm7F0ysBqGnW5wzO",
+                client_secret: "pi_3K0UpkLNa9FFzz1X0LV2qwHt_secret_mNZmE79yuo1cnoIv41m7pvZLF",
             });
 
 

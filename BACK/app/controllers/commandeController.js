@@ -56,7 +56,6 @@ const commandeController = {
             // ici je n'autorise que certain statut a être updaté ! 
             // les statuts : 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 
             // le statut Expédié n'est pas traité ici, une route dédié lui est attribué pour une insertion des données dans la table livraison sur la route /admin/livraison/new
-            // par mesure de sécurité et pour plus de liberté, j'autorise néanmoins le Developpeur a changé tout statut comme il le souhaite ! 
 
 
             if (req.session.user.privilege === 'Client') {
@@ -64,12 +63,13 @@ const commandeController = {
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
             };
-            //! parser un email : https://medium.com/@akinremiolumide96/reading-email-data-with-node-js-cdacaa174cc7 
 
             //RAPPEL des statuts de commande : 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée;
 
-            //pour une API flexible on prend soit une réference de commande soit un id de commande et soit le nom d'un statut soit sont id !
-            // et on autorise l'admin a faire 3 faute par statut, on on le corrige automatiquement ! sinon on lui propose le plus proche statut existant... Merci Levenshtein !
+            //FLAG 
+            // Attention, ici en vertu d'un plus grande flexibilité, en autorisant le changement de statut des commandes en rentrant l'identifiant d'un statut de commande, cela peut poser souci, si on décide de changer le fichier de seeding et de changer l'ordre des statuts, ou d'en ajouter... 
+            //pour une API flexible on prend soit une réference de commande soit un id de commande et le nom d'un statut.
+            // et on autorise l'admin a faire 2 faute par statut, on on le corrige automatiquement ! sinon on lui propose le plus proche statut existant... Merci Levenshtein !
 
             //! je fait le tri si c'est une référence de commande ou un id de commande !
 
@@ -83,6 +83,12 @@ const commandeController = {
                 console.log("La confirmation de votre statut doit être identique a votre statut !");
                 return res.status(200).json({
                     message: "La confirmation de votre statut doit être identique a votre statut !"
+                })
+            }
+
+            if (req.body.statut === 'Expédiée') {
+                return res.status(200).json({
+                    message: "Merci d'utiliser la route adéquate pour rentrer une nouvelle livraison : /admin/livraison/new"
                 })
             }
 
@@ -324,7 +330,7 @@ const commandeController = {
                     //console.log("theDistance == ", theDistance);
                 }
 
-                const isDistInf3 = (element) => element <= 3;
+                const isDistInf3 = (element) => element <= 2;
                 const indexSmallDistance = arrayDistance.findIndex(isDistInf3);
                 // console.log("indexSmallDistance == ", indexSmallDistance);
 
@@ -333,9 +339,9 @@ const commandeController = {
 
                     // Je prospose néanmoins a l'admin le mot le plus proche possible de sa demande !
                     const closeWord = closest(req.body.statut, arrayStatut);
-                    console.log(`Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiqué le statut : '${closeWord}' ?`);
+                    console.log(`Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiquer le statut : '${closeWord}' ?`);
                     return res.status(200).json({
-                        message: `Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiqué le statut : '${closeWord}' ?`
+                        message: `Aucun statut existant ne correspond a votre demande de statut, vouliez-vous indiquer le statut : '${closeWord}' ?`
                     })
                 }
 

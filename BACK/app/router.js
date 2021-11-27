@@ -59,7 +59,6 @@ const adressePostSchema = require('./schemas/adressePostSchema');
 const passwordSchema = require('./schemas/passwordOnlySchema');
 const transporteurSchema = require('./schemas/transporteurShema');
 const transporteurPostSchema = require('./schemas/transporteurPostSchema');
-const newLivraisonSchema = require('./schemas/newLivraisonSchema');
 const choixLivraisonSchema = require('./schemas/choixLivraisonSchema');
 const smsChoiceSchema = require('./schemas/smsChoiceSchema');
 const emailChoiceSchema = require('./schemas/emailChoiceShema');
@@ -67,6 +66,8 @@ const refundSchema = require('./schemas/refundSchema');
 const refundClientSchema = require('./schemas/refundClientSchema');
 const couponSchema = require('./schemas/couponSchema');
 const delCouponSchema = require('./schemas/delCouponSchema');
+const newLivraisonSchema = require('./schemas/newLivraisonSchema');
+const updateStatutSchema = require('./schemas/updateStatutSchema');
 
 
 
@@ -498,7 +499,7 @@ router.get('/user/cancelCoupon', client, panierController.cancelCoupon);
  * @param {string} commande.body.required - Une commande a mettre a jour, qui peut être soit une référence, soit un identifiant de commande.
  * @returns {JSON} 200 - Mise a jour du statut du statut d'une commande et renvoie le statut de la commande nouvellement mis a jour 
  */
-router.post('/admin/updateCommande', admin, commandeController.updateStatut);
+router.post('/admin/updateCommande', admin, validateBody(updateStatutSchema), commandeController.updateStatut);
 
 
 //! FACTURES Création de factures aprés la commande et le paiement ---------------------------------------------------------------------------

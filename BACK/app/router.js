@@ -376,8 +376,7 @@ router.get('/balanceStripe', admin, paiementController.balanceStripe);
  * @group Administrateur
  * @summary  Demander un remboursement sur un paiement de la part d'un Administrateur
  * @param {string} commande.body.required - Une référence de commande.
- * @param {string} email.body.required - L'email du client a remboursé.
- * @param {number} montant.body.required - Une valeur en euros et non en centimes.
+ * @param {number} montant.body - Une valeur en euros et non en centimes. Egale a 100% du paiement de la commande si non précisé.
  * @returns {JSON} 200 -  Demander un remboursement sur un paiement de la part d'un Admin
  */
 router.post('/admin/refund', clean, admin, validateBody(refundSchema), paiementController.refund);
@@ -840,7 +839,7 @@ router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema)
  * @route POST /client/livraisonChoix
  * @group Utilisateur
  * @summary Permet de déterminer le choix du transporteur fait par le client et de laisser un commentaire en session
- * @param {number} idTransporteur.body.required - L'identifiant du transporteur, compris entre 1 et 4.
+ * @param {string} nomTransporteur.body.required - Le nom du transporteur, compris entre 1 et 4.
  * @param {string} commentaire.body.required - Le commentaire laissé par lors du choix du transporteur. D'une longeur max de 500 caractéres. Les caractéres suivant : <>&#=+*"|{} seront rejetés.
  * @param {boolean} sendSmsWhenShipping.body - Booléen avec true ou false comme valeur accéptée.
  * @returns {JSON} 200 -  {totalHT, totalTTC, totalTVA, coutTransporteur, transporteur, totalTTCAvecTransport, message, commentaire, sendSmsWhenShipping,}
@@ -1151,7 +1150,8 @@ router.get('/dev/emailVerif', dev, adminController.getAllEmailVerif);
  */
 router.get('/dev/emailVerif/:id(\\d+)', dev, adminController.getOneEmailVerif);
 
-//! A finir _____________________-------------------______________--------------------_______________-_-_-_-_-_-_-_-_-_-_-_-
+//FLAG 
+//! A finir clean swagger doc ! _____________________-------------------______________--------------------_______________-_-_-_-_-_-_-_-_-_-_-_-
 /**
  * Permet de voir tous un email vérifié ou non pour les admins, selon son id Client
  * Route sécurisée avec Joi et MW Developpeur

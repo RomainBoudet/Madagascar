@@ -8,25 +8,16 @@ const Joi = require('joi');
  * Valide les informations reçu dans le body et envoyé par les utilisateurs
  * @name choixLivraisonSchema 
  * @group Joi - Vérifie les informations du body
- * @property {string} idTransporteur - l'identifiant d'un transporteur en BDD : chiffre allant de 1 a 4.
+ * @property {string} nomTransporteur - l'identifiant d'un transporteur en BDD : chiffre allant de 1 a 4.
  * @return {json} messages - Un texte adapté en cas d'érreur, en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
 const choixLivraisonSchema = Joi.object({
 
 
-    idTransporteur: Joi.number()
-    .integer()
-    .positive()
-    .min(1)
-    .max(5)
-    .required()
-    .messages({
-        'any.number': 'Le champs de votre idTransporteur doit être un chiffre !',
-        'number.empty': 'Le champs de votre idTransporteur doit être un chiffre !',
-        'any.required': 'Le champs de votre idTransporteur ne peut être vide !',
-        'number.max': 'Le champs de votre idTransporteur ne peut être supérieur a 4 !',
-        'number.positive': 'Le champs de votre idTransporteur ne peut être inférieur a zéro !',
-
+    nomTransporteur: Joi.any().valid('La poste Collisimmo', 'Chronopost - Chrono Relais 13', 'Retrait sur le stand', 'Chronopost - Chrono13', 'DHL')
+    .required().messages({
+        'any.only': ` Seules les transporteur avec comme nom : 'La poste Collisimmo', 'Chronopost - Chrono Relais 13', 'Retrait sur le stand', 'Chronopost - Chrono13', 'DHL' peuvent être inséré.`,
+        'any.required': 'Le champs de votre choix de transporteur ne peut pas être vide !',
     }),
 
     commentaire: Joi.string()
@@ -48,8 +39,3 @@ const choixLivraisonSchema = Joi.object({
 });
 
 module.exports = choixLivraisonSchema;
-
-// source REGEX email : https://emailregex.com/
-//Cette syntaxe fonctionne aussi :
-//.pattern(/^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,}$/).required()
-//.boolean().invalid(false) ou  .pattern(new RegExp(/^(?i)(true)$/))

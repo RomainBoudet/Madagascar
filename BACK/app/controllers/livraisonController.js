@@ -89,21 +89,17 @@ const livraisonController = {
             };
 
             // Je vérifis que le transporteur choisit n'est pas un retrait sur le marché !
-            const nomTransporteur = await Transporteur.findOne(Number(commandeInDb.idTransporteur));
+            const transporteur = await Transporteur.findOne(Number(commandeInDb.idTransporteur));
 
-            if (nomTransporteur.nom === "Retrait sur le stand durant le prochain marché") {
-                console.log("Le transporteur choisi pour cette commande n'est pas compatible avec une livraison. Pour être compatible, celui ci doit avoir un transporteur autre que 'Retrait sur le stand durant le prochain marché'.");
+            if (nomTransporteur.nom === "Retrait sur le stand") {
+                console.log("Le transporteur choisi pour cette commande n'est pas compatible avec une livraison. Pour être compatible, celui ci doit avoir un transporteur autre que 'Retrait sur le stand'.");
                 return res.status(200).json({
-                    message: "Le transporteur choisi pour cette commande n'est pas compatible avec une livraison. Pour être compatible, celui ci doit avoir un transporteur autre que 'Retrait sur le stand durant le prochain marché'."
+                    message: "Le transporteur choisi pour cette commande n'est pas compatible avec une livraison. Pour être compatible, celui ci doit avoir un transporteur autre que 'Retrait sur le stand'."
                 })
             }
 
-            // ici la let commandeInDb contient une commande compatible avec une insertion dans la table livraison.
-            // Je vérifit le transporteur et stock son nom :
-            const transporteur = await Transporteur.findOne(commandeInDb.idTransporteur);
 
             const trackingNumber = req.body.numeroSuivi; //=> le numéro de suivi que l'on inserera dans les API des transporteurs !
-
 
             const theResponse = {};
             theResponse.colis = req.body.numeroSuivi;
@@ -194,7 +190,7 @@ const livraisonController = {
                         theResponse.event = statutParcel.label;
                     }
 
-                }  else {
+                } else {
                     //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifier l'état de sa commande via le site web du transporteur
                     theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
                 }
@@ -261,7 +257,7 @@ const livraisonController = {
 
                     }
 
-                }else {
+                } else {
                     //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifier l'état de sa commande via le site web du transporteur
                     theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
 
@@ -323,13 +319,13 @@ const livraisonController = {
             //! On change le statut de la commande dans la table statut_commande !
             //TODO ne plus passer les statuts par leur identifiant dans la table commande, probléme en cas de modif du fichier de seeding, prendre le nom serait préférable !
             try {
-                    const newUpdateStatut = new Commande({
+                const newUpdateStatut = new Commande({
                     idCommandeStatut: 5,
                     id: commandeInDb.id,
                 });
-                   const newStatut = await newUpdateStatut.updateStatutCommande();
+                const newStatut = await newUpdateStatut.updateStatutCommande();
 
-                    console.log("newStatut ==> ", newStatut);
+                console.log("newStatut ==> ", newStatut);
 
             } catch (error) {
                 console.log("Erreur lors de la mise a jour d'un statut de commande dans la méthode newLivraison dans le livraisonController : ", error);
@@ -427,18 +423,18 @@ const livraisonController = {
             // Depuis le front on envoie un entier qui fait référence a un transporteur, selon son id : 1,2,3, ou 4
             //  1 : DPD, 2 : TNT express, 3 : retrait sur place, 4 : La Poste (exemple)
 
-            req.session.idTransporteur = Number(req.body.idTransporteur);
+            req.session.nomTransporteur = req.body.nomTransporteur;
 
             //Je permet a l'utilisateur de laisser un commentaire sur la commande...
             req.session.commentaire = req.body.commentaire;
 
             // Concerne l'option permettant de recevoir un sms, si le client le souhaite, lorsque sa commande sera remis au transporteur.
             // on garde la donnée au chaud concernant l'envoie d'un sms et on l'enverra en BDD dans le webbhook du paiement quand on est certain de la commande et du client..
-            // n'est possible que si il y a une expédition avec une livraison, donc si req.session.idTransporteur = 3 , on ne permet pas !
+            // n'est possible que si il y a une expédition avec une livraison, donc si req.session.nomTransporteur = 'Retrait sur le stand' , on ne permet pas !
 
             //BUG 
             //! a fixer, quand champs vide, false par défault !!
-            if (req.body.sendSmsWhenShipping == 'true' && req.body.idTransporteur !== 3) {
+            if (req.body.sendSmsWhenShipping == 'true' && req.body.nomTransporteur !== 'Retrait sur le stand') {
                 req.session.sendSmsWhenShipping = true;
             } else {
                 req.session.sendSmsWhenShipping = false;
@@ -446,9 +442,9 @@ const livraisonController = {
 
             // Je met a jour le prix du panier en prenant en compte le cout du transport
 
-            const transporteurData = await Transporteur.findOne(req.session.idTransporteur);
 
-            console.log("transporteur ==> ", transporteurData);
+            const transporteurData = await Transporteur.findOneName(req.session.nomTransporteur);
+
 
             req.session.coutTransporteur = transporteurData.fraisExpedition;
 
@@ -464,7 +460,7 @@ const livraisonController = {
             }
 
 
-            console.log("req.session a la sortie du choix du transporteur ==> ", req.session);
+            //console.log("req.session a la sortie du choix du transporteur ==> ", req.session);
 
             const message = "Le choix du transporteur a bien été pris en compte."
 
@@ -632,29 +628,31 @@ const livraisonController = {
         }
     },
 
+    //! Useless...
+    /*  new: async (req, res) => {
+         try {
 
-    new: async (req, res) => {
-        try {
+             const data = {};
 
-            const data = {};
+             data.reference = req.body.reference;
+             data.numeroSuivi = req.body.numeroSuivi;
+             data.URLSuivi = req.body.URLSuivi;
+             data.poid = req.body.poid;
+             data.idClient = req.body.idClient;
+             data.idCommande = req.body.idCommande;
+             data.idTransporteur = req.body.idTransporteur;
 
-            data.reference = req.body.reference;
-            data.numeroSuivi = req.body.numeroSuivi;
-            data.URLSuivi = req.body.URLSuivi;
-            data.poid = req.body.poid;
-            data.idClient = req.body.idClient;
-            data.idCommande = req.body.idCommande;
-            data.idTransporteur = req.body.idTransporteur;
+             const newLivraison = new Livraison(data);
 
-            const newLivraison = new Livraison(data);
+             await newLivraison.save();
+             res.json(newLivraison);
+         } catch (error) {
+             console.log(`Erreur dans la méthode new du livraisonController : ${error.message}`);
+             res.status(500).end();
+         }
+     }, */
 
-            await newLivraison.save();
-            res.json(newLivraison);
-        } catch (error) {
-            console.log(`Erreur dans la méthode new du livraisonController : ${error.message}`);
-            res.status(500).end();
-        }
-    },
+
     newLigneCommande: async (req, res) => {
         try {
 

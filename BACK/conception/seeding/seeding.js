@@ -267,7 +267,7 @@ const seeding = async () => {
 
         // voir produit_image
 
-        // Si les noms des transporteurs sont changés, il faut changer le livraisonController (newLivraison), le panierController, PaiementController...
+        // Si les noms des transporteurs sont changés, il faut changer 'Retrait sur le stand' pzrtout il est présent et dans le choixLivraisonSchéma, mettre les nouveaux noms des transporteurs...
         //! TRANSPORTEUR 
 
         const transporteurs = [ 
@@ -296,7 +296,7 @@ const seeding = async () => {
         {
             frais_expedition: 0,
             logo: faker.image.business(),
-            nom_transporteur: "Retrait sur le stand durant le prochain marché",
+            nom_transporteur: "Retrait sur le stand",
             estime_arrive: "Durant le prochain marché. Nous contacter pour connaitre la date",
             estime_arrive_number: 'Prochain marché',
             description: "Une livraison de la main a la main, sur notre stand",

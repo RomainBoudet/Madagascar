@@ -33,7 +33,7 @@
         Commande N°{{refCommande}} <br>
         Statut de votre commande : {{statutCommande}} <br>
         Votre mode de livraison : {{nomTransporteur}}<br>
-        {{#compare idTransporteur "==" 3}}
+        {{#compare nomTransporteur "==" 'Retrait sur le stand'}}
         Vous avez choisi un retrait sur le marché, votre commande ne sera pas expédié.<br>
         {{else}}
         Aprés validation du paiement votre commande sera expédié à : {{adresse}} <br>

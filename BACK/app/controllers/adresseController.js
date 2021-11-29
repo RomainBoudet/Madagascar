@@ -287,7 +287,7 @@ const adresseController = {
                 });
             }
 
-            //Si l'utilisateur a déja une adresse indiqués commen adresse de facturation,  je passe a null cette adresse puisque celle qu'il vient de demander de créer sera automatiquement par défaul, sa nouvelle adresse de facturation.
+            //Si l'utilisateur a déja une adresse indiqués comme adresse de facturation,  je passe a null cette adresse puisque celle qu'il vient de demander de créer sera automatiquement par défaul, sa nouvelle adresse de facturation.
             const adresse = await Adresse.findByFacturationTrue(req.session.user.idClient);
             if (adresse && adresse.idClient !== undefined) {
 
@@ -296,6 +296,8 @@ const adresseController = {
                 });
                 await adresseToSetNull.updateFacturationNull();
             };
+
+            console.log("req.session ==>> ", req.session.user);
 
             const data = {};
 
@@ -341,7 +343,7 @@ const adresseController = {
             const newAdresse = new Adresse(data);
 
             const idClientStripe = await redis.get(`mada/clientStripe:${req.session.user.email}`);
-            console.log("newAddrresse ==> ", newAdresse);
+
             let resultatAdresse;
             let ligneAdresse;
             let custumer;

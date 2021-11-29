@@ -129,9 +129,9 @@ const factureController = {
 
             // Si retrait sur le stand, on affiche pas d'adresse de livraison !
             let adresseLivraison;
-            if (commande[0].idTransporteur === 3) {
+            if (commande[0].transporteur === 'Retrait sur le stand') {
 
-                adresseLivraison = `Vous n'avez pas choisi \n de livraison mais un retrait \n sur le stand lors du \n prochain marché.`
+                adresseLivraison = `Vous n'avez pas choisi \n de livraison mais un retrait \n sur le stand.`
 
             } else {
 

@@ -12,11 +12,11 @@ const refundClientSchema = Joi.object({
 
     commande: Joi.string()
         .required()
-        .regex(/^[0-9\.]*$/)
+        .regex(/^([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+){1}([.]{1}[0-9]+[.]{1}[0-9]+)*$/)
         .messages({
-            'any.required': `Le champs de votre référence commande ne peut être vide !`,
-            'string.empty': `Le champs de votre référence commande ne peut être vide !`,
-            'string.pattern.base': 'Le format de votre référence commande est incorrect',
+            'any.required': `Le champs de votre commande ne peut être vide !`,
+            'string.empty': `Le champs de votre commande ne peut être vide !`,
+            'string.pattern.base': 'Le format de votre commande est incorrect',
         }),
 
 

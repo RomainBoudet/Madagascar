@@ -12,7 +12,7 @@ class Transporteur {
   logo;
   createdDate;
   updatedDate;
-  
+
 
   set frais_expedition(val) {
     this.fraisExpedition = val;
@@ -30,7 +30,7 @@ class Transporteur {
     this.updatedDate = val;
   }
 
- 
+
 
   /**
    * @constructor
@@ -91,7 +91,34 @@ class Transporteur {
     return new Transporteur(rows[0]);
   }
 
-  
+  /**
+   * Méthode chargé d'aller chercher les informations relatives à un transporteur passé en paramétre
+   * @param nom - un nom d'un transporteur
+   * @returns - les informations du transporteur demandées
+   * @static - une méthode static
+   * @async - une méthode asynchrone
+   */
+  static async findOneName(nom) {
+        
+    const {
+      rows,
+    } = await db.query(
+      "SELECT * from mada.transporteur WHERE transporteur.nom LIKE $1;",
+      [nom]
+    );
+
+    if (!rows[0]) {
+      return null;
+    }
+
+    consol.model(
+      `le transporteur nommé : ${nom} a été demandé en BDD !`
+    );
+
+    return new Transporteur(rows[0]);
+  }
+
+
 
   /**
    * Méthode chargé d'aller insérer les informations relatives à un transporteur passé en paramétre
@@ -108,7 +135,7 @@ class Transporteur {
       rows,
     } = await db.query(
       `INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, estime_arrive_number, logo, created_date) VALUES ($1,$2, $3, $4, $5, now()) RETURNING *;`,
-      [this.nom, this.description, this.fraisExpedition, this.estimeArrive, this .estimeArriveNumber, this.logo]
+      [this.nom, this.description, this.fraisExpedition, this.estimeArrive, this.estimeArriveNumber, this.logo]
     );
 
     this.id = rows[0].id;
@@ -135,7 +162,7 @@ class Transporteur {
       rows,
     } = await db.query(
       `UPDATE mada.transporteur SET nom = $1, description = $2, frais_expedition = $3, estime_arrive = $4, logo = $5, estime_arrive_number = $6  updated_date = now() WHERE id = $7 RETURNING *;`,
-      [this.nom, this.description, this.fraisExpedition, this.estimeArrive, this .estimeArriveNumber, this.logo, this.id]
+      [this.nom, this.description, this.fraisExpedition, this.estimeArrive, this.estimeArriveNumber, this.logo, this.id]
     );
     this.updatedDate = rows[0].updated_date;
     console.log(

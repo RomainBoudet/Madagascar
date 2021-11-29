@@ -163,7 +163,6 @@ class Adresse {
             'SELECT * FROM mada.view_adresse WHERE id_client = $1;',
             [id]
         );
-        console.log("rows0 ==>> ", rows[0]);
         if (!rows[0]) {
             return null
         }
@@ -332,7 +331,6 @@ class Adresse {
      */
     async updateEnvoieNull() {
 
-        console.log("this.id =>", this.id);
 
         const {
             rows,
@@ -398,7 +396,6 @@ class Adresse {
             'UPDATE mada.adresse SET envoie = TRUE WHERE id  = $1 RETURNING * ;',
             [this.id]
         );
-        console.log(rows[0]);
         if (!rows[0]) {
             console.log(`Aucune adresse avec envoi TRUE n'as été passé a null pour l'adresse ${this.id}.`)
             return null;
@@ -591,7 +588,6 @@ class Adresse {
             `UPDATE mada.adresse SET titre = $1, prenom = $2, nom_famille = $3, ligne1 = $4, ligne2 = $5, ligne3 = $6, code_postal = $7, ville = $8, pays =$9, telephone = $10, envoie = $11, updated_date = now(), id_client = $12 WHERE id = $13 RETURNING *;`,
             [this.titre, this.prenom, this.nomFamille, this.ligne1, this.ligne2, this.ligne3, this.codePostal, this.ville, this.pays, this.telephone, this.envoie, this.idClient, this.id]
         );
-        console.log("rows dans le model ==>> ", rows);
 
         this.updatedDate = rows[0].updated_date;
         console.log(
@@ -638,7 +634,6 @@ class Adresse {
             `UPDATE mada.adresse SET envoie = NULL WHERE id = $1 RETURNING *;`,
             [this.id]
         );
-        console.log('rows ==>> ', rows);
         this.envoie = rows[0].envoie;
         console.log(
             `La valeur envoie de l'Adresse id : ${this.id} a été passé a ${this.envoie} avec succés !`
@@ -685,7 +680,6 @@ class Adresse {
             `UPDATE mada.adresse SET facturation = NULL WHERE id = $1 RETURNING *;`,
             [this.id]
         );
-        console.log('rows ==>> ', rows);
         this.facturation = rows[0].facturation;
         console.log(
             `La valeur facturation de l'adresse id : ${this.id} a été passé a ${this.facturation} avec succés !`

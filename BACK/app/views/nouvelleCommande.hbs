@@ -51,7 +51,7 @@
         Date de la commande : {{dateAchat}} <br>
         Délai de livraison estimé : {{delai}} <br>
 
-        {{#compare idTransporteur "==" 3}}
+        {{#compare nomTransporteur "==" 'Retrait sur le stand'}}
         Un retrait sur un marché a été choisi, la commande ne devra pas être expédié.<br>
         {{else}}
         La commande est a expédié à : {{adresse}} <br>

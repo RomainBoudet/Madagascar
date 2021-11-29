@@ -11,7 +11,7 @@ const Joi = require('joi');
  * @return {json} messages - Un texte adapté a l'érreur en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
 const refundSchema = Joi.object({
-    email: Joi.string()
+    /* email: Joi.string()
         .max(200)
         .pattern(new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
         .messages({
@@ -31,20 +31,19 @@ const refundSchema = Joi.object({
             'any.required': 'Le champs de votre idClient ne peut être vide !',
             'number.positive': 'Le champs de  idClient code doit être un chiffre positif !',
 
-        }),
+        }), */
 
     commande: Joi.string()
         .required()
-        .regex(/^[0-9\.]*$/)
+        .regex(/^([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+){1}([.]{1}[0-9]+[.]{1}[0-9]+)*$/)
         .messages({
-            'any.required': `Le champs de votre référence commande ne peut être vide !`,
-            'string.empty': `Le champs de votre référence commande ne peut être vide !`,
-            'string.pattern.base': 'Le format de votre référence commande est incorrect',
+            'any.required': `Le champs de votre commande ne peut être vide !`,
+            'string.empty': `Le champs de votre commande ne peut être vide !`,
+            'string.pattern.base': 'Le format de votre commande est incorrect',
         }),
 
     montant: Joi.number()
         .positive()
-        .required()
         .messages({
             'any.number': 'Le champs de votre montant doit être un chiffre !',
             'number.empty': 'Le champs de votre montant doit être un chiffre !',
@@ -55,6 +54,7 @@ const refundSchema = Joi.object({
 
 
 
-}).xor('email', 'idClient');
+});
+//}).xor('email', 'idClient');
 
 module.exports = refundSchema;

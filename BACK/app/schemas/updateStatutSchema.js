@@ -44,7 +44,7 @@ const updateStatutSchema = Joi.object({
             'any.required': 'Le champs de votre statut ne peut être vide !',
             'string.pattern.base': 'Le format de votre commentaire est incorrect : Il ne doit pas être composé d\'un de ces caractéres spéciaux : [<>@_&#=+*/"|]',
         }),
-        // Avec ce schéma ci-dessous (.valid()), on ne laisse plus s'exprimer l'API avec la distance de Leven
+        // Avec ce schéma ci-dessous (.valid()), on ne laisse plus s'exprimer l'API avec la distance de Levenshtein
         /* Joi.any().valid('Paiement validé', 'En cours de préparation', 'Prêt pour expédition' )
         .required().messages({
             'any.only': ` Seul les commandes avec comme statut :'Paiement validé', 'En cours de préparation'et 'Prêt pour expédition' peuvent être mise a jour. Pour passer au statut 'Expédié', vous devez utiliser la route dédié : admin/livraison/new`,

@@ -62,9 +62,8 @@
         Information complémentaire sur la livraison que le client souhaiterais annuler : <br>
         <br>
         Transporteur: {{transporteur}} <br>
-        adresse d'envoie: {{adresse}} <br>
         Le client a-t-il choisi l'envoie d'un sms lorsque le colis sera expédié : {{#compare sms "==" 'true'}} Oui ! {{else}} non. {{/compare}} <br>
-        {{#compare idTransporteur "==" 3}}
+        {{#compare transporteur "==" 'Retrait sur le stand'}}
         Un retrait sur un marché a été choisi, la commande ne devra pas être expédié.<br>
         {{else}}
         Commande devant être expédié à : {{adresse}} <br>

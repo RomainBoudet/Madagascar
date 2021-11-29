@@ -9,8 +9,8 @@ const fs = require('fs');
 const {
     promisify
 } = require('util');
-const mkdirAsync = promisify(fs.mkdir);
-const createWriteStreamAsync = promisify(fs.createWriteStream);
+//const mkdirAsync = promisify(fs.mkdir);
+//const createWriteStreamAsync = promisify(fs.createWriteStream);
 const PdfPrinter = require('pdfmake');
 const path = require('path');
 
@@ -44,6 +44,46 @@ const facture = async (idCommande) => {
             return console.trace('Erreur dans la méthode facture du factureController :',
                 error);
         }
+
+        /* Commande {
+    id: 3,
+    reference: '2.7205.29112021111252.101.1',
+    dateAchat: 2021-11-29T10:12:52.169Z,
+    commentaire: null,
+    sendSmsShipping: false,
+    updatedDate: null,
+    idCommandeStatut: 2,
+    idClient: 2,
+    idTransporteur: 3,
+    produit_nom: 'Practical Fresh Shirt',
+    couleur: 'vert',
+    taille: 'L',
+    montant: 7205,
+    moyenPaiement: 'Carte bancaire',
+    moyenPaiementDetail: 'visa credit',
+    quantite_commande: 1,
+    id_produit: 101,
+    prix_ht: 9400,
+    taux: 0.05,
+    reduction: 0.27,
+    idclient: 2,
+    client_nom: 'Gustave',
+    client_prenom: 'leon',
+    email: 'romain@boudet.me',
+    adresse_prenom: 'Leo',
+    adresse_nomfamille: 'Alfred',
+    adresse1: 'Rue de la lentille',
+    adresse2: null,
+    adresse3: null,
+    codepostal: 85000,
+    ville: 'Caen',
+    pays: 'FRANCE',
+    telephone: '+33603720612',
+    transporteur: 'Retrait sur le stand',
+    frais_expedition: 0
+  }
+] */
+
         //console.log('commande ==', commande);
         if (commande === null || commande === undefined || commande === []) {
             return console.log('Aucune commande n\'existe pour cet identifiant de commande, dommage.. !');
@@ -56,7 +96,6 @@ const facture = async (idCommande) => {
             return console.trace('Erreur dans la méthode facture du factureController :',
                 error);
         }
-        //console.log(shop);
 
 
         const nomFacture = `${commande[0].client_nom}_${commande[0].client_prenom}__${commande[0].reference}`;
@@ -109,7 +148,7 @@ const facture = async (idCommande) => {
         const totalTTC = totalHT + totalTax;
 
         let adresseLivraison;
-        if (commande[0].idTransporteur === 3) {
+        if (commande[0].transporteur === 'Retrait sur le stand') {
 
             adresseLivraison = `Vous n'avez pas choisi \n de livraison mais un retrait \n sur le stand lors du \n prochain marché.`
 
@@ -654,10 +693,11 @@ const facture = async (idCommande) => {
             // ...
         }
 
+
         const pdfDoc = printer.createPdfKitDocument(docDefinition);
 
         try {
-            pdfDoc.pipe(await createWriteStreamAsync(`Factures/client:_${emailWithoutSlash}/${nomFacture}.pdf`));
+            pdfDoc.pipe( fs.createWriteStream(`Factures/client:_${emailWithoutSlash}/${nomFacture}.pdf`));
 
         } catch (error) {
             console.trace("Erreur dans le service facture, lors de l'appel de createWriteStreamAsync ", error);

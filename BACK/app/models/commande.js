@@ -543,6 +543,7 @@ class Commande {
             `UPDATE mada.commande SET updated_date=now(), id_commandeStatut = $1  WHERE id = $2 RETURNING *;`,
             [this.idCommandeStatut, this.id]
         );
+        
         this.updatedDate = rows[0].updated_date;
         console.log(
             `la commande id ${this.id} avec le statut ${this.idCommandeStatut} a été mise à jour le ${this.updatedDate} !`

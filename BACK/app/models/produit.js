@@ -72,7 +72,7 @@ class Produit {
         } = await db.query('SELECT * FROM mada.view_produit_plus');
 
         if (!rows[0]) {
-            null;
+          return  null;
         }
         consol.model(
             `les informations des ${rows.length} produits ont été demandées !`
@@ -99,9 +99,8 @@ class Produit {
             [id]
         );
 
-
-        if (!rows[0] || rows[0].id === undefined) {
-            null;
+        if (!rows[0] || rows[0] === undefined) {
+            return null;
         }
 
 
@@ -132,7 +131,7 @@ class Produit {
 
 
         if (!rows[0]) {
-            null;
+          return  null;
         }
         consol.model(
             `le produit id : ${id} a été demandé en BDD !`
@@ -192,7 +191,7 @@ class Produit {
         );
 
         if (!rows[0]) {
-            null;
+           return null;
         }
         consol.model(
             `la produit pour le idClient : ${idCategorie} a été demandé en BDD !`

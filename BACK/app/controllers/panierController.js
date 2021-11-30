@@ -345,10 +345,18 @@ const panierController = {
             const articleId = parseInt(req.params.id, 10);
             // Je vérifie qu'il est en stock pour pouvoir l'ajouter au panier
             const monArticle = await Produit.findOne(articleId);
-            console.log("monArticle juste apres ==>> ", monArticle);
+
+            console.log("monArticle dans le panierController ligne 349 ==>> ", monArticle);
+
+
+            if(monArticle === null || monArticle.id === undefined ) {
+                return res.status(200).json({
+                    message: "Cet article n'existe pas !"
+                });
+            }
 
             if (monArticle.stock < 1) {
-                return res.json({
+                return res.status(200).json({
                     message: "Cet article n'est plus disponible !"
                 });
             };

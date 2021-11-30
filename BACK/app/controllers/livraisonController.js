@@ -476,7 +476,9 @@ const livraisonController = {
 
             const transporteurData = await Transporteur.findOneName(req.session.nomTransporteur);
 
-
+            //TODO Calcul des Frais trasnporteur selon le poid total et le nom du transporteur !
+            // Au travers la création d'un nouveau service !
+            
             req.session.coutTransporteur = transporteurData.fraisExpedition;
 
             // Je remet a jour le total dans le panier.

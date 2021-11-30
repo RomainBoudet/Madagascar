@@ -8,6 +8,7 @@ class Produit {
     description;
     prixHT;
     imageMini;
+    poid;
     createdDate;
     updatedDate;
     idCategorie;
@@ -206,6 +207,7 @@ class Produit {
      * @param description - la description d'un produit, 
      * @param prixHT - le prix HT d'un produit,
      * @param imageMini - une image destiné au panier en petit format
+     * @param poid - Le poid d'un article en gramme
      * @param idCategorie - l'identifiant d'une catégorie lié à un produit
      * @param idTVA - l'identifiant d' une TVA lié a un produit
      * @param idReduction - l'identifiant d'une reduction
@@ -217,8 +219,8 @@ class Produit {
         const {
             rows,
         } = await db.query(
-            `INSERT INTO mada.produit (nom, description, prix_HT, image_mini, created_date, id_categorie, id_TVA, id_reduction) VALUES ($1, $2, $3, $4, now(), $5, $6, $7) RETURNING *;`,
-            [this.nom, this.description, this.prixHT, this.imageMini, this.idCategorie, this.idTVA, this.idReduction]
+            `INSERT INTO mada.produit (nom, description, prix_HT, image_mini, poid, created_date, id_categorie, id_TVA, id_reduction) VALUES ($1, $2, $3, $4, $5, now(), $6, $7, $8) RETURNING *;`,
+            [this.nom, this.description, this.prixHT, this.imageMini, this.poid, this.idCategorie, this.idTVA, this.idReduction]
         );
 
         this.id = rows[0].id;
@@ -247,8 +249,8 @@ class Produit {
         const {
             rows,
         } = await db.query(
-            `UPDATE mada.produit SET nom = $1, description = $2, updated_date = now(), prix_HT = $3, image_mini = $4, id_categorie = $5, id_TVA = $6, id_reduction = $7  WHERE id = $8 RETURNING *;`,
-            [this.nom, this.description, this.prixHT, this.imageMini, this.idCategorie, this.idTVA, this.idReduction, this.id]
+            `UPDATE mada.produit SET nom = $1, description = $2, updated_date = now(), prix_HT = $3, image_mini = $4, poid = $5, id_categorie = $6, id_TVA = $7, id_reduction = $8  WHERE id = $9 RETURNING *;`,
+            [this.nom, this.description, this.prixHT, this.imageMini, this.poid, this.idCategorie, this.idTVA, this.idReduction, this.id]
         );
         this.updatedDate = rows[0].updated_date;
         console.log(

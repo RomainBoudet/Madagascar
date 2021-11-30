@@ -269,6 +269,8 @@ const panierController = {
                 const totalHT = req.session.totalHT;
                 const totalTTC = req.session.totalTTC;
                 const totalTVA = req.session.totalTVA;
+                const totalPoid = req.session.totalPoid;
+
 
 
                 // si dans la session, un transporteur existe, ou un coupon de reduction existe, on applique sa valeur, sinon on ignore
@@ -297,9 +299,6 @@ const panierController = {
 
                 const totalAPayer = req.session.totalStripe;
 
-                console.log("req.session a la sortie du getPanier ==> ", req.session);
-
-
                 if (req.session.coutTransporteur !== null && req.session.coutTransporteur !== undefined) {
                     const coutTransporteur = req.session.coutTransporteur;
                     // On renvoit les infos calculés au front avec les cout du transport !
@@ -307,6 +306,7 @@ const panierController = {
                         totalHT,
                         totalTTC,
                         totalTVA,
+                        totalPoid,
                         coutTransporteur,
                         cart,
                         totalAPayer,
@@ -318,6 +318,7 @@ const panierController = {
                         totalHT,
                         totalTTC,
                         totalTVA,
+                        totalPoid,
                         cart,
                         totalAPayer,
                     });
@@ -346,9 +347,6 @@ const panierController = {
             // Je vérifie qu'il est en stock pour pouvoir l'ajouter au panier
             const monArticle = await Produit.findOne(articleId);
 
-            console.log("monArticle dans le panierController ligne 349 ==>> ", monArticle);
-
-
             if(monArticle === null || monArticle.id === undefined ) {
                 return res.status(200).json({
                     message: "Cet article n'existe pas !"
@@ -361,7 +359,7 @@ const panierController = {
                 });
             };
 
-            //je verifie qu'il existe
+            //je verifie que mon panier existe
             if (!req.session.cart) {
                 req.session.cart = [];
             }
@@ -441,16 +439,23 @@ const panierController = {
                         return (accumulator || 0) + ((item.prixHTAvecReduc * (item.tva)) * item.quantite)
                     }, 0
                 );
+                const totalPoid = cart.reduce(
+                    (accumulator, item) => {
+                        return (accumulator || 0) + (item.poid * item.quantite)
+                    }, 0
+                );
 
                 // pour que mes valeur dans le json soit bien des chiffres ne dépassant pas deux chiffres aprés la virgule.
                 const totalHT = Math.round(arrondi(totalHT1));
                 const totalTTC = Math.round(arrondi(totalTTC1));
                 const totalTVA = Math.round(arrondi(totalTVA1));
+               // const totalPoid =  // le total des multiplications => poid d'un article x qté de cet article
 
                 //Je les stock en session au cas ou j'en ai besoin plus tard.
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
+                req.session.totalPoid = totalPoid;
 
 
                 // si dans la session, un transporteur existe, ou un coupon de reduction existe, on applique sa valeur, sinon on ignore
@@ -487,6 +492,7 @@ const panierController = {
                         totalHT,
                         totalTTC,
                         totalTVA,
+                        totalPoid,
                         coutTransporteur,
                         cart,
                         totalAPayer,
@@ -498,6 +504,7 @@ const panierController = {
                         totalHT,
                         totalTTC,
                         totalTVA,
+                        totalPoid,
                         cart,
                         totalAPayer,
                     });
@@ -535,6 +542,7 @@ const panierController = {
 
             if (monArticle) {
                 monArticle.quantite--;
+
             }
 
             // Je fais le ménage et ne garde que les items dont la quantité est superieur à 0
@@ -586,6 +594,11 @@ const panierController = {
                         return (accumulator || 0) + ((item.prixHTAvecReduc * (item.tva)) * item.quantite)
                     }, 0
                 );
+                const totalPoid = cart.reduce(
+                    (accumulator, item) => {
+                        return (accumulator || 0) + (item.poid * item.quantite)
+                    }, 0
+                );
 
                 // pour que mes valeur dans le json soit bien des chiffres ne dépassant pas deux chiffres aprés la virgule.
                 const totalHT = Math.round(arrondi(totalHT1));
@@ -596,6 +609,8 @@ const panierController = {
                 req.session.totalHT = totalHT;
                 req.session.totalTTC = totalTTC;
                 req.session.totalTVA = totalTVA;
+                req.session.totalPoid = totalPoid;
+
 
 
                 // si dans la session, un transporteur existe, ou un coupon de reduction existe, on applique sa valeur, sinon on ignore
@@ -633,6 +648,7 @@ const panierController = {
                         totalHT,
                         totalTTC,
                         totalTVA,
+                        totalPoid,
                         coutTransporteur,
                         cart,
                         totalAPayer,
@@ -644,6 +660,7 @@ const panierController = {
                         totalHT,
                         totalTTC,
                         totalTVA,
+                        totalPoid,
                         cart,
                         totalAPayer,
                     });

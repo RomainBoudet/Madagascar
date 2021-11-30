@@ -781,7 +781,6 @@ const factureRefund = async (idCommande) => {
         const arrayTotalTax = [];
         commande.map(article => (arrayTotalPrixAvecReduc.push(article.prixHTAvecReduc * article.quantite_commande), arrayTotalTax.push(article.montantTax * article.quantite_commande)));
         const accumulator = (previousValue, currentValue) => previousValue + currentValue;
-        console.log(commande);
 
         const totalProduit = (arrayTotalPrixAvecReduc.reduce(accumulator)) / 100;
         const fraisExpedition = commande[0].frais_expedition / 100;
@@ -790,7 +789,7 @@ const factureRefund = async (idCommande) => {
         const totalTTC = totalHT + totalTax;
 
         let adresseLivraison;
-        if (commande[0].idTransporteur === 3) {
+        if (commande[0].transporteur === 'Retrait sur le stand') {
 
             adresseLivraison = `Vous n'avez pas choisi \n de livraison mais un retrait \n sur le stand lors du \n prochain marché.`
 

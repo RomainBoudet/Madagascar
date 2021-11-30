@@ -23,13 +23,6 @@ const authController = {
 
         try {
 
-            if (request.session.user !== undefined && request.signedCookies.xsrfToken!== undefined && request.signedCookies.xsrfToken === request.headers['x-xsrf-token']) {
-                return response.status(200).json({
-                    message: "Vous vous êtes déja authentifié et vos informations de connection sont toujours valide.",
-                    token: `${request.headers['x-xsrf-token']}`,
-                });
-            }
-
             const {
                 email,
                 password

@@ -6,8 +6,8 @@ const Joi = require('joi');
  * Valide les informations reçu dans le body et envoyé par les clients
  * @name refundSchema 
  * @group Joi - Vérifie les informations du body
- * @property {string} email - l'email qu'un client utilise pour se connecter, ne doit pas être identique a un autre email. 
- * @property {string} password - le mot de passe d'un utilisateur, doit avoir 8 caractéres au minimum, une lettre minuscule, une lettre majuscule, un nombre et un caractéres spécial parmis : (@#$%^&*)
+ * @property {string} commande - Une référence de commande que l'on souhaite rembourser 
+ * @property {number} montant - Le montant de la commande que l'on souhaite rembourser. Si absent, la commande sera remboursé dans son intégralité !
  * @return {json} messages - Un texte adapté a l'érreur en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
 const refundSchema = Joi.object({

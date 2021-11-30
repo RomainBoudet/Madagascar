@@ -56,6 +56,7 @@ const commandeController = {
             // ici je n'autorise que certain statut a être updaté ! 
             // les statuts : 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 
             // le statut Expédié n'est pas traité ici, une route dédié lui est attribué pour une insertion des données dans la table livraison sur la route /admin/livraison/new
+            let info ={}; 
 
 
             if (req.session.user.privilege === 'Client') {
@@ -297,11 +298,11 @@ const commandeController = {
                 }
                 // j'avertit l'admin si sa mise a jour ne suit pas un ordre logique... si il a sauté des étapes..
                 // simple avertissement, on ne "return" pas !
+
                 if (Number(req.body.statut) !== (commandeInDb.idCommandeStatut + 1)) {
                     console.log("Votre mise a jour de statut ne suit pas l'ordre logique... ")
-                    res.status(200).json({
-                        message: `Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de ${commandeInDb.idCommandeStatut} à ${req.body.statut}  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`
-                    })
+                    info.avertissement = `Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de '${commandeInDb.statut}' à '${req.body.statut}'  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`;
+
                 }
 
 
@@ -365,11 +366,9 @@ const commandeController = {
                 const indexStatutCommande = arrayStatut.findIndex(isStatut2);
 
                 if (indexStatut !== (indexStatutCommande + 1)) {
-                    console.log("commandeInDb.statut == ", commandeInDb.statut);
                     console.log("Votre mise a jour de statut ne suit pas l'ordre logique... ")
-                    res.status(200).json({
-                        message: `Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de '${commandeInDb.statut}' à '${req.body.statut}'  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`
-                    })
+                    
+                    info.avertissement = `Votre mise a jour de statut ne suit pas l'ordre logique... vous êtes passé de '${commandeInDb.statut}' à '${req.body.statut}'  (RAPPEL: 1 = En attente, 2 = Paiement validé, 3 = En cours de préparation, 4 = Prêt pour expédition, 5 = Expédiée, 6 = Remboursée, 7 = Annulée)`;
                 }
 
 
@@ -385,8 +384,8 @@ const commandeController = {
                 })
             }
 
-            console.log("statutInDb  == ", statutInDb);
-            console.log("commandeInDb  == ", commandeInDb);
+            //console.log("statutInDb  == ", statutInDb);
+            //console.log("commandeInDb  == ", commandeInDb);
 
             // j'insére cet update en BDD !
             const data = {
@@ -397,14 +396,15 @@ const commandeController = {
             const newUpdate = new Commande(data);
             const updateDone = await newUpdate.updateStatutCommande();
 
-            console.log("updateDone == ", updateDone);
+            //console.log("updateDone == ", updateDone);
 
+            info.message = 'La commande a bien été mise à jour !'
+            res.status(200).json(info);
 
-            res.status(200).end();
         } catch (error) {
             console.trace('Erreur dans la méthode  updateStatut du commandeController :',
                 error);
-            res.status(500).end();
+           return res.status(500).end();
         }
     },
 

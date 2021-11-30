@@ -272,8 +272,8 @@ const adresseController = {
             res.status(500).end();
         }
     },
-
-
+    // A utiiser pour fiabiliser les adresses !
+    //https://developer.laposte.fr/products/controladresse/1/documentation#heading-0 
     newAdresse: async (req, res) => {
         try {
 
@@ -296,8 +296,6 @@ const adresseController = {
                 });
                 await adresseToSetNull.updateFacturationNull();
             };
-
-            console.log("req.session ==>> ", req.session.user);
 
             const data = {};
 
@@ -439,7 +437,6 @@ const adresseController = {
 
             res.status(200).json(resultatsToSend);
         } catch (error) {
-            console.trace(error);
             console.log(`Erreur dans la méthode newAdresse du adresseController: ${error}`);
             res.status(500).end();
         }

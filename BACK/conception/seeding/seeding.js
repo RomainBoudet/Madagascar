@@ -9,17 +9,17 @@ const chalk = require('chalk');
  * @param cmd {string}
  * @return {Promise<string>}
  */
- function execShellCommand(cmd) {
+function execShellCommand(cmd) {
     const exec = require('child_process').exec;
     return new Promise((resolve, reject) => {
-     exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-       console.warn(chalk.bold.red `${error}`);
-      }
-      resolve(stdout? console.log(chalk.bold.green `${stdout}`) : stderr);
-     });
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+                console.warn(chalk.bold.red `${error}`);
+            }
+            resolve(stdout ? console.log(chalk.bold.green `${stdout}`) : stderr);
+        });
     });
-   }
+}
 
 
 const redis = require('../../app/services/redis');
@@ -45,7 +45,7 @@ const seeding = async () => {
         // permet de modifier le script SQL en même temps qu'on réalise le fichier de seeding et de toujours avoir la derniére version du script
         // (on aurait également pu lancer la commande dans le package.json en même temps que le démarrage 'npm run seed'... )
         consol.seed("Début dropdb - createdb");
-       await execShellCommand("dropdb --if-exists madagascar && createdb madagascar && cd .. && cd data && psql madagascar -f script_postgres.sql")
+        await execShellCommand("dropdb --if-exists madagascar && createdb madagascar && cd .. && cd data && psql madagascar -f script_postgres.sql")
 
         // Mettre en place l'option WITH (FORCE) pour supprimer même si la DB est ouvert dans  PGAdmin... les données de la DB sont bien changé sans devoir fermer PG Admin !(?)
 
@@ -94,7 +94,7 @@ const seeding = async () => {
         consol.seed(`Fin de la génération de TVA`);
 
 
-        
+
 
         //! PRODUIT 
 
@@ -113,7 +113,7 @@ const seeding = async () => {
 
                 name: faker.commerce.productName(),
                 description: faker.commerce.productDescription(),
-                price: Math.floor(faker.commerce.price(10, 100) *100 ),
+                price: Math.floor(faker.commerce.price(10, 100) * 100),
                 color: colors[Math.floor(Math.random() * colors.length)], //faker.internet.color => hex
                 size: sizes[Math.floor(Math.random() * sizes.length)],
                 quantity: Math.floor(Math.random() * (10 - 1 + 1)) + 1, // un random entre 1 et 10\u{002A}\u{FE0F}\u{20E3}
@@ -209,10 +209,10 @@ const seeding = async () => {
         }, {
             nom: 'Expédiée',
             description: "La commande a remis au transporteur. Vous avez dû recevoir un email contenant le numéro de tracking vous permettant de suivre l'acheminement de votre colis. Ce numéro de tracking est également accessible dans votre compte client dans la rubrique Mes commandes / Onglet Expéditions"
-        },{
+        }, {
             nom: 'Remboursée',
             description: "La commande a été remboursé. Vous avez dû recevoir un email confirmant ce remboursement"
-        },{
+        }, {
             nom: 'Annulée',
             description: "Vous avez choisi d'annuler votre commande ou avez demandé à notre service client de l'annuler ? Vous serez remboursé du montant que vous avez réglé sur le moyen de paiement utilisé.Vous n'avez pas choisi d'annuler votre commande ? Ce statut indique que le paiement en ligne n’a pas abouti (paiement rejeté, coordonnées bancaires non renseignées dans le délai imparti …) Cette commande ne sera pas préparée, vous pouvez faire une nouvelle tentative."
 
@@ -232,7 +232,7 @@ const seeding = async () => {
         consol.seed(`Fin de la génération de fake statut_commandes`);
 
 
-        
+
         //! REDUCTION
 
 
@@ -270,67 +270,66 @@ const seeding = async () => {
         // Si les noms des transporteurs sont changés, il faut changer 'Retrait sur le stand' pzrtout il est présent et dans le choixLivraisonSchéma, mettre les nouveaux noms des transporteurs...
         //! TRANSPORTEUR 
 
-        const transporteurs = [ 
-         {
-            frais_expedition: Math.floor(12.00*100),
-            logo: faker.image.business(),
-            nom_transporteur: "La poste Collisimmo",
-            estime_arrive: "Livraison dans les 48h a 72h",
-            estime_arrive_number: 3,
-            description: "Le service colis de La Poste",
-            poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-            numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-            URL_suivi: faker.internet.url(),
-        },
-        {
-            frais_expedition: Math.floor(13.00*100),
-            logo: faker.image.business(),
-            nom_transporteur: "Chronopost - Chrono Relais 13",
-            estime_arrive: "Chrono Relais 13",
-            estime_arrive_number: 1,
-            description: "Livraison Chronopost - Livraison avant 13h dans l'un des 15000 points relais et consignes Pickup.",
-            poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-            numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-            URL_suivi: faker.internet.url(),
-        },
-        {
-            frais_expedition: 0,
-            logo: faker.image.business(),
-            nom_transporteur: "Retrait sur le stand",
-            estime_arrive: "Durant le prochain marché. Nous contacter pour connaitre la date",
-            estime_arrive_number: 'Prochain marché',
-            description: "Une livraison de la main a la main, sur notre stand",
-            poid: Math.floor((Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-            numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-            URL_suivi: faker.internet.url(),
-        },
-        {
-            frais_expedition: Math.floor(26.00*100),
-            logo: faker.image.business(),
-            nom_transporteur: "Chronopost - Chrono13",
-            estime_arrive: "Chrono13 - Livraison le lendemain avant 13h, colis livrés en matinée partout en France.",
-            estime_arrive_number: 1,
-            description: "Livraison Chronopost - Livraison en matinée partout en France, remise contre signature.",
-            poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-            numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-            URL_suivi: faker.internet.url(),
-        },
-        {
-            frais_expedition: Math.floor(12.00*100),
-            logo: faker.image.business(),
-            nom_transporteur: "DHL",
-            estime_arrive: "Livraison entre 1 et 3 jours",
-            estime_arrive_number: 3,
-            description: "DHL solution logistique",
-            poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2)*100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-            numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-            URL_suivi: faker.internet.url(),
-        }
+        const transporteurs = [{
+                frais_expedition: 0,
+                logo: faker.image.business(),
+                nom_transporteur: "Retrait sur le stand",
+                estime_arrive: "Durant le prochain marché. Nous contacter pour connaitre la date",
+                estime_arrive_number: 'Prochain marché',
+                description: "Une livraison de la main a la main, sur notre stand",
+                poid: Math.floor((Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
+                URL_suivi: faker.internet.url(),
+            },
+            {
+                frais_expedition: Math.floor(12.00 * 100),
+                logo: faker.image.business(),
+                nom_transporteur: "La poste Collisimmo",
+                estime_arrive: "Livraison dans les 48h a 72h",
+                estime_arrive_number: 3,
+                description: "Le service colis de La Poste",
+                poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
+                URL_suivi: faker.internet.url(),
+            },
+            {
+                frais_expedition: Math.floor(13.00 * 100),
+                logo: faker.image.business(),
+                nom_transporteur: "Chronopost - Chrono Relais 13",
+                estime_arrive: "Chrono Relais 13",
+                estime_arrive_number: 1,
+                description: "Livraison Chronopost - Livraison avant 13h dans l'un des 15000 points relais et consignes Pickup.",
+                poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
+                URL_suivi: faker.internet.url(),
+            },
+            {
+                frais_expedition: Math.floor(26.00 * 100),
+                logo: faker.image.business(),
+                nom_transporteur: "Chronopost - Chrono13",
+                estime_arrive: "Chrono13 - Livraison le lendemain avant 13h, colis livrés en matinée partout en France.",
+                estime_arrive_number: 1,
+                description: "Livraison Chronopost - Livraison en matinée partout en France, remise contre signature.",
+                poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
+                URL_suivi: faker.internet.url(),
+            },
+            {
+                frais_expedition: Math.floor(12.00 * 100),
+                logo: faker.image.business(),
+                nom_transporteur: "DHL",
+                estime_arrive: "Livraison entre 1 et 3 jours",
+                estime_arrive_number: 3,
+                description: "DHL solution logistique",
+                poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
+                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
+                URL_suivi: faker.internet.url(),
+            }
 
-    ];
+        ];
 
 
-       
+
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!IMPORT DES DONNEES EN BDD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // on a générer des fausses des données, ne reste plus qu'a les importer dans la BDD (dans le bon ordre).
@@ -554,11 +553,11 @@ const seeding = async () => {
         }
 
         consol.seed(`Fin de l'import de ${image_produits.slice(0,33).length} images de sous-categories`);
-        console.timeEnd(`Import de ${image_produits.slice(0,33).length} images de sous-categories`);                      
+        console.timeEnd(`Import de ${image_produits.slice(0,33).length} images de sous-categories`);
 
 
 
-//FLAG                                                                                                                                                                           
+        //FLAG                                                                                                                                                                           
 
 
         //! Mise en place d'un client avec des droits admin.
@@ -588,7 +587,7 @@ const seeding = async () => {
 
         const arraycodeErreur = ["authentication_required", "approve_with_id", "call_issuer", "card_not_supported", "card_velocity_exceeded", "currency_not_supported", "do_not_honor", "do_not_try_again", "duplicate_transaction", "expired_card", "fraudulent", "incorrect_number", "incorrect_cvc", "insufficient_funds", "incorrect_zip", "invalid_amount", "invalid_cvc", "invalid_account", "invalid_expiry_month", "invalid_expiry_year", "invalid_number", "issuer_not_available", "lost_card", "merchant_blacklist", "new_account_information_available", "no_action_taken", "not_permitted", "offline_pin_required", "online_or_offline_pin_required", "pickup_card", "pin_try_exceeded", "processing_error", "reenter_transaction", "restricted_card", "revocation_of_all_authorizations", "revocation_of_authorization", "security_violation", "service_not_allowed", "stolen_card", "stop_payment_order", "testmode_decline", "transaction_not_allowed", "try_again_later", "withdrawal_count_limit_exceeded", "generic_decline", "card_declined", "requested_block_on_incorrect_cvc"];
 
-        const infoErreur = ["Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a été refusée, car la transaction nécessite une authentification. Essayer de relancer le paiement et d'authentifier votre carte bancaire lorsque vous y serez invité. Si vous recevez ce code de refus de paiement aprés une transaction authentifiée, contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible d’autoriser le paiement. Vous pouvez retenter le paiement. S’il ne peut toujours pas être traité, vous pouvez contacter votre banque.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Ce type d’achat n’est pas pris en charge par cette carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Vous avez dépassé le solde ou la limite de crédit disponible sur sa carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La devise spécifiée n’est pas prise en charge par cette carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une transaction du même montant avec les mêmes informations de carte bancaire a été soumise tout récemment. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a expiré. Merci d'utiliser une autre carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé car il a été identifié comme potentiellement frauduleux. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire ne dispose pas de fonds suffisants pour effectuer l’achat. Merci d'utiliser un autre moyen de paiement.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code postal est erroné. Merci de réessayer avec le bon code postal.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le montant du paiement n’est pas valide ou dépasse le montant autorisé par l’émetteur de la carte . Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le mois d’expiration n’est pas valide. Merci de réessayer avec la bonne date d’expiration.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. L’année d’expiration n’est pas valide. Merci de réessayer avec la bonne date d’expiration.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible de joindre l’émetteur de la carte, donc d’autoriser le paiement.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée perdue.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’est pas autorisé. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le nombre de tentatives autorisées de saisie du code PIN a été dépassé.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une erreur s’est produite lors du traitement de la carte bancaire. Vous pouvez retenter le paiement. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’a pas pu être traité par l’émetteur de la carte pour une raison inconnue. Vous pouvez retenter le paiement. ", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée volée.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte utilisée est une carte de test. Utilisez une véritable carte bancaire pour effectuer le paiement", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de retenter le paiement", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Vous avez dépassé le solde ou la limite de crédit disponible sur votre carte bancaire. Merci d'utiliser un autre moyen de paiement", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC." ];
+        const infoErreur = ["Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a été refusée, car la transaction nécessite une authentification. Essayer de relancer le paiement et d'authentifier votre carte bancaire lorsque vous y serez invité. Si vous recevez ce code de refus de paiement aprés une transaction authentifiée, contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible d’autoriser le paiement. Vous pouvez retenter le paiement. S’il ne peut toujours pas être traité, vous pouvez contacter votre banque.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Ce type d’achat n’est pas pris en charge par cette carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Vous avez dépassé le solde ou la limite de crédit disponible sur sa carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La devise spécifiée n’est pas prise en charge par cette carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une transaction du même montant avec les mêmes informations de carte bancaire a été soumise tout récemment. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire a expiré. Merci d'utiliser une autre carte bancaire. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé car il a été identifié comme potentiellement frauduleux. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire ne dispose pas de fonds suffisants pour effectuer l’achat. Merci d'utiliser un autre moyen de paiement.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code postal est erroné. Merci de réessayer avec le bon code postal.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le montant du paiement n’est pas valide ou dépasse le montant autorisé par l’émetteur de la carte . Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le mois d’expiration n’est pas valide. Merci de réessayer avec la bonne date d’expiration.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. L’année d’expiration n’est pas valide. Merci de réessayer avec la bonne date d’expiration.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le numéro de carte bancaire est erroné. Merci de réessayer avec le bon numéro de carte bancaire.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Il n’est pas possible de joindre l’émetteur de la carte, donc d’autoriser le paiement.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée perdue.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte bancaire, ou le compte auquel elle est connectée, n’est pas valide. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’est pas autorisé. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée, car un code PIN est requis. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le nombre de tentatives autorisées de saisie du code PIN a été dépassé.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Une erreur s’est produite lors du traitement de la carte bancaire. Vous pouvez retenter le paiement. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement n’a pas pu être traité par l’émetteur de la carte pour une raison inconnue. Vous pouvez retenter le paiement. ", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte ne peut pas être utilisée pour effectuer ce paiement (il est possible qu’elle ait été déclarée perdue ou volée). Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le paiement a été refusé, car la carte bancaire a été déclarée volée.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte utilisée est une carte de test. Utilisez une véritable carte bancaire pour effectuer le paiement", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de retenter le paiement", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Vous avez dépassé le solde ou la limite de crédit disponible sur votre carte bancaire. Merci d'utiliser un autre moyen de paiement", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. La carte a été refusée pour une raison inconnue. Merci de contacter votre banque pour en savoir plus.", "Une erreur est survenu lors du paiement ! Vous n'avez pas été débité. Le code CVC est erroné. Merci de réessayer avec le bon CVC."];
 
         //console.log("arraycodeErreur.lehgth ==>> ", arraycodeErreur.length);
         //console.log("infoErreur.length ==>> ", infoErreur.length);
@@ -604,7 +603,7 @@ const seeding = async () => {
 
         const arrayCodeEvenementAPIlaposte = ["DR1", "PC1", "PC2", "ET1", "ET2", "ET3", "ET4", "EP1", "DO1", "DO2", "DO3", "PB1", "PB2", "MD2", "ND1", "AG1", "RE1", "DI1", "DI2"];
 
-        const infoEvenement = ["Déclaratif réceptionné", "Pris en charge", "Pris en charge dans le pays d’expédition", "En cours de traitement", "En cours de traitement dans le pays d’expédition", "En cours de traitement dans le pays de destination", "En cours de traitement dans un pays de transit", "En attente de présentation","Entrée en Douane", "Sortie  de Douane", "Retenu en Douane", "Problème en cours", "Problème résolu", "Mis en distribution", "Non distribuable", "En attente d'être retiré au guichet", "Retourné à l'expéditeur", "Distribué", "Distribué à l'expéditeur"];
+        const infoEvenement = ["Déclaratif réceptionné", "Pris en charge", "Pris en charge dans le pays d’expédition", "En cours de traitement", "En cours de traitement dans le pays d’expédition", "En cours de traitement dans le pays de destination", "En cours de traitement dans un pays de transit", "En attente de présentation", "Entrée en Douane", "Sortie  de Douane", "Retenu en Douane", "Problème en cours", "Problème résolu", "Mis en distribution", "Non distribuable", "En attente d'être retiré au guichet", "Retourné à l'expéditeur", "Distribué", "Distribué à l'expéditeur"];
 
         let j = 0;
         for (const item of arrayCodeEvenementAPIlaposte) {

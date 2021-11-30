@@ -6,6 +6,7 @@ const Joi = require('joi');
  * Valide les informations reçu dans le body et envoyé par les clients
  * @name refundClientSchema 
  * @group Joi - Vérifie les informations du body
+ * @property {string} commande - La référence d'une commande
  * @return {json} messages - Un texte adapté a l'érreur en json, informant l'utilisateur d'un non respect des régles du schéma de validation
  */
 const refundClientSchema = Joi.object({

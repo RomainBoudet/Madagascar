@@ -166,6 +166,8 @@ const paiementController = {
 
             // et avoir une adresse de facturation 
             const isFacturationOk = await Adresse.findByFacturationTrue(req.session.user.idClient);
+
+
             if (!isFacturationOk || isFacturationOk === null || isFacturationOk === undefined) {
                 return res.status(200).json({
                     message: "Pour effectuer une commande, vous devez avoir enregistré une adresse de Facturation a minima'."
@@ -639,10 +641,8 @@ const paiementController = {
                             dataPaiement.moyenPaiementDetail = moyenPaiementDet;
                             dataPaiement.origine = origine;
 
-                            console.log("dataPaiement ==>> ", dataPaiement);
                             const newPaiement = new Paiement(dataPaiement);
                             await newPaiement.save();
-                            console.log("newPaiement ==>> ", newPaiement);
 
                         } catch (error) {
                             console.log(`Erreur dans la méthode d'insertion du paiement dans la methode Webhook du paiementController : ${error.message}`);
@@ -1386,17 +1386,13 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3K1C0ZLNa9FFzz1X1531qSpD_secret_RJ9nNswV69TIM1TV0ZM0g3qle",
+                client_secret: "pi_3K1Mg7LNa9FFzz1X1qopk5xu_secret_si0wpwn5h4NQjRYDJjGDARqp7",
             });
 
 
         } catch (error) {
-            const errorMessage = process.env.NODE_ENV === 'production' ?
-                'Erreur serveur.' :
-                `Erreur dans la méthode key du paiementController : ${error.message})`;
-
-            res.status(500).json(errorMessage);
-            console.trace(error);
+            res.status(500).end();
+            console.trace('Erreur dans le try catch de la methode Key du PaiementController  ', error);
         }
     },
 
@@ -1435,17 +1431,13 @@ const paiementController = {
 
             // A chaque test, on lance la méthode key dans postman ou REACT, on remplace la clé en dure par la clé dynamique donné en console.
             return res.status(200).json({
-                client_secret: "pi_3K1C2OLNa9FFzz1X17TEFi2g_secret_Nh0AOsMcC4hbHg1RRggC9mKsu",
+                client_secret: "pi_3K1MimLNa9FFzz1X19osDRNT_secret_gSGUEO80fvrBP0zs6jYxrukT3",
             });
 
 
         } catch (error) {
-            const errorMessage = process.env.NODE_ENV === 'production' ?
-                'Erreur serveur.' :
-                `Erreur dans la méthode keySEPA du paiementController : ${error.message})`;
-
-            res.status(500).json(errorMessage);
-            console.trace(error);
+            res.status(500).end();
+            console.trace('Erreur dans le try catch de la methode KeySEPA du PaiementController  ', error);
         }
     },
 
@@ -1722,7 +1714,6 @@ const paiementController = {
                 let adminsMail;
                 const adresse = await adresseEnvoieFormat(refCommandeOk[0].idClient);
 
-                console.log("adresse dans la méthode webhookRefund du paiement controller ligne 1731 ==>> ", adresse);
                 // Je previens les admins de cette annulation de commande ! 
                 // je récupére les infos des admins pour l'envoi du mail.
                 try {
@@ -2024,7 +2015,7 @@ const paiementController = {
 
             // le calcul du montant a rembourser :
             let montant;
-            if (req.body.montant === null || req.body.montant === undefined) {
+            if (req.body.montant === null || req.body.montant === undefined || req.body.montant === 0) {
                 montant = refCommandeOk.montant;
             } else {
 
@@ -2109,11 +2100,10 @@ const paiementController = {
                 return res.status(500).end();
             }
 
-
             if (refCommandeOk === null || refCommandeOk[0].nom === undefined) {
                 console.log("Aucun paiement pour cette référence de commande ou elle n'a pas de paiement ... !");
                 return res.status(200).json({
-                    message: "Aucune commande n'est compatible avec un remboursement, merci de vérifier l'orthographe de la référence de la commande."
+                    message: "Cette commande n'est pas compatible avec un remboursement, merci de vérifier l'orthographe de la référence de la commande ou de vous assurer que cette commande n'a pas déja été remboursée."
                 });
             }
 

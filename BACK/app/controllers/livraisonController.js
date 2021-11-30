@@ -91,7 +91,7 @@ const livraisonController = {
             // Je vérifis que le transporteur choisit n'est pas un retrait sur le marché !
             const transporteur = await Transporteur.findOne(Number(commandeInDb.idTransporteur));
 
-            if (nomTransporteur.nom === "Retrait sur le stand") {
+            if (transporteur.nom === "Retrait sur le stand") {
                 console.log("Le transporteur choisi pour cette commande n'est pas compatible avec une livraison. Pour être compatible, celui ci doit avoir un transporteur autre que 'Retrait sur le stand'.");
                 return res.status(200).json({
                     message: "Le transporteur choisi pour cette commande n'est pas compatible avec une livraison. Pour être compatible, celui ci doit avoir un transporteur autre que 'Retrait sur le stand'."
@@ -127,7 +127,7 @@ const livraisonController = {
                         method: 'get',
                         headers: {
                             'Accept': 'application/json',
-                            'X-Okapi-Key': `${process.env.LAPOSTEAPISANDBOX}`,
+                            'X-Okapi-Key': `${process.env.LAPOSTEAPI}`,
                         }
 
                     });
@@ -148,20 +148,50 @@ const livraisonController = {
                         theResponse.infoTransporteur = `message LaPoste / Chronopost : ${dataLaposte.returnMessage}`;
                     }
 
-                    if (Number(dataLaposte.returnCode) === 400 || Number(dataLaposte.returnCode) === 401 || Number(dataLaposte.returnCode) === 404) {
+                    if (Number(dataLaposte.returnCode) === 400) {
                         //console.log(dataLaposte.returnMessage);
-                        theResponse.infoTransporteur = `message LaPoste / Chronopost : ${dataLaposte.returnMessage}`;
+
+                        return res.status(200).json({
+                            infoTransporteur: `message LaPoste / Chronopost : ${dataLaposte.returnMessage}`,
+                            info: "Cette nouvelle livraison n'a pas été enregistrée !",
+                        })
+                    }
+                    if (Number(dataLaposte.returnCode) === 401) {
+
+                        return res.status(200).json({
+                            infoTransporteur: `message LaPoste / Chronopost : ${dataLaposte.returnMessage}`,
+                            info: "Cette nouvelle livraison n'a pas été enregistrée !",
+
+                        })
+
+                    }
+                    if (Number(dataLaposte.returnCode) === 404) {
+
+                        return res.status(200).json({
+                            infoTransporteur: `message LaPoste / Chronopost : ${dataLaposte.returnMessage}`,
+                            info: "Cette nouvelle livraison n'a pas été enregistrée !",
+
+                        })
+
+
                     }
                     if (dataLaposte.code === 'UNAUTHORIZED') {
-                        //console.log(dataLaposte.message);
+                        console.log('Aucune clé OKAPI pour l\'API la Poste ne semble présente...');
                         theResponse.infoTransporteur = `message LaPoste / Chronopost : ${dataLaposte.code} : ${dataLaposte.message}`;
                     }
-                }
+
+                    else {
+                        //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifier l'état de sa commande via le site web du transporteur
+                        theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
+    
+                    }
+                } 
+
 
                 // ici si j'ai un code 104 (code FA633119313XX), la propriété shipment n'existe pas dans mon objet, mais je ne dois pas pour autant ne pas enregistrer la livraison...
 
-                console.log("dataLaposte ==>> ", dataLaposte);
-                console.log("dataLaposte.shipment ==>> ", dataLaposte.shipment);
+                //console.log("dataLaposte ==>> ", dataLaposte);
+                //console.log("dataLaposte.shipment ==>> ", dataLaposte.shipment);
 
 
                 if (dataLaposte.shipment && dataLaposte.shipment !== undefined && dataLaposte.shipment !== null) {
@@ -170,10 +200,7 @@ const livraisonController = {
                         // ici je fais le choix de rentrer dans mon if meme si l'info est érroné, que le transporteur est la poste collisimo mais que le numéro de colis est un n° Chronopost, on aura l'url provenant de cronopost !
                         theResponse.url = dataLaposte.shipment.urlDetail;
 
-                    } else {
-
-                        theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
-                    }
+                    } 
 
                     const statutParcel = dataLaposte.shipment.event[0]; // event est un array
 
@@ -190,9 +217,7 @@ const livraisonController = {
                         theResponse.event = statutParcel.label;
                     }
 
-                } else {
-                    //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifier l'état de sa commande via le site web du transporteur
-                    theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
+
                 }
             }
 
@@ -219,6 +244,7 @@ const livraisonController = {
 
                     dataDHL = await DHLResponse.json();
 
+
                 } catch (error) {
                     console.log("erreur dans la récupération des données du numéro de suivi dans l'API DHL", error);
                 }
@@ -235,7 +261,7 @@ const livraisonController = {
                             } */
 
                         console.log("message DHL : Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi.");
-
+                        theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
                         theResponse.infoTransporteur = `message DHL : Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi.`;
 
                     } else if (dataDHL.status === 400) {
@@ -260,6 +286,7 @@ const livraisonController = {
                 } else {
                     //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifier l'état de sa commande via le site web du transporteur
                     theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
+                    theResponse.infoTransporteur = `message DHL : Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi.`;
 
                 }
 
@@ -289,13 +316,19 @@ const livraisonController = {
                 console.log("Erreur lors de l'insertion d'une nouvelle livraison dans la méthode nexLivraison dans le livraisonController : ", error);
                 return res.status(500).end();
             }
-            console.log("theNewLivraison ==> ", theNewLivraison);
+
+            console.log('theNewLivraison ligne 295 du Livraison Controller ==>> ', theNewLivraison);
 
             //! On update le numéro de livraison dans la table ligne_commande !
+            let allLigneCommandes;
+            try {
+                allLigneCommandes = await LigneCommande.findByIdCommande(commandeInDb.id);
+            } catch (error) {
+                console.log("Erreur lors de la recherche des ligne de commande selon la commande dans la méthode nexLivraison dans le livraisonController : ", error);
+                return res.status(500).end();
+            }
 
-            const allLigneCommandes = await LigneCommande.findByIdCommande(commandeInDb.id);
-
-            console.log("allLigneCommandes ==> ", allLigneCommandes);
+            console.log('allLigneCommandes ligne 306 du livraisonController ==>> ', allLigneCommandes);
 
             // Pour toutes les data dans le tableaux, on boucle dessus et on update la valeur idLivraison dans la table ligne_commande 
             const dataLigneCommande = {};
@@ -324,8 +357,6 @@ const livraisonController = {
                     id: commandeInDb.id,
                 });
                 const newStatut = await newUpdateStatut.updateStatutCommande();
-
-                console.log("newStatut ==> ", newStatut);
 
             } catch (error) {
                 console.log("Erreur lors de la mise a jour d'un statut de commande dans la méthode newLivraison dans le livraisonController : ", error);

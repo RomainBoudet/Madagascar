@@ -835,7 +835,7 @@ router.delete('/client/adresses/:id(\\d+)', client, validateBody(passwordSchema)
 /**
  * Une route pour déterminer le type de livraison choisi par l'Utilisateur et permet de laisser un commentaire en session 
  * Aucun sms ne sera envoyé si le retrait sur le marché a été choisi.
- * Le panier est mis a jour en prenant en compte le cout du transporteur. Les données concernant les totaux sont renvoyés a l'utilisateur.
+ * Les frais de transport sont mise a jour en prenant en compte le poid des marchandises et la gamme de tarif selon le ppid du transporteur .
  * @route POST /client/livraisonChoix
  * @group Utilisateur
  * @summary Permet de déterminer le choix du transporteur fait par le client et de laisser un commentaire en session
@@ -2360,9 +2360,8 @@ router.delete('/admin/delAvisByIdClient/:id(\\d+)', client, avisController.delet
  */
 router.use((req, res) => {
   //res.redirect(`https://localhost:4000/api-docs#/`);
-  res.status(404).json(`La route choisie n\'existe pas : Pour la liste des routes existantes, saisir cette URL dans le navigateur => https://localhost:${port}/api-docs#/`);
+  res.status(404).redirect(`/api-docs`);
 });
-
 
 
 

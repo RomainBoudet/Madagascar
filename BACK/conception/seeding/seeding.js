@@ -550,7 +550,6 @@ const seeding = async () => {
         // Avec son numéro de tel vérifié et ok pour recevoir des sms !
 
         consol.seed("Mise en place d'un admin dans la BDD");
-        //await db.query(`UPDATE mada.client SET id_privilege='${process.env.MYPRIVILEGE2}', email='${process.env.EMAILTEST2}', prenom='${process.env.MYFIRST2}', nom_famille='${process.env.MYLAST2}' WHERE id = ${process.env.ID2}; `);
 
         const client = await db.query(`INSERT INTO mada.client (id_privilege, email,  prenom, nom_famille, password) VALUES ('${process.env.MYPRIVILEGE}', '${process.env.EMAILTEST}', '${process.env.MYFIRST}', '${process.env.MYLAST}', '${process.env.PASSWORD}') RETURNING *;`);
         await db.query(`INSERT INTO mada.admin_phone (admin_telephone, sms_new_commande, id_client) VALUES ('${process.env.MYPHONE}', 'true', ${client.rows[0].id});`);
@@ -559,7 +558,7 @@ const seeding = async () => {
         consol.seed(`Admin mis en place en client id ${process.env.ID}`)
 
 
-        //! Mise en place des infos propre au site (nom, phrase de biencvenue, contact..etc.)
+        //! Mise en place des infos propre au site (nom, phrase de bienvenue, contact..etc.)
 
         consol.seed("Mise en place des infos du site dans la BDD");
         await db.query(`INSERT INTO mada.shop (nom, adresse1, code_postal, ville, pays, texte_intro, email_contact, telephone) VALUES('${process.env.SITE}', '${process.env.ADRESSE1}', '${process.env.CODEPOSTAL}', '${process.env.VILLE}', '${process.env.PAYS}','${process.env.TEXTEINTRO}', '${process.env.EMAILCONTACTSITE}', '${process.env.TELEPHONESITE}');`);

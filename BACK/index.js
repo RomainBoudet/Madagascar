@@ -143,7 +143,7 @@ app.use(
             httpOnly: true, // Garantit que le cookie n’est envoyé que sur HTTP(S), pas au JavaScript du client, ce qui renforce la protection contre les attaques de type cross-site scripting.
             sameSite: 'Strict', //le mode Strict empêche l’envoi d’un cookie de session dans le cas d’un accès au site via un lien externe//https://blog.dareboost.com/fr/2017/06/securisation-cookies-attribut-samesite/
             //!il faudra définir les options de sécurité pour accroitre la sécurité. (https://expressjs.com/fr/advanced/best-practice-security.html)
-            //domain: 'example.com',  Indique le domaine du cookie ; utilisez cette option pour une comparaison avec le domaine du serveur dans lequel l’URL est demandée. S’ils correspondent, vérifiez ensuite l’attribut de chemin.
+            domain: 'artisanat-madagascar.art', // Indique le domaine du cookie ; utilisez cette option pour une comparaison avec le domaine du serveur dans lequel l’URL est demandée. S’ils correspondent, vérifiez ensuite l’attribut de chemin.
             //path: 'foo/bar', Indique le chemin du cookie ; utilisez cette option pour une comparaison avec le chemin demandé. Si le chemin et le domaine correspondent, envoyez le cookie dans la demande.
             //expires: expiryDate, Utilisez cette option pour définir la date d’expiration des cookies persistants.
         },
@@ -152,12 +152,12 @@ app.use(
 
  
 
-
+// https://expressjs.com/en/resources/middleware/cors.html
 // Je require le middleware pour dire à express d'être plus permissif sur l'origine des requête
 app.use(cors({
     optionsSuccessStatus: 200,
     credentials: true, // pour envoyer des cookies et des en-têtes d'autorisations faut rajouter une autorisation avec l'option credential
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:4040 '], // true = req.header('Origin') //! a pas oublier pour la prod ! => remplacer par le bon nom de domaine
+    origin: "*",//! a pas oublier pour la prod ! => remplacer par le bon nom de domaine
     methods: "GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS", // ok via un array aussi
     allowedHeaders: ['Content-Type', 'x-xsrf-token'],
 }));
@@ -169,23 +169,7 @@ app.use(cors({
 app.use('/v1', router);
 
 
-// key = la clé privée du sous domain 
-// cert = certificat du sous-domain 
-// Voir la doc dans le fichier.txt du dossier certificat
-
-// les options que l'on va passer pour la config du https.
-const options = {
-    key: fs.readFileSync(process.env.SSL_KEY_FILE),
-    cert: fs.readFileSync(process.env.SSL_CRT_FILE),
-};
-
-
-
-
-
-
-
 /* Puis on créer notre serveur HTTPS avec les option qui sont le certificat et la clé */
-spdy.createServer(options, app).listen(port, () => {
+app.listen(port, () => {
     console.log(chalk.cyan `API Mada Running on`, chalk.magenta.bold.inverse `https`, chalk.cyan `://localhost:${port}`);
 });

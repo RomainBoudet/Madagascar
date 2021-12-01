@@ -16,6 +16,10 @@ const {
     formatJMA,
 } = require('../services/date');
 
+const {
+    transportCost
+} = require('../services/transportCost');
+
 const fetch = require('node-fetch');
 const redis = require('../services/redis');
 
@@ -140,12 +144,22 @@ const livraisonController = {
                 // Je vais chercher les données correspondant au code événement dans REDIS.
                 // Je ne return rien avec un code 104, le code doit se dérouler...
 
+                console.log("dataLaposte ligne 147 du livraisonController ==>>> ", dataLaposte);
+
                 if (dataLaposte && dataLaposte !== undefined && dataLaposte !== null) {
 
 
                     if (Number(dataLaposte.returnCode) === 104) {
                         //console.log(dataLaposte.returnMessage);
                         theResponse.infoTransporteur = `message LaPoste / Chronopost : ${dataLaposte.returnMessage}`;
+                    }
+
+                    if (Number(dataLaposte.returnCode) === 101) {
+                        //console.log(dataLaposte.returnMessage);                        
+                        return res.status(200).json({
+                            infoTransporteur: `message LaPoste / Chronopost : ${dataLaposte.returnMessage}`,
+                            info: "Cette nouvelle livraison n'a pas été enregistrée !",
+                        })
                     }
 
                     if (Number(dataLaposte.returnCode) === 400) {
@@ -178,14 +192,12 @@ const livraisonController = {
                     if (dataLaposte.code === 'UNAUTHORIZED') {
                         console.log('Aucune clé OKAPI pour l\'API la Poste ne semble présente...');
                         theResponse.infoTransporteur = `message LaPoste / Chronopost : ${dataLaposte.code} : ${dataLaposte.message}`;
-                    }
-
-                    else {
+                    } else {
                         //Même si j'ai pas de réponse de l'API je fourni une URL pour que l'utilisateur puisse a l'avenir vérifier l'état de sa commande via le site web du transporteur
                         theResponse.url = `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNumber}`;
-    
+
                     }
-                } 
+                }
 
 
                 // ici si j'ai un code 104 (code FA633119313XX), la propriété shipment n'existe pas dans mon objet, mais je ne dois pas pour autant ne pas enregistrer la livraison...
@@ -200,7 +212,7 @@ const livraisonController = {
                         // ici je fais le choix de rentrer dans mon if meme si l'info est érroné, que le transporteur est la poste collisimo mais que le numéro de colis est un n° Chronopost, on aura l'url provenant de cronopost !
                         theResponse.url = dataLaposte.shipment.urlDetail;
 
-                    } 
+                    }
 
                     const statutParcel = dataLaposte.shipment.event[0]; // event est un array
 
@@ -221,7 +233,7 @@ const livraisonController = {
                 }
             }
 
-            //! DHL
+            //! DHL Cette partie de code pourrais être supprimer... Elle reste cependant fonctionelle si le schéma accept de laisser passer les formats numéro de suivi DHL
 
             if (transporteur.nom === "DHL") {
 
@@ -317,8 +329,6 @@ const livraisonController = {
                 return res.status(500).end();
             }
 
-            console.log('theNewLivraison ligne 295 du Livraison Controller ==>> ', theNewLivraison);
-
             //! On update le numéro de livraison dans la table ligne_commande !
             let allLigneCommandes;
             try {
@@ -327,8 +337,6 @@ const livraisonController = {
                 console.log("Erreur lors de la recherche des ligne de commande selon la commande dans la méthode nexLivraison dans le livraisonController : ", error);
                 return res.status(500).end();
             }
-
-            console.log('allLigneCommandes ligne 306 du livraisonController ==>> ', allLigneCommandes);
 
             // Pour toutes les data dans le tableaux, on boucle dessus et on update la valeur idLivraison dans la table ligne_commande 
             const dataLigneCommande = {};
@@ -448,13 +456,24 @@ const livraisonController = {
 
     choixLivraison: async (req, res) => {
         try {
-
-
             // on insére le choix de la livraison en session, 
             // Depuis le front on envoie un entier qui fait référence a un transporteur, selon son id : 1,2,3, ou 4
             //  1 : DPD, 2 : TNT express, 3 : retrait sur place, 4 : La Poste (exemple)
+            let transporteurData;
+            try {
+                transporteurData = await Transporteur.findOneName(req.body.nomTransporteur);
 
-            req.session.nomTransporteur = req.body.nomTransporteur;
+            } catch (error) {
+                console.log("Erreur dans la récupération des données Transporteur dans le livraisonController", error)
+                return res.status(500).end();
+            }
+
+            if(transporteurData === null) {
+                console.log("Ce transporteur n'existe pas !");
+                return res.status(500).end();
+            }
+
+            req.session.nomTransporteur = transporteurData.nom;
 
             //Je permet a l'utilisateur de laisser un commentaire sur la commande...
             req.session.commentaire = req.body.commentaire;
@@ -463,23 +482,22 @@ const livraisonController = {
             // on garde la donnée au chaud concernant l'envoie d'un sms et on l'enverra en BDD dans le webbhook du paiement quand on est certain de la commande et du client..
             // n'est possible que si il y a une expédition avec une livraison, donc si req.session.nomTransporteur = 'Retrait sur le stand' , on ne permet pas !
 
-            //BUG 
-            //! a fixer, quand champs vide, false par défault !!
-            if (req.body.sendSmsWhenShipping == 'true' && req.body.nomTransporteur !== 'Retrait sur le stand') {
+            if (req.body.sendSmsWhenShipping === 'true' && req.body.nomTransporteur !== 'Retrait sur le stand') {
                 req.session.sendSmsWhenShipping = true;
             } else {
                 req.session.sendSmsWhenShipping = false;
             };
 
+
             // Je met a jour le prix du panier en prenant en compte le cout du transport
+            // Calcul des Frais transporteur selon le poid total et le nom du transporteur !
+            //! On pourrait envisager de rajouter 300 grammes pour l'emballage avant le calcul du cout du transport.
+            // const poid = req.session.totalPoid + 300; 
+            // const price = await transportCost(poid, req.session.nomTransporteur);
 
+            const price = await transportCost(req.session.totalPoid, req.session.nomTransporteur); // en centimes !
 
-            const transporteurData = await Transporteur.findOneName(req.session.nomTransporteur);
-
-            //TODO Calcul des Frais trasnporteur selon le poid total et le nom du transporteur !
-            // Au travers la création d'un nouveau service !
-            
-            req.session.coutTransporteur = transporteurData.fraisExpedition;
+            req.session.coutTransporteur = price;
 
             // Je remet a jour le total dans le panier.
 
@@ -492,11 +510,7 @@ const livraisonController = {
 
             }
 
-
-            //console.log("req.session a la sortie du choix du transporteur ==> ", req.session);
-
-            const message = "Le choix du transporteur a bien été pris en compte."
-
+            const message = "Le choix du transporteur a bien été pris en compte.";
             const totalHT = req.session.totalHT / 100;
             const totalTTC = req.session.totalTTC / 100;
             const totalTVA = req.session.totalTVA / 100;

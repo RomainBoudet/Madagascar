@@ -6,7 +6,6 @@ class Transporteur {
   id;
   nom;
   description;
-  fraisExpedition;
   estimeArrive;
   estimeArriveNumber;
   logo;
@@ -14,9 +13,6 @@ class Transporteur {
   updatedDate;
 
 
-  set frais_expedition(val) {
-    this.fraisExpedition = val;
-  }
   set estime_arrive(val) {
     this.estimeArrive = val;
   }
@@ -134,8 +130,8 @@ class Transporteur {
     const {
       rows,
     } = await db.query(
-      `INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, estime_arrive_number, logo, created_date) VALUES ($1,$2, $3, $4, $5, now()) RETURNING *;`,
-      [this.nom, this.description, this.fraisExpedition, this.estimeArrive, this.estimeArriveNumber, this.logo]
+      `INSERT INTO mada.transporteur (nom, description, estime_arrive, estime_arrive_number, logo, created_date) VALUES ($1, $2, $3, $4, $5, now()) RETURNING *;`,
+      [this.nom, this.description, this.estimeArrive, this.estimeArriveNumber, this.logo]
     );
 
     this.id = rows[0].id;
@@ -161,8 +157,8 @@ class Transporteur {
     const {
       rows,
     } = await db.query(
-      `UPDATE mada.transporteur SET nom = $1, description = $2, frais_expedition = $3, estime_arrive = $4, logo = $5, estime_arrive_number = $6  updated_date = now() WHERE id = $7 RETURNING *;`,
-      [this.nom, this.description, this.fraisExpedition, this.estimeArrive, this.estimeArriveNumber, this.logo, this.id]
+      `UPDATE mada.transporteur SET nom = $1, description = $2, estime_arrive = $3, estime_arrive_number = $4, logo = $5, updated_date = now() WHERE id = $6 RETURNING *;`,
+      [this.nom, this.description, this.estimeArrive, this.estimeArriveNumber, this.logo, this.id]
     );
     this.updatedDate = rows[0].updated_date;
     console.log(

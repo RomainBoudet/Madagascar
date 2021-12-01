@@ -29,27 +29,25 @@ const newLivraisonSchema = Joi.object({
 
         }),
     ),
-    // 11 a 15 caractéres alpha pour la poste !!
-    // DHL ? fake data a 9...  Noté 10 max sur leur site !
-    // attention ici le message d'érreur en cas de non match d'un des 2 cas ne sera pas personalisé !
-    numeroSuivi: Joi.alternatives().try(
-        Joi.string()
+    
+    numeroSuivi: Joi.string()
         .pattern(new RegExp(/^[a-zA-Z0-9/]{11,15}$/))
         .required()
         .messages({
             'string.empty': `Le champs de votre numero de suivi ne peut être vide !`,
             'any.required': 'Le champs de votre numero de suivi ne peut être vide !',
-            'string.pattern.base': 'Le format de votre numero de suivi est incorrect : Il doit posséder au minimum 11 chiffres et 15 au maximum pour la poste et entre 6 et 10 pour DHL !',
+            'string.pattern.base': 'Le format de votre numero de suivi est incorrect : Il doit posséder au minimum 11 chiffres et 15 au maximum !',
         }),
-        Joi.string()
+        // Attention, ici une double validation avec Joi.alternatives() est a utilisé si différent transporteur avec différent format de numéro de suivi sont présent !
+       /*  Joi.string()
         .pattern(new RegExp(/^[a-zA-Z0-9/]{6,10}$/))
         .required()
         .messages({
             'string.empty': `Le champs de votre numero de suivi ne peut être vide !`,
             'any.required': 'Le champs de votre numero de suivi ne peut être vide !',
             'string.pattern.base': 'Le format de votre numero de suivi est incorrect : Il doit posséder au minimum 11 chiffres et 15 au maximum pour la poste et entre 6 et 10 pour DHL !',
-        }),
-    ),
+        }), */
+    
 
     confirmNumeroSuivi: Joi.ref('numeroSuivi'),
 

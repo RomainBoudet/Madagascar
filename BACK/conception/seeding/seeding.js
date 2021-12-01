@@ -113,7 +113,7 @@ const seeding = async () => {
 
                 name: faker.commerce.productName(),
                 description: faker.commerce.productDescription(),
-                poid: Math.floor(Math.random() * (10000 - 100 + 1)) + 100, // Random entre 100 et 10 000 grammes  //Math.floor(Math.random() * (max - min + 1)) + min
+                poid: Math.floor(Math.random() * (3000 - 100 + 1)) + 100, // Random entre 100 et 3000 grammes  //Math.floor(Math.random() * (max - min + 1)) + min
                 price: Math.floor(faker.commerce.price(10, 100) * 100),
                 color: colors[Math.floor(Math.random() * colors.length)], //faker.internet.color => hex
                 size: sizes[Math.floor(Math.random() * sizes.length)],
@@ -269,6 +269,8 @@ const seeding = async () => {
         // voir produit_image
 
         // Si les noms des transporteurs sont changés, il faut changer 'Retrait sur le stand' pzrtout il est présent et dans le choixLivraisonSchéma, mettre les nouveaux noms des transporteurs...
+
+        //Dans le cas d'un ajout d'un transporteur, ces tarif doivent être inséré dans REDIS également, en fin de ce fichier de seeding et le service "transportCost" doit également être mis a jour avec les gamme de poid de ce nouveu tranporteur et enfin le shéma joi de la route client/livraisonChoix !
         //! TRANSPORTEUR 
 
         const transporteurs = [{
@@ -278,53 +280,38 @@ const seeding = async () => {
                 estime_arrive: "Durant le prochain marché. Nous contacter pour connaitre la date",
                 estime_arrive_number: 'Prochain marché',
                 description: "Une livraison de la main a la main, sur notre stand",
-                poid: Math.floor((Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-                URL_suivi: faker.internet.url(),
             },
             {
                 frais_expedition: Math.floor(12.00 * 100),
                 logo: faker.image.business(),
-                nom_transporteur: "La poste Collisimmo",
+                nom_transporteur: "La poste Colissimo",
                 estime_arrive: "Livraison dans les 48h a 72h",
                 estime_arrive_number: 3,
                 description: "Le service colis de La Poste",
-                poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-                URL_suivi: faker.internet.url(),
             },
             {
                 frais_expedition: Math.floor(13.00 * 100),
                 logo: faker.image.business(),
-                nom_transporteur: "Chronopost - Chrono Relais 13",
+                nom_transporteur: "Chronopost Chrono Relais 13",
                 estime_arrive: "Chrono Relais 13",
                 estime_arrive_number: 1,
                 description: "Livraison Chronopost - Livraison avant 13h dans l'un des 15000 points relais et consignes Pickup.",
-                poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-                URL_suivi: faker.internet.url(),
             },
             {
                 frais_expedition: Math.floor(26.00 * 100),
                 logo: faker.image.business(),
-                nom_transporteur: "Chronopost - Chrono13",
+                nom_transporteur: "Chronopost Chrono13",
                 estime_arrive: "Chrono13 - Livraison le lendemain avant 13h, colis livrés en matinée partout en France.",
                 estime_arrive_number: 1,
                 description: "Livraison Chronopost - Livraison en matinée partout en France, remise contre signature.",
-                poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-                URL_suivi: faker.internet.url(),
             },
             {
                 frais_expedition: Math.floor(12.00 * 100),
                 logo: faker.image.business(),
-                nom_transporteur: "DHL",
-                estime_arrive: "Livraison entre 1 et 3 jours",
+                nom_transporteur: "Chronopost Shop2Shop",
+                estime_arrive: "Livraison entre 2 et 4 jours",
                 estime_arrive_number: 3,
-                description: "DHL solution logistique",
-                poid: (Math.floor(Math.random() * 15 - 1 + 1).toFixed(2) * 100), // random de 1 a 15 kg avec 2 chifre aprés la virgule
-                numero_suivi: Math.floor(Math.random() * 99999999 - 999999 + 1) + 999999,
-                URL_suivi: faker.internet.url(),
+                description: "Livraison sous 2 a jours dans un commerce de proximité",
             }
 
         ];
@@ -342,8 +329,6 @@ const seeding = async () => {
 
 
         //FLAG                                                                                                                                        
-
-
 
 
         //! CATEGORIES
@@ -480,12 +465,12 @@ const seeding = async () => {
 
         consol.seed(`Début de l'import de ${transporteurs.length} transporteurs`);
         console.time(`Import de ${transporteurs.length} transporteurs`);
-        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, estime_arrive_number, logo) VALUES ($1, $2, $3, $4, $5, $6);";
+        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, estime_arrive, estime_arrive_number, logo) VALUES ($1, $2, $3, $4, $5);";
 
         for (const transporteur of transporteurs) {
 
             consol.seed(`Import du livraison pour le client id ${transporteur.nom_transporteur}`);
-            await db.query(transporteursInsert, [transporteur.nom_transporteur, transporteur.description, transporteur.frais_expedition, transporteur.estime_arrive, transporteur.estime_arrive_number, transporteur.logo]);
+            await db.query(transporteursInsert, [transporteur.nom_transporteur, transporteur.description, transporteur.estime_arrive, transporteur.estime_arrive_number, transporteur.logo]);
         }
 
         consol.seed(`Fin de l'import de ${transporteurs.length} transporteurs`);
@@ -614,6 +599,71 @@ const seeding = async () => {
 
             console.log(`code événement "${item}" API La poste bien inséré dans REDIS!`);
         }
+
+
+
+        //! Mise en place de la BDD REDIS des prix des transporteurs Colissimo et Chronopost
+        // Poid en gramme et montant en centimes.
+
+        //https://www.laposte.fr/colissimo-en-ligne/votre-colis
+        const tarifColissimoFranceMetro = [495, 645, 735, 799, 915, 1410, 2050, 2600, 3220];
+        const poidColissimoFranceMetro = [250, 500, 750, 1000, 2000, 5000, 10000, 15000, 30000];
+
+        let k = 0;
+        for (const item of poidColissimoFranceMetro) {
+
+            await redis.set(`mada/tarif_la_poste_colissimo:${item}gramme`, tarifColissimoFranceMetro[k]);
+            k += 1;
+
+            console.log(`Tarif Colissimo France Metropolitaine pour ${item}gr, bien inséré dans REDIS!`);
+        }
+        await redis.set(`mada/poidla_poste_colissimo`, JSON.stringify(poidColissimoFranceMetro));
+
+        //https://www.chronopost.fr/small-webapp/#/step-one
+        const tarifChronopost13 = [1490, 1560, 1770, 2120, 2920, 3345, 3770];
+        const poidChronopost13 = [1000, 2000, 5000, 10000, 20000, 25000, 30000];
+
+        let l = 0;
+        for (const item of poidChronopost13) {
+
+            await redis.set(`mada/tarif_chronopost_chrono13:${item}gramme`, tarifChronopost13[l]);
+            l += 1;
+
+            console.log(`Tarif Chronopost 13 pour ${item}gr, bien inséré dans REDIS!`);
+        }
+        await redis.set(`mada/poidchronopost_chrono13`, JSON.stringify(poidChronopost13));
+
+
+        //https://www.laposte.fr/shop2shop/en-ligne#/type-colis
+        const tariChronopostShopToShop = [450, 695, 1395, 1990];
+        const poidChronopostShopToShop = [1000, 4000, 10000, 20000];
+
+        let m = 0;
+        for (const item of poidChronopostShopToShop) {
+
+            await redis.set(`mada/tarif_chronopost_shop2shop:${item}gramme`, tariChronopostShopToShop[m]);
+            m += 1;
+
+            console.log(`Tarif Chronopost Shop2Shop pour ${item}gr, bien inséré dans REDIS!`);
+        }
+        await redis.set(`mada/poidchronopost_shop2shop`, JSON.stringify(poidChronopostShopToShop));
+
+
+        //https://www.chronopost.fr/small-webapp/#/step-one
+        const tarifChronoRelai = [850, 910, 1090, 1390, 1790, 2190];
+        const poidChronoRelai = [1000, 2000, 5000, 10000, 15000, 20000];
+
+        let n = 0;
+        for (const item of poidChronoRelai) {
+
+            await redis.set(`mada/tarif_chronopost_chrono_relais_13:${item}gramme`, tarifChronoRelai[n]);
+            n += 1;
+
+            console.log(`Tarif Chronopost relai pour ${item}gr, bien inséré dans REDIS!`);
+        }
+        await redis.set(`mada/poidchronopost_chrono_relais_13`, JSON.stringify(poidChronoRelai));
+
+
 
         console.timeEnd("Génération de la fonction seeding");
         consol.admin("FIN DE L'IMPORT");

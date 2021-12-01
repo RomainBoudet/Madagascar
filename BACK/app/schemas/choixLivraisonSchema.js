@@ -14,9 +14,9 @@ const Joi = require('joi');
 const choixLivraisonSchema = Joi.object({
 
 
-    nomTransporteur: Joi.any().valid('La poste Collisimmo', 'Chronopost - Chrono Relais 13', 'Retrait sur le stand', 'Chronopost - Chrono13', 'DHL')
+    nomTransporteur: Joi.any().valid('La poste Colissimo', 'Chronopost Chrono Relais 13', 'Retrait sur le stand', 'Chronopost Chrono13', 'Chronopost Shop2Shop')
     .required().messages({
-        'any.only': ` Seules les transporteur avec comme nom : 'La poste Collisimmo', 'Chronopost - Chrono Relais 13', 'Retrait sur le stand', 'Chronopost - Chrono13', 'DHL' peuvent être inséré.`,
+        'any.only': ` Seules les transporteur avec comme nom : 'La poste Collisimmo', 'Chronopost Chrono Relais 13', 'Retrait sur le stand', 'Chronopost Chrono13', 'Chronopost Shop2Shop' peuvent être inséré.`,
         'any.required': 'Le champs de votre choix de transporteur ne peut pas être vide !',
     }),
 

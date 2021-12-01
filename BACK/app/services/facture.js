@@ -19,11 +19,19 @@ const {
 } = require('../services/date');
 
 const {
+    transportCost
+} = require('../services/transportCost');
+
+const {
     textShopFacture,
     textAdresseLivraison,
     textAdresseFacturation,
     facturePhone
 } = require('../services/adresse');
+
+const {
+    arrondi
+} = require('../services/arrondi');
 
 const redis = require('../services/redis');
 
@@ -45,7 +53,7 @@ const facture = async (idCommande) => {
                 error);
         }
 
-        /* Commande {
+        /* Commande [{
     id: 3,
     reference: '2.7205.29112021111252.101.1',
     dateAchat: 2021-11-29T10:12:52.169Z,
@@ -80,7 +88,7 @@ const facture = async (idCommande) => {
     pays: 'FRANCE',
     telephone: '+33603720612',
     transporteur: 'Retrait sur le stand',
-    frais_expedition: 0
+    poid: 2240,
   }
 ] */
 
@@ -138,14 +146,19 @@ const facture = async (idCommande) => {
 
         const arrayTotalPrixAvecReduc = [];
         const arrayTotalTax = [];
-        commande.map(article => (arrayTotalPrixAvecReduc.push(article.prixHTAvecReduc * article.quantite_commande), arrayTotalTax.push(article.montantTax * article.quantite_commande)));
+        const arrayTotalPoid = [];
+        commande.map(article => (arrayTotalPrixAvecReduc.push(article.prixHTAvecReduc * article.quantite_commande), arrayTotalTax.push(article.montantTax * article.quantite_commande), arrayTotalPoid.push(article.poid * article.quantite_commande)));
         const accumulator = (previousValue, currentValue) => previousValue + currentValue;
 
         const totalProduit = (arrayTotalPrixAvecReduc.reduce(accumulator)) / 100;
-        const fraisExpedition = commande[0].frais_expedition / 100;
+
+        const totalPoid = (arrayTotalPoid.reduce(accumulator)) // en centimes pour les service transportCost
+        const price = await transportCost(totalPoid, commande[0].transporteur); // en centimes !
+
+        const fraisExpedition = price / 100; // et on repasse en euros !
         const totalHT = totalProduit + fraisExpedition;
         const totalTax = (arrayTotalTax.reduce(accumulator)) / 100;
-        const totalTTC = totalHT + totalTax;
+        const totalTTC = arrondi(totalHT + totalTax);
 
         let adresseLivraison;
         if (commande[0].transporteur === 'Retrait sur le stand') {
@@ -697,12 +710,12 @@ const facture = async (idCommande) => {
         const pdfDoc = printer.createPdfKitDocument(docDefinition);
 
         try {
-            pdfDoc.pipe( fs.createWriteStream(`Factures/client:_${emailWithoutSlash}/${nomFacture}.pdf`));
+            pdfDoc.pipe(fs.createWriteStream(`Factures/client:_${emailWithoutSlash}/${nomFacture}.pdf`));
 
         } catch (error) {
             console.trace("Erreur dans le service facture, lors de l'appel de createWriteStreamAsync ", error);
         }
-       
+
         pdfDoc.end();
 
 
@@ -779,14 +792,19 @@ const factureRefund = async (idCommande) => {
         commande.map(article => (article.prixHTAvecReduc = parseInt((article.prix_ht) * (1 - article.reduction)), article.montantTax = Math.round(article.prixHTAvecReduc * article.taux)));
         const arrayTotalPrixAvecReduc = [];
         const arrayTotalTax = [];
-        commande.map(article => (arrayTotalPrixAvecReduc.push(article.prixHTAvecReduc * article.quantite_commande), arrayTotalTax.push(article.montantTax * article.quantite_commande)));
+        const arrayTotalPoid = [];
+        commande.map(article => (arrayTotalPrixAvecReduc.push(article.prixHTAvecReduc * article.quantite_commande), arrayTotalTax.push(article.montantTax * article.quantite_commande), arrayTotalPoid.push(article.poid * article.quantite_commande)));
         const accumulator = (previousValue, currentValue) => previousValue + currentValue;
 
         const totalProduit = (arrayTotalPrixAvecReduc.reduce(accumulator)) / 100;
-        const fraisExpedition = commande[0].frais_expedition / 100;
+
+        const totalPoid = (arrayTotalPoid.reduce(accumulator)) // en centimes pour les service transportCost
+        const price = await transportCost(totalPoid, commande[0].transporteur); // en centimes !
+
+        const fraisExpedition = price / 100; // et on repasse en euros !
         const totalHT = totalProduit + fraisExpedition;
         const totalTax = (arrayTotalTax.reduce(accumulator)) / 100;
-        const totalTTC = totalHT + totalTax;
+        const totalTTC = arrondi(totalHT + totalTax);
 
         let adresseLivraison;
         if (commande[0].transporteur === 'Retrait sur le stand') {
@@ -794,7 +812,6 @@ const factureRefund = async (idCommande) => {
             adresseLivraison = `Vous n'avez pas choisi \n de livraison mais un retrait \n sur le stand lors du \n prochain marché.`
 
         } else {
-
             adresseLivraison = await textAdresseLivraison(commande[0].idClient);
         }
 

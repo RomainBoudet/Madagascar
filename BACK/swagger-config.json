@@ -1,7 +1,7 @@
 {
     "swaggerDefinition": {
         "info": {
-            "description": "A beatiful swagger for this shopping website API !",
+            "description": "A beatiful swagger for this shopping website API ! you can find the code for this API on gitHub : https://github.com/RomainBoudet/Madagascar ",
             "title": "Madagascar",
             "version": "1.0.0"
         },

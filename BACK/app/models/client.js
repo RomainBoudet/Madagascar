@@ -105,9 +105,9 @@ class Client {
       console.log("Aucun client avec cet id");
     }
 
-    consol.model(
+    /* consol.model(
       `le client id : ${id} a été demandé en BDD !`
-    );
+    ); */
 
     return new Client(rows[0]);
   }
@@ -134,9 +134,9 @@ class Client {
       return null;
     }
 
-    consol.model(
+    /* consol.model(
       `le client id : ${id} a été demandé en BDD !`
-    );
+    ); */
 
     return new Client(rows[0]);
 

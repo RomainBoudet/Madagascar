@@ -2,7 +2,12 @@ const Transporteur = require('../models/transporteur');
 
 const redis = require('../services/redis');
 
-
+/**
+ * Un fonction qui renvoie le tarif associé au poid et au transporteur deandé
+ * @param {number} totalPoid
+ * @param {string} nomTranporteur
+ * @return {number} - Retourne le tarif pour le poid et le nom du transporteur demandé.
+ */
 const transportCost = async (totalPoid, nomTranporteur) => {
 
     if (nomTranporteur === 'Retrait sur le stand') {
@@ -47,6 +52,7 @@ const transportCost = async (totalPoid, nomTranporteur) => {
     // Je détermine le poid en selectionnant l'intervalle supérieur le plus proche du totalPoid
     // Je récupére la valeur dans le tableau qui est supérieur a previous et inférieur a current, et dans ce cas je renvoie la valeur current. Le inférieur ou égale permet d'inclura la borne supérieur
     // Un colie de 2000 gr sera dans la classe de 1000gr a 2000 gr. 
+
     const maxWeigth = poidTransporteur.reduce(function (prev, curr) {
 
         return ((prev < totalPoid) && (totalPoid <= curr)) ? curr : prev

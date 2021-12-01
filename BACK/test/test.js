@@ -7,6 +7,9 @@ const {
 } = require('chai');
 const chalk = require('chalk');
 
+//TODO 
+//Taux de couverture a améliorer...
+
 //! Tests sur les SCHEMA JOI ----------------------------------------------
 
 
@@ -132,7 +135,7 @@ describe(chalk.magenta('Test de validation du choixLivraisonSchema JOI :'), func
     before(function () {
 
         mockLivraison = {
-            idTransporteur: 4,
+            nomTransporteur: "La poste Colissimo",
             commentaire: 'Mon magnifique commentaire !',
             sendSmsWhenShipping: true,
         };
@@ -144,21 +147,21 @@ describe(chalk.magenta('Test de validation du choixLivraisonSchema JOI :'), func
         expect(choixLivraisonSchema.validate(mockLivraison)).not.to.have.property('error');
     });
 
-    it("should not validate the idTransporteur bigger than 4", function () {
+    it("should not validate the nameTransporteur other than predefined", function () {
 
         // Valider qu'un schéma invalide, retourne une érreur si le mot de passe n'a pas le bon format :
-        mockLivraison.idTransporteur = 5;
+        mockLivraison.nomTransporteur = "my lovely transporter";
         expect(choixLivraisonSchema.validate(mockLivraison)).to.have.property('error');
 
         const validation = choixLivraisonSchema.validate(mockLivraison).error.details[0].path[0];
-        expect(validation).to.deep.equal('idTransporteur');
+        expect(validation).to.deep.equal('nomTransporteur');
     })
 
     it("should not validate the sendSmsWhenShipping format (not boolean)", function () {
 
         mockLivraison.sendSmsWhenShipping = 'Coucou';
-        //et je ré-introduis un téléphone valide :
-        mockLivraison.idTransporteur = 2;
+        //et je ré-introduis un transporteur valide :
+        mockLivraison.nomTransporteur = "La poste Colissimo";
         // Valider qu'un schéma invalide me retourne bien une érreur si le mail n'a pas le bon format :
         expect(choixLivraisonSchema.validate(mockLivraison)).to.have.property('error');
 
@@ -343,96 +346,49 @@ describe(chalk.magenta('Test de validation du delCouponSchema JOI :'), function 
 });
 
 
-//! Test sur livraisonPostSchema
+//! Test sur newLivraisonSchema
 
-const livraisonPostSchema = require('../app/schemas/livraisonPostSchema');
+const newLivraisonSchema = require('../app/schemas/newLivraisonSchema');
 
 
-describe(chalk.magenta('Test de validation du livraisonPostSchema JOI :'), function () {
+describe(chalk.magenta('Test de validation du newLivraisonSchema JOI :'), function () {
 
     before(function () {
 
         mockLivraison = {
-            reference: 'LIVRAISON7e2232dd7666496ab3681a2993f1df9b',
-            numeroSuivi: '79037862',
-            URLSuivi: 'http://blanche.fr',
+            commande: '12.12542.1221.1.1.1.1',
+            numeroSuivi: '790378624152',
+            confirmNumeroSuivi: '790378624152',
             poid: 500,
-            idClient: 4,
-            idCommande: 34,
-            idTransporteur: 4,
+
         };
     });
 
     it('should validate a valid livraison', function () {
-        expect(livraisonPostSchema.validate(mockLivraison)).not.to.have.property('error');
+        expect(newLivraisonSchema.validate(mockLivraison)).not.to.have.property('error');
     });
 
-    it("should not validate url other than true url", function () {
+    it("should not validate numeroSuivi bigger than 15 numbers", function () {
 
-        mockLivraison.URLSuivi = 'htp://blanche.fr',
-            expect(livraisonPostSchema.validate(mockLivraison)).to.have.property('error');
+        mockLivraison.numeroSuivi = '152584752554155285558',
+            expect(newLivraisonSchema.validate(mockLivraison)).to.have.property('error');
 
-        const validation = livraisonPostSchema.validate(mockLivraison).error.details[0].path[0];
-        expect(validation).to.deep.equal('URLSuivi');
+        const validation = newLivraisonSchema.validate(mockLivraison).error.details[0].path[0];
+        expect(validation).to.deep.equal('numeroSuivi');
     })
 
-    it("should not validate id transporteur other than between 1 and 4 (5) ", function () {
-        mockLivraison.idTransporteur = 5,
-            expect(livraisonPostSchema.validate(mockLivraison)).to.have.property('error');
+    it("should not validate commande with bad format ", function () {
+        mockLivraison.commande = '12.12542.1221.1.1.1',
+            expect(newLivraisonSchema.validate(mockLivraison)).to.have.property('error');
 
-        const validation2 = livraisonPostSchema.validate(mockLivraison).error.details[0].message;
-        expect(validation2).to.deep.equal('Le format de votre  URLSuivi est incorrect');
+        const validation2 = newLivraisonSchema.validate(mockLivraison).error.details[0].message;
+        expect(validation2).to.deep.equal('Le format de votre commande est incorrect : il ne respecte pas la structure d\'une référénce');
 
     });
 
 });
 
 
-//! Test sur livraisonSchema
-
-const livraisonSchema = require('../app/schemas/livraisonSchema');
-
-
-describe(chalk.magenta('Test de validation du livraisonSchema JOI :'), function () {
-
-    before(function () {
-
-        mockLivraison = {
-            reference: 'LIVRAISON7e2232dd7666496ab3681a2993f1df9b',
-            //numeroSuivi: '79037862',
-            URLSuivi: 'http://blanche.fr',
-            poid: 500,
-            //idClient:4,
-            idCommande: 34,
-            idTransporteur: 4,
-        };
-    });
-
-    it('should validate a valid livraison', function () {
-        expect(livraisonSchema.validate(mockLivraison)).not.to.have.property('error');
-    });
-
-    it("should not validate weight smaller than 0.5", function () {
-
-        mockLivraison.poid = 0.4,
-            expect(livraisonSchema.validate(mockLivraison)).to.have.property('error');
-
-        const validation = livraisonSchema.validate(mockLivraison).error.details[0].path[0];
-        expect(validation).to.deep.equal('poid');
-    })
-
-    it("should not validate id transporteur bigger than 4 (6) ", function () {
-        mockLivraison.idTransporteur = 6,
-            mockLivraison.poid = 0.6,
-
-            expect(livraisonSchema.validate(mockLivraison)).to.have.property('error');
-
-        const validation2 = livraisonSchema.validate(mockLivraison).error.details[0].message;
-        expect(validation2).to.deep.equal('Le champs de votre  idTransporteur ne peut être supérieur a 4 !');
-
-    });
-
-});
 
 
 //! Test passwordSchema
@@ -545,20 +501,20 @@ describe(chalk.magenta('Test de validation du refundClientSchema JOI :'), functi
         expect(validation).to.deep.equal('commande');
     })
 
-    it("should not validate an empty phoneNumber ", function () {
+    it("should not validate an empty commande ", function () {
 
         mockRefundClient.commande = undefined;
         expect(refundClientSchema.validate(mockRefundClient)).to.have.property('error');
 
         const validation2 = refundClientSchema.validate(mockRefundClient).error.details[0].message;
-        expect(validation2).to.equal('Le champs de votre référence commande ne peut être vide !');
+        expect(validation2).to.equal('Le champs de votre commande ne peut être vide !');
 
     });
 
 });
 
 
-//! Test refundClientSchema
+//! Test refundSchema
 
 const refundSchema = require('../app/schemas/refundSchema');
 
@@ -568,9 +524,7 @@ describe(chalk.magenta('Test de validation du refundSchema JOI :'), function () 
     before(function () {
 
         mockRefund = {
-            email: 'test@test.fr',
-            //idClient: 34, Soit email soit idClient ! (xor)
-            commande: '233.45.65.1',
+            commande: '233.45.65.1.1',
             montant: 135,
         };
     });
@@ -579,24 +533,24 @@ describe(chalk.magenta('Test de validation du refundSchema JOI :'), function () 
         expect(refundSchema.validate(mockRefund)).not.to.have.property('error');
     });
 
-    it("should not validate email with wrong format", function () {
+    it("should not validate commande with wrong format", function () {
 
-        mockRefund.email = "test@test.23";
+        mockRefund.commande = "12.252.363.21";
         expect(refundSchema.validate(mockRefund)).to.have.property('error');
 
         const validation = refundSchema.validate(mockRefund).error.details[0].path[0];
-        expect(validation).to.deep.equal('email');
+        expect(validation).to.deep.equal('commande');
     })
 
-    it("should check that 'idClient' or 'email' keys are present but not both ", function () {
-        // test du xor fonctionnel !
-        mockRefund.email = "test@test.de";
-        mockRefund.idClient = 23;
+    it("should check that montant is a positive number ", function () {
+        mockRefund.commande = "12.252.363.21.1";
+
+        mockRefund.montant = -23;
 
         expect(refundSchema.validate(mockRefund)).to.have.property('error');
 
-        const validation2 = refundSchema.validate(mockRefund).error.details[0].context.peers;
-        expect(validation2).to.deep.equal(['email', 'idClient']);
+        const validation2 = refundSchema.validate(mockRefund).error.details[0].path[0];
+        expect(validation2).to.deep.equal('montant');
 
     });
 
@@ -1176,16 +1130,16 @@ describe(chalk.blue('Test du service de facture :'), function () {
         adresse = await db.query(adressesInsertEnvoieTrue, ['Maison', 'Test', 'Unitaire', '1600 Pennsylvania Ave NW', '20500', 'Washington', 'France', '+33612547687', client.rows[0].id]);
 
         // Insertion d'un transporteur !
-        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, frais_expedition, estime_arrive, estime_arrive_number, logo) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;";
-        transporteur = await db.query(transporteursInsert, ['TheTransporteur', 'So fast, you will be surprised', 2000, 'des le lendemain', 1, 'https://logos-download.com/wp-content/uploads/2016/10/TNT_logo-700x286.png']);
+        const transporteursInsert = "INSERT INTO mada.transporteur (nom, description, estime_arrive, estime_arrive_number, logo) VALUES ($1, $2, $3, $4, $5) RETURNING *;";
+        transporteur = await db.query(transporteursInsert, ['TheTransporteur', 'So fast, you will be surprised', 'des le lendemain', 1, 'https://logos-download.com/wp-content/uploads/2016/10/TNT_logo-700x286.png']);
 
         // Insertion  d'une TVA !
         const taxRatesInsert = "INSERT INTO mada.TVA (taux, nom) VALUES ($1, $2) RETURNING *;";
         tva = await db.query(taxRatesInsert, [0.20, 'Taux normal 20%']);
 
         // Insertion d'un produit !
-        const productsInsert = "INSERT INTO mada.produit (nom, description, prix_HT, image_mini, id_TVA) VALUES ($1, $2, $3 ,$4, $5) RETURNING *;";
-        produit = await db.query(productsInsert, ['Spatula', 'The best spatula ever !', 8000, 'https://evans.brandeditems.com/wp-content/uploads/2017/09/Small-Silicone-Spatula-1307.jpeg', tva.rows[0].id]);
+        const productsInsert = "INSERT INTO mada.produit (nom, description, prix_HT, image_mini, poid, id_TVA) VALUES ($1, $2, $3 ,$4, $5, $6) RETURNING *;";
+        produit = await db.query(productsInsert, ['Spatula', 'The best spatula ever !', 8000, 'https://evans.brandeditems.com/wp-content/uploads/2017/09/Small-Silicone-Spatula-1307.jpeg', 500, tva.rows[0].id]);
 
         // Insertion d'une commande
         commande = await db.query('INSERT INTO mada.commande (reference, commentaire, id_commandeStatut, id_client, id_transporteur) VALUES ($1, $2, $3, $4, $5) RETURNING *;', [`${client.rows[0].id}.${2000+1600+(8000*2)}.21041944140000.${produit.rows[0].id}.2`, 'Sur un plateau d\'argent. Merci', `${arrayIdStatutCommande[1]}`, `${client.rows[0].id}`, `${transporteur.rows[0].id}`]);
@@ -1208,6 +1162,23 @@ describe(chalk.blue('Test du service de facture :'), function () {
 
         // Insertion d'un shop 
         shop = await db.query(`INSERT INTO mada.shop (nom, adresse1, code_postal, ville, pays, texte_intro, email_contact, telephone) VALUES('Mock-Test_Unitaire', 'Adresse_ Ligne 1', '07170', 'Ville', 'France','texte intro', 'test_for_TU@test.fr', '+33606345632') RETURNING *;`);
+
+
+
+        //Pour être cohérent dans mon service trnasportCost, je dois indiquer une gamme de prix pour ce nouveau transporteur factice :
+        const tarifTheTransporteur = [495, 645, 735, 799, 915, 1410, 2050, 2600, 3220];
+        const poidTheTransporteur = [250, 500, 750, 1000, 2000, 5000, 10000, 15000, 30000];
+
+        let k = 0;
+        for (const item of poidTheTransporteur) {
+
+            await redis.set(`mada/tarif_thetransporteur:${item}gramme`, tarifTheTransporteur[k]);
+            k += 1;
+
+            //console.log(`Tarif TheTransporteur pour ${item}gr, bien inséré dans REDIS!`);
+        }
+        await redis.set(`mada/poidthetransporteur`, JSON.stringify(poidTheTransporteur));
+
 
 
         // Je stocke des données qui devront être accéssible durant mes tests :
@@ -1339,12 +1310,7 @@ describe(chalk.blue('Test du service de facture :'), function () {
 
 //! test sur le service "adresse"
 
-//! test sur le service "adresse"
-
 const {
-    textShopFacture,
-    textAdresseLivraison,
-    textAdresseFacturation,
     facturePhone
 } = require('../app/services/adresse');
 
@@ -1372,8 +1338,7 @@ describe(chalk.blue('Test du service adresse :'), function () {
 
             expect(facturePhone(phoneNumber)).to.be.deep.equal(expectedFormat);
 
-        })
-
+        });
         // a finir !
         /* context('with incorrect arguments', function () {
             it('should return an error if the given phone number don\'t have the expected format', function () {
@@ -1388,13 +1353,6 @@ describe(chalk.blue('Test du service adresse :'), function () {
     })
 
 });
-
-
-
-
-
-//!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
-
 
 
 //!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
@@ -1421,6 +1379,7 @@ let privilege2 = {};
 
 describe(chalk.yellow('Model Client'), function () {
 
+    let theClient1;
 
     before(async function () {
 
@@ -1432,6 +1391,9 @@ describe(chalk.yellow('Model Client'), function () {
             rows
         } = await db.query('INSERT INTO mada.client (prenom, nom_famille, email, password, id_privilege) VALUES ($1, $2, $3 ,$4, $5) RETURNING *;', ['Barack', 'Obama', 'obama@whiteHouse.us', '$2b$10$NTmOgZb2fN1QxewdWOYchOVQXUtUSaW47uOCBhRJ2zi1s2dK4kJsi', privilege2.rows[0].id]);
         user.id = rows[0].id;
+
+        theClient1 = await Client.findOne(user.id);
+
     });
 
     after(async function () {
@@ -1443,27 +1405,39 @@ describe(chalk.yellow('Model Client'), function () {
 
     });
 
-    describe('#findOne', function () {
+    describe('#findOne',function () {
 
-        it('should validate the findOne methode', function () {
+
 
             it('should fetch an instance of Client', async function () {
                 const theClient = await Client.findOne(user.id);
 
-                console.log(theClient),
 
-                    expect(theClient).to.be.an.instanceOf(Client)
+                expect(theClient).to.be.an.instanceOf(Client)
 
-                expect(theClient).to.have.property('nom_famille').equal('Obama');
+            });
 
-                expect(theClient).to.have.property('prenom').equal('Barack');
+            it('should have property nom_famille equal to Obama', function () {
 
-                expect(theClient).not.to.have.property('adresse');
+                expect(theClient1).to.have.property('nomFamille').equal('Obama');
 
-                theClient.password.should.eql(/$2[ayb]\$.{50,61}$/i);
+            });
+            it('should have property prenom equal to Barack', function () {
+
+                expect(theClient1).to.have.property('prenom').equal('Barack');
+
+            });
+            it('should not have property address', function () {
+
+                expect(theClient1).not.to.have.property('adresse');
+
+            });
+            it('should have password special format', function () {
 
 
-            })
-        })
+                expect(theClient1.password).to.match(/^\$2[ayb]\$.{56}$/i);
+
+            });
+        
     });
 });

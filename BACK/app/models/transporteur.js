@@ -107,9 +107,9 @@ class Transporteur {
       return null;
     }
 
-    consol.model(
+    /* consol.model(
       `le transporteur nommé : ${nom} a été demandé en BDD !`
-    );
+    ); */
 
     return new Transporteur(rows[0]);
   }

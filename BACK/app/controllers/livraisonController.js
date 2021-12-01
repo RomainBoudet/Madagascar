@@ -235,7 +235,7 @@ const livraisonController = {
 
             //! DHL Cette partie de code pourrais être supprimer... Elle reste cependant fonctionelle si le schéma accept de laisser passer les formats numéro de suivi DHL
 
-            if (transporteur.nom === "DHL") {
+           /*  if (transporteur.nom === "DHL") {
 
                 // https://developer.dhl.com/api-reference/shipment-tracking#reference-docs-section/
                 //https://developer.dhl.com/api-reference/shipment-tracking#get-started-section/
@@ -266,23 +266,11 @@ const livraisonController = {
 
                     if (dataDHL.status === 404) {
 
-                        /* {
-                            title: 'No result found',
-                            status: 404,
-                            detail: 'No shipment with given tracking number found.'
-                            } */
-
                         console.log("message DHL : Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi.");
                         theResponse.url = `https://www.dhl.com/fr-fr/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`;
                         theResponse.infoTransporteur = `message DHL : Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Aucun envoie n'est présent pour ce numéro de suivi.`;
 
                     } else if (dataDHL.status === 400) {
-
-                        /* {
-                             title: 'Invalid input',
-                             status: 400,
-                             detail: 'Input is invalid: Invalid tracking number - illegal length of number.'
-                           } */
 
                         console.log("Pour information, DHL ne reconnait pas ce numéro de suivi de colis ! Le numéro de suivi du colis est invalide !");
 
@@ -302,9 +290,9 @@ const livraisonController = {
 
                 }
 
-            }
+            } */
+            
             //  DPD =>  pas d'API connu...? / TNT => API qui ne fonctionne que en XML, intégration peu claire... / UPS => API inexploitable gratuitement demande un compte pro avec justification ...
-
 
             const dataLivraison = {};
 
@@ -440,7 +428,6 @@ const livraisonController = {
                     .then(theResponse.sms = "Un sms a bien été envoyé au client pour cette expédition !").then(message => console.log(`SMS bien envoyé a ${tel} depuis ${dataTwillio.twillioNumber} avec pour sid :${message.sid}`));
 
             }
-
 
             theResponse.info = "Cette nouvelle livraison a bien été enregistrée !";
 

@@ -5,6 +5,11 @@ const redis = require('../services/redis');
 
 const countrynames = require('countrynames');
 
+const fetch = require('node-fetch');
+const {
+    makeAdresse
+} = require('../services/adresse');
+
 const stripe = require('stripe')(process.env.STRIPE_TEST_KEY);
 
 
@@ -181,7 +186,7 @@ const adresseController = {
                 })
             };
 
-            if (( req.session.user.privilege === 'Client') && req.session.user.idClient !== client.idClient) {
+            if ((req.session.user.privilege === 'Client') && req.session.user.idClient !== client.idClient) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })
@@ -274,6 +279,7 @@ const adresseController = {
     },
     // A utiiser pour fiabiliser les adresses !
     //https://developer.laposte.fr/products/controladresse/1/documentation#heading-0 
+
     newAdresse: async (req, res) => {
         try {
 
@@ -286,6 +292,64 @@ const adresseController = {
                     message: "Erreur d'authentification : vous n'êtes pas autoriser a insérer une adresse."
                 });
             }
+
+            if (req.body.ligne2 === '') {
+                req.body.ligne2 = null;
+            }
+
+            if (req.body.ligne3 == '') {
+                req.body.ligne3 = null;
+            }
+
+            // On n'accepte que les adresses en France pour cette premiére version de l'API
+            // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
+            //console.log(req.body.pays);
+            if (req.body.pays !== 'FRANCE') {
+                return res.status(404).json({
+                    message: "Bonjour, merci de renseigner une adresse en France pour cette version de l'API"
+                })
+            };
+
+            //Si l'utilisateur a rentré deux titres d'adresse identique, on lui refuse..
+            if (await Adresse.findByTitre(req.body.titre, req.session.user.idClient)) {
+                console.log('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
+                return res.status(404).json({
+                    message: 'Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.'
+                });
+
+            }
+
+
+            // création d'un service qui génére une adresse sous format string qui pourra être passé en paramétre a l'API laposte controleAdresse.
+            //! Service peu intéressant dans la mesure ou il renvoie également de nombreuses adresses fausses si l'utilisateur rentre une fausse adresse et renvoie un grand nombre de possibilités si une adresse est fausse, ne permettant pas a l'utilisateur de faire un choix parmis une courte selection...  
+
+            //! Exemple = 
+            /* {
+                code: '744103328',
+                    adresse: "<span style='display: none;'>LES 54520 LAXOU</span> 10 IMPASSE DU LAVOIR FLEURI 07170 DARBRES"
+                },
+                {
+                  code: '744103331',
+                  adresse: "<span style='display: none;'>LES 54520 LAXOU</span> 10 ROUTE DE LA VIOLLE 07170 DARBRES"
+                },
+                {
+                  code: '744103333',
+                  adresse: "<span style='display: none;'>LES 54520 LAXOU</span> 230 ROUTE DE LA VIOLLE 07170 DARBRES"
+                },
+                {
+                  code: '744103335',
+                  adresse: "<span style='display: none;'>LES 54520 LAXOU</span> 235 ROUTE DE LA VIOLLE 07170 DARBRES"
+                },
+                {
+                  code: '744103337',
+                  adresse: "<span style='display: none;'>54520 LAXOU</span> 30 RUE DES ABEILLES 07170 DARBRES"
+                },
+                {
+                  code: '744103339',
+                  adresse: "<span style='display: none;'>54520 LAXOU</span> 60 RUE DES ABEILLES 07170 DARBRES"
+                }
+]               */
+             
 
             //Si l'utilisateur a déja une adresse indiqués comme adresse de facturation,  je passe a null cette adresse puisque celle qu'il vient de demander de créer sera automatiquement par défaul, sa nouvelle adresse de facturation.
             const adresse = await Adresse.findByFacturationTrue(req.session.user.idClient);
@@ -320,23 +384,7 @@ const adresseController = {
                 data.ligne3 = null;
             }
 
-            // On n'accepte que les adresses en France pour cette premiére version de l'API
-            // upperCase est appliqué uniquement a req.body.pays dans le MW sanitiz dans l'index.
-            //console.log(req.body.pays);
-            if (req.body.pays !== 'FRANCE') {
-                return res.status(404).json({
-                    message: "Bonjour, merci de renseigner une adresse en France pour cette version de l'API"
-                })
-            };
 
-            //Si l'utilisateur a rentré deux titres d'adresse identique, on lui refuse..
-            if (await Adresse.findByTitre(req.body.titre, req.session.user.idClient)) {
-                console.log('Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.');
-                return res.status(404).json({
-                    message: 'Vous avez déja enregistré une adresse avec ce titre d\'adresse. Merci de renseigner un autre titre pour éviter toute confusion lors de vos prochaines selections d\'adresse.'
-                });
-
-            }
 
             const newAdresse = new Adresse(data);
 
@@ -428,7 +476,7 @@ const adresseController = {
                 adresse2: resultatAdresse.ligne2,
                 adresse3: resultatAdresse.ligne3,
                 envoie: resultatAdresse.envoie,
-                facturation:resultatAdresse.facturation,
+                facturation: resultatAdresse.facturation,
                 codePostal: parseInt(resultatAdresse.codePostal, 10),
                 ville: resultatAdresse.ville,
                 pays: resultatAdresse.pays,
@@ -742,7 +790,7 @@ const adresseController = {
                 })
             };
 
-            if ( req.session.privilege === 'Client' && adressesToDelete[0].idClient !== req.session.user.idClient) {
+            if (req.session.privilege === 'Client' && adressesToDelete[0].idClient !== req.session.user.idClient) {
                 return res.status(403).json({
                     message: "Vous n'avez pas les droits pour accéder a cette ressource"
                 })

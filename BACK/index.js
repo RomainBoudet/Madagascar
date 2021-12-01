@@ -40,7 +40,7 @@ const port = process.env.PORT || 5000;
 const expressSwagger = require('express-swagger-generator')(app);
 let optionsSwagger = require('./swagger-config.json');
 optionsSwagger.basedir = __dirname; // __dirname désigne le dossier du point d'entrée
-optionsSwagger.swaggerDefinition.host = `localhost:${port}`;
+optionsSwagger.swaggerDefinition.host = `artisanat-madagascar.art`;
 expressSwagger(optionsSwagger);
 
 

@@ -1,7 +1,7 @@
 {
     "swaggerDefinition": {
         "info": {
-            "description": "A beatiful swagger fot my online shopping website under construction !",
+            "description": "A beatiful swagger for this shopping website API !",
             "title": "Madagascar",
             "version": "1.0.0"
         },
@@ -9,15 +9,8 @@
         "produces": [
             "application/json"
         ],
-        "schemes": ["https"],
-        "securityDefinitions": {
-            "JWT": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "Authorization",
-                "description": ""
-            }
-        }
+        "schemes": ["https"]
+        
     },
     "files": ["./app/router.js"]
 }

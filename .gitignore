@@ -5,6 +5,7 @@ node_modules/
 # dotenv environment variables file
 .env.back
 .env.test
+.env.back.save
 
 BACK/certificat/key.pem
 BACK/certificat/cert.pem

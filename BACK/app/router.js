@@ -2356,7 +2356,7 @@ router.delete('/admin/delAvisByIdClient/:id(\\d+)', client, avisController.delet
 
 
 /**
- * Redirection vers une page 404
+ * Redirection vers une page 404 . (Pas trés pertinent, tous ce qui ne sera pas préfixé par V1 ne tombera pas dans la 404 !!! )
  */
 router.use((req, res) => {
   //res.redirect(`https://localhost:4000/api-docs#/`);

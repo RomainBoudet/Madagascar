@@ -168,6 +168,11 @@ app.use(cors({
 // on préfixe notre router avec un V1 qui sera inclus devant chaque nom de route. Permet de faire évoluer l'app avec une V2 plus facilement.
 app.use('/v1', router);
 
+app.use((req, res) => {
+    //res.redirect(`https://localhost:4000/api-docs#/`);
+    res.status(404).redirect(`/api-docs`);
+  });
+
 
 /* Puis on créer notre serveur HTTPS avec les option qui sont le certificat et la clé */
 app.listen(port, () => {

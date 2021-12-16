@@ -80,7 +80,7 @@ const {
   cache,
   flush
 } = cacheGenerator({
-  ttl: 1296000, // 3600 *24 *15 => 15 jours
+  ttl: 1296000, // 3600 *24 *15 => 15 days
   prefix: "mada",
 });
 
@@ -2355,14 +2355,15 @@ router.delete('/admin/delAvis/:id(\\d+)', client, avisController.delete);
 router.delete('/admin/delAvisByIdClient/:id(\\d+)', client, avisController.deleteByIdClient);
 
 
+// 404 mooved to index.js...
 /**
  * Redirection vers une page 404
  */
-router.use((req, res) => {
+/* router.use((req, res) => {
   //res.redirect(`https://localhost:4000/api-docs#/`);
   res.status(404).redirect(`/api-docs`);
 });
-
+ */
 
 
 module.exports = router;

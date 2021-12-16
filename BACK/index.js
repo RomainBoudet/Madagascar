@@ -4,7 +4,6 @@ require('dotenv').config({
 });
 
 // module natif de Node.js pour intéragir avec les fichier systéme
-const fs = require('fs');
 //parce que c'est beau la couleur ;)
 const chalk = require('chalk');
 //Mise en place d'un logger pour garder une trace écrite des connexion
@@ -18,12 +17,6 @@ const redisSession = require('redis');
 const helmet = require('helmet');
 const router = require('./app/router');
 const cookieParser = require("cookie-parser");
-const bodyParser = require('body-parser');
-const cleanPass = require('./app/middlewares/sanitiz');
-
-
-//passage de notre api en http2
-const spdy = require('spdy');
 
 
 //connect-redis permet d'utiliser Redis avec express-session pour stocker les cookies de la session sur Redis et non en mémoire (pas bien en prod!)
@@ -40,7 +33,7 @@ const port = process.env.PORT || 5000;
 const expressSwagger = require('express-swagger-generator')(app);
 let optionsSwagger = require('./swagger-config.json');
 optionsSwagger.basedir = __dirname; // __dirname désigne le dossier du point d'entrée
-optionsSwagger.swaggerDefinition.host = `artisanat-madagascar.art`;
+optionsSwagger.swaggerDefinition.host = `localhost`;// replace with <your_domain_name>
 expressSwagger(optionsSwagger);
 
 
@@ -82,9 +75,6 @@ app.use(cookieParser(process.env.SECRET));
 app.use(express.urlencoded({
     extended: true
 }));
-
-//On se prémunit des failles xss avec ce module qui filtre, en enlevant tout tag. Un filtre par défault ici qui laisse passer certains caractéres spéciaux pour MdP. Un filtre plus restrictif sera appilqué 
-//app.use(cleanPass); // fait planter la vérification de la signature STRIPE dans le webhook payment ! "Expected a string but received a number"
 
 //helmet : https://expressjs.com/fr/advanced/best-practice-security.html 
 //https://blog.risingstack.com/node-js-security-checklist/
@@ -143,7 +133,7 @@ app.use(
             httpOnly: true, // Garantit que le cookie n’est envoyé que sur HTTP(S), pas au JavaScript du client, ce qui renforce la protection contre les attaques de type cross-site scripting.
             sameSite: 'Strict', //le mode Strict empêche l’envoi d’un cookie de session dans le cas d’un accès au site via un lien externe//https://blog.dareboost.com/fr/2017/06/securisation-cookies-attribut-samesite/
             //!il faudra définir les options de sécurité pour accroitre la sécurité. (https://expressjs.com/fr/advanced/best-practice-security.html)
-            domain: 'artisanat-madagascar.art', // Indique le domaine du cookie ; utilisez cette option pour une comparaison avec le domaine du serveur dans lequel l’URL est demandée. S’ils correspondent, vérifiez ensuite l’attribut de chemin.
+            //domain: '<yourdomainname>', // Indique le domaine du cookie ; utilisez cette option pour une comparaison avec le domaine du serveur dans lequel l’URL est demandée. S’ils correspondent, vérifiez ensuite l’attribut de chemin.
             //path: 'foo/bar', Indique le chemin du cookie ; utilisez cette option pour une comparaison avec le chemin demandé. Si le chemin et le domaine correspondent, envoyez le cookie dans la demande.
             //expires: expiryDate, Utilisez cette option pour définir la date d’expiration des cookies persistants.
         },
@@ -167,6 +157,12 @@ app.use(cors({
 
 // on préfixe notre router avec un V1 qui sera inclus devant chaque nom de route. Permet de faire évoluer l'app avec une V2 plus facilement.
 app.use('/v1', router);
+
+//404 :
+app.use((req, res) => {
+    //res.redirect(`https://localhost:4000/api-docs#/`);
+    res.status(404).redirect(`/api-docs`);
+  });
 
 
 /* Puis on créer notre serveur HTTPS avec les option qui sont le certificat et la clé */

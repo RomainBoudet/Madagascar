@@ -40,7 +40,7 @@ const port = process.env.PORT || 5000;
 const expressSwagger = require('express-swagger-generator')(app);
 let optionsSwagger = require('./swagger-config.json');
 optionsSwagger.basedir = __dirname; // __dirname désigne le dossier du point d'entrée
-optionsSwagger.swaggerDefinition.host = `artisanat-madagascar.art`;
+optionsSwagger.swaggerDefinition.host = `localhost`;
 expressSwagger(optionsSwagger);
 
 
@@ -143,7 +143,7 @@ app.use(
             httpOnly: true, // Garantit que le cookie n’est envoyé que sur HTTP(S), pas au JavaScript du client, ce qui renforce la protection contre les attaques de type cross-site scripting.
             sameSite: 'Strict', //le mode Strict empêche l’envoi d’un cookie de session dans le cas d’un accès au site via un lien externe//https://blog.dareboost.com/fr/2017/06/securisation-cookies-attribut-samesite/
             //!il faudra définir les options de sécurité pour accroitre la sécurité. (https://expressjs.com/fr/advanced/best-practice-security.html)
-            domain: 'artisanat-madagascar.art', // Indique le domaine du cookie ; utilisez cette option pour une comparaison avec le domaine du serveur dans lequel l’URL est demandée. S’ils correspondent, vérifiez ensuite l’attribut de chemin.
+            //domain: 'your_domain_name', // Indique le domaine du cookie ; utilisez cette option pour une comparaison avec le domaine du serveur dans lequel l’URL est demandée. S’ils correspondent, vérifiez ensuite l’attribut de chemin.
             //path: 'foo/bar', Indique le chemin du cookie ; utilisez cette option pour une comparaison avec le chemin demandé. Si le chemin et le domaine correspondent, envoyez le cookie dans la demande.
             //expires: expiryDate, Utilisez cette option pour définir la date d’expiration des cookies persistants.
         },

@@ -44,8 +44,6 @@ optionsSwagger.swaggerDefinition.host = `artisanat-madagascar.art`;
 expressSwagger(optionsSwagger);
 
 
-//app.use(express.static(__dirname + '/public'));
-
 //Nos Middlewares :
 //-----------------------------------------------------------------------------------
 
@@ -91,7 +89,7 @@ app.use(express.urlencoded({
 // hsts définit l’en-tête Strict-Transport-Security qui impose des connexions (HTTP sur SSL/TLS) sécurisées au serveur. 
 // une gestion fine de la CSP => https://ponyfoo.com/articles/content-security-policy-in-express-apps 
 // CSP ==>  https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP 
-app.use(helmet());
+//app.use(helmet()); //! HEADERS géré par NGINX !
 
 // configuration de nos header !
 app.use(helmet.contentSecurityPolicy({
@@ -107,24 +105,11 @@ app.use(helmet.contentSecurityPolicy({
     helmet.dnsPrefetchControl({
         allow: true, //j'autorise la prélecture DNS pour ganer du temps sur mobile.. => https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-DNS-Prefetch-Control
     }),
-    helmet.expectCt({
+    /* helmet.expectCt({
         maxAge: 0,
         enforce: false, //demander qu'un navigateur applique toujours l'exigence de transparence du certificat SSL ! //TODO  repasser a true
         //reportUri: "https://example.com/report", Pourrait être intérresant de se prévoir une url pour l'admin avec aussi 
-    }))
-
-
-// ATTENTION cette protection contre les reflextive XSS pourrait être la porte ouverte pour les attaques XS search.. :
-//https://infosecwriteups.com/xss-auditor-the-protector-of-unprotected-f900a5e15b7b
-//https://portswigger.net/research/top-10-web-hacking-techniques-of-2019
-//https://github.com/xsleaks/xsleaks/wiki/Browser-Side-Channels
-// risque de XS leak important, des attaquant peuvent soutirer des infos en provoquant des faux postive, l'API XSS filter étant sensible a ce type d'attaque..
-// cette option override celle de helmet qui la méttait a 0
-app.use((req, res, next) => {
-    res.setHeader("X-XSS-Protection", "1; mode=block");
-    next();
-});
-
+    }) */)
 
 
 
